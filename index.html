@@ -4198,51 +4198,55 @@ function applyAKFlight(f, flow, opts = {}){
       }
     }
 
-  /* ===== bandeau + META AK ===== */
-  let arrFF = '';
-  let depFF = '';
-  let bcForStrip = '';
+    /* ===== bandeau + META AK (inchangé) ===== */
+    let arrFF = '';
+    let depFF = '';
+    let bcForStrip = '';
 
-  if(flow === 'ARR'){
-    arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-    bcForStrip = (f.borderControl || '').toUpperCase().trim();
+    if(flow === 'ARR'){
+      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+      bcForStrip = (f.borderControl || '').toUpperCase().trim();
 
-    const nextDep = findLinkedDepForArr(f);
-    if(nextDep){
-      depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
+      const nd = findLinkedDepForArr(f);
+      if(nd) depFF = (nd.fullFlightNumber || nd.callsign || '').toUpperCase().trim();
+    }else{
+      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+
+      const pa = findLinkedArrForDep(f);
+      if(pa){
+        arrFF = (pa.fullFlightNumber || pa.callsign || '').toUpperCase().trim();
+        bcForStrip = (pa.borderControl || '').toUpperCase().trim();
+      }
     }
-  }else{
-    depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
 
-    const prevArr = findLinkedArrForDep(f);
-    if(prevArr){
-      arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
-      bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
+    storeAKMetaForTab({
+      flow,
+      id: f.id,
+      reg: f.reg || '',
+      ff: (f.fullFlightNumber || f.callsign || ''),
+      timeISO: (flow === 'DEP')
+        ? (f.sobt || f.eobt || f.aobt || f.atot || '')
+        : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
+      pkg: f.pkg || '',
+      arrFF,
+      depFF,
+      bc: bcForStrip
+    });
+
+    updateAllCalculations();
+    updateTabLabelInstant();
+
+    if(!isRefresh){
+      showPopup("Vol importé", "#16a34a", 1600);
     }
-  }
 
-  storeAKMetaForTab({
-    flow,
-    id: f.id,
-    reg: f.reg || '',
-    ff: (f.fullFlightNumber || f.callsign || ''),
-    timeISO: (flow === 'DEP')
-      ? (f.sobt || f.eobt || f.aobt || f.atot || '')
-      : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
-    pkg: f.pkg || '',
-    arrFF,
-    depFF,
-    bc: bcForStrip
-  });
-
-  updateAllCalculations();
-  updateTabLabelInstant();
-
-  if(!isRefresh){
-    closeAKPicker();
-    const flowSel = document.getElementById('akFlow');
-    if(flowSel) flowSel.value = 'DEP';
-    showPopup("Vol importé", "#16a34a", 1600);
+  } finally {
+    // ✅ fermeture AK QUOI QU'IL ARRIVE (sauf refresh)
+    if(!isRefresh){
+      closeAKPicker();
+      const flowSel = document.getElementById('akFlow');
+      if(flowSel) flowSel.value = 'DEP';
+    }
   }
 }
 
