@@ -975,17 +975,6 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
   font-weight: 400 !important;
 }
 
-#lirFab{
-  position: fixed;
-  left: 14px;
-  bottom: 158px; /* au-dessus du footer + au-dessus des autres FAB */
-  z-index: 4902;
-  border-radius: 999px;
-  height: 52px;
-  box-shadow: var(--shadow2);
-  font-weight: 900;
-}
-
 /* ===== DL WRAPPER ===== */
 .dl-wrap{
   display: block;
@@ -1283,6 +1272,7 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
   </div><!-- /.ldm-body -->
 </div><!-- /#ldmModal -->
+
 
 <!-- ===== FIXED HEADER ===== -->
 <div class="fixed-header" id="fixedHeader">
@@ -2845,8 +2835,6 @@ function updateSOBTDefault() {
 }
 
 /* TOBT + règle CTOT */
-/* TOBT + règle CTOT (NOUVELLE LOGIQUE) */
-/* TOBT + règle CTOT (LOGIQUE FINALE) */
 function updateTOBT() {
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
   const sibttxt = document.getElementById('SIBT')?.value || '';
@@ -3924,7 +3912,7 @@ function renderAKList(flights, flow){
     : `<p class="has-text-grey">Aucun vol.</p>`;
 }
 
- // ===== Import : règles BVA =====
+// ===== Import : règles BVA =====
 function akBuildSI(f, allowDL = true, opts = {}){
   const includeDL = opts.includeDL !== undefined ? !!opts.includeDL : true;
 
@@ -4465,7 +4453,7 @@ function toggleLDM(mode=null){
     return;
   }
 
-  // si mode === null => openLDM déclenche le choix auto
+  // ✅ si tu appelles toggleLDM() sans argument → mode=null → auto
   openLDM(mode);
 }
 
@@ -4506,116 +4494,6 @@ function shouldOpenFinalLoad(){
   return diff >= 0;
 }
 
-// ===== MAPPING LIR LAUDA =====
-const LAUDA_LIR_MAP = {
-  page: 1,
-  // ✅ Mets "TOP_LEFT" si tes coords viennent d'un outil en haut-gauche (souvent le cas)
-  // ✅ Mets "BOTTOM_LEFT" si tes coords sont déjà en repère PDF (bas-gauche)
-  coordMode: "TOP_LEFT",
-
-  // ✅ micro-ajustements (en points PDF) si ça tombe "pas pile"
-  // (tu peux laisser 0 au début)
-  offsetX: 0,
-  offsetY: 0,
-
-  fields: {
-    FLIGHT: { x: 57.85,  y: 152.42, size: 12 },
-    REG:    { x: 126.87, y: 152.42, size: 12 },
-    DATE:   { x: 178.23, y: 152.42, size: 12 },
-    FROM:   { x: 220.03, y: 152.42, size: 12 },
-    TO:     { x: 261.74, y: 152.42, size: 12 },
-  }
-};
-
-async function LIR_LAUDA(){
-  try{
-    if(!window.PDFLib) throw new Error("PDFLib is not loaded (ajoute pdf-lib.min.js)");
-
-    const pdfUrl = "assets/pdf/lauda-lir.pdf";
-    const res = await fetch(pdfUrl, { cache: "no-store" });
-    if(!res.ok) throw new Error(`PDF fetch failed: ${res.status} ${res.statusText}`);
-    const bytes = await res.arrayBuffer();
-
-    const pdfDoc = await window.PDFLib.PDFDocument.load(bytes);
-
-    const pageIndex = Math.max(0, (LAUDA_LIR_MAP.page || 1) - 1);
-    const page = pdfDoc.getPages()[pageIndex];
-    if(!page) throw new Error(`Page ${pageIndex + 1} not found in PDF`);
-
-    const { width, height } = page.getSize();
-
-    const v = id => (document.getElementById(id)?.value || "").trim();
-
-    // Convertit les coords du mapping -> coords pdf-lib
-    const mapXY = (f) => {
-      const size = f.size || 12;
-
-      let x = (f.x || 0);
-      let y = (f.y || 0);
-
-      if ((LAUDA_LIR_MAP.coordMode || "TOP_LEFT") === "TOP_LEFT") {
-        // mapping donné depuis le haut-gauche -> pdf-lib (bas-gauche)
-        y = height - y - size;
-      } else {
-        // mapping déjà en bas-gauche
-        // y inchangé
-      }
-
-      // offsets globaux
-      x += (LAUDA_LIR_MAP.offsetX || 0);
-      y += (LAUDA_LIR_MAP.offsetY || 0);
-
-      // clamp sécurité
-      x = Math.max(0, Math.min(width  - 1, x));
-      y = Math.max(0, Math.min(height - 1, y));
-
-      return { x, y, size };
-    };
-
-    const draw = (key, text) => {
-      const f = LAUDA_LIR_MAP?.fields?.[key];
-      if(!f) return;
-
-      const t = String(text ?? "").trim();
-      if(!t) return;
-
-      const p = mapXY(f);
-
-      page.drawText(t, {
-        x: p.x,
-        y: p.y,
-        size: p.size,
-        color: window.PDFLib.rgb(0,0,0),
-      });
-    };
-
-    // ===== valeurs =====
-    draw("FLIGHT", (v("Cie") + v("NVol")).toUpperCase());
-    draw("REG",    v("Immat").toUpperCase());
-    draw("DATE",   v("Date"));
-    draw("FROM",   "BVA");
-    draw("TO",     v("To").toUpperCase());
-
-    const out = await pdfDoc.save();
-    const blob = new Blob([out], { type: "application/pdf" });
-
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "LIR_LAUDA.pdf";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(a.href);
-
-  }catch(err){
-    console.error(err);
-    alert("Erreur LIR : " + (err?.message || err));
-  }
-}
-
-window.LIR_LAUDA = LIR_LAUDA;
-
- 
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -4645,7 +4523,6 @@ window.LIR_LAUDA = LIR_LAUDA;
 
   <div id="akList"></div>
 </div>
-
 
 <!-- ===== SETTINGS MENU (bottom gear) ===== -->
 <div id="settingsBackdrop" onclick="closeSettingsMenu()"></div>
@@ -4735,14 +4612,6 @@ window.LIR_LAUDA = LIR_LAUDA;
         onclick="toggleFuelMenu()" aria-label="Fuel">
   ⛽
 </button>
-
-<button id="lirFab" class="button is-primary" type="button" onclick="LIR_LAUDA()">
-  📄 LIR LAUDA
-</button>
-
-
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-
 
 </body>
 </html>
