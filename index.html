@@ -2439,6 +2439,7 @@ function closeLDM(){
 }
 
 function ldmSwitch(mode){
+ window._ldmMode = mode; // ✅ mémorise l’onglet LDM courant
   const arr   = document.getElementById('ldmArr');
   const previ = document.getElementById('ldmPrevi');
   const fin   = document.getElementById('ldmFinal');
@@ -2480,6 +2481,19 @@ function ldmSwitch(mode){
     bArr?.classList.add('is-active');
     if(hint) hint.textContent = 'ARRIVÉE';
   }
+}
+
+function refreshLDMLayouts(){
+  const modal = document.getElementById('ldmModal');
+  if(!modal || modal.style.display === 'none') return; // LDM fermé -> rien
+
+  // met à jour les blocs selon la compagnie
+  updateFinalLoadLayout?.();
+  updatePreviLoadLayout?.();
+
+  // si tu es sur PREVI ou FINAL, on réapplique l’affichage (au cas où)
+  const mode = window._ldmMode || 'arr';
+  if(typeof ldmSwitch === 'function') ldmSwitch(mode);
 }
 
 function setTOBValidity(isValid){
@@ -2875,6 +2889,7 @@ function switchTab(id){
   loadTabData(id);
 
   renderTabs();
+  refreshLDMLayouts();
   refreshUIForTabs();
   renderTimeline();
 }
