@@ -4433,142 +4433,149 @@ async function refreshAKTab(tabId){
 function applyAKFlight(f, flow, opts = {}){
   const isRefresh = !!opts.refresh;
 
-  /* ===== champs communs ===== */
-  setValAK('Immat', (f.reg || ''));
+  try{
+    /* ===== champs communs ===== */
+    setValAK('Immat', (f.reg || ''));
 
-  const stand = (f.pkg || '').toString().replace(/^P/i,'').trim();
-  if(stand) setValAK('Parking', stand);
+    const stand = (f.pkg || '').toString().replace(/^P/i,'').trim();
+    if(stand) setValAK('Parking', stand);
 
-  const ac = (f.acTypeIcao || f.acTypeIata || '').toUpperCase().trim();
-  if(ac) setValAK('TypeAvion', ac);
+    const ac = (f.acTypeIcao || f.acTypeIata || '').toUpperCase().trim();
+    if(ac) setValAK('TypeAvion', ac);
 
-  const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-  if(ff){
-    const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
-    if(m){
-      const cie  = m[1];
-      const nvol = m[2];
-      const cieSel = document.getElementById('Cie');
-      if(cieSel){
-        const ok = Array.from(cieSel.options).some(o => o.value === cie);
-        setValAK('Cie', ok ? cie : 'Autre');
+    const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    if(ff){
+      const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
+      if(m){
+        const cie  = m[1];
+        const nvol = m[2];
+        const cieSel = document.getElementById('Cie');
+        if(cieSel){
+          const ok = Array.from(cieSel.options).some(o => o.value === cie);
+          setValAK('Cie', ok ? cie : 'Autre');
+        }
+        setValAK('NVol', nvol);
+      }else{
+        setValAK('NVol', ff);
       }
-      setValAK('NVol', nvol);
-    }else{
-      setValAK('NVol', ff);
-    }
-  }
-
-  /* ================= DEP ================= */
-  if(flow === 'DEP'){
-    setValAK('To', (f.adesIata || '') || HOME_IATA);
-
-    setTimeFromISOAK('SOBT', f.sobt || f.eobt);
-    setTimeFromISOAK('AOBT', f.aobt);
-    setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
-
-    // ❌ DL AK interdit dans LOAD PREVI / FINAL
-    const siDep = akBuildSI(f, true, { includeDL:false });
-    setIfEmptyOrAK('PreviSI', siDep);
-    setIfEmptyOrAK('FinalSI', siDep);
-
-    const prevArr = findLinkedArrForDep(f);
-    if(prevArr){
-      setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
-
-      setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
-      setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
-
-      if(prevArr?.paxNb != null){
-        setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
-      }
-
-      const siArr = akBuildSI(prevArr, false, { includeDL:false });
-      setIfEmptyOrAK('ArrSI', siArr);
-    }else{
-      setValAK('From', HOME_IATA);
     }
 
-  /* ================= ARR ================= */
-  }else{
-    setValAK('From', (f.adepIata || '') || HOME_IATA);
+    /* ================= DEP ================= */
+    if(flow === 'DEP'){
+      setValAK('To', (f.adesIata || '') || HOME_IATA);
 
-    setTimeFromISOAK('SIBT', f.sibt || f.eibt);
-    setTimeFromISOAK('AIBT', f.aibt);
-
-    if(f?.paxNb != null){
-      setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
-    }
-
-    const siArr = akBuildSI(f, false, { includeDL:false });
-    setIfEmptyOrAK('ArrSI', siArr);
-
-    const nextDep = findLinkedDepForArr(f);
-    if(nextDep){
-      setValAK('To', (nextDep.adesIata || '') || HOME_IATA);
-
-      setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
-      setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
-      setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
+      setTimeFromISOAK('SOBT', f.sobt || f.eobt);
+      setTimeFromISOAK('AOBT', f.aobt);
+      setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
 
       // ❌ DL AK interdit dans LOAD PREVI / FINAL
-      const siDep = akBuildSI(nextDep, true, { includeDL:false });
+      const siDep = akBuildSI(f, true, { includeDL:false });
       setIfEmptyOrAK('PreviSI', siDep);
       setIfEmptyOrAK('FinalSI', siDep);
+
+      const prevArr = findLinkedArrForDep(f);
+      if(prevArr){
+        setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
+
+        setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+        setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
+
+        if(prevArr?.paxNb != null){
+          setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
+        }
+
+        const siArr = akBuildSI(prevArr, false, { includeDL:false });
+        setIfEmptyOrAK('ArrSI', siArr);
+      }else{
+        setValAK('From', HOME_IATA);
+      }
+
+    /* ================= ARR ================= */
     }else{
-      setValAK('To', HOME_IATA);
+      setValAK('From', (f.adepIata || '') || HOME_IATA);
+
+      setTimeFromISOAK('SIBT', f.sibt || f.eibt);
+      setTimeFromISOAK('AIBT', f.aibt);
+
+      if(f?.paxNb != null){
+        setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
+      }
+
+      const siArr = akBuildSI(f, false, { includeDL:false });
+      setIfEmptyOrAK('ArrSI', siArr);
+
+      const nextDep = findLinkedDepForArr(f);
+      if(nextDep){
+        setValAK('To', (nextDep.adesIata || '') || HOME_IATA);
+
+        setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+        setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
+        setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
+
+        // ❌ DL AK interdit dans LOAD PREVI / FINAL
+        const siDep = akBuildSI(nextDep, true, { includeDL:false });
+        setIfEmptyOrAK('PreviSI', siDep);
+        setIfEmptyOrAK('FinalSI', siDep);
+      }else{
+        setValAK('To', HOME_IATA);
+      }
     }
-  }
 
-  /* ===== bandeau + META AK ===== */
-  let arrFF = '';
-  let depFF = '';
-  let bcForStrip = '';
+    /* ===== bandeau + META AK ===== */
+    let arrFF = '';
+    let depFF = '';
+    let bcForStrip = '';
 
-  if(flow === 'ARR'){
-    arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-    bcForStrip = (f.borderControl || '').toUpperCase().trim();
+    if(flow === 'ARR'){
+      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+      bcForStrip = (f.borderControl || '').toUpperCase().trim();
 
-    const nextDep = findLinkedDepForArr(f);
-    if(nextDep){
-      depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
+      const nextDep = findLinkedDepForArr(f);
+      if(nextDep){
+        depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
+      }
+    }else{
+      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+
+      const prevArr = findLinkedArrForDep(f);
+      if(prevArr){
+        arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
+        bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
+      }
     }
-  }else{
-    depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
 
-    const prevArr = findLinkedArrForDep(f);
-    if(prevArr){
-      arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
-      bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
+    storeAKMetaForTab({
+      flow,
+      id: f.id,
+      reg: f.reg || '',
+      ff: (f.fullFlightNumber || f.callsign || ''),
+      timeISO: (flow === 'DEP')
+        ? (f.sobt || f.eobt || f.aobt || f.atot || '')
+        : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
+      pkg: f.pkg || '',
+      arrFF,
+      depFF,
+      bc: bcForStrip
+    });
+
+    updateAllCalculations();
+    updateTabLabelInstant();
+
+    // ✅ mise à jour des layouts LOAD (AK ou manuel ensuite via change Cie)
+    if(typeof updateFinalLoadLayout === 'function') updateFinalLoadLayout();
+    if(typeof updatePreviLoadLayout === 'function') updatePreviLoadLayout();
+
+  } finally {
+    // ✅ fermeture + rendu garantis (même si erreur au-dessus)
+    if(!isRefresh){
+      closeAKPicker();
+      const flowSel = document.getElementById('akFlow');
+      if(flowSel) flowSel.value = 'DEP';
+      showPopup("Vol importé", "#16a34a", 1600);
     }
-  }
 
-  storeAKMetaForTab({
-    flow,
-    id: f.id,
-    reg: f.reg || '',
-    ff: (f.fullFlightNumber || f.callsign || ''),
-    timeISO: (flow === 'DEP')
-      ? (f.sobt || f.eobt || f.aobt || f.atot || '')
-      : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
-    pkg: f.pkg || '',
-    arrFF,
-    depFF,
-    bc: bcForStrip
-  });
-
-  updateAllCalculations();
-  updateTabLabelInstant();
-
-  // ✅ mise à jour des layouts LOAD (AK ou manuel ensuite via change Cie)
-  if(typeof updateFinalLoadLayout === 'function') updateFinalLoadLayout();
-  if(typeof updatePreviLoadLayout === 'function') updatePreviLoadLayout();
-
-  if(!isRefresh){
-    closeAKPicker();
-    const flowSel = document.getElementById('akFlow');
-    if(flowSel) flowSel.value = 'DEP';
-    showPopup("Vol importé", "#16a34a", 1600);
+    // ✅ force l’état visuel des onglets (bleu direct)
+    if(typeof renderTabs === 'function') renderTabs();
   }
 }
 
