@@ -2382,6 +2382,13 @@ function switchLoadPanel(mode){
 
 let _ldmMode = 'arr';
 
+function refreshLDMLayouts(){
+  // IMPORTANT : si PREVI/FINAL dépendent de la Cie, il faut refresh ici
+  try{ updateFinalLoadLayout?.(); }catch(e){}
+  try{ updatePreviLoadLayout?.(); }catch(e){}
+  try{ updateFinalTOB?.(); }catch(e){}
+}
+
 function openLDM(mode=null){
   const b = document.getElementById('ldmBackdrop');
   const m = document.getElementById('ldmModal');
@@ -2391,7 +2398,6 @@ function openLDM(mode=null){
   if(b) b.style.display = '';
   if(m) m.style.display = 'flex';
 
-  // si aucun mode forcé → décision auto
   if(mode === null){
     if(shouldOpenFinalLoad()){
       ldmSwitch('final');
@@ -2399,10 +2405,10 @@ function openLDM(mode=null){
       ldmSwitch('arr');
     }
   }else{
-    // mode forcé (ex: bouton ARR / FINAL)
     ldmSwitch(mode);
   }
 
+  refreshLDMLayouts();
   updateHeaderOffset();
 }
 
@@ -2420,26 +2426,33 @@ function ldmSwitch(mode){
   _ldmMode = mode;
 
   const sArr   = document.getElementById('ldmArr');
+  const sPrevi = document.getElementById('ldmPrevi');
   const sFinal = document.getElementById('ldmFinal');
 
   const tArr   = document.getElementById('ldmTabArr');
+  const tPrevi = document.getElementById('ldmTabPrevi');
   const tFinal = document.getElementById('ldmTabFinal');
 
-  if(sArr)   sArr.style.display   = (mode==='arr')   ? '' : 'none';
-  if(sFinal) sFinal.style.display = (mode==='final') ? '' : 'none';
+  if(sArr)   sArr.style.display   = (mode === 'arr')   ? '' : 'none';
+  if(sPrevi) sPrevi.style.display = (mode === 'previ') ? '' : 'none';
+  if(sFinal) sFinal.style.display = (mode === 'final') ? '' : 'none';
 
-  if(tArr)   tArr.classList.toggle('is-active', mode==='arr');
-  if(tFinal) tFinal.classList.toggle('is-active', mode==='final');
+  if(tArr)   tArr.classList.toggle('is-active', mode === 'arr');
+  if(tPrevi) tPrevi.classList.toggle('is-active', mode === 'previ');
+  if(tFinal) tFinal.classList.toggle('is-active', mode === 'final');
 
   const hint = document.getElementById('ldmHint');
   if(hint){
-    hint.textContent = (mode==='arr') ? 'LOAD' : 'FINAL';
+    hint.textContent =
+      (mode === 'arr')   ? 'ARRIVÉE' :
+      (mode === 'previ') ? 'PREVI' :
+      'FINAL';
   }
 
-  if(mode==='final') updateFinalTOB();
+  // refresh layout au switch (sinon PREVI peut rester vide)
+  refreshLDMLayouts();
   updateHeaderOffset();
 }
-
 
 /* compat anciens boutons (optionnel) */
 function toggleLoadArr(){ openLDM('arr'); }
