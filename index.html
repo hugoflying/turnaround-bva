@@ -3994,9 +3994,10 @@ function renderAKList(flights, flow){
 
     if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
 
+    // ✅ IMPORTANT : ne pas utiliser AFAT pour "ARRIVÉ" (AK le met parfois alors que le vol est IN_FLIGHT)
     const isArrived =
       flow === 'ARR' &&
-      (statusRaw === 'TERMINATED' || !!f.aibt || !!f.afat);
+      (statusRaw === 'TERMINATED' || !!f.aibt);
 
     if(flow === 'DEP'){
       if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
@@ -4005,22 +4006,20 @@ function renderAKList(flights, flow){
       if(isArrived){
         status = 'ARRIVÉ';
       }else{
-        const nowMs  = Date.now();
-        const eldtMs = Date.parse(f.eldt || '');
-
-        const isApproach =
-          statusRaw === 'IN_FLIGHT' &&
-          Number.isFinite(eldtMs) &&
-          nowMs >= (eldtMs - 15*60*1000) &&
-          nowMs < eldtMs;
-
-        if(isApproach){
-          status = "A L'APPROCHE";
-        }else if(statusRaw === 'IN_FLIGHT'){
-          status = 'EN VOL';
+        // ✅ A L'APPROCHE = ELDT - 15 min (uniquement si le vol est EN VOL côté AK)
+        let isApproach = false;
+        if(statusRaw === 'IN_FLIGHT'){
+          const nowMs  = Date.now();
+          const eldtMs = Date.parse(f.eldt || '');
+          if(Number.isFinite(eldtMs) && nowMs >= (eldtMs - 15*60*1000) && nowMs < eldtMs){
+            status = "A L'APPROCHE";
+            isApproach = true;
+          }else{
+            status = 'EN VOL';
+          }
         }
 
-        // ARR affiché DÉCOLLÉ si le DEP lié a décollé (hors approche)
+        // 🔥 ton règle existante "DÉCOLLÉ" (on la garde), mais elle ne doit PAS écraser l'approche
         if(!isApproach){
           const nextDep = findLinkedDepForArr(f);
           if(nextDep){
@@ -4033,24 +4032,27 @@ function renderAKList(flights, flow){
     }
 
     const dly = delayMinutes(f, flow);
+
+    // ✅ une fois arrivé : plus de retard affiché
     const showDelay = !isArrived && dly >= 5;
 
     let bg = 'var(--card)';
 
+    // ✅ priorité visuelle absolue
     if(flow === 'ARR' && status === "A L'APPROCHE"){
-      bg = 'rgba(22,163,74,0.18)';
+      bg = 'rgba(22,163,74,0.18)';          // vert
     }else if(flow === 'ARR' && status === 'EN VOL'){
-      bg = 'rgba(37,99,235,0.12)';
+      bg = 'rgba(37,99,235,0.12)';          // bleu
     }else if(flow === 'ARR' && status === 'DÉCOLLÉ'){
-      bg = 'rgba(0,0,0,.04)';
+      bg = 'rgba(0,0,0,.04)';               // gris
     }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';
+      bg = 'rgba(0,0,0,.04)';               // gris
     }else if(showDelay){
       bg = (dly <= 15)
         ? 'rgba(245,158,11,0.18)'
         : 'rgba(239,68,68,0.16)';
     }
-    // ARRIVÉ => fond blanc (par défaut)
+    // ARRIVÉ => fond blanc (var(--card)) + pas de badge retard
 
     const mainIata = (flow === 'ARR')
       ? (f.adepIata || f.adepIcao || '')
