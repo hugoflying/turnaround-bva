@@ -1810,25 +1810,32 @@ function syncAdultGenderLocks(){
 
 /* ===== POIDS auto FR / RK : (BAGS + GB) * 13 ===== */
 function updateFinalWeightIfNeeded(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
-  if(cie !== 'FR' && cie !== 'RK') return;
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
 
-  const bags = parseInt(document.getElementById('FinalBAGS')?.value || '0', 10);
-  const gb   = parseInt(document.getElementById('FinalGB')?.value   || '0', 10);
-
-  const poids = (bags + gb) * 13;
   const poidsEl = document.getElementById('FinalPOIDS');
   if(!poidsEl) return;
 
-  if(
-    (document.getElementById('FinalBAGS')?.value || '') === '' &&
-    (document.getElementById('FinalGB')?.value || '') === ''
-  ){
-    poidsEl.value = '';
+  // ✅ autres compagnies : on débloque et on sort (pas de calcul)
+  if(!isFRRK){
+    poidsEl.readOnly = false;
+    poidsEl.disabled = false;
+    poidsEl.classList.remove('is-readonly');
     return;
   }
 
-  poidsEl.value = String(poids);
+  // ✅ FR/RK : on bloque + calcul auto (ton code actuel en dessous)
+  poidsEl.readOnly = true;
+  poidsEl.disabled = false; // laisse disabled=false sinon value non copiée / UX bizarre
+  poidsEl.classList.add('is-readonly');
+
+  // --- ton calcul actuel inchangé ---
+  const bags = parseInt(document.getElementById('FinalBAGS')?.value || '0', 10) || 0;
+  const gb   = parseInt(document.getElementById('FinalGB')?.value   || '0', 10) || 0;
+
+  const w = (bags + gb) * 13;
+  // si tu avais un guard pour éviter d’écraser, garde-le pareil
+  poidsEl.value = String(w);
 }
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
