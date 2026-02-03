@@ -2399,55 +2399,49 @@ function closeLDM(){
 }
 
 function ldmSwitch(mode){
-  _ldmMode = mode;
+  const arr   = document.getElementById('ldmArr');
+  const previ = document.getElementById('ldmPrevi');
+  const fin   = document.getElementById('ldmFinal');
 
-  const sArr   = document.getElementById('ldmArr');
-  const sFinal = document.getElementById('ldmFinal');
-
-  const tArr   = document.getElementById('ldmTabArr');
-  const tFinal = document.getElementById('ldmTabFinal');
-
-  if(sArr)   sArr.style.display   = (mode==='arr')   ? '' : 'none';
-  if(sFinal) sFinal.style.display = (mode==='final') ? '' : 'none';
-
-  if(tArr)   tArr.classList.toggle('is-active', mode==='arr');
-  if(tFinal) tFinal.classList.toggle('is-active', mode==='final');
+  const bArr   = document.getElementById('ldmTabArr');
+  const bPrevi = document.getElementById('ldmTabPrevi');
+  const bFinal = document.getElementById('ldmTabFinal');
 
   const hint = document.getElementById('ldmHint');
-  if(hint){
-    hint.textContent = (mode==='arr') ? 'LOAD' : 'FINAL';
-  }
 
-  if(mode==='final') updateFinalTOB();
-  updateHeaderOffset();
-}
+  // sécurité
+  if(!arr || !previ || !fin) return;
 
+  // reset display
+  arr.style.display   = 'none';
+  previ.style.display = 'none';
+  fin.style.display   = 'none';
 
-/* compat anciens boutons (optionnel) */
-function toggleLoadArr(){ openLDM('arr'); }
-function toggleLoadExp(){ openLDM('exp'); }
-function toggleLoadFinal(){ openLDM('final'); }
+  // reset active
+  bArr?.classList.remove('is-active');
+  bPrevi?.classList.remove('is-active');
+  bFinal?.classList.remove('is-active');
 
-/* ===== FINAL : calcul ADULT + TOB + contrôle OA/OB/OC/OD ===== */
-function asInt(id){
-  const v = (document.getElementById(id)?.value || '').trim();
-  if(v === '') return null;
-  const n = parseInt(v,10);
-  return isNaN(n) ? null : n;
-}
-function syncAdultIfNeeded(){
-  const m = asInt('FinalMALE');
-  const f = asInt('FinalFEMALE');
-  const adultEl = document.getElementById('FinalADULT');
-  if(!adultEl) return;
-
-  if(m != null && f != null){
-    adultEl.value = String(m + f);
-    adultEl.readOnly = true;
+  if(mode === 'previ'){
+    previ.style.display = '';
+    bPrevi?.classList.add('is-active');
+    if(hint) hint.textContent = 'PRÉVISIONNEL';
+    // refresh layout PREVI (selon compagnie)
+    updatePreviLoadLayout?.();
+  }else if(mode === 'final'){
+    fin.style.display = '';
+    bFinal?.classList.add('is-active');
+    if(hint) hint.textContent = 'FINAL';
+    // refresh layout FINAL (selon compagnie)
+    updateFinalLoadLayout?.();
   }else{
-    adultEl.readOnly = false;
+    // default arr
+    arr.style.display = '';
+    bArr?.classList.add('is-active');
+    if(hint) hint.textContent = 'ARRIVÉE';
   }
 }
+
 function setTOBValidity(isValid){
   const tobEl = document.getElementById('FinalTOB');
   if(!tobEl) return;
