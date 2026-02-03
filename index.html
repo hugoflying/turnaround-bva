@@ -4163,129 +4163,142 @@ async function loadAKFlights(){
 }
 
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
-function renderAKList(flights, flow){
-  const list = document.getElementById('akList');
-  if(!list) return;
+function applyAKFlight(f, flow, opts = {}){
+  const isRefresh = !!opts.refresh;
 
-  function delayMinutes(f, flow){
-    const parse = v => v ? Date.parse(v) : NaN;
+  /* ===== champs communs ===== */
+  setValAK('Immat', (f.reg || ''));
 
-    if(flow === 'ARR'){
-      const s = parse(f?.sibt);
-      const r = parse(f?.aibt || f?.eibt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
+  const stand = (f.pkg || '').toString().replace(/^P/i,'').trim();
+  if(stand) setValAK('Parking', stand);
+
+  const ac = (f.acTypeIcao || f.acTypeIata || '').toUpperCase().trim();
+  if(ac) setValAK('TypeAvion', ac);
+
+  const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+  if(ff){
+    const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
+    if(m){
+      const cie  = m[1];
+      const nvol = m[2];
+      const cieSel = document.getElementById('Cie');
+      if(cieSel){
+        const ok = Array.from(cieSel.options).some(o => o.value === cie);
+        setValAK('Cie', ok ? cie : 'Autre');
+      }
+      setValAK('NVol', nvol);
     }else{
-      const s = parse(f?.sobt);
-      const r = parse(f?.aobt || f?.eobt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
+      setValAK('NVol', ff);
     }
   }
 
-  const safeJsonForOnclick = obj =>
-    JSON.stringify(obj)
-      .replace(/</g,"\\u003c")
-      .replace(/>/g,"\\u003e")
-      .replace(/&/g,"\\u0026")
-      .replace(/'/g,"\\u0027")
-      .replace(/\u2028/g,"\\u2028")
-      .replace(/\u2029/g,"\\u2029");
+  /* ================= DEP ================= */
+  if(flow === 'DEP'){
+    setValAK('To', (f.adesIata || '') || HOME_IATA);
 
-  const row = (f)=>{
-    const ff    = (f.fullFlightNumber || f.callsign || '').trim();
-    const reg   = (f.reg || '').trim();
-    const stand = (f.pkg || '').toString().replace(/^P/i,'');
-    const t     = pickBestTimeForList(f, flow);
+    setTimeFromISOAK('SOBT', f.sobt || f.eobt);
+    setTimeFromISOAK('AOBT', f.aobt);
+    setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
 
-    let statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
-    let status = statusRaw;
+    // ❌ DL AK interdit dans LOAD PREVI / FINAL
+    const siDep = akBuildSI(f, true, { includeDL:false });
+    setIfEmptyOrAK('PreviSI', siDep);
+    setIfEmptyOrAK('FinalSI', siDep);
 
-    if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
+    const prevArr = findLinkedArrForDep(f);
+    if(prevArr){
+      setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
 
-    if(flow === 'DEP'){
-      if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
-    }else{
-      // ARR
-      if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
-      if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
+      setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+      setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
 
-      // 🔥 ARR affiché DÉCOLLÉ si le DEP lié a décollé
-      const nextDep = findLinkedDepForArr(f);
-      if(nextDep){
-        const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
-        const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
-        if(depIsOff) status = 'DÉCOLLÉ';
+      if(prevArr?.paxNb != null){
+        setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
       }
+
+      const siArr = akBuildSI(prevArr, false, { includeDL:false });
+      setIfEmptyOrAK('ArrSI', siArr);
+    }else{
+      setValAK('From', HOME_IATA);
     }
 
-    const dly = delayMinutes(f, flow);
-    const showDelay = dly >= 5;
+  /* ================= ARR ================= */
+  }else{
+    setValAK('From', (f.adepIata || '') || HOME_IATA);
 
-    let bg = 'var(--card)';
-    if(flow === 'ARR' && status === 'DÉCOLLÉ'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(37,99,235,0.12)';
-    }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(showDelay){
-      bg = (dly <= 15)
-        ? 'rgba(245,158,11,0.18)'
-        : 'rgba(239,68,68,0.16)';
+    setTimeFromISOAK('SIBT', f.sibt || f.eibt);
+    setTimeFromISOAK('AIBT', f.aibt);
+
+    if(f?.paxNb != null){
+      setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
     }
 
-    const mainIata = (flow === 'ARR')
-      ? (f.adepIata || f.adepIcao || '')
-      : (f.adesIata || f.adesIcao || '');
+    const siArr = akBuildSI(f, false, { includeDL:false });
+    setIfEmptyOrAK('ArrSI', siArr);
 
-    const delayBadge = showDelay
-      ? `<span class="tag" style="font-weight:900; margin-left:6px;
-           background:${dly<=15 ? 'rgba(245,158,11,0.20)' : 'rgba(239,68,68,0.18)'};">
-           RETARD +${dly}
-         </span>`
-      : '';
+    const nextDep = findLinkedDepForArr(f);
+    if(nextDep){
+      setValAK('To', (nextDep.adesIata || '') || HOME_IATA);
 
-    const json = safeJsonForOnclick(f);
+      setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+      setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
+      setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
 
-    return `
-      <div class="card mb-2"
-        style="box-shadow:none;border:1px solid rgba(0,0,0,.08);background:${bg};">
-        <div class="card-content" style="padding:10px 12px;">
-          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
-            <div style="min-width:220px;">
-              <div style="font-weight:900;font-size:1.05rem;display:flex;gap:6px;flex-wrap:wrap;">
-                <span>${escapeHtml(mainIata || '---')}</span>
-                ${delayBadge}
-              </div>
+      // ❌ DL AK interdit dans LOAD PREVI / FINAL
+      const siDep = akBuildSI(nextDep, true, { includeDL:false });
+      setIfEmptyOrAK('PreviSI', siDep);
+      setIfEmptyOrAK('FinalSI', siDep);
+    }else{
+      setValAK('To', HOME_IATA);
+    }
+  }
 
-              <div style="color:var(--muted);font-weight:800;font-size:.95rem;">
-                ${escapeHtml(ff || '(sans numéro)')}
-                · Stand ${escapeHtml(stand || '—')}
-                · ${escapeHtml(reg || '—')}
-              </div>
+  /* ===== bandeau + META AK ===== */
+  let arrFF = '';
+  let depFF = '';
+  let bcForStrip = '';
 
-              <div style="color:var(--muted);font-weight:800;font-size:.9rem;">
-                ${escapeHtml(t || '—')}
-                ${status ? '· ' + escapeHtml(status) : ''}
-              </div>
-            </div>
+  if(flow === 'ARR'){
+    arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    bcForStrip = (f.borderControl || '').toUpperCase().trim();
 
-            <button class="button is-small is-link" type="button"
-              onclick='applyAKFlight(${json}, "${flow}")'>
-              Utiliser
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  };
+    const nextDep = findLinkedDepForArr(f);
+    if(nextDep){
+      depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
+    }
+  }else{
+    depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
 
-  list.innerHTML = flights.length
-    ? flights.map(row).join('')
-    : `<p class="has-text-grey">Aucun vol.</p>`;
+    const prevArr = findLinkedArrForDep(f);
+    if(prevArr){
+      arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
+      bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
+    }
+  }
+
+  storeAKMetaForTab({
+    flow,
+    id: f.id,
+    reg: f.reg || '',
+    ff: (f.fullFlightNumber || f.callsign || ''),
+    timeISO: (flow === 'DEP')
+      ? (f.sobt || f.eobt || f.aobt || f.atot || '')
+      : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
+    pkg: f.pkg || '',
+    arrFF,
+    depFF,
+    bc: bcForStrip
+  });
+
+  updateAllCalculations();
+  updateTabLabelInstant();
+
+  if(!isRefresh){
+    closeAKPicker();
+    const flowSel = document.getElementById('akFlow');
+    if(flowSel) flowSel.value = 'DEP';
+    showPopup("Vol importé", "#16a34a", 1600);
+  }
 }
 
 // ===== Import : règles BVA =====
