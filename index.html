@@ -2268,6 +2268,11 @@ function updatePreviLoadLayout(){
   }
 }
 
+document.getElementById('Cie')?.addEventListener('change', ()=>{
+  updateFinalLoadLayout();
+  updatePreviLoadLayout();
+});
+
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
 
@@ -4617,6 +4622,10 @@ function applyAKFlight(f, flow, opts = {}){
 
   updateAllCalculations();
   updateTabLabelInstant();
+
+  // ✅ mise à jour des layouts LOAD (AK ou manuel ensuite via change Cie)
+  if(typeof updateFinalLoadLayout === 'function') updateFinalLoadLayout();
+  if(typeof updatePreviLoadLayout === 'function') updatePreviLoadLayout();
 
   if(!isRefresh){
     closeAKPicker();
