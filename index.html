@@ -1851,6 +1851,48 @@ function updateArrExpWeightIfNeeded(){
   }
 }
 
+function updateFinalLoadLayout(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const fieldOf = (id)=>{
+    const inp = document.getElementById(id);
+    return inp ? inp.closest('.field') : null;
+  };
+
+  const showField = (id, show)=>{
+    const f = fieldOf(id);
+    if(f) f.style.display = show ? '' : 'none';
+  };
+
+  const setLabel = (id, txt)=>{
+    const f = fieldOf(id);
+    const lab = f ? f.querySelector('label.label') : null;
+    if(lab) lab.textContent = txt;
+  };
+
+  // ===== FR/RK =====
+  // enlever MALE/FEMALE + OD
+  showField('FinalMALE',   !isFRRK);
+  showField('FinalFEMALE', !isFRRK);
+  showField('FinalOD',     !isFRRK);
+
+  // renommer OA/OB/OC
+  setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
+  setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
+  setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
+
+  // ===== AUTRES CIE =====
+  // enlever ADULT (mais garder CHILD/INFANT/TOB)
+  showField('FinalADULT', isFRRK);
+
+  // renommer H1..H4
+  setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
+  setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
+  setLabel('FinalH3', isFRRK ? 'H3' : 'CP3');
+  setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
+}
+
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
 
@@ -2779,6 +2821,7 @@ function updateAllCalculations() {
   redistributeDL();
   updateLID();
   updateLIDVisibility();
+  updateFinalLoadLayout();
 
   updateHBagsValidity('arr');
   updateHBagsValidity('final');
