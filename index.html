@@ -2130,11 +2130,26 @@ function updateFinalLoadLayout(){
     }
   }
 
-function updatePreviLoadLayout
+// ===== LOAD PREVI (layout switch) =====
+function updatePreviLoadLayout(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const fr = document.getElementById('previFRRK');
+  const ot = document.getElementById('previOTHER');
+
+  if(!fr || !ot) return;
+
+  fr.style.display = isFRRK ? '' : 'none';
+  ot.style.display = isFRRK ? 'none' : '';
+}
+
+// ===== listener compagnie =====
 document.getElementById('Cie')?.addEventListener('change', ()=>{
   updateFinalLoadLayout();
   updatePreviLoadLayout();
 });
+
 
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
