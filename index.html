@@ -1046,9 +1046,12 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
       <span id="ldmHint" class="tag is-light">ARRIVÉE</span>
     </div>
 
+    <!-- ✅ 3 onglets : ARR / PREVI / FINAL -->
     <div class="lm-seg">
       <button id="ldmTabArr" class="button is-small is-active" type="button"
               onclick="ldmSwitch('arr')">ARR</button>
+      <button id="ldmTabPrevi" class="button is-small" type="button"
+              onclick="ldmSwitch('previ')">PREVI</button>
       <button id="ldmTabFinal" class="button is-small" type="button"
               onclick="ldmSwitch('final')">FINAL</button>
     </div>
@@ -1058,222 +1061,283 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
   <div class="ldm-body">
 
-   <!-- ===== LOAD (ARR + PREVI) ===== -->
-<section class="ldm-card ldm-arr" id="ldmArr">
-  <div class="ldm-card-hdr">
-    <div class="ldm-card-title">LOAD</div>
-    <div class="ldm-card-sub">ARR + PREVI</div>
-  </div>
-
-  <div class="ldm-grid">
-
-    <!-- ARR -->
-    <div class="ldm-span-2" style="font-weight:900; letter-spacing:.08em; text-transform:uppercase;">
-      ARR
-    </div>
-
-    <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
-      <div class="field" style="margin:0;">
-        <label class="label">PAX</label>
-        <input class="input ldm-in" id="ArrPAX_MAIN"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this)">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">+ INF</label>
-        <input class="input ldm-in" id="ArrPAX_INF"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this)">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">BAGS</label>
-        <input class="input ldm-in" id="ArrBAGS"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('arr')">
-      </div>
-    </div>
-
-    <div class="field ldm-span-2">
-      <label class="label">SI</label>
-      <textarea class="textarea si-uppercase ldm-ta" id="ArrSI"></textarea>
-    </div>
-
-    <div class="ldm-span-2" style="height:1px; background:rgba(0,0,0,.08); margin:4px 0;"></div>
-
-    <!-- PREVI -->
-    <div class="ldm-span-2" style="font-weight:900; letter-spacing:.08em; text-transform:uppercase;">
-      PREVI
-    </div>
-
-    <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
-      <div class="field" style="margin:0;">
-        <label class="label">PAX</label>
-        <input class="input ldm-in" id="PreviPAX_MAIN"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this)">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">+ INF</label>
-        <input class="input ldm-in" id="PreviPAX_INF"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this)">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">BAGS</label>
-        <input class="input ldm-in" id="PreviBAGS"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('previ')">
-      </div>
-    </div>
-
-    <div class="field ldm-span-2">
-      <label class="label">SI</label>
-      <textarea class="textarea si-uppercase ldm-ta" id="PreviSI"></textarea>
-    </div>
-
-  </div>
-</section>
-
-<!-- ===== LOAD FINAL ===== -->
-<section class="ldm-card ldm-final" id="ldmFinal" style="display:none;">
-  <div class="ldm-card-hdr">
-    <div class="ldm-card-title">LOAD FINAL</div>
-    <div class="ldm-card-sub">FINAL</div>
-  </div>
-
-  <div class="ldm-grid">
-
-    <div class="field">
-      <label class="label">MALE</label>
-      <input class="input ldm-in" id="FinalMALE"
-             type="text" inputmode="numeric" pattern="[0-9]*"
-             maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
-    </div>
-
-    <div class="field">
-      <label class="label">FEMALE</label>
-      <input class="input ldm-in" id="FinalFEMALE"
-             type="text" inputmode="numeric" pattern="[0-9]*"
-             maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
-    </div>
-
-    <div class="ldm-span-2"
-         style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;">
-      <div class="field" style="margin:0;">
-        <label class="label">ADULT</label>
-        <input class="input ldm-in" id="FinalADULT"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">CHILD</label>
-        <input class="input ldm-in" id="FinalCHILD"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">INFANT</label>
-        <input class="input ldm-in" id="FinalINFANT"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-      <div class="field" style="margin:0;">
-        <label class="label">TOB</label>
-        <input class="input ldm-in has-text-weight-bold" id="FinalTOB" readonly>
-      </div>
-    </div>
-
-    <div class="ldm-row-4">
-      <div class="field">
-        <label class="label">OA</label>
-        <input class="input ldm-in" id="FinalOA"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-      <div class="field">
-        <label class="label">OB</label>
-        <input class="input ldm-in" id="FinalOB"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-      <div class="field">
-        <label class="label">OC</label>
-        <input class="input ldm-in" id="FinalOC"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-      <div class="field">
-        <label class="label">OD</label>
-        <input class="input ldm-in" id="FinalOD"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-      </div>
-    </div>
-
-    <div class="ldm-row-4">
-      <div class="field">
-        <label class="label">BAGS</label>
-        <input class="input ldm-in" id="FinalBAGS"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4"
-               oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded()">
+    <!-- ===== LOAD ARR ===== -->
+    <section class="ldm-card ldm-arr" id="ldmArr">
+      <div class="ldm-card-hdr">
+        <div class="ldm-card-title">LOAD</div>
+        <div class="ldm-card-sub">ARR</div>
       </div>
 
-      <div class="field">
-        <label class="label">POIDS</label>
-        <input class="input ldm-in" id="FinalPOIDS"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               readonly>
+      <div class="ldm-grid">
+
+        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+          <div class="field" style="margin:0;">
+            <label class="label">PAX</label>
+            <input class="input ldm-in" id="ArrPAX_MAIN"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this)">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">+ INF</label>
+            <input class="input ldm-in" id="ArrPAX_INF"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this)">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">BAGS</label>
+            <input class="input ldm-in" id="ArrBAGS"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('arr')">
+          </div>
+        </div>
+
+        <div class="field ldm-span-2">
+          <label class="label">SI</label>
+          <textarea class="textarea si-uppercase ldm-ta" id="ArrSI"></textarea>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== LOAD PREVI ===== -->
+    <section class="ldm-card ldm-previ" id="ldmPrevi" style="display:none;">
+      <div class="ldm-card-hdr">
+        <div class="ldm-card-title">LOAD</div>
+        <div class="ldm-card-sub">PREVI</div>
       </div>
 
-      <div class="field">
-        <label class="label">GB</label>
-        <input class="input ldm-in" id="FinalGB"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4"
-               oninput="digitsOnly(this); updateFinalWeightIfNeeded()">
-      </div>
-    </div>
+      <div class="ldm-grid">
 
-    <div class="ldm-row-4">
-      <div class="field">
-        <label class="label">H1</label>
-        <input class="input ldm-in" id="FinalH1"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
-      </div>
-      <div class="field">
-        <label class="label">H2</label>
-        <input class="input ldm-in" id="FinalH2"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
-      </div>
-      <div class="field">
-        <label class="label">H3</label>
-        <input class="input ldm-in" id="FinalH3"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
-      </div>
-      <div class="field">
-        <label class="label">H4</label>
-        <input class="input ldm-in" id="FinalH4"
-               type="text" inputmode="numeric" pattern="[0-9]*"
-               maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
-      </div>
-    </div>
+        <!-- PREVI – FR / RK (layout d'origine) -->
+        <div class="ldm-span-2" id="previFRRK">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+            <div class="field" style="margin:0;">
+              <label class="label">PAX</label>
+              <input class="input ldm-in" id="PreviPAX_MAIN"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="4" oninput="digitsOnly(this)">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">+ INF</label>
+              <input class="input ldm-in" id="PreviPAX_INF"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="3" oninput="digitsOnly(this)">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">BAGS</label>
+              <input class="input ldm-in" id="PreviBAGS"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('previ')">
+            </div>
+          </div>
+        </div>
 
-    <div class="field ldm-span-2">
-      <label class="label">SI</label>
-      <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
-    </div>
+        <!-- PREVI – AUTRES CIE -->
+        <div class="ldm-span-2" id="previOTHER" style="display:none;">
 
-  </div>
-</section>
+          <!-- MALE / FEMALE / CHILD / INFANT -->
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+            <div class="field" style="margin:0;">
+              <label class="label">MALE</label>
+              <input class="input ldm-in" id="PreviMALE"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">FEMALE</label>
+              <input class="input ldm-in" id="PreviFEMALE"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">CHILD</label>
+              <input class="input ldm-in" id="PreviCHILD"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">INFANT</label>
+              <input class="input ldm-in" id="PreviINFANT"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
+            </div>
+          </div>
+
+          <!-- TOB -->
+          <div style="margin-top:10px;">
+            <div class="field" style="margin:0;">
+              <label class="label">TOB</label>
+              <input class="input ldm-in" id="PreviTOB" type="text" readonly>
+            </div>
+          </div>
+
+          <!-- BAGS / POIDS -->
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;">
+            <div class="field" style="margin:0;">
+              <label class="label">BAGS</label>
+              <input class="input ldm-in" id="PreviBAGS_OTHER"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="4" oninput="digitsOnly(this)">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">POIDS</label>
+              <input class="input ldm-in" id="PreviPOIDS_OTHER"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="5" oninput="digitsOnly(this)">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SI PREVI -->
+        <div class="field ldm-span-2">
+          <label class="label">SI</label>
+          <textarea class="textarea si-uppercase ldm-ta" id="PreviSI"></textarea>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== LOAD FINAL ===== -->
+    <section class="ldm-card ldm-final" id="ldmFinal" style="display:none;">
+      <div class="ldm-card-hdr">
+        <div class="ldm-card-title">LOAD FINAL</div>
+        <div class="ldm-card-sub">FINAL</div>
+      </div>
+
+      <div class="ldm-grid">
+
+        <div class="field">
+          <label class="label">MALE</label>
+          <input class="input ldm-in" id="FinalMALE"
+                 type="text" inputmode="numeric" pattern="[0-9]*"
+                 maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
+        </div>
+
+        <div class="field">
+          <label class="label">FEMALE</label>
+          <input class="input ldm-in" id="FinalFEMALE"
+                 type="text" inputmode="numeric" pattern="[0-9]*"
+                 maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
+        </div>
+
+        <div class="ldm-span-2"
+             style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;">
+          <div class="field" style="margin:0;">
+            <label class="label">ADULT</label>
+            <input class="input ldm-in" id="FinalADULT"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">CHILD</label>
+            <input class="input ldm-in" id="FinalCHILD"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">INFANT</label>
+            <input class="input ldm-in" id="FinalINFANT"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">TOB</label>
+            <input class="input ldm-in has-text-weight-bold" id="FinalTOB" readonly>
+          </div>
+        </div>
+
+        <div class="ldm-row-4">
+          <div class="field">
+            <label class="label">OA</label>
+            <input class="input ldm-in" id="FinalOA"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+          <div class="field">
+            <label class="label">OB</label>
+            <input class="input ldm-in" id="FinalOB"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+          <div class="field">
+            <label class="label">OC</label>
+            <input class="input ldm-in" id="FinalOC"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+          <div class="field">
+            <label class="label">OD</label>
+            <input class="input ldm-in" id="FinalOD"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          </div>
+        </div>
+
+        <div class="ldm-row-4">
+          <div class="field">
+            <label class="label">BAGS</label>
+            <input class="input ldm-in" id="FinalBAGS"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4"
+                   oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded()">
+          </div>
+
+          <div class="field">
+            <label class="label">POIDS</label>
+            <input class="input ldm-in" id="FinalPOIDS"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   readonly>
+          </div>
+
+          <div class="field">
+            <label class="label">GB</label>
+            <input class="input ldm-in" id="FinalGB"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4"
+                   oninput="digitsOnly(this); updateFinalWeightIfNeeded()">
+          </div>
+        </div>
+
+        <div class="ldm-row-4">
+          <div class="field">
+            <label class="label">H1</label>
+            <input class="input ldm-in" id="FinalH1"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+          </div>
+          <div class="field">
+            <label class="label">H2</label>
+            <input class="input ldm-in" id="FinalH2"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+          </div>
+          <div class="field">
+            <label class="label">H3</label>
+            <input class="input ldm-in" id="FinalH3"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+          </div>
+          <div class="field">
+            <label class="label">H4</label>
+            <input class="input ldm-in" id="FinalH4"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+          </div>
+        </div>
+
+        <div class="field ldm-span-2">
+          <label class="label">SI</label>
+          <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
+        </div>
+
+      </div>
+    </section>
 
   </div><!-- /.ldm-body -->
 </div><!-- /#ldmModal -->
 
-
+  
 <!-- ===== FIXED HEADER ===== -->
 <div class="fixed-header" id="fixedHeader">
   <div class="fixed-header-inner">
