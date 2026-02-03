@@ -3989,70 +3989,42 @@ function renderAKList(flights, flow){
     const stand = (f.pkg || '').toString().replace(/^P/i,'');
     const t     = pickBestTimeForList(f, flow);
 
-    const statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
+    let statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
     let status = statusRaw;
 
     if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
 
-    // ✅ IMPORTANT : ne pas utiliser AFAT pour "ARRIVÉ" (AK le met parfois alors que le vol est IN_FLIGHT)
-    const isArrived =
-      flow === 'ARR' &&
-      (statusRaw === 'TERMINATED' || !!f.aibt);
-
     if(flow === 'DEP'){
       if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
     }else{
-      // ===== ARR =====
-      if(isArrived){
-        status = 'ARRIVÉ';
-      }else{
-        // ✅ A L'APPROCHE = ELDT - 15 min (uniquement si le vol est EN VOL côté AK)
-        let isApproach = false;
-        if(statusRaw === 'IN_FLIGHT'){
-          const nowMs  = Date.now();
-          const eldtMs = Date.parse(f.eldt || '');
-          if(Number.isFinite(eldtMs) && nowMs >= (eldtMs - 15*60*1000) && nowMs < eldtMs){
-            status = "A L'APPROCHE";
-            isApproach = true;
-          }else{
-            status = 'EN VOL';
-          }
-        }
+      // ARR
+      if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
+      if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
 
-        // 🔥 ton règle existante "DÉCOLLÉ" (on la garde), mais elle ne doit PAS écraser l'approche
-        if(!isApproach){
-          const nextDep = findLinkedDepForArr(f);
-          if(nextDep){
-            const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
-            const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
-            if(depIsOff) status = 'DÉCOLLÉ';
-          }
-        }
+      // 🔥 ARR affiché DÉCOLLÉ si le DEP lié a décollé
+      const nextDep = findLinkedDepForArr(f);
+      if(nextDep){
+        const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
+        const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
+        if(depIsOff) status = 'DÉCOLLÉ';
       }
     }
 
     const dly = delayMinutes(f, flow);
-
-    // ✅ une fois arrivé : plus de retard affiché
-    const showDelay = !isArrived && dly >= 5;
+    const showDelay = dly >= 5;
 
     let bg = 'var(--card)';
-
-    // ✅ priorité visuelle absolue
-    if(flow === 'ARR' && status === "A L'APPROCHE"){
-      bg = 'rgba(22,163,74,0.18)';          // vert
-    }else if(flow === 'ARR' && status === 'EN VOL'){
-      bg = 'rgba(37,99,235,0.12)';          // bleu
-    }else if(flow === 'ARR' && status === 'DÉCOLLÉ'){
-      bg = 'rgba(0,0,0,.04)';               // gris
+    if(flow === 'ARR' && status === 'DÉCOLLÉ'){
+      bg = 'rgba(0,0,0,.04)';
+    }else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
+      bg = 'rgba(37,99,235,0.12)';
     }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';               // gris
+      bg = 'rgba(0,0,0,.04)';
     }else if(showDelay){
       bg = (dly <= 15)
         ? 'rgba(245,158,11,0.18)'
         : 'rgba(239,68,68,0.16)';
     }
-    // ARRIVÉ => fond blanc (var(--card)) + pas de badge retard
 
     const mainIata = (flow === 'ARR')
       ? (f.adepIata || f.adepIcao || '')
