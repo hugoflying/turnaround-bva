@@ -1855,7 +1855,6 @@ function updateFinalLoadLayout(){
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const isFRRK = (cie === 'FR' || cie === 'RK');
 
-  // helpers
   const fieldOf = (id)=>{
     const el = document.getElementById(id);
     return el ? el.closest('.field') : null;
@@ -1870,48 +1869,55 @@ function updateFinalLoadLayout(){
     if(lab) lab.textContent = txt;
   };
 
-  // champs
+  // --- champs (FINAL) ---
   const maleF   = fieldOf('FinalMALE');
   const femaleF = fieldOf('FinalFEMALE');
   const adultF  = fieldOf('FinalADULT');
   const childF  = fieldOf('FinalCHILD');
   const infantF = fieldOf('FinalINFANT');
   const tobF    = fieldOf('FinalTOB');
-  const odF     = fieldOf('FinalOD');
 
-  if(!maleF || !femaleF || !childF || !infantF || !tobF) return;
+  const oaF = fieldOf('FinalOA');
+  const obF = fieldOf('FinalOB');
+  const ocF = fieldOf('FinalOC');
+  const odF = fieldOf('FinalOD');
 
-  // grille FINAL
+  const bagsF  = fieldOf('FinalBAGS');
+  const poidsF = fieldOf('FinalPOIDS');
+  const gbF    = fieldOf('FinalGB');
+
+  if(!maleF || !femaleF) return;
   const finalGrid = maleF.closest('.ldm-grid');
   if(!finalGrid) return;
 
-  // conteneur d'origine ADULT/CHILD/INFANT/TOB (à capturer UNE fois, avant tout déplacement)
-  const paxGridNow = tobF.closest('.ldm-span-2');
-
-  // cache global pour restaurer exactement le DOM d'origine
+  // --- cache layout initial (1 seule fois) ---
   window._finalLayoutCache = window._finalLayoutCache || null;
 
   const snap = (node)=>({
     node,
-    parent: node.parentNode,
-    next: node.nextSibling
+    parent: node ? node.parentNode : null,
+    next: node ? node.nextSibling : null
   });
 
-  // 1) Sauvegarde du layout initial (1 seule fois)
   if(!window._finalLayoutCache){
     window._finalLayoutCache = {
       male:   snap(maleF),
       female: snap(femaleF),
       adult:  adultF ? snap(adultF) : null,
-      child:  snap(childF),
-      infant: snap(infantF),
-      tob:    snap(tobF),
-      paxGrid: paxGridNow ? snap(paxGridNow) : null
+      child:  childF ? snap(childF) : null,
+      infant: infantF ? snap(infantF) : null,
+      tob:    tobF ? snap(tobF) : null,
+      oa:     oaF ? snap(oaF) : null,
+      ob:     obF ? snap(obF) : null,
+      oc:     ocF ? snap(ocF) : null,
+      od:     odF ? snap(odF) : null,
+      bags:   bagsF ? snap(bagsF) : null,
+      poids:  poidsF ? snap(poidsF) : null,
+      gb:     gbF ? snap(gbF) : null,
     };
   }
 
   const cache = window._finalLayoutCache;
-  const paxGridOrig = cache?.paxGrid?.node || paxGridNow; // ✅ toujours l'original
 
   const putBack = (s)=>{
     if(!s?.node || !s?.parent) return;
@@ -1919,61 +1925,48 @@ function updateFinalLoadLayout(){
     else s.parent.appendChild(s.node);
   };
 
-  const restore = ()=>{
-    // remove our custom containers if present
-    finalGrid.querySelectorAll('.ldm-final-paxline, .ldm-final-tobline').forEach(n=>n.remove());
+  const removeCustom = ()=>{
+    finalGrid.querySelectorAll(
+      '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags, .ldm-final-other-paxline, .ldm-final-other-tobline'
+    ).forEach(n => n.remove());
+  };
 
-    // restore nodes to original positions
+  const restore = ()=>{
+    removeCustom();
     putBack(cache.male);
     putBack(cache.female);
-    putBack(cache.child);
-    putBack(cache.infant);
-    putBack(cache.tob);
-    if(cache.adult) putBack(cache.adult);
-
-    // restore paxGrid container if we ever moved it (safe)
-    if(cache.paxGrid) putBack(cache.paxGrid);
-
-    // show original paxGrid (important for FR/RK -> TOB re-apparaît)
-    if(paxGridOrig) paxGridOrig.style.display = '';
+    if(cache.adult)  putBack(cache.adult);
+    if(cache.child)  putBack(cache.child);
+    if(cache.infant) putBack(cache.infant);
+    if(cache.tob)    putBack(cache.tob);
+    if(cache.oa)     putBack(cache.oa);
+    if(cache.ob)     putBack(cache.ob);
+    if(cache.oc)     putBack(cache.oc);
+    if(cache.od)     putBack(cache.od);
+    if(cache.bags)   putBack(cache.bags);
+    if(cache.poids)  putBack(cache.poids);
+    if(cache.gb)     putBack(cache.gb);
   };
 
-  const applyOtherLayout = ()=>{
-    restore();
-
-    // ligne 4 colonnes (span 2) : MALE / FEMALE / CHILD / INFANT
-    const line = document.createElement('div');
-    line.className = 'ldm-row-4 ldm-final-paxline';
-    line.style.gridColumn = 'span 2';
-
-    // insert juste après FEMALE (comme dans ton flow)
-    const femaleNode = cache?.female?.node;
-    if(femaleNode && femaleNode.parentNode === finalGrid){
-      finalGrid.insertBefore(line, femaleNode.nextSibling);
-    }else{
-      finalGrid.insertBefore(line, finalGrid.firstChild);
-    }
-
-    line.appendChild(maleF);
-    line.appendChild(femaleF);
-    line.appendChild(childF);
-    line.appendChild(infantF);
-
-    // TOB seul en dessous (pleine largeur)
-    const tobWrap = document.createElement('div');
-    tobWrap.className = 'ldm-span-2 ldm-final-tobline';
-    tobWrap.style.gridColumn = 'span 2';
-    tobWrap.appendChild(tobF);
-
-    finalGrid.insertBefore(tobWrap, line.nextSibling);
-
-    // cache le bloc d'origine (sinon doublon visuel)
-    if(paxGridOrig) paxGridOrig.style.display = 'none';
+  // --- builders ---
+  const makeRow3 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+  const makeRowFull = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    return d;
   };
 
-  // ===== règles de contenu/labels (comme demandé) =====
-
-  // FR/RK : enlever MALE/FEMALE, OD ; renommer OA/OB/OC
+  // ===== règles de labels / masquages =====
+  // FR/RK : masquer MALE/FEMALE + OD ; renommer OA/OB/OC
   showField('FinalMALE',   !isFRRK);
   showField('FinalFEMALE', !isFRRK);
   showField('FinalOD',     !isFRRK);
@@ -1982,7 +1975,7 @@ function updateFinalLoadLayout(){
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
-  // Autres : enlever ADULT ; renommer H1..H4
+  // Autres : masquer ADULT ; renommer H1..H4 (si tu veux garder cette règle)
   showField('FinalADULT', isFRRK);
   setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
   setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
@@ -1990,12 +1983,41 @@ function updateFinalLoadLayout(){
   setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
 
   // ===== layout =====
+  restore();
+
   if(isFRRK){
-    // FR/RK : layout normal + paxGrid visible (TOB revient)
-    restore();
+    // 1) PAX : ADULT / CHILD / INFANT (3 colonnes)
+    if(adultF && childF && infantF){
+      const paxRow = makeRow3('ldm-final-frrk-pax');
+      paxRow.appendChild(adultF);
+      paxRow.appendChild(childF);
+      paxRow.appendChild(infantF);
+
+      // 2) TOB full width
+      const tobRow = makeRowFull('ldm-final-frrk-tob');
+      if(tobF) tobRow.appendChild(tobF);
+
+      // 3) Zones : FWD / MID / AFT (OA/OB/OC)
+      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      if(oaF) zonesRow.appendChild(oaF);
+      if(obF) zonesRow.appendChild(obF);
+      if(ocF) zonesRow.appendChild(ocF);
+
+      // 4) Bags : BAGS / POIDS / GB
+      const bagsRow = makeRow3('ldm-final-frrk-bags');
+      if(bagsF)  bagsRow.appendChild(bagsF);
+      if(poidsF) bagsRow.appendChild(poidsF);
+      if(gbF)    bagsRow.appendChild(gbF);
+
+      // On insère ces lignes au début de la grille FINAL (tu peux déplacer si tu veux)
+      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
+      finalGrid.insertBefore(zonesRow, bagsRow);
+      finalGrid.insertBefore(tobRow, zonesRow);
+      finalGrid.insertBefore(paxRow, tobRow);
+    }
   }else{
-    // Autres : MALE/FEMALE/CHILD/INFANT sur 1 ligne + TOB seul dessous
-    applyOtherLayout();
+    // autres compagnies : on garde ton layout normal (et tes règles existantes)
+    // (si tu veux la ligne MALE/FEMALE/CHILD/INFANT + TOB dessous, on le remettra proprement après)
   }
 }
 
