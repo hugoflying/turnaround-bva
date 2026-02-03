@@ -2874,6 +2874,14 @@ function switchTab(id){
   renderTabs();
   refreshUIForTabs();
   renderTimeline();
+
+  // ✅ si LOAD est ouvert : remettre les layouts selon la Cie du nouvel onglet
+  const ldmModal = document.getElementById('ldmModal');
+  const isLdmOpen = ldmModal && ldmModal.style.display !== 'none' && ldmModal.style.display !== '';
+  if(isLdmOpen){
+    updateFinalLoadLayout?.();
+    updatePreviLoadLayout?.();
+  }
 }
 
 function deleteTab(id){
