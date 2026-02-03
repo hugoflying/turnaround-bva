@@ -2067,7 +2067,7 @@ function updateFinalLoadLayout(){
   restore();
 
   if(isFRRK){
-    // --- FR/RK (OK chez toi) ---
+    // --- FR/RK ---
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
@@ -2093,10 +2093,9 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(paxRow, tobRow);
     }
   }else{
-    // --- AUTRES CIE : 4 colonnes MALE/FEMALE/CHILD/INFANT + TOB dessous + 3 colonnes BAGS/POIDS/GB ---
+    // --- AUTRES CIE ---
     const femaleNode = cache?.female?.node;
 
-    // ligne 4 colonnes
     if(maleF && femaleF && childF && infantF){
       const paxLine = makeRow4('ldm-final-other-paxline');
       paxLine.appendChild(maleF);
@@ -2104,11 +2103,9 @@ function updateFinalLoadLayout(){
       paxLine.appendChild(childF);
       paxLine.appendChild(infantF);
 
-      // TOB pleine largeur
       const tobLine = makeRowFull('ldm-final-other-tobline');
       if(tobF) tobLine.appendChild(tobF);
 
-      // BAGS/POIDS/GB en 3 colonnes
       const bagsLine = makeRow3('ldm-final-other-bagsline');
       if(bagsF)  bagsLine.appendChild(bagsF);
       if(poidsF) bagsLine.appendChild(poidsF);
@@ -2125,11 +2122,11 @@ function updateFinalLoadLayout(){
         finalGrid.insertBefore(bagsLine, tobLine.nextSibling);
       }
 
-      // cacher le bloc d'origine (évite doublons)
       if(paxGridOrig) paxGridOrig.style.display = 'none';
     }
   }
-} 
+}
+
 
 // ===== LOAD PREVI (layout switch) =====
 function updatePreviLoadLayout(){
@@ -2138,18 +2135,21 @@ function updatePreviLoadLayout(){
 
   const fr = document.getElementById('previFRRK');
   const ot = document.getElementById('previOTHER');
-
   if(!fr || !ot) return;
 
   fr.style.display = isFRRK ? '' : 'none';
   ot.style.display = isFRRK ? 'none' : '';
 }
 
-// ===== listener compagnie =====
-document.getElementById('Cie')?.addEventListener('change', ()=>{
-  updateFinalLoadLayout();
-  updatePreviLoadLayout();
-});
+
+// ===== listener compagnie (1 seule fois) =====
+if(!window._cieLayoutHooked){
+  window._cieLayoutHooked = true;
+
+  document.getElementById('Cie')?.addEventListener('change', ()=>{
+    updateFinalLoadLayout();
+    updatePreviLoadLayout();
+  });
 }
 
 /* ===== COUNTDOWN (CD) ===== */
