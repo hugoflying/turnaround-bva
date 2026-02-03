@@ -1890,6 +1890,9 @@ function updateFinalLoadLayout(){
   const finalGrid = maleF.closest('.ldm-grid');
   if(!finalGrid) return;
 
+  // conteneur d'origine ADULT/CHILD/INFANT/TOB (à capturer UNE fois)
+  const paxGridNow = tobF ? tobF.closest('.ldm-span-2') : null;
+
   // --- cache layout initial (1 seule fois) ---
   window._finalLayoutCache = window._finalLayoutCache || null;
 
@@ -1914,10 +1917,12 @@ function updateFinalLoadLayout(){
       bags:   bagsF ? snap(bagsF) : null,
       poids:  poidsF ? snap(poidsF) : null,
       gb:     gbF ? snap(gbF) : null,
+      paxGrid: paxGridNow ? snap(paxGridNow) : null
     };
   }
 
   const cache = window._finalLayoutCache;
+  const paxGridOrig = cache?.paxGrid?.node || paxGridNow;
 
   const putBack = (s)=>{
     if(!s?.node || !s?.parent) return;
@@ -1927,12 +1932,14 @@ function updateFinalLoadLayout(){
 
   const removeCustom = ()=>{
     finalGrid.querySelectorAll(
-      '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags, .ldm-final-other-paxline, .ldm-final-other-tobline'
+      '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags,' +
+      '.ldm-final-other-paxline, .ldm-final-other-tobline'
     ).forEach(n => n.remove());
   };
 
   const restore = ()=>{
     removeCustom();
+
     putBack(cache.male);
     putBack(cache.female);
     if(cache.adult)  putBack(cache.adult);
@@ -1946,9 +1953,21 @@ function updateFinalLoadLayout(){
     if(cache.bags)   putBack(cache.bags);
     if(cache.poids)  putBack(cache.poids);
     if(cache.gb)     putBack(cache.gb);
+    if(cache.paxGrid) putBack(cache.paxGrid);
+
+    if(paxGridOrig) paxGridOrig.style.display = '';
   };
 
-  // --- builders ---
+  const makeRow4 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+
   const makeRow3 = (className)=>{
     const d = document.createElement('div');
     d.className = className;
@@ -1958,6 +1977,7 @@ function updateFinalLoadLayout(){
     d.style.gap = '12px';
     return d;
   };
+
   const makeRowFull = (className)=>{
     const d = document.createElement('div');
     d.className = className;
@@ -1965,8 +1985,8 @@ function updateFinalLoadLayout(){
     return d;
   };
 
-  // ===== règles de labels / masquages =====
-  // FR/RK : masquer MALE/FEMALE + OD ; renommer OA/OB/OC
+  // ===== règles =====
+  // FR/RK : enlever MALE/FEMALE + OD ; renommer OA/OB/OC
   showField('FinalMALE',   !isFRRK);
   showField('FinalFEMALE', !isFRRK);
   showField('FinalOD',     !isFRRK);
@@ -1975,7 +1995,7 @@ function updateFinalLoadLayout(){
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
-  // Autres : masquer ADULT ; renommer H1..H4 (si tu veux garder cette règle)
+  // Autres : enlever ADULT ; renommer H1..H4
   showField('FinalADULT', isFRRK);
   setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
   setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
@@ -1986,38 +2006,57 @@ function updateFinalLoadLayout(){
   restore();
 
   if(isFRRK){
-    // 1) PAX : ADULT / CHILD / INFANT (3 colonnes)
+    // --- FR/RK (déjà OK chez toi) ---
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
       paxRow.appendChild(childF);
       paxRow.appendChild(infantF);
 
-      // 2) TOB full width
       const tobRow = makeRowFull('ldm-final-frrk-tob');
       if(tobF) tobRow.appendChild(tobF);
 
-      // 3) Zones : FWD / MID / AFT (OA/OB/OC)
       const zonesRow = makeRow3('ldm-final-frrk-zones');
       if(oaF) zonesRow.appendChild(oaF);
       if(obF) zonesRow.appendChild(obF);
       if(ocF) zonesRow.appendChild(ocF);
 
-      // 4) Bags : BAGS / POIDS / GB
       const bagsRow = makeRow3('ldm-final-frrk-bags');
       if(bagsF)  bagsRow.appendChild(bagsF);
       if(poidsF) bagsRow.appendChild(poidsF);
       if(gbF)    bagsRow.appendChild(gbF);
 
-      // On insère ces lignes au début de la grille FINAL (tu peux déplacer si tu veux)
+      // insertion "en haut" (comme ta version actuelle)
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
       finalGrid.insertBefore(zonesRow, bagsRow);
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
     }
   }else{
-    // autres compagnies : on garde ton layout normal (et tes règles existantes)
-    // (si tu veux la ligne MALE/FEMALE/CHILD/INFANT + TOB dessous, on le remettra proprement après)
+    // --- AUTRES CIE : 4 colonnes MALE/FEMALE/CHILD/INFANT + TOB dessous ---
+    if(maleF && femaleF && childF && infantF){
+      const paxLine = makeRow4('ldm-final-other-paxline');
+      paxLine.appendChild(maleF);
+      paxLine.appendChild(femaleF);
+      paxLine.appendChild(childF);
+      paxLine.appendChild(infantF);
+
+      const tobLine = makeRowFull('ldm-final-other-tobline');
+      if(tobF) tobLine.appendChild(tobF);
+
+      // ✅ insertion propre : juste après FEMALE dans la grille (pas de décalage)
+      const femaleNode = cache?.female?.node;
+      if(femaleNode && femaleNode.parentNode === finalGrid){
+        finalGrid.insertBefore(paxLine, femaleNode.nextSibling);
+        finalGrid.insertBefore(tobLine, paxLine.nextSibling);
+      }else{
+        finalGrid.insertBefore(paxLine, finalGrid.firstChild);
+        finalGrid.insertBefore(tobLine, paxLine.nextSibling);
+      }
+
+      // cacher le bloc d'origine ADULT/CHILD/INFANT/TOB pour éviter doublons
+      if(paxGridOrig) paxGridOrig.style.display = 'none';
+    }
   }
 }
 
