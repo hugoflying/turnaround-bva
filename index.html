@@ -35,6 +35,7 @@
   :root{ --gap: 12px; --padCard: 14px; --inputH: 44px; }
 }
 
+
 body{ background: var(--bg); color: var(--text); margin: 0; }
 html, body{ min-height: 100%; background: var(--bg) !important; }
 
@@ -3844,6 +3845,15 @@ function renderAKList(flights, flow){
       if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
       if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
 
+      // ✅ MODIF : remplacer EN VOL par A L'APPROCHE à ELDT-15 (ARR uniquement)
+      if(statusRaw === 'IN_FLIGHT' && f.eldt && !f.afat && !f.aibt){
+        const nowMs  = Date.now();
+        const eldtMs = Date.parse(f.eldt);
+        if(isFinite(eldtMs) && nowMs >= (eldtMs - 15*60*1000) && nowMs < eldtMs){
+          status = "A L'APPROCHE";
+        }
+      }
+
       // 🔥 ARR affiché DÉCOLLÉ si le DEP lié a décollé
       const nextDep = findLinkedDepForArr(f);
       if(nextDep){
@@ -3857,9 +3867,14 @@ function renderAKList(flights, flow){
     const showDelay = dly >= 5;
 
     let bg = 'var(--card)';
-    if(flow === 'ARR' && status === 'DÉCOLLÉ'){
+
+    // ✅ MODIF : vert pour A L'APPROCHE (ARR uniquement) au lieu du bleu "EN VOL"
+    if(flow === 'ARR' && status === "A L'APPROCHE"){
+      bg = 'rgba(22,163,74,0.18)';
+    }else if(flow === 'ARR' && status === 'DÉCOLLÉ'){
       bg = 'rgba(0,0,0,.04)';
     }else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
+      // bleu "EN VOL" (reste inchangé)
       bg = 'rgba(37,99,235,0.12)';
     }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
       bg = 'rgba(0,0,0,.04)';
