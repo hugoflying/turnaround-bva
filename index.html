@@ -1856,8 +1856,8 @@ function updateFinalLoadLayout(){
   const isFRRK = (cie === 'FR' || cie === 'RK');
 
   const fieldOf = (id)=>{
-    const inp = document.getElementById(id);
-    return inp ? inp.closest('.field') : null;
+    const el = document.getElementById(id);
+    return el ? el.closest('.field') : null;
   };
 
   const showField = (id, show)=>{
@@ -1871,26 +1871,68 @@ function updateFinalLoadLayout(){
     if(lab) lab.textContent = txt;
   };
 
-  // ===== FR/RK =====
-  // enlever MALE/FEMALE + OD
+  const setFieldStyle = (id, styleObj)=>{
+    const f = fieldOf(id);
+    if(!f) return;
+    for(const k in styleObj) f.style[k] = styleObj[k];
+  };
+
+  const clearFieldStyle = (id, keys)=>{
+    const f = fieldOf(id);
+    if(!f) return;
+    keys.forEach(k => f.style[k] = '');
+  };
+
+  // ===== FR / RK (inchangé par rapport à ta demande précédente) =====
   showField('FinalMALE',   !isFRRK);
   showField('FinalFEMALE', !isFRRK);
   showField('FinalOD',     !isFRRK);
 
-  // renommer OA/OB/OC
   setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
   // ===== AUTRES CIE =====
-  // enlever ADULT (mais garder CHILD/INFANT/TOB)
   showField('FinalADULT', isFRRK);
 
-  // renommer H1..H4
   setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
   setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
   setLabel('FinalH3', isFRRK ? 'H3' : 'CP3');
   setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
+
+  // ===== MISE EN PAGE (AUTRES CIE) =====
+  // MALE / FEMALE / CHILD / INFANT sur une seule ligne, puis TOB seul
+  const layoutKeys = [
+    'display','width','marginRight','verticalAlign','marginBottom','clear'
+  ];
+
+  if(!isFRRK){
+    // 4 champs en ligne (25% chacun)
+    ['FinalMALE','FinalFEMALE','FinalCHILD','FinalINFANT'].forEach((id, idx)=>{
+      setFieldStyle(id, {
+        display: 'inline-block',
+        width: 'calc(25% - 9px)',
+        marginRight: (idx === 3) ? '0px' : '12px',
+        verticalAlign: 'top',
+        marginBottom: '10px',
+        clear: 'none'
+      });
+    });
+
+    // TOB seul en dessous
+    setFieldStyle('FinalTOB', {
+      display: 'block',
+      width: '100%',
+      marginRight: '0px',
+      marginBottom: '10px',
+      clear: 'both'
+    });
+  }else{
+    // FR/RK : on remet le layout normal (pas de styles forcés)
+    ['FinalMALE','FinalFEMALE','FinalCHILD','FinalINFANT','FinalTOB'].forEach(id=>{
+      clearFieldStyle(id, layoutKeys);
+    });
+  }
 }
 
 /* ===== COUNTDOWN (CD) ===== */
