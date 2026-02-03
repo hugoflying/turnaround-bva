@@ -3989,12 +3989,11 @@ function renderAKList(flights, flow){
     const stand = (f.pkg || '').toString().replace(/^P/i,'');
     const t     = pickBestTimeForList(f, flow);
 
-    let statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
+    const statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
     let status = statusRaw;
 
     if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
 
-    // ARRIVÉ = posé (sert pour couleur + suppression RETARD)
     const isArrived =
       flow === 'ARR' &&
       (statusRaw === 'TERMINATED' || !!f.aibt || !!f.afat);
@@ -4006,57 +4005,52 @@ function renderAKList(flights, flow){
       if(isArrived){
         status = 'ARRIVÉ';
       }else{
-        if(statusRaw === 'IN_FLIGHT') status = 'EN VOL';
+        const nowMs  = Date.now();
+        const eldtMs = Date.parse(f.eldt || '');
 
-        // EN VOL -> A L'APPROCHE à ELDT - 15
-        if(statusRaw === 'IN_FLIGHT' && f.eldt){
-          const nowMs  = Date.now();
-          const eldtMs = Date.parse(f.eldt);
-          if(isFinite(eldtMs) && nowMs >= (eldtMs - 15*60*1000) && nowMs < eldtMs){
-            status = "A L'APPROCHE";
-          }
+        const isApproach =
+          statusRaw === 'IN_FLIGHT' &&
+          Number.isFinite(eldtMs) &&
+          nowMs >= (eldtMs - 15*60*1000) &&
+          nowMs < eldtMs;
+
+        if(isApproach){
+          status = "A L'APPROCHE";
+        }else if(statusRaw === 'IN_FLIGHT'){
+          status = 'EN VOL';
         }
 
-        // ARR affiché DÉCOLLÉ si le DEP lié a décollé
-        const nextDep = findLinkedDepForArr(f);
-        if(nextDep){
-          const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
-          const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
-          if(depIsOff) status = 'DÉCOLLÉ';
+        // ARR affiché DÉCOLLÉ si le DEP lié a décollé (hors approche)
+        if(!isApproach){
+          const nextDep = findLinkedDepForArr(f);
+          if(nextDep){
+            const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
+            const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
+            if(depIsOff) status = 'DÉCOLLÉ';
+          }
         }
       }
     }
 
     const dly = delayMinutes(f, flow);
-
-    // ARR : une fois arrivé → plus de retard
     const showDelay = !isArrived && dly >= 5;
 
     let bg = 'var(--card)';
 
-    // A L'APPROCHE = vert
     if(flow === 'ARR' && status === "A L'APPROCHE"){
       bg = 'rgba(22,163,74,0.18)';
-    }
-    // ARR affiché DÉCOLLÉ = gris
-    else if(flow === 'ARR' && status === 'DÉCOLLÉ'){
-      bg = 'rgba(0,0,0,.04)';
-    }
-    // ARR EN VOL = bleu
-    else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
+    }else if(flow === 'ARR' && status === 'EN VOL'){
       bg = 'rgba(37,99,235,0.12)';
-    }
-    // DEP décollé = gris
-    else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
+    }else if(flow === 'ARR' && status === 'DÉCOLLÉ'){
       bg = 'rgba(0,0,0,.04)';
-    }
-    // RETARD (uniquement avant arrivée)
-    else if(showDelay){
+    }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
+      bg = 'rgba(0,0,0,.04)';
+    }else if(showDelay){
       bg = (dly <= 15)
         ? 'rgba(245,158,11,0.18)'
         : 'rgba(239,68,68,0.16)';
     }
-    // ARRIVÉ → fond blanc (var(--card)) = rien à faire
+    // ARRIVÉ => fond blanc (par défaut)
 
     const mainIata = (flow === 'ARR')
       ? (f.adepIata || f.adepIcao || '')
