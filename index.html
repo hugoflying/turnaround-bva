@@ -1989,7 +1989,7 @@ function updateFinalLoadLayout(){
   const removeCustom = ()=>{
     finalGrid.querySelectorAll(
       '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags,' +
-      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-bagsline, .ldm-final-other-zonesline'
+      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-zonesline, .ldm-final-other-bagsline'
     ).forEach(n => n.remove());
   };
 
@@ -2101,26 +2101,25 @@ function updateFinalLoadLayout(){
       const tobLine = makeRowFull('ldm-final-other-tobline');
       if(tobF) tobLine.appendChild(tobF);
 
-      const bagsLine = makeRow3('ldm-final-other-bagsline');
-      if(bagsF)  bagsLine.appendChild(bagsF);
-      if(poidsF) bagsLine.appendChild(poidsF);
-      if(gbF)    bagsLine.appendChild(gbF);
-
       const zonesLine = makeRow4('ldm-final-other-zonesline');
       if(oaF) zonesLine.appendChild(oaF);
       if(obF) zonesLine.appendChild(obF);
       if(ocF) zonesLine.appendChild(ocF);
       if(odF) zonesLine.appendChild(odF);
 
-      // ⚠️ insertion béton : au tout début, dans l’ordre voulu
-      // (on insère à l’envers sur firstChild)
-      const first = finalGrid.firstChild;
-      finalGrid.insertBefore(zonesLine, first);
-      finalGrid.insertBefore(bagsLine, zonesLine);
-      finalGrid.insertBefore(tobLine,  bagsLine);
-      finalGrid.insertBefore(paxLine,  tobLine);
+      const bagsLine = makeRow3('ldm-final-other-bagsline');
+      if(bagsF)  bagsLine.appendChild(bagsF);
+      if(poidsF) bagsLine.appendChild(poidsF);
+      if(gbF)    bagsLine.appendChild(gbF);
 
-      // cacher le bloc d'origine (évite doublons)
+      // ✅ ordre voulu : PAX -> TOB -> ZONES -> BAGS
+      // insertion béton en haut (on insère à l’envers sur firstChild)
+      const first = finalGrid.firstChild;
+      finalGrid.insertBefore(bagsLine, first);
+      finalGrid.insertBefore(zonesLine, bagsLine);
+      finalGrid.insertBefore(tobLine, zonesLine);
+      finalGrid.insertBefore(paxLine, tobLine);
+
       if(paxGridOrig) paxGridOrig.style.display = 'none';
     }
   }
