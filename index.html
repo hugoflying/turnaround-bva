@@ -1855,35 +1855,24 @@ function updateFinalLoadLayout(){
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const isFRRK = (cie === 'FR' || cie === 'RK');
 
+  // helpers
   const fieldOf = (id)=>{
     const el = document.getElementById(id);
     return el ? el.closest('.field') : null;
   };
-
   const showField = (id, show)=>{
     const f = fieldOf(id);
     if(f) f.style.display = show ? '' : 'none';
   };
-
   const setLabel = (id, txt)=>{
     const f = fieldOf(id);
     const lab = f ? f.querySelector('label.label') : null;
     if(lab) lab.textContent = txt;
   };
 
-  const setFieldStyle = (id, styleObj)=>{
-    const f = fieldOf(id);
-    if(!f) return;
-    for(const k in styleObj) f.style[k] = styleObj[k];
-  };
+  // ===== tes règles d'affichage/labels =====
 
-  const clearFieldStyle = (id, keys)=>{
-    const f = fieldOf(id);
-    if(!f) return;
-    keys.forEach(k => f.style[k] = '');
-  };
-
-  // ===== FR / RK (inchangé par rapport à ta demande précédente) =====
+  // FR/RK : enlever MALE/FEMALE + OD, renommer OA/OB/OC
   showField('FinalMALE',   !isFRRK);
   showField('FinalFEMALE', !isFRRK);
   showField('FinalOD',     !isFRRK);
@@ -1892,46 +1881,123 @@ function updateFinalLoadLayout(){
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
-  // ===== AUTRES CIE =====
+  // Autres : enlever ADULT, renommer H1..H4 en CP1..CP4
   showField('FinalADULT', isFRRK);
-
   setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
   setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
   setLabel('FinalH3', isFRRK ? 'H3' : 'CP3');
   setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
 
-  // ===== MISE EN PAGE (AUTRES CIE) =====
-  // MALE / FEMALE / CHILD / INFANT sur une seule ligne, puis TOB seul
-  const layoutKeys = [
-    'display','width','marginRight','verticalAlign','marginBottom','clear'
-  ];
+  // ===== layout spécifique "autres cie" =====
+  // Objectif (hors FR/RK) :
+  //  - MALE/FEMALE/CHILD/INFANT sur une ligne (4 colonnes)
+  //  - TOB seul en dessous (pleine largeur)
 
-  if(!isFRRK){
-    // 4 champs en ligne (25% chacun)
-    ['FinalMALE','FinalFEMALE','FinalCHILD','FinalINFANT'].forEach((id, idx)=>{
-      setFieldStyle(id, {
-        display: 'inline-block',
-        width: 'calc(25% - 9px)',
-        marginRight: (idx === 3) ? '0px' : '12px',
-        verticalAlign: 'top',
-        marginBottom: '10px',
-        clear: 'none'
-      });
+  // cache global pour restaurer exactement le DOM d'origine
+  window._finalLayoutCache = window._finalLayoutCache || null;
+
+  const maleF   = fieldOf('FinalMALE');
+  const femaleF = fieldOf('FinalFEMALE');
+  const adultF  = fieldOf('FinalADULT');
+  const childF  = fieldOf('FinalCHILD');
+  const infantF = fieldOf('FinalINFANT');
+  const tobF    = fieldOf('FinalTOB');
+
+  if(!maleF || !femaleF || !childF || !infantF || !tobF) return;
+
+  // le conteneur actuel ADULT/CHILD/INFANT/TOB (ldm-span-2 en grid)
+  const paxGrid = tobF.closest('.ldm-span-2');
+
+  // racine FINAL grid
+  const finalGrid = maleF.closest('.ldm-grid');
+  if(!finalGrid) return;
+
+  // -- 1) Sauvegarde du layout initial (1 seule fois) --
+  if(!window._finalLayoutCache){
+    const snap = (node)=>({
+      node,
+      parent: node.parentNode,
+      next: node.nextSibling
     });
 
-    // TOB seul en dessous
-    setFieldStyle('FinalTOB', {
-      display: 'block',
-      width: '100%',
-      marginRight: '0px',
-      marginBottom: '10px',
-      clear: 'both'
-    });
+    window._finalLayoutCache = {
+      male:   snap(maleF),
+      female: snap(femaleF),
+      child:  snap(childF),
+      infant: snap(infantF),
+      tob:    snap(tobF),
+      paxGrid: paxGrid ? snap(paxGrid) : null
+    };
+  }
+
+  const restore = ()=>{
+    const c = window._finalLayoutCache;
+    if(!c) return;
+
+    // remove our custom containers if present
+    finalGrid.querySelectorAll('.ldm-final-paxline, .ldm-final-tobline').forEach(n=>n.remove());
+
+    // restore nodes to original positions
+    const putBack = (s)=>{
+      if(!s?.node || !s?.parent) return;
+      if(s.next && s.next.parentNode === s.parent) s.parent.insertBefore(s.node, s.next);
+      else s.parent.appendChild(s.node);
+    };
+    putBack(c.male);
+    putBack(c.female);
+    putBack(c.child);
+    putBack(c.infant);
+    putBack(c.tob);
+
+    // restore paxGrid container if we had moved it (souvent pas nécessaire, mais safe)
+    if(c.paxGrid) putBack(c.paxGrid);
+  };
+
+  const applyOtherLayout = ()=>{
+    // on part d'une base saine
+    restore();
+
+    // Crée une ligne 4 colonnes (span 2) pour MALE/FEMALE/CHILD/INFANT
+    const line = document.createElement('div');
+    line.className = 'ldm-row-4 ldm-final-paxline';
+    line.style.gridColumn = 'span 2';
+
+    // Insère cette ligne juste après FEMALE (dans le flow final)
+    const afterFemale = window._finalLayoutCache?.female?.node;
+    if(afterFemale && afterFemale.parentNode === finalGrid){
+      // si female est direct enfant de ldm-grid
+      finalGrid.insertBefore(line, afterFemale.nextSibling);
+    }else{
+      // fallback : au début
+      finalGrid.insertBefore(line, finalGrid.firstChild);
+    }
+
+    // Déplace les 4 champs dedans
+    line.appendChild(maleF);
+    line.appendChild(femaleF);
+    line.appendChild(childF);
+    line.appendChild(infantF);
+
+    // TOB seul en dessous (pleine largeur)
+    const tobWrap = document.createElement('div');
+    tobWrap.className = 'ldm-span-2 ldm-final-tobline';
+    tobWrap.style.display = 'block';
+    tobWrap.style.gridColumn = 'span 2';
+    tobWrap.appendChild(tobF);
+
+    finalGrid.insertBefore(tobWrap, line.nextSibling);
+
+    // Le paxGrid ADULT/CHILD/INFANT/TOB devient inutile visuellement hors FR/RK
+    if(paxGrid) paxGrid.style.display = 'none';
+  };
+
+  if(isFRRK){
+    // FR/RK : layout normal (et le paxGrid redevient visible)
+    restore();
+    if(paxGrid) paxGrid.style.display = '';
   }else{
-    // FR/RK : on remet le layout normal (pas de styles forcés)
-    ['FinalMALE','FinalFEMALE','FinalCHILD','FinalINFANT','FinalTOB'].forEach(id=>{
-      clearFieldStyle(id, layoutKeys);
-    });
+    // autres : appliquer la nouvelle disposition
+    applyOtherLayout();
   }
 }
 
