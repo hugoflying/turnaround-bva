@@ -2078,15 +2078,31 @@ function updatePreviLoadLayout(){
 
   if(!paxMain || !paxInf || !bagsEl) return;
 
-  // Le bloc PREVI "origine" (3 colonnes)
   const previOrigRow = paxMain.closest('.ldm-span-2');
   if(!previOrigRow) return;
 
-  // Point d’insertion : juste après la ligne PREVI (origine)
   const previSI = document.getElementById('PreviSI')?.closest('.field');
   const anchor = previSI || previOrigRow;
 
-  // Crée (une fois) le bloc custom "autres Cie"
+  // ✅ TOB helper dispo AVANT oninput
+  window.updatePreviTOB = window.updatePreviTOB || function(){
+    const n = (id)=>{
+      const v = (document.getElementById(id)?.value || '').trim();
+      if(v === '') return 0;
+      const x = parseInt(v, 10);
+      return Number.isFinite(x) ? x : 0;
+    };
+
+    const male   = n('PreviMALE');
+    const female = n('PreviFEMALE');
+    const child  = n('PreviCHILD');
+    const infant = n('PreviINFANT');
+
+    const main = (male + female + child);
+    const tobEl = document.getElementById('PreviTOB');
+    if(tobEl) tobEl.value = `${main} + ${infant}`;
+  };
+
   let custom = document.getElementById('previOtherBlock');
   if(!custom){
     custom = document.createElement('div');
@@ -2094,14 +2110,12 @@ function updatePreviLoadLayout(){
     custom.style.display = 'none';
     custom.style.marginTop = '0px';
 
-    // Ligne 4 colonnes
     const row4 = document.createElement('div');
     row4.className = 'ldm-span-2';
     row4.style.display = 'grid';
     row4.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
     row4.style.gap = '10px';
 
-    // Ligne TOB pleine largeur
     const rowTOB = document.createElement('div');
     rowTOB.className = 'ldm-span-2';
     rowTOB.style.display = 'grid';
@@ -2109,7 +2123,6 @@ function updatePreviLoadLayout(){
     rowTOB.style.gap = '10px';
     rowTOB.style.marginTop = '10px';
 
-    // Ligne 2 colonnes BAGS / POIDS
     const row2 = document.createElement('div');
     row2.className = 'ldm-span-2';
     row2.style.display = 'grid';
@@ -2142,10 +2155,10 @@ function updatePreviLoadLayout(){
       return wrap;
     };
 
-    row4.appendChild(mkField('MALE',   'PreviMALE',   { maxLength:'3', oninput:function(){ digitsOnly(this); updatePreviTOB(); } }));
-    row4.appendChild(mkField('FEMALE', 'PreviFEMALE', { maxLength:'3', oninput:function(){ digitsOnly(this); updatePreviTOB(); } }));
-    row4.appendChild(mkField('CHILD',  'PreviCHILD',  { maxLength:'3', oninput:function(){ digitsOnly(this); updatePreviTOB(); } }));
-    row4.appendChild(mkField('INFANT', 'PreviINFANT', { maxLength:'3', oninput:function(){ digitsOnly(this); updatePreviTOB(); } }));
+    row4.appendChild(mkField('MALE',   'PreviMALE',   { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
+    row4.appendChild(mkField('FEMALE', 'PreviFEMALE', { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
+    row4.appendChild(mkField('CHILD',  'PreviCHILD',  { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
+    row4.appendChild(mkField('INFANT', 'PreviINFANT', { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
 
     rowTOB.appendChild(mkField('TOB', 'PreviTOB', { maxLength:'12', readOnly:true }));
 
@@ -2156,53 +2169,34 @@ function updatePreviLoadLayout(){
     custom.appendChild(rowTOB);
     custom.appendChild(row2);
 
-    // insert custom avant SI (ou après la ligne origine)
     anchor.parentNode.insertBefore(custom, anchor);
   }
 
-  // helpers TOB
-  window.updatePreviTOB = window.updatePreviTOB || function(){
-    const n = (id)=>{
-      const v = (document.getElementById(id)?.value || '').trim();
-      if(v === '') return 0;
-      const x = parseInt(v, 10);
-      return Number.isFinite(x) ? x : 0;
-    };
-
-    const male   = n('PreviMALE');
-    const female = n('PreviFEMALE');
-    const child  = n('PreviCHILD');
-    const infant = n('PreviINFANT');
-
-    const main = (male + female + child);
-    const tobEl = document.getElementById('PreviTOB');
-    if(tobEl) tobEl.value = `${main} + ${infant}`;
-  };
-
-  // ===== FR/RK : on ne touche à rien =====
   if(isFRRK){
     previOrigRow.style.display = '';
     custom.style.display = 'none';
     return;
   }
 
-  // ===== Autres Cie : nouveau layout =====
   previOrigRow.style.display = 'none';
   custom.style.display = '';
 
-  // synchro de BAGS : si tu veux garder la valeur existante
   const bagsOther = document.getElementById('PreviBAGS_OTHER');
   if(bagsOther && bagsOther.value === '' && bagsEl.value !== ''){
     bagsOther.value = bagsEl.value;
   }
 
-  updatePreviTOB();
+  window.updatePreviTOB();
 }
 
-document.getElementById('Cie')?.addEventListener('change', ()=>{
-  updateFinalLoadLayout();
-  updatePreviLoadLayout();
-});
+// ✅ listener 1 fois
+if(!window._cieLayoutHooked){
+  window._cieLayoutHooked = true;
+  document.getElementById('Cie')?.addEventListener('change', ()=>{
+    updateFinalLoadLayout();
+    updatePreviLoadLayout();
+  });
+}
 
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
