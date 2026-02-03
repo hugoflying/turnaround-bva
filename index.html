@@ -2075,112 +2075,127 @@ function updatePreviLoadLayout(){
   const paxMain = document.getElementById('PreviPAX_MAIN');
   const paxInf  = document.getElementById('PreviPAX_INF');
   const bagsEl  = document.getElementById('PreviBAGS');
-
   if(!paxMain || !paxInf || !bagsEl) return;
 
+  // bloc PREVI d'origine (3 colonnes)
   const previOrigRow = paxMain.closest('.ldm-span-2');
   if(!previOrigRow) return;
 
-  const previSI = document.getElementById('PreviSI')?.closest('.field');
-  const anchor = previSI || previOrigRow;
+  const grid = previOrigRow.closest('.ldm-grid');
+  if(!grid) return;
 
-  // ✅ TOB helper dispo AVANT oninput
+  // ancre : on insère juste avant SI PREVI
+  const previSIField = document.getElementById('PreviSI')?.closest('.field');
+  const anchor = previSIField || previOrigRow.nextSibling;
+
+  // ====== helpers ======
+  const digits = (el)=>{ if(typeof digitsOnly === 'function') digitsOnly(el); };
+
+  // crée une "field" (même style que ton HTML)
+  const mkField = (label, id, maxLen, onInput, readOnly=false)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    wrap.style.margin = '0';
+
+    const lab = document.createElement('label');
+    lab.className = 'label';
+    lab.textContent = label;
+
+    const inp = document.createElement('input');
+    inp.className = 'input ldm-in';
+    inp.id = id;
+    inp.type = 'text';
+    inp.inputMode = 'numeric';
+    inp.pattern = '[0-9]*';
+    inp.maxLength = String(maxLen);
+    inp.readOnly = !!readOnly;
+    inp.oninput = onInput;
+
+    wrap.appendChild(lab);
+    wrap.appendChild(inp);
+    return wrap;
+  };
+
+  // ====== créer 3 lignes custom (1 seule fois) ======
+  let row4 = document.getElementById('previOtherRow4');
+  let rowTOB = document.getElementById('previOtherTOB');
+  let row2 = document.getElementById('previOtherRow2');
+
   window.updatePreviTOB = window.updatePreviTOB || function(){
     const n = (id)=>{
       const v = (document.getElementById(id)?.value || '').trim();
-      if(v === '') return 0;
-      const x = parseInt(v, 10);
+      const x = parseInt(v || '0', 10);
       return Number.isFinite(x) ? x : 0;
     };
-
     const male   = n('PreviMALE');
     const female = n('PreviFEMALE');
     const child  = n('PreviCHILD');
     const infant = n('PreviINFANT');
 
-    const main = (male + female + child);
+    const main = male + female + child;
     const tobEl = document.getElementById('PreviTOB');
     if(tobEl) tobEl.value = `${main} + ${infant}`;
   };
 
-  let custom = document.getElementById('previOtherBlock');
-  if(!custom){
-    custom = document.createElement('div');
-    custom.id = 'previOtherBlock';
-    custom.style.display = 'none';
-    custom.style.marginTop = '0px';
-
-    const row4 = document.createElement('div');
+  if(!row4 || !rowTOB || !row2){
+    // Ligne 4 colonnes
+    row4 = document.createElement('div');
+    row4.id = 'previOtherRow4';
     row4.className = 'ldm-span-2';
     row4.style.display = 'grid';
     row4.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
     row4.style.gap = '10px';
 
-    const rowTOB = document.createElement('div');
+    // Ligne TOB pleine largeur
+    rowTOB = document.createElement('div');
+    rowTOB.id = 'previOtherTOB';
     rowTOB.className = 'ldm-span-2';
     rowTOB.style.display = 'grid';
     rowTOB.style.gridTemplateColumns = '1fr';
     rowTOB.style.gap = '10px';
     rowTOB.style.marginTop = '10px';
 
-    const row2 = document.createElement('div');
+    // Ligne 2 colonnes BAGS/POIDS
+    row2 = document.createElement('div');
+    row2.id = 'previOtherRow2';
     row2.className = 'ldm-span-2';
     row2.style.display = 'grid';
     row2.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
     row2.style.gap = '10px';
     row2.style.marginTop = '10px';
 
-    const mkField = (label, id, extra = {})=>{
-      const wrap = document.createElement('div');
-      wrap.className = 'field';
-      wrap.style.margin = '0';
+    row4.appendChild(mkField('MALE',   'PreviMALE',   3, function(){ digits(this); window.updatePreviTOB(); }));
+    row4.appendChild(mkField('FEMALE', 'PreviFEMALE', 3, function(){ digits(this); window.updatePreviTOB(); }));
+    row4.appendChild(mkField('CHILD',  'PreviCHILD',  3, function(){ digits(this); window.updatePreviTOB(); }));
+    row4.appendChild(mkField('INFANT', 'PreviINFANT', 3, function(){ digits(this); window.updatePreviTOB(); }));
 
-      const lab = document.createElement('label');
-      lab.className = 'label';
-      lab.textContent = label;
+    rowTOB.appendChild(mkField('TOB', 'PreviTOB', 12, function(){}, true));
 
-      const inp = document.createElement('input');
-      inp.className = 'input ldm-in';
-      inp.id = id;
-      inp.type = 'text';
-      inp.inputMode = 'numeric';
-      inp.pattern = '[0-9]*';
-      inp.maxLength = extra.maxLength || '3';
-      inp.oninput = extra.oninput || function(){ digitsOnly(this); };
+    row2.appendChild(mkField('BAGS',  'PreviBAGS_OTHER',  4, function(){ digits(this); }));
+    row2.appendChild(mkField('POIDS', 'PreviPOIDS_OTHER', 5, function(){ digits(this); }));
 
-      if(extra.readOnly) inp.readOnly = true;
-
-      wrap.appendChild(lab);
-      wrap.appendChild(inp);
-      return wrap;
-    };
-
-    row4.appendChild(mkField('MALE',   'PreviMALE',   { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
-    row4.appendChild(mkField('FEMALE', 'PreviFEMALE', { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
-    row4.appendChild(mkField('CHILD',  'PreviCHILD',  { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
-    row4.appendChild(mkField('INFANT', 'PreviINFANT', { maxLength:'3', oninput:function(){ digitsOnly(this); window.updatePreviTOB(); } }));
-
-    rowTOB.appendChild(mkField('TOB', 'PreviTOB', { maxLength:'12', readOnly:true }));
-
-    row2.appendChild(mkField('BAGS',  'PreviBAGS_OTHER',  { maxLength:'4', oninput:function(){ digitsOnly(this); } }));
-    row2.appendChild(mkField('POIDS', 'PreviPOIDS_OTHER', { maxLength:'5', oninput:function(){ digitsOnly(this); } }));
-
-    custom.appendChild(row4);
-    custom.appendChild(rowTOB);
-    custom.appendChild(row2);
-
-    anchor.parentNode.insertBefore(custom, anchor);
+    // insertion dans la grille (avant SI)
+    grid.insertBefore(row4, anchor);
+    grid.insertBefore(rowTOB, anchor);
+    grid.insertBefore(row2, anchor);
   }
 
+  // ===== FR/RK : on ne touche à rien =====
   if(isFRRK){
     previOrigRow.style.display = '';
-    custom.style.display = 'none';
+    row4.style.display = 'none';
+    rowTOB.style.display = 'none';
+    row2.style.display = 'none';
     return;
   }
 
+  // ===== autres Cie : on remplace =====
   previOrigRow.style.display = 'none';
-  custom.style.display = '';
+  row4.style.display = 'grid';
+  rowTOB.style.display = 'grid';
+  row2.style.display = 'grid';
 
+  // synchro BAGS si déjà renseigné avant
   const bagsOther = document.getElementById('PreviBAGS_OTHER');
   if(bagsOther && bagsOther.value === '' && bagsEl.value !== ''){
     bagsOther.value = bagsEl.value;
@@ -2189,14 +2204,11 @@ function updatePreviLoadLayout(){
   window.updatePreviTOB();
 }
 
-// ✅ listener 1 fois
-if(!window._cieLayoutHooked){
-  window._cieLayoutHooked = true;
-  document.getElementById('Cie')?.addEventListener('change', ()=>{
-    updateFinalLoadLayout();
-    updatePreviLoadLayout();
-  });
-}
+document.getElementById('Cie')?.addEventListener('change', ()=>{
+  updateFinalLoadLayout();
+  updatePreviLoadLayout();
+});
+
 
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
