@@ -2485,15 +2485,24 @@ function ldmSwitch(mode){
 
 function refreshLDMLayouts(){
   const modal = document.getElementById('ldmModal');
-  if(!modal || modal.style.display === 'none') return; // LDM fermé -> rien
+  if(!modal || modal.style.display === 'none') return;
 
-  // met à jour les blocs selon la compagnie
+  // détecte le tab LDM réellement actif
+  const bArr   = document.getElementById('ldmTabArr');
+  const bPrevi = document.getElementById('ldmTabPrevi');
+  const bFinal = document.getElementById('ldmTabFinal');
+
+  let mode = 'arr';
+  if(bPrevi?.classList.contains('is-active')) mode = 'previ';
+  else if(bFinal?.classList.contains('is-active')) mode = 'final';
+  else if(bArr?.classList.contains('is-active')) mode = 'arr';
+
+  // 1) recalcul des layouts (selon compagnie)
   updateFinalLoadLayout?.();
   updatePreviLoadLayout?.();
 
-  // si tu es sur PREVI ou FINAL, on réapplique l’affichage (au cas où)
-  const mode = window._ldmMode || 'arr';
-  if(typeof ldmSwitch === 'function') ldmSwitch(mode);
+  // 2) réaffiche le bon panneau (au cas où)
+  ldmSwitch?.(mode);
 }
 
 function setTOBValidity(isValid){
@@ -2502,6 +2511,7 @@ function setTOBValidity(isValid){
   tobEl.classList.toggle('is-invalid', !isValid);
   tobEl.classList.toggle('is-valid', isValid);
 }
+  
 function updateFinalTOB(){
   const n = (id)=>{
     const v = (document.getElementById(id)?.value || '').trim();
