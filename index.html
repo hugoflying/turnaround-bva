@@ -2077,21 +2077,36 @@ function updatePreviLoadLayout(){
   const bagsEl  = document.getElementById('PreviBAGS');
   if(!paxMain || !paxInf || !bagsEl) return;
 
-  // bloc PREVI d'origine (3 colonnes)
   const previOrigRow = paxMain.closest('.ldm-span-2');
   if(!previOrigRow) return;
 
   const grid = previOrigRow.closest('.ldm-grid');
   if(!grid) return;
 
-  // ancre : on insère juste avant SI PREVI
+  // On insère le bloc custom juste avant le champ SI de PREVI
   const previSIField = document.getElementById('PreviSI')?.closest('.field');
-  const anchor = previSIField || previOrigRow.nextSibling;
+  const anchor = previSIField || null;
 
-  // ====== helpers ======
+  // Helpers
   const digits = (el)=>{ if(typeof digitsOnly === 'function') digitsOnly(el); };
 
-  // crée une "field" (même style que ton HTML)
+  // TOB auto : "main + infant"
+  window.updatePreviTOB = window.updatePreviTOB || function(){
+    const n = (id)=>{
+      const v = (document.getElementById(id)?.value || '').trim();
+      const x = parseInt(v || '0', 10);
+      return Number.isFinite(x) ? x : 0;
+    };
+    const male   = n('PreviMALE');
+    const female = n('PreviFEMALE');
+    const child  = n('PreviCHILD');
+    const infant = n('PreviINFANT');
+
+    const main = male + female + child;
+    const tobEl = document.getElementById('PreviTOB');
+    if(tobEl) tobEl.value = `${main} + ${infant}`;
+  };
+
   const mkField = (label, id, maxLen, onInput, readOnly=false)=>{
     const wrap = document.createElement('div');
     wrap.className = 'field';
@@ -2116,53 +2131,38 @@ function updatePreviLoadLayout(){
     return wrap;
   };
 
-  // ====== créer 3 lignes custom (1 seule fois) ======
-  let row4 = document.getElementById('previOtherRow4');
-  let rowTOB = document.getElementById('previOtherTOB');
-  let row2 = document.getElementById('previOtherRow2');
-
-  window.updatePreviTOB = window.updatePreviTOB || function(){
-    const n = (id)=>{
-      const v = (document.getElementById(id)?.value || '').trim();
-      const x = parseInt(v || '0', 10);
-      return Number.isFinite(x) ? x : 0;
-    };
-    const male   = n('PreviMALE');
-    const female = n('PreviFEMALE');
-    const child  = n('PreviCHILD');
-    const infant = n('PreviINFANT');
-
-    const main = male + female + child;
-    const tobEl = document.getElementById('PreviTOB');
-    if(tobEl) tobEl.value = `${main} + ${infant}`;
-  };
+  // Créer les 3 lignes custom 1 fois
+  let row4   = document.getElementById('previOtherRow4');
+  let rowTOB = document.getElementById('previOtherRowTOB');
+  let row2   = document.getElementById('previOtherRow2');
 
   if(!row4 || !rowTOB || !row2){
-    // Ligne 4 colonnes
     row4 = document.createElement('div');
     row4.id = 'previOtherRow4';
     row4.className = 'ldm-span-2';
-    row4.style.display = 'grid';
+    row4.style.display = 'none';
     row4.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
     row4.style.gap = '10px';
 
-    // Ligne TOB pleine largeur
     rowTOB = document.createElement('div');
-    rowTOB.id = 'previOtherTOB';
+    rowTOB.id = 'previOtherRowTOB';
     rowTOB.className = 'ldm-span-2';
-    rowTOB.style.display = 'grid';
+    rowTOB.style.display = 'none';
     rowTOB.style.gridTemplateColumns = '1fr';
     rowTOB.style.gap = '10px';
     rowTOB.style.marginTop = '10px';
 
-    // Ligne 2 colonnes BAGS/POIDS
     row2 = document.createElement('div');
     row2.id = 'previOtherRow2';
     row2.className = 'ldm-span-2';
-    row2.style.display = 'grid';
+    row2.style.display = 'none';
     row2.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
     row2.style.gap = '10px';
     row2.style.marginTop = '10px';
+
+    // important: display:grid quand actif
+    row4.style.display = 'none';
+    row4.style.display = 'none';
 
     row4.appendChild(mkField('MALE',   'PreviMALE',   3, function(){ digits(this); window.updatePreviTOB(); }));
     row4.appendChild(mkField('FEMALE', 'PreviFEMALE', 3, function(){ digits(this); window.updatePreviTOB(); }));
@@ -2174,13 +2174,19 @@ function updatePreviLoadLayout(){
     row2.appendChild(mkField('BAGS',  'PreviBAGS_OTHER',  4, function(){ digits(this); }));
     row2.appendChild(mkField('POIDS', 'PreviPOIDS_OTHER', 5, function(){ digits(this); }));
 
-    // insertion dans la grille (avant SI)
-    grid.insertBefore(row4, anchor);
-    grid.insertBefore(rowTOB, anchor);
-    grid.insertBefore(row2, anchor);
+    // insertion juste avant SI
+    if(anchor){
+      grid.insertBefore(row4, anchor);
+      grid.insertBefore(rowTOB, anchor);
+      grid.insertBefore(row2, anchor);
+    }else{
+      grid.appendChild(row4);
+      grid.appendChild(rowTOB);
+      grid.appendChild(row2);
+    }
   }
 
-  // ===== FR/RK : on ne touche à rien =====
+  // FR/RK -> rien ne change
   if(isFRRK){
     previOrigRow.style.display = '';
     row4.style.display = 'none';
@@ -2189,13 +2195,13 @@ function updatePreviLoadLayout(){
     return;
   }
 
-  // ===== autres Cie : on remplace =====
+  // Autres -> on remplace l'affichage
   previOrigRow.style.display = 'none';
   row4.style.display = 'grid';
   rowTOB.style.display = 'grid';
   row2.style.display = 'grid';
 
-  // synchro BAGS si déjà renseigné avant
+  // synchro bagages existants (si tu avais déjà tapé dans PreviBAGS)
   const bagsOther = document.getElementById('PreviBAGS_OTHER');
   if(bagsOther && bagsOther.value === '' && bagsEl.value !== ''){
     bagsOther.value = bagsEl.value;
