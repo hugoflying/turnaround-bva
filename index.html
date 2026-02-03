@@ -2068,6 +2068,205 @@ function updateFinalLoadLayout(){
   }
 }
 
+function updatePreviLoadLayout(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const fieldOf = (id)=>{
+    const el = document.getElementById(id);
+    return el ? el.closest('.field') : null;
+  };
+  const showField = (id, show)=>{
+    const f = fieldOf(id);
+    if(f) f.style.display = show ? '' : 'none';
+  };
+
+  // === IDs PREVI (adapte si tes ids sont différents) ===
+  const oldPaxF   = fieldOf('ExpPAX');     // "PAX"
+  const oldInfF   = fieldOf('ExpINF');     // "+INF" (si tu l'as)
+  const oldBagsF  = fieldOf('ExpBAGS');    // "BAGS"
+  const oldPoidsF = fieldOf('ExpPOIDS');   // "POIDS"
+
+  const maleF   = fieldOf('ExpMALE');
+  const femaleF = fieldOf('ExpFEMALE');
+  const childF  = fieldOf('ExpCHILD');
+  const infantF = fieldOf('ExpINFANT');
+  const tobF    = fieldOf('ExpTOB');
+
+  const bagsF  = oldBagsF;
+  const poidsF = oldPoidsF;
+
+  // rien à faire si on n’a pas les champs “nouvelle dispo”
+  if(!maleF || !femaleF || !childF || !infantF || !tobF || !bagsF || !poidsF) return;
+
+  // grille PREVI
+  const previGrid = maleF.closest('.ldm-grid') || (oldPaxF ? oldPaxF.closest('.ldm-grid') : null);
+  if(!previGrid) return;
+
+  // cache initial (1 seule fois)
+  window._previLayoutCache = window._previLayoutCache || null;
+
+  const snap = (node)=>({
+    node,
+    parent: node ? node.parentNode : null,
+    next: node ? node.nextSibling : null
+  });
+
+  if(!window._previLayoutCache){
+    window._previLayoutCache = {
+      oldPax:   oldPaxF ? snap(oldPaxF) : null,
+      oldInf:   oldInfF ? snap(oldInfF) : null,
+      oldBags:  oldBagsF ? snap(oldBagsF) : null,
+      oldPoids: oldPoidsF ? snap(oldPoidsF) : null,
+
+      male:   snap(maleF),
+      female: snap(femaleF),
+      child:  snap(childF),
+      infant: snap(infantF),
+      tob:    snap(tobF),
+      bags:   snap(bagsF),
+      poids:  snap(poidsF),
+    };
+  }
+
+  const cache = window._previLayoutCache;
+
+  const putBack = (s)=>{
+    if(!s?.node || !s?.parent) return;
+    if(s.next && s.next.parentNode === s.parent) s.parent.insertBefore(s.node, s.next);
+    else s.parent.appendChild(s.node);
+  };
+
+  const removeCustom = ()=>{
+    previGrid.querySelectorAll(
+      '.ldm-previ-other-paxline,.ldm-previ-other-tobline,.ldm-previ-other-bagsline'
+    ).forEach(n=>n.remove());
+  };
+
+  const restore = ()=>{
+    removeCustom();
+    if(cache.oldPax)   putBack(cache.oldPax);
+    if(cache.oldInf)   putBack(cache.oldInf);
+    if(cache.oldBags)  putBack(cache.oldBags);
+    if(cache.oldPoids) putBack(cache.oldPoids);
+
+    putBack(cache.male);
+    putBack(cache.female);
+    putBack(cache.child);
+    putBack(cache.infant);
+    putBack(cache.tob);
+    putBack(cache.bags);
+    putBack(cache.poids);
+  };
+
+  const makeRow4 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+
+  const makeRow2 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+
+  const makeRowFull = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    return d;
+  };
+
+  // ===== FR/RK : on ne touche à rien =====
+  if(isFRRK){
+    restore();
+    // ré-affiche les champs “classiques” si tu les utilises
+    showField('ExpPAX', true);
+    showField('ExpINF', true);
+    showField('ExpBAGS', true);
+    showField('ExpPOIDS', true);
+    // et masque le set alternatif
+    showField('ExpMALE', false);
+    showField('ExpFEMALE', false);
+    showField('ExpCHILD', false);
+    showField('ExpINFANT', false);
+    showField('ExpTOB', false);
+    return;
+  }
+
+  // ===== Autres Cie : nouveau layout =====
+  restore();
+
+  // masquer anciens PAX/+INF (ils ne doivent plus être visibles)
+  showField('ExpPAX', false);
+  showField('ExpINF', false);
+
+  // afficher set alternatif
+  showField('ExpMALE', true);
+  showField('ExpFEMALE', true);
+  showField('ExpCHILD', true);
+  showField('ExpINFANT', true);
+  showField('ExpTOB', true);
+
+  // Ligne 4 colonnes : MALE FEMALE CHILD INFANT
+  const paxLine = makeRow4('ldm-previ-other-paxline');
+  paxLine.appendChild(maleF);
+  paxLine.appendChild(femaleF);
+  paxLine.appendChild(childF);
+  paxLine.appendChild(infantF);
+
+  // TOB pleine largeur (auto)
+  const tobLine = makeRowFull('ldm-previ-other-tobline');
+  tobLine.appendChild(tobF);
+
+  // BAGS / POIDS en 2 colonnes
+  const bagsLine = makeRow2('ldm-previ-other-bagsline');
+  bagsLine.appendChild(bagsF);
+  bagsLine.appendChild(poidsF);
+
+  // insertion : juste après FEMALE (fallback : début)
+  const femaleNode = cache?.female?.node;
+  if(femaleNode && femaleNode.parentNode === previGrid){
+    previGrid.insertBefore(paxLine, femaleNode.nextSibling);
+    previGrid.insertBefore(tobLine, paxLine.nextSibling);
+    previGrid.insertBefore(bagsLine, tobLine.nextSibling);
+  }else{
+    previGrid.insertBefore(paxLine, previGrid.firstChild);
+    previGrid.insertBefore(tobLine, paxLine.nextSibling);
+    previGrid.insertBefore(bagsLine, tobLine.nextSibling);
+  }
+
+  // === TOB auto (comme FINAL) : TOB = MALE + FEMALE + CHILD + INFANT ===
+  const tobInput = document.getElementById('ExpTOB');
+  const readNum = (id)=> parseInt(document.getElementById(id)?.value || '0', 10) || 0;
+
+  const updateTob = ()=>{
+    const v = readNum('ExpMALE') + readNum('ExpFEMALE') + readNum('ExpCHILD') + readNum('ExpINFANT');
+    if(tobInput) tobInput.value = String(v);
+  };
+
+  if(tobInput){
+    tobInput.readOnly = true;
+    tobInput.disabled = false;
+    // attache 1 seule fois
+    if(!window._previTobHooked){
+      window._previTobHooked = true;
+      ['ExpMALE','ExpFEMALE','ExpCHILD','ExpINFANT'].forEach(id=>{
+        document.getElementById(id)?.addEventListener('input', updateTob);
+      });
+    }
+    updateTob();
+  }
+}
 
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
