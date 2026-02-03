@@ -1989,8 +1989,7 @@ function updateFinalLoadLayout(){
   const removeCustom = ()=>{
     finalGrid.querySelectorAll(
       '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags,' +
-      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-bagsline,' +
-      '.ldm-final-other-zonesline'
+      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-bagsline, .ldm-final-other-zonesline'
     ).forEach(n => n.remove());
   };
 
@@ -2081,7 +2080,7 @@ function updateFinalLoadLayout(){
       if(poidsF) bagsRow.appendChild(poidsF);
       if(gbF)    bagsRow.appendChild(gbF);
 
-      // ✅ FR/RK : enlever l’espace trop grand sous BAGS/POIDS/GB
+      // ✅ FR/RK : réduire l’espace sous BAGS/POIDS/GB
       bagsRow.style.marginBottom = '0';
 
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
@@ -2089,10 +2088,9 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
     }
-  }else{
-    // --- AUTRES CIE ---
-    const femaleNode = cache?.female?.node;
 
+  }else{
+    // --- AUTRES CIE : ordre FORCÉ ---
     if(maleF && femaleF && childF && infantF){
       const paxLine = makeRow4('ldm-final-other-paxline');
       paxLine.appendChild(maleF);
@@ -2103,43 +2101,26 @@ function updateFinalLoadLayout(){
       const tobLine = makeRowFull('ldm-final-other-tobline');
       if(tobF) tobLine.appendChild(tobF);
 
-      // BAGS/POIDS/GB en 3 colonnes
       const bagsLine = makeRow3('ldm-final-other-bagsline');
       if(bagsF)  bagsLine.appendChild(bagsF);
       if(poidsF) bagsLine.appendChild(poidsF);
       if(gbF)    bagsLine.appendChild(gbF);
 
-      // OA/OB/OC/OD (zones) en 4 colonnes
       const zonesLine = makeRow4('ldm-final-other-zonesline');
       if(oaF) zonesLine.appendChild(oaF);
       if(obF) zonesLine.appendChild(obF);
       if(ocF) zonesLine.appendChild(ocF);
       if(odF) zonesLine.appendChild(odF);
 
-      // ✅ AUTRES CIE : inverser BAGS/POIDS/GB et OA/OB/OC/OD (BAGS avant ZONES)
-      const insertAfter = (ref, node)=>{
-        if(!ref || !ref.parentNode) return false;
-        if(ref.nextSibling) ref.parentNode.insertBefore(node, ref.nextSibling);
-        else ref.parentNode.appendChild(node);
-        return true;
-      };
+      // ⚠️ insertion béton : au tout début, dans l’ordre voulu
+      // (on insère à l’envers sur firstChild)
+      const first = finalGrid.firstChild;
+      finalGrid.insertBefore(zonesLine, first);
+      finalGrid.insertBefore(bagsLine, zonesLine);
+      finalGrid.insertBefore(tobLine,  bagsLine);
+      finalGrid.insertBefore(paxLine,  tobLine);
 
-      let ok = false;
-
-      // insertion propre : juste après FEMALE (sinon fallback en haut)
-      if(femaleNode && femaleNode.parentNode === finalGrid){
-        finalGrid.insertBefore(paxLine, femaleNode.nextSibling);
-        ok = true;
-      }else{
-        finalGrid.insertBefore(paxLine, finalGrid.firstChild);
-        ok = true;
-      }
-
-      // ordre : PAX -> TOB -> BAGS -> ZONES
-      insertAfter(paxLine, tobLine);
-      insertAfter(tobLine, bagsLine);
-      insertAfter(bagsLine, zonesLine);
-
+      // cacher le bloc d'origine (évite doublons)
       if(paxGridOrig) paxGridOrig.style.display = 'none';
     }
   }
