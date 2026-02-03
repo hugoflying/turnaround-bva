@@ -1907,6 +1907,269 @@ function updateArrExpWeightIfNeeded(){
   }
 }
 
+function updateFinalLoadLayout(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const fieldOf = (id)=>{
+    const el = document.getElementById(id);
+    return el ? el.closest('.field') : null;
+  };
+  const showField = (id, show)=>{
+    const f = fieldOf(id);
+    if(f) f.style.display = show ? '' : 'none';
+  };
+  const setLabel = (id, txt)=>{
+    const f = fieldOf(id);
+    const lab = f ? f.querySelector('label.label') : null;
+    if(lab) lab.textContent = txt;
+  };
+
+  // --- champs (FINAL) ---
+  const maleF   = fieldOf('FinalMALE');
+  const femaleF = fieldOf('FinalFEMALE');
+  const adultF  = fieldOf('FinalADULT');
+  const childF  = fieldOf('FinalCHILD');
+  const infantF = fieldOf('FinalINFANT');
+  const tobF    = fieldOf('FinalTOB');
+
+  const oaF = fieldOf('FinalOA');
+  const obF = fieldOf('FinalOB');
+  const ocF = fieldOf('FinalOC');
+  const odF = fieldOf('FinalOD');
+
+  const bagsF  = fieldOf('FinalBAGS');
+  const poidsF = fieldOf('FinalPOIDS');
+  const gbF    = fieldOf('FinalGB');
+
+  if(!maleF || !femaleF) return;
+  const finalGrid = maleF.closest('.ldm-grid');
+  if(!finalGrid) return;
+
+  // conteneur d'origine ADULT/CHILD/INFANT/TOB (à capturer UNE fois)
+  const paxGridNow = tobF ? tobF.closest('.ldm-span-2') : null;
+
+  // --- cache layout initial (1 seule fois) ---
+  window._finalLayoutCache = window._finalLayoutCache || null;
+
+  const snap = (node)=>({
+    node,
+    parent: node ? node.parentNode : null,
+    next: node ? node.nextSibling : null
+  });
+
+  if(!window._finalLayoutCache){
+    window._finalLayoutCache = {
+      male:   snap(maleF),
+      female: snap(femaleF),
+      adult:  adultF ? snap(adultF) : null,
+      child:  childF ? snap(childF) : null,
+      infant: infantF ? snap(infantF) : null,
+      tob:    tobF ? snap(tobF) : null,
+      oa:     oaF ? snap(oaF) : null,
+      ob:     obF ? snap(obF) : null,
+      oc:     ocF ? snap(ocF) : null,
+      od:     odF ? snap(odF) : null,
+      bags:   bagsF ? snap(bagsF) : null,
+      poids:  poidsF ? snap(poidsF) : null,
+      gb:     gbF ? snap(gbF) : null,
+      paxGrid: paxGridNow ? snap(paxGridNow) : null
+    };
+  }
+
+  const cache = window._finalLayoutCache;
+  const paxGridOrig = cache?.paxGrid?.node || paxGridNow;
+
+  const putBack = (s)=>{
+    if(!s?.node || !s?.parent) return;
+    if(s.next && s.next.parentNode === s.parent) s.parent.insertBefore(s.node, s.next);
+    else s.parent.appendChild(s.node);
+  };
+
+  const removeCustom = ()=>{
+    finalGrid.querySelectorAll(
+      '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags,' +
+      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-bagsline'
+    ).forEach(n => n.remove());
+  };
+
+  const restore = ()=>{
+    removeCustom();
+
+    putBack(cache.male);
+    putBack(cache.female);
+    if(cache.adult)  putBack(cache.adult);
+    if(cache.child)  putBack(cache.child);
+    if(cache.infant) putBack(cache.infant);
+    if(cache.tob)    putBack(cache.tob);
+    if(cache.oa)     putBack(cache.oa);
+    if(cache.ob)     putBack(cache.ob);
+    if(cache.oc)     putBack(cache.oc);
+    if(cache.od)     putBack(cache.od);
+    if(cache.bags)   putBack(cache.bags);
+    if(cache.poids)  putBack(cache.poids);
+    if(cache.gb)     putBack(cache.gb);
+    if(cache.paxGrid) putBack(cache.paxGrid);
+
+    if(paxGridOrig) paxGridOrig.style.display = '';
+  };
+
+  const makeRow4 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+
+  const makeRow3 = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    d.style.display = 'grid';
+    d.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+    d.style.gap = '12px';
+    return d;
+  };
+
+  const makeRowFull = (className)=>{
+    const d = document.createElement('div');
+    d.className = className;
+    d.style.gridColumn = 'span 2';
+    return d;
+  };
+
+  // ===== règles =====
+  showField('FinalMALE',   !isFRRK);
+  showField('FinalFEMALE', !isFRRK);
+  showField('FinalOD',     !isFRRK);
+
+  setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
+  setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
+  setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
+
+  showField('FinalADULT', isFRRK);
+  setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
+  setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
+  setLabel('FinalH3', isFRRK ? 'H3' : 'CP3');
+  setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
+
+  // ===== layout =====
+  restore();
+
+  if(isFRRK){
+    // --- FR/RK ---
+    if(adultF && childF && infantF){
+      const paxRow = makeRow3('ldm-final-frrk-pax');
+      paxRow.appendChild(adultF);
+      paxRow.appendChild(childF);
+      paxRow.appendChild(infantF);
+
+      const tobRow = makeRowFull('ldm-final-frrk-tob');
+      if(tobF) tobRow.appendChild(tobF);
+
+      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      if(oaF) zonesRow.appendChild(oaF);
+      if(obF) zonesRow.appendChild(obF);
+      if(ocF) zonesRow.appendChild(ocF);
+
+      const bagsRow = makeRow3('ldm-final-frrk-bags');
+      if(bagsF)  bagsRow.appendChild(bagsF);
+      if(poidsF) bagsRow.appendChild(poidsF);
+      if(gbF)    bagsRow.appendChild(gbF);
+
+      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
+      finalGrid.insertBefore(zonesRow, bagsRow);
+      finalGrid.insertBefore(tobRow, zonesRow);
+      finalGrid.insertBefore(paxRow, tobRow);
+    }
+  }else{
+    // --- AUTRES CIE ---
+    const femaleNode = cache?.female?.node;
+
+    if(maleF && femaleF && childF && infantF){
+      const paxLine = makeRow4('ldm-final-other-paxline');
+      paxLine.appendChild(maleF);
+      paxLine.appendChild(femaleF);
+      paxLine.appendChild(childF);
+      paxLine.appendChild(infantF);
+
+      const tobLine = makeRowFull('ldm-final-other-tobline');
+      if(tobF) tobLine.appendChild(tobF);
+
+      const bagsLine = makeRow3('ldm-final-other-bagsline');
+      if(bagsF)  bagsLine.appendChild(bagsF);
+      if(poidsF) bagsLine.appendChild(poidsF);
+      if(gbF)    bagsLine.appendChild(gbF);
+
+      // insertion propre : juste après FEMALE (sinon fallback en haut)
+      if(femaleNode && femaleNode.parentNode === finalGrid){
+        finalGrid.insertBefore(paxLine, femaleNode.nextSibling);
+        finalGrid.insertBefore(tobLine, paxLine.nextSibling);
+        finalGrid.insertBefore(bagsLine, tobLine.nextSibling);
+      }else{
+        finalGrid.insertBefore(paxLine, finalGrid.firstChild);
+        finalGrid.insertBefore(tobLine, paxLine.nextSibling);
+        finalGrid.insertBefore(bagsLine, tobLine.nextSibling);
+      }
+
+      if(paxGridOrig) paxGridOrig.style.display = 'none';
+    }
+  }
+}
+
+
+// ===== LOAD PREVI (layout switch) =====
+function updatePreviLoadLayout(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const fr = document.getElementById('previFRRK');
+  const ot = document.getElementById('previOTHER');
+  if(!fr || !ot) return;
+
+  fr.style.display = isFRRK ? '' : 'none';
+  ot.style.display = isFRRK ? 'none' : '';
+
+  if(isFRRK) updatePreviTOB_FRRK();
+  else updatePreviTOB();
+}
+
+// ===== listener compagnie (1 seule fois) =====
+if(!window._cieLayoutHooked){
+  window._cieLayoutHooked = true;
+
+  document.getElementById('Cie')?.addEventListener('change', ()=>{
+    updateFinalLoadLayout();
+    updatePreviLoadLayout();
+  });
+}
+
+function updatePreviTOB_FRRK(){
+  const main = parseInt(document.getElementById('PreviPAX_MAIN')?.value || '0', 10) || 0;
+  const inf  = parseInt(document.getElementById('PreviPAX_INF')?.value  || '0', 10) || 0;
+  const el = document.getElementById('PreviTOB_FRRK');
+  if(el) el.value = `${main} + ${inf}`;
+}
+
+function updatePreviTOB(){
+  const n = (id)=>{
+    const v = (document.getElementById(id)?.value || '').trim();
+    const x = parseInt(v || '0', 10);
+    return Number.isFinite(x) ? x : 0;
+  };
+  const male   = n('PreviMALE');
+  const female = n('PreviFEMALE');
+  const child  = n('PreviCHILD');
+  const infant = n('PreviINFANT');
+
+  const main = male + female + child;
+  const el = document.getElementById('PreviTOB');
+  if(el) el.value = `${main} + ${infant}`;
+}
+
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
 
