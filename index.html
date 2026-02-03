@@ -4036,6 +4036,41 @@ function findLinkedDepForArr(arr){
   return best;
 }
 
+// ===== Linking : priorité linkedId, sinon reg+temps =====
+function findLinkedDepForArr(arr){
+  if(!arr) return null;
+
+  // 1) linkedId direct
+  const lid = (arr?.linkedId || '').trim();
+  if(lid){
+    const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
+    if(dep) return dep;
+  }
+
+  // 2) fallback reg + premier DEP après ARR
+  const reg = (arr?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const arrT = arrTimeMs(arr);
+  if(arrT == null) return null;
+
+  const deps = window._akCache?.dep || [];
+  let best = null;
+  let bestT = Infinity;
+
+  for(const d of deps){
+    const r = (d?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = depTimeMs(d);
+    if(t == null) continue;
+    if(t < arrT) continue;
+
+    if(t < bestT){ best = d; bestT = t; }
+  }
+  return best;
+}
+
 function findLinkedArrForDep(dep){
   if(!dep) return null;
 
