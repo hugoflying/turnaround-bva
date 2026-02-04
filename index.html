@@ -7,7 +7,7 @@
 
 <!-- Bulma -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-
+ouais 
 <style>
 :root{
   --bg: #f6f7fb;
@@ -4034,7 +4034,11 @@ function findLinkedDepForArr(arr){
   const lid = (arr?.linkedId || '').trim();
   if(lid){
     const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
-    if(dep) return dep;
+    if(dep){
+      const arrT = arrTimeMs(arr);
+      const depT = depTimeMs(dep);
+      if(arrT != null && depT != null && depT >= arrT && (depT - arrT) <= MAX_LINK_MS) return dep;
+    }
   }
 
   // 2) fallback reg + premier DEP après ARR
@@ -4056,6 +4060,9 @@ function findLinkedDepForArr(arr){
     if(t == null) continue;
     if(t < arrT) continue;
 
+    // ✅ règle rotation : pas au-delà de MAX_LINK_HOURS
+    if((t - arrT) > MAX_LINK_MS) continue;
+
     if(t < bestT){ best = d; bestT = t; }
   }
   return best;
@@ -4068,7 +4075,11 @@ function findLinkedArrForDep(dep){
   const lid = (dep?.linkedId || '').trim();
   if(lid){
     const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
-    if(arr) return arr;
+    if(arr){
+      const depT = depTimeMs(dep);
+      const arrT = arrTimeMs(arr);
+      if(depT != null && arrT != null && arrT <= depT && (depT - arrT) <= MAX_LINK_MS) return arr;
+    }
   }
 
   // 2) fallback reg + dernière ARR avant DEP
@@ -4089,6 +4100,9 @@ function findLinkedArrForDep(dep){
     const t = arrTimeMs(a);
     if(t == null) continue;
     if(t > depT) continue;
+
+    // ✅ règle rotation : pas un vieux vol d’hier/matin
+    if((depT - t) > MAX_LINK_MS) continue;
 
     if(t > bestT){ best = a; bestT = t; }
   }
