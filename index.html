@@ -302,116 +302,521 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   font-weight: 800;
 }
 
-/* ... (TON CSS EXISTANT JUSQU’À LA PARTIE INFO VOL / TABLET / DL) ... */
-
-/* ===== INFO VOL : on supprime les champs doublons du bas ===== */
-#infoVolDetails{ display:none; }
-
-/* ===== INFO VOL : mini-grille dans les 2 cartes ARR / DEP ===== */
-.kv-grid{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* tablette = 2 colonnes */
-  gap: 8px 10px;
-  width:100%;
-}
-@media (min-width: 769px){
-  .kv-grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); } /* desktop = 4 colonnes */
+/* Popup toast */
+#popup{
+  position: fixed;
+  top: calc(var(--fixed-header-h) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  border-radius: 12px;
+  color:#fff;
+  z-index: 4000;
+  box-shadow: var(--shadow);
 }
 
-.kv-field{ display:flex; flex-direction:column; gap:4px; }
-.kv-lab{
-  font-size: .62rem;
+/* Toggle switch */
+.toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow2);
+  cursor:pointer;
+  user-select:none;
   font-weight: 900;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text);
+}
+.toggle input{ position:absolute; opacity:0; pointer-events:none; }
+.toggle .track{
+  width: 44px; height: 26px; border-radius: 999px;
+  background: rgba(148,163,184,.55);
+  position: relative; flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.toggle .thumb{
+  width: 22px; height: 22px; border-radius: 999px;
+  background: #fff; position:absolute; top: 2px; left: 2px;
+  transition: transform .18s ease, background .18s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.toggle input:checked + .track{ background: color-mix(in srgb, #3b82f6 70%, #22c55e 30%); }
+.toggle input:checked + .track .thumb{ transform: translateX(18px); }
+
+/* ===== AK picker (FULLSCREEN POPUP) ===== */
+#akPopover{
+  position: fixed;
+  inset: calc(var(--fixed-header-h) + 12px) 12px 12px 12px;
+  width: auto;
+  transform: none;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+  z-index: 4700;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  display: none;
+  overflow: auto;
+  flex-direction: column;
+}
+body.dark #akPopover{ border-color: rgba(255,255,255,.10); }
+
+#akBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 4600;
+  display: none;
 }
 
-/* inputs compacts dans le bandeau */
-.kv-in{
+#akPopover .ak-header{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+body.dark #akPopover .ak-header{ border-bottom-color: rgba(255,255,255,.10); }
+
+#akList{ flex: 1 1 auto; overflow-y: auto; }
+
+/* ===== TIMELINE ===== */
+.timeline-track {
+  position: absolute; left:6%; right:6%;
+  height: 4px; background:#cfd4da; transform:translateY(-50%); border-radius:4px;
+}
+body.dark .timeline-track{ background:#2e2e2e; }
+
+.timeline-tick { position: absolute; width: 1px; background:rgba(0,0,0,0.08); }
+body.dark .timeline-tick { background:#3e444b; }
+
+.timeline-tick-label {
+  position: absolute; transform: translateX(-50%);
+  font-size: 14px; font-weight: 800; color:#111827;
+}
+body.dark .timeline-tick-label { color:#cfd4da; }
+
+.tl-event, .tl-range { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; line-height:1; z-index: 1; }
+.tl-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+  margin: 0 auto 4px;
+}
+.tl-label {
+  padding: 4px 10px; border-radius: 999px;
+  background: #f1f3f5; color:#111; font-size: 14px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.07);
+  font-weight: 900;
+}
+body.dark .tl-label { background:#232733; color:#f5f5f5; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+
+.tl--std  { --c:#64748b; }
+.tl--tobt { --c:#16a34a; }
+.tl--ctot { --c:#334155; }
+.tl--ops  { --c:#2563eb; }
+.tl--turn { --c:#ef4444; }
+.tl-event .tl-dot { background: var(--c); }
+
+.tl-range{
+  height: 16px;
+  background: color-mix(in srgb, var(--c) 42%, transparent);
+  border: 2px solid var(--c);
+  border-radius: 999px;
+  z-index: 2;
+}
+.tl-range-label{
+  position:absolute; top: -22px; left:50%; transform: translateX(-50%);
+  font-size: 13px; background: rgba(255,255,255,.92);
+  padding: 2px 8px; border-radius: 10px; font-weight: 900;
+  color: #111;
+}
+body.dark .tl-range-label { background: rgba(0,0,0,.45); color:#fff; }
+
+.timeline-toolbar{
+  display:flex; align-items:center; gap:8px; margin: 4px 0 10px;
+  flex-wrap: wrap;
+}
+.timeline-scroll{
+  overflow-x:auto; overflow-y:hidden;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.timeline-canvas{ position:relative; min-width:600px; width:100%; }
+
+/* DL error */
+.dl-error { border: 2px solid #ef4444 !important; border-radius: 12px; }
+
+/* ===== SETTINGS (gear) bottom menu ===== */
+#settingsBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 9000;
+  display: none;
+}
+
+#settingsFab{
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--fixed-footer-h) + 14px);
+  z-index: 9100;                 /* ✅ au-dessus du footer + header */
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  box-shadow: var(--shadow2);
+}
+
+#settingsMenu{
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--fixed-footer-h) + 74px); /* ✅ suit la molette */
+  z-index: 9200;                 /* ✅ au-dessus de tout */
+  width: min(320px, calc(100vw - 28px));
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 12px;
+  display: none;
+}
+body.dark #settingsMenu{ border-color: rgba(255,255,255,.10); }
+
+#settingsMenu .settings-title{ font-weight: 900; margin-bottom: 10px; }
+#settingsMenu .settings-row{ display:flex; flex-direction: column; gap: 10px; }
+
+/* ===== RESPONSIVE tweaks ===== */
+@media (max-width: 768px){
+  .timer-chip{ min-width: 128px; }
+  .timeline-canvas{ min-width: 720px; }
+}
+@media (max-width: 420px){
+  .timer-chip{ min-width: 120px; padding: 9px 12px; }
+  .timer-chip .v{ min-width: 64px; }
+  .ctot-pill{ min-width: 64px; }
+}
+@media (max-width: 480px){
+  .timer-row{ gap: 6px; }
+  .timer-chip{ min-width: 96px; padding: 6px 8px; gap: 6px; }
+  .timer-chip .k{ font-size: .7rem; font-weight: 800; }
+  .timer-chip .v{ min-width: 54px; padding: 4px 6px; font-size: .8rem; }
+  .ctot-pill{ min-width: 54px; padding: 4px 6px !important; font-size: .8rem; }
+}
+
+/* ===== LDM modal (neutre) ===== */
+#ldmBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.40);
+  z-index: 4400;
+  display: none;
+}
+
+#ldmModal{
+  position: fixed;
+  inset: calc(var(--fixed-header-h) + 10px) 10px 10px 10px;
+  z-index: 4500;
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,.10);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.dark #ldmModal{ border-color: rgba(255,255,255,.10); }
+
+.ldm-header{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--card);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+body.dark .ldm-header{ border-bottom-color: rgba(255,255,255,.10); }
+
+.ldm-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex: 1 1 auto;
+}
+.ldm-title strong{ font-weight: 900; font-size: 1.05rem; }
+
+#ldmHint{ font-weight: 900; border-radius: 999px; }
+
+/* segment buttons */
+.lm-seg{
+  display:inline-flex;
+  gap:6px;
+  background: color-mix(in srgb, var(--card) 86%, #000 14%);
+  padding: 6px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+body.dark .lm-seg{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.lm-seg .button{
+  border-radius: 999px !important;
+  font-weight: 900;
   height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(17,24,39,.18);
-  padding: 0 10px;
-  font-weight: 900;
-  background: var(--field-bg);
-  color: var(--field-text);
-  width: 100%;
 }
-.kv-in.uppercase{ text-transform: uppercase; }
+.lm-seg .button.is-active{
+  background: #2563eb !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
 
-/* selects compacts + flèche centrée */
-.kv-select select{
-  height: 34px !important;
-  line-height: 34px !important;
-  border-radius: 10px;
-  font-weight: 900;
-  padding: 0 34px 0 10px !important;
-  background: var(--field-bg) !important;
-  color: var(--field-text) !important;
-  border-color: rgba(17,24,39,.18) !important;
-  display: block !important; /* IMPORTANT (override le global flex) */
+.ldm-body{
+  padding: 12px;
+  overflow: auto;
 }
-.kv-select:not(.is-multiple):not(.is-loading)::after{
+
+.ldm-card{
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 92%, #000 8%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+body.dark .ldm-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+
+.ldm-card-hdr{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--card) 88%, #000 12%);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+body.dark .ldm-card-hdr{ border-bottom-color: rgba(255,255,255,.08); }
+
+.ldm-card-title{ font-weight: 900; letter-spacing:.08em; }
+.ldm-card-sub{ color: var(--muted); font-weight: 800; font-size: .85rem; margin-left:auto; }
+
+.ldm-grid{
+  padding: 10px 12px 12px;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+.ldm-span-2{ grid-column: span 2; }
+
+.ldm-in{
+  height: 38px !important;
+  padding: 6px 10px !important;
+  font-weight: 900 !important;
+  text-align: center;
+  letter-spacing: .02em;
+}
+.ldm-ta{
+  min-height: 90px !important;
+  height: auto !important;
+  font-weight: 800;
+}
+
+.ldm-row-4{
+  grid-column: span 2;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.ldm-row-4 .field{ margin: 0 !important; }
+.ldm-row-4 .field .label{
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  display:block;
+  border-radius: 0;
+  font-size: var(--labelSize) !important;
+  font-weight: 900 !important;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  opacity: .9;
+}
+.ldm-row-4 .field .label::before{ display:none !important; content:none !important; }
+
+@media (max-width: 520px){
+  #ldmModal{ inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
+  .ldm-row-4{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ldm-in{ height: 36px !important; padding: 6px 8px !important; }
+  .ldm-ta{ min-height: 86px !important; }
+}
+
+html.modal-open,
+body.modal-open{
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* ===== footer fixed bottom ===== */
+.fixed-footer{
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 3500;
+  background: var(--bg) !important;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
+
+.fixed-footer-inner{
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 14px;
+}
+
+.footer-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap: wrap;
+}
+
+/* version compacte tablette */
+@media (min-width: 600px) and (max-width: 900px){
+  .fixed-footer-inner{ padding: 8px 12px; }
+}
+
+/* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
+#loadFab{
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--fixed-footer-h) + 86px); /* ✅ au-dessus de la molette */
+  z-index: 9150;                              /* ✅ visible même si menu/settings */
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  box-shadow: var(--shadow2);
+}
+
+/* ===== DL WRAPPER ===== */
+.dl-wrap{ display: block; }
+
+/* ===== MOBILE : 2 colonnes x 3 lignes (Code / Durée) ===== */
+@media (max-width: 599px){
+  .dl-wrap{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gap);
+  }
+  .dl-wrap .dl-grid{ display: contents; }
+  .dl-wrap .field:has(#DLcode1){  grid-column: 1; grid-row: 1; }
+  .dl-wrap .field:has(#DLcode2){  grid-column: 1; grid-row: 2; }
+  .dl-wrap .field:has(#DLcode3){  grid-column: 1; grid-row: 3; }
+  .dl-wrap .field:has(#DLduree1){ grid-column: 2; grid-row: 1; }
+  .dl-wrap .field:has(#DLduree2){ grid-column: 2; grid-row: 2; }
+  .dl-wrap .field:has(#DLduree3){ grid-column: 2; grid-row: 3; }
+  .dl-wrap .input{ height: var(--inputH); padding: 6px 10px; }
+}
+
+/* Onglet FUEL en jaune (comme LID) */
+#ldmTabFuel{
+  background:#facc15 !important;
+  color:#fff !important;
+  border-color: transparent !important;
+}
+#ldmTabFuel:hover{ filter: brightness(.97); }
+
+/* si actif, on garde jaune */
+.lm-seg .button#ldmTabFuel.is-active{
+  background:#facc15 !important;
+  color:#fff !important;
+}
+
+/* RETARDS : 2 lignes x 3 colonnes dès 600px */
+.dl-grid{
+  display: grid;
+  grid-template-columns: 1fr;  /* mobile <600 */
+  gap: var(--gap);
+}
+
+@media (min-width: 600px){
+  .dl-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 600+ => 3 colonnes */
+  }
+}
+
+/* ===== TABLET 600–900 ===== */
+@media (min-width:600px) and (max-width:900px){
+  :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
+
+  .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .kv-card{ padding: 6px 10px; border-radius: 12px; }
+  .kv-title{ font-size: .62rem; letter-spacing: .05em; }
+  .kv-value{ font-size: .92rem; line-height: 1.1; }
+  .kv-left{ gap: 0px; }
+
+  .timer-chip{ min-width: 124px; padding: 8px 12px; }
+  .timer-chip .k{ font-size: .75rem; }
+  .timer-chip .v{ padding: 5px 8px; min-width: 64px; }
+
+  /* RESTAURE LA GRILLE TABLETTE */
+  .span-2{ grid-column: span 2; }
+  .span-3{ grid-column: span 3; }
+  .span-4{ grid-column: span 4; }
+  .span-6{ grid-column: span 6; }
+
+  /* DL : force 3 colonnes */
+  .dl-wrap .dl-grid{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: var(--gap) !important;
+  }
+}
+
+/* INFO VOL : selects alignés comme inputs (corrige le décalage) */
+#infoVolDetails .select{
+  height: 34px;
+}
+
+#infoVolDetails .select select{
+  height: 34px !important;
+  line-height: 34px !important;   /* clé : aligne le texte */
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: block !important;       /* PAS flex */
+  font-size: .95rem;
+}
+
+/* centre la flèche Bulma sur la nouvelle hauteur */
+#infoVolDetails .select:not(.is-multiple):not(.is-loading)::after{
   top: 50% !important;
   transform: translateY(-50%) !important;
   margin-top: 0 !important;
 }
 
-/* tablette plus compact */
+/* tablette : si tu passes à 32px */
 @media (min-width:600px) and (max-width:900px){
-  .kv-grid{ gap: 6px 10px; }
-  .kv-in{ height: 32px; }
-  .kv-select select{ height: 32px !important; line-height: 32px !important; }
-}
-
-/* TABLET : certains champs en pleine largeur */
-.kv-span-2{ grid-column: 1 / -1; }
-
-/* Row (remplace les styles inline) */
-.kv-row{ display:flex; gap:8px; }
-
-/* Groupe heure + boutons */
-.kv-time{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.kv-time .kv-in{
-  flex:1 1 auto;
-  min-width: 90px;
-}
-.kv-time-btn{
-  height: 32px;
-  padding: 0 8px;
-  font-weight: 900;
-  border-radius: 10px;
-}
-
-/* TABLET : optimise les largeurs */
-@media (min-width:600px) and (max-width:900px){
-  .kv-row{ flex-wrap: nowrap; }
-
-  /* select CIE pas trop petit */
-  .kv-card .kv-select{ min-width: 86px; }
-
-  /* N° vol prend le reste et a une largeur mini */
-  #NVol{ flex: 1 1 auto; min-width: 110px; }
-
-  /* Champs time/date */
-  input[type="time"].kv-in,
-  input[type="date"].kv-in{ min-width: 120px; }
-
-  /* Parking(dep) */
-  #ParkingDep{ min-width: 90px; }
-
-  /* boutons plus compacts */
-  .kv-time-btn{
-    height: 30px;
-    padding: 0 6px;
-    font-size: .75rem;
+  #infoVolDetails .select,
+  #infoVolDetails .select select{
+    height: 32px !important;
+  }
+  #infoVolDetails .select select{
+    line-height: 32px !important;
   }
 }
+
 </style>
 </head>
 
@@ -824,148 +1229,180 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 
   <div class="card-content">
 
-    <!-- Bandeau ESSENTIEL (éditable) : ARR + DEP -->
+    <!-- Bandeau ESSENTIEL -->
     <div class="kv-strip mb-4">
-
-      <!-- ===== ARRIVÉE ===== -->
       <div class="kv-card">
-        <div class="kv-left" style="width:100%;">
-          <div class="kv-title">Arrivée</div>
-
-          <div class="kv-grid">
-
-            <!-- ✅ span 2 pour respirer -->
-            <div class="kv-field kv-span-2">
-              <div class="kv-lab">Vol</div>
-              <div class="kv-row">
-                <div class="select kv-select" style="flex:0 0 90px;">
-                  <select id="Cie">
-                    <option value="">--</option>
-                    <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
-                    <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-                    <option>V7</option><option>Autre</option>
-                  </select>
-                </div>
-                <input class="kv-in uppercase" id="NVol" placeholder="N°">
-              </div>
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">Provenance</div>
-              <input class="kv-in uppercase" id="From" maxlength="3" placeholder="FROM">
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">Immat</div>
-              <input class="kv-in uppercase" id="Immat" maxlength="6" placeholder="IMMAT">
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">Type avion</div>
-              <div class="select kv-select">
-                <select id="TypeAvion">
-                  <option value="">--</option>
-                  <option>A319</option><option>A320</option><option>A321</option>
-                  <option>A20N</option><option>A21N</option><option>A21NY</option>
-                  <option>B734</option><option>B737</option><option>B738</option>
-                  <option>B38M</option><option>BCS3</option>
-                  <option>Autre</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">SIBT</div>
-              <input class="kv-in" type="time" id="SIBT">
-            </div>
-
-            <!-- ✅ AIBT avec -1 / NOW / +1 -->
-            <div class="kv-field">
-              <div class="kv-lab">AIBT</div>
-              <div class="kv-time">
-                <input class="kv-in" type="time" id="AIBT">
-                <button class="button is-small kv-time-btn" type="button" onclick="timeMinus1('AIBT')">-1</button>
-                <button class="button is-small kv-time-btn" type="button" onclick="timeNow('AIBT')">NOW</button>
-                <button class="button is-small kv-time-btn" type="button" onclick="timePlus1('AIBT')">+1</button>
-              </div>
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">Date</div>
-              <input class="kv-in" type="date" id="Date">
-            </div>
-
-            <div class="kv-field">
-              <div class="kv-lab">Parking</div>
-              <div class="select kv-select">
-                <select id="Parking">
-                  <option value="">--</option>
-                  <option>1</option><option>2</option><option>3</option><option>4</option>
-                  <option>5</option><option>6</option><option>7</option><option>8</option>
-                  <option>9</option><option>10</option><option>11</option><option>12</option>
-                </select>
-              </div>
-            </div>
-
+        <div class="kv-left">
+          <div class="kv-title">Vol</div>
+          <div class="kv-value">
+            <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
+          </div>
+        </div>
+        <div class="kv-left" style="text-align:right;">
+          <div class="kv-title">Route</div>
+          <div class="kv-value">
+            <span id="kvFrom">---</span> → <span id="kvTo">---</span>
           </div>
         </div>
       </div>
 
-      <!-- ===== DÉPART ===== -->
       <div class="kv-card">
-        <div class="kv-left" style="width:100%;">
-          <div class="kv-title">Départ</div>
+        <div class="kv-left">
+          <div class="kv-title">Immat / Type</div>
+          <div class="kv-value">
+            <span id="kvImmat">------</span> · <span id="kvType">--</span>
+          </div>
+        </div>
+        <div class="kv-left" style="text-align:right;">
+          <div class="kv-title">Salle arr. / Parking</div>
+          <div class="kv-value">
+            <span id="kvBC">----</span> · <span id="kvPark">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="kv-grid">
+    <!-- DÉTAILS (éditables) -->
+    <div id="infoVolDetails" class="grid-auto">
 
-            <!-- ✅ span 2 conseillé -->
-            <div class="kv-field kv-span-2">
-              <div class="kv-lab">Destination</div>
-              <input class="kv-in uppercase" id="To" maxlength="3" placeholder="TO">
-            </div>
+      <!-- Date + Parking + Immat + Type avion -->
+      <div class="field span-3">
+        <label class="label">Date</label>
+        <input class="input" type="date" id="Date">
+      </div>
 
-            <div class="kv-field">
-              <div class="kv-lab">SOBT</div>
-              <input class="kv-in" type="time" id="SOBT">
-            </div>
+      <div class="field span-3">
+        <label class="label">Parking</label>
+        <div class="select is-fullwidth">
+          <select id="Parking">
+            <option value="">--</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+      </div>
 
-            <!-- ✅ AOBT avec -1 / NOW / +1 -->
-            <div class="kv-field">
-              <div class="kv-lab">AOBT</div>
-              <div class="kv-time">
-                <input class="kv-in" type="time" id="AOBT">
-                <button class="button is-small kv-time-btn" type="button" onclick="timeMinus1('AOBT')">-1</button>
-                <button class="button is-small kv-time-btn" type="button" onclick="timeNow('AOBT')">NOW</button>
-                <button class="button is-small kv-time-btn" type="button" onclick="timePlus1('AOBT')">+1</button>
+      <div class="field span-3">
+        <label class="label">Immat</label>
+        <input class="input uppercase" type="text" id="Immat" maxlength="6">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Type avion</label>
+        <div class="select is-fullwidth">
+          <select id="TypeAvion">
+            <option value="">--</option>
+            <option>A319</option><option>A320</option><option>A321</option>
+            <option>A20N</option><option>A21N</option><option>A21NY</option>
+            <option>B734</option><option>B737</option><option>B738</option>
+            <option>B38M</option><option>BCS3</option>
+            <option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Cie / N° -->
+      <div class="field span-3">
+        <label class="label">Cie</label>
+        <div class="select is-fullwidth">
+          <select id="Cie">
+            <option value="">--</option>
+            <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
+            <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
+            <option>V7</option><option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field span-3">
+        <label class="label">N°</label>
+        <input class="input uppercase" type="text" id="NVol">
+      </div>
+
+      <!-- From / To -->
+      <div class="field span-3">
+        <label class="label">From</label>
+        <input class="input uppercase" type="text" id="From" maxlength="3">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">To</label>
+        <input class="input uppercase" type="text" id="To" maxlength="3">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- HORAIRES -->
+<div class="card mb-5">
+  <header class="card-header section-collapse" onclick="toggleCardBody(this)">
+    <p class="card-header-title">HORAIRES</p>
+    <span class="card-header-icon"><span class="icon">⌄</span></span>
+  </header>
+
+  <div class="card-content">
+    <div class="grid-auto">
+
+      <!-- Arrivée -->
+      <div class="span-12">
+        <div class="kv-card" style="padding:12px;">
+          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Arrivée</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+            <div style="min-width:160px;">
+              <label class="label">SIBT</label>
+              <input class="input" type="time" id="SIBT" onchange="updateAllCalculations()">
+              <div class="btn-actions">
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',-1);updateAllCalculations()">-1</button>
+                <button class="button is-link" type="button" onclick="setNow('SIBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',1);updateAllCalculations()">+1</button>
               </div>
             </div>
 
-            <div class="kv-field">
-              <div class="kv-lab">Immat / Type</div>
-              <input class="kv-in uppercase" id="kvImmatTypeMirror" readonly placeholder="—">
+            <div style="min-width:160px;">
+              <label class="label">AIBT</label>
+              <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
+              <div class="btn-actions">
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
+                <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="kv-field">
-              <div class="kv-lab">Parking (dep)</div>
-              <div class="select kv-select">
-                <select id="ParkingDep">
-                  <option value="">--</option>
-                  <option>1</option><option>2</option><option>3</option><option>4</option>
-                  <option>5</option><option>6</option><option>7</option><option>8</option>
-                  <option>9</option><option>10</option><option>11</option><option>12</option>
-                </select>
+      <!-- Départ -->
+      <div class="span-12">
+        <div class="kv-card" style="padding:12px;">
+          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Départ</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+            <div style="min-width:160px;">
+              <label class="label">SOBT</label>
+              <input class="input" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
+              <div class="btn-actions">
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',-1);updateAllCalculations()">-1</button>
+                <button class="button is-link" type="button" onclick="setNow('SOBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',1);updateAllCalculations()">+1</button>
               </div>
             </div>
 
+            <div style="min-width:160px;">
+              <label class="label">AOBT</label>
+              <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
+              <div class="btn-actions">
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
+                <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
+                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
-
-    <!-- Ancienne zone edit (gardée cachée par CSS, tu peux la supprimer plus tard) -->
-    <div id="infoVolDetails" class="grid-auto"></div>
-
   </div>
 </div>
 
@@ -2279,35 +2716,14 @@ function setupUppercaseInputs(ids){
 
 /* Autosave */
 function attachAutoSave(){
-  let lastChangedId = null;
-
-  const handler = (e)=>{
-    // mémorise quel champ a déclenché
-    lastChangedId = e?.target?.id || null;
-
+  const handler=()=>{
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(()=>{
-      // 1) Save
+    saveTimer=setTimeout(()=>{
       saveCurrentTabData();
-
-      // 2) UI
       renderTimeline();
       updateHeaderOffset();
-
-      // 3) Timers / countdown (IMPORTANT)
-      ensureCountdownRunning();
-
-      // 4) Bandeaux essentiels (si présents dans le DOM)
-      updateInfoStrip();
-
-      // 5) Si tu veux que le nom d’onglet suive les champs vol
-      if(['Cie','NVol','From','To','Date'].includes(lastChangedId)){
-        renderTabs(); // pas besoin de re-save ici, c’est déjà fait
-      }
-
-    }, 250);
+    }, 300);
   };
-
   document.addEventListener('input', handler, true);
   document.addEventListener('change', handler, true);
 }
@@ -2511,7 +2927,6 @@ function clearFormFields(){
 
   updateAllCalculations();
   updateTabLabelInstant();
-  ensureCountdownRunning();
 }
   
 function saveCurrentTabData(){
@@ -2574,7 +2989,6 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
-  ensureCountdownRunning();
 }
 
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
