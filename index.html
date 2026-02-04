@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+je pe<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
@@ -4034,11 +4034,7 @@ function findLinkedDepForArr(arr){
   const lid = (arr?.linkedId || '').trim();
   if(lid){
     const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
-    if(dep){
-      const arrT = arrTimeMs(arr);
-      const depT = depTimeMs(dep);
-      if(arrT != null && depT != null && depT >= arrT && (depT - arrT) <= MAX_LINK_MS) return dep;
-    }
+    if(dep) return dep;
   }
 
   // 2) fallback reg + premier DEP après ARR
@@ -4060,10 +4056,41 @@ function findLinkedDepForArr(arr){
     if(t == null) continue;
     if(t < arrT) continue;
 
-    // ✅ règle rotation : pas au-delà de MAX_LINK_HOURS
-    if((t - arrT) > MAX_LINK_MS) continue;
-
     if(t < bestT){ best = d; bestT = t; }
+  }
+  return best;
+}
+
+function findLinkedArrForDep(dep){
+  if(!dep) return null;
+
+  // 1) linkedId direct
+  const lid = (dep?.linkedId || '').trim();
+  if(lid){
+    const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
+    if(arr) return arr;
+  }
+
+  // 2) fallback reg + dernière ARR avant DEP
+  const reg = (dep?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const depT = depTimeMs(dep);
+  if(depT == null) return null;
+
+  const arrs = window._akCache?.arr || [];
+  let best = null;
+  let bestT = -Infinity;
+
+  for(const a of arrs){
+    const r = (a?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = arrTimeMs(a);
+    if(t == null) continue;
+    if(t > depT) continue;
+
+    if(t > bestT){ best = a; bestT = t; }
   }
   return best;
 }
