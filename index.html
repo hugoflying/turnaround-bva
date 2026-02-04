@@ -874,62 +874,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 /* positions */
 #loadFab{ bottom: 158px; } /* au-dessus du fuel */
 #fuelFab{ bottom: 86px; }  /* juste au-dessus de la molette */
-
-
-<!-- ===== FUEL MENU ===== -->
-<div id="fuelBackdrop" onclick="closeFuelMenu()"></div>
-
-<div id="fuelMenu" role="dialog" aria-modal="true">
-
-  <div class="ldm-header">
-    <div class="ldm-title">
-      <strong>FUEL</strong>
-      <span class="tag is-light">SAISIE</span>
-    </div>
-    <button class="button is-small is-light" type="button" onclick="closeFuelMenu()">Fermer</button>
-  </div>
-
-  <div class="ldm-body">
-    <section class="ldm-card">
-      <div class="ldm-card-hdr">
-        <div class="ldm-card-title">FUEL</div>
-        <div class="ldm-card-sub">INPUT</div>
-      </div>
-
-      <div class="ldm-grid">
-        <!-- 4 colonnes comme LOAD -->
-        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-          <div class="field" style="margin:0;">
-            <label class="label">BLOCK</label>
-            <input id="BlockFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="6" oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">TAXI</label>
-            <input id="TaxiFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="6" oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">TRIP</label>
-            <input id="TripFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="6" oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">UPLIFT</label>
-            <input id="FuelUplift" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="6" oninput="digitsOnly(this)">
-          </div>
-        </div>
-      </div>
-
-    </section>
-  </div>
-
-</div>
-  
+ 
 /* ===== INPUTS NON GRAS (override global) ===== */
 .input,
 .textarea,
