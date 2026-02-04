@@ -785,6 +785,43 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   }
 }
 
+/* INFO VOL – version compacte */
+#infoVolDetails{
+  gap: 8px;               /* réduit espace entre champs */
+}
+
+#infoVolDetails .field{
+  margin-bottom: 0 !important;
+}
+
+#infoVolDetails .label{
+  margin-bottom: 4px !important;
+  font-size: .68rem !important;
+  letter-spacing: .03em;
+}
+
+#infoVolDetails .input,
+#infoVolDetails .select select{
+  height: 34px !important;
+  padding: 4px 10px !important;
+  font-size: .95rem;
+}
+
+/* encore plus compact sur tablette */
+@media (min-width:600px) and (max-width:900px){
+  #infoVolDetails{
+    gap: 6px;
+  }
+  #infoVolDetails .label{
+    font-size: .62rem !important;
+    margin-bottom: 3px !important;
+  }
+  #infoVolDetails .input,
+  #infoVolDetails .select select{
+    height: 32px !important;
+  }
+}
+
 </style>
 </head>
 
