@@ -1115,20 +1115,21 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
       <div class="ldm-grid">
 
-        <!-- ✅ PREVI – FR / RK : 4 colonnes -->
+        <!-- ✅ PREVI – FR / RK : 4 colonnes + ligne LOAD -->
         <div class="ldm-span-2" id="previFRRK">
+
           <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
             <div class="field" style="margin:0;">
               <label class="label">PAX</label>
               <input class="input ldm-in" id="PreviPAX_MAIN"
                      type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="4" oninput="digitsOnly(this)">
+                     maxlength="4" oninput="digitsOnly(this); updatePreviTOB_FRRK()">
             </div>
             <div class="field" style="margin:0;">
               <label class="label">+ INF</label>
               <input class="input ldm-in" id="PreviPAX_INF"
                      type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this)">
+                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB_FRRK()">
             </div>
             <div class="field" style="margin:0;">
               <label class="label">BAGS</label>
@@ -1143,6 +1144,15 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
                      maxlength="5" oninput="digitsOnly(this)">
             </div>
           </div>
+
+          <!-- ✅ ligne LOAD (FR/RK) -->
+          <div style="margin-top:10px;">
+            <div class="field" style="margin:0;">
+              <label class="label">LOAD</label>
+              <input class="input ldm-in" id="PreviTOB_FRRK" type="text" readonly>
+            </div>
+          </div>
+
         </div>
 
         <!-- PREVI – AUTRES CIE -->
@@ -1349,7 +1359,6 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
   </div><!-- /.ldm-body -->
 </div><!-- /#ldmModal -->
-
   
 <!-- ===== FIXED HEADER ===== -->
 <div class="fixed-header" id="fixedHeader">
