@@ -785,34 +785,34 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   }
 }
 
-/* INFO VOL : selects alignés comme inputs (corrige le décalage) */
-#infoVolDetails .select{
-  height: 34px;
+/* SELECT = même taille que input partout */
+.select,
+.select select{
+  height: var(--inputH) !important;
 }
 
-#infoVolDetails .select select{
-  height: 34px !important;
-  line-height: 34px !important;   /* clé : aligne le texte */
+.select select{
+  line-height: var(--inputH) !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  display: block !important;       /* PAS flex */
+  display: block !important;
   font-size: .95rem;
 }
 
-/* centre la flèche Bulma sur la nouvelle hauteur */
-#infoVolDetails .select:not(.is-multiple):not(.is-loading)::after{
+/* centre la flèche Bulma */
+.select:not(.is-multiple):not(.is-loading)::after{
   top: 50% !important;
   transform: translateY(-50%) !important;
   margin-top: 0 !important;
 }
 
-/* tablette : si tu passes à 32px */
+/* tablette */
 @media (min-width:600px) and (max-width:900px){
-  #infoVolDetails .select,
-  #infoVolDetails .select select{
+  .select,
+  .select select{
     height: 32px !important;
   }
-  #infoVolDetails .select select{
+  .select select{
     line-height: 32px !important;
   }
 }
