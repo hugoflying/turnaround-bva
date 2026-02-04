@@ -1064,28 +1064,6 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
   }
 }
 
-/* ===== ESSENTIELS FIXES SOUS LE HEADER ===== */
-#kvEssentials{
-  position: fixed;
-  top: var(--fixed-header-h);
-  left: 0;
-  right: 0;
-  z-index: 2999;
-  padding: 8px 14px 6px;
-  background: var(--bg);
-}
-
-/* largeur alignée avec l'app */
-#kvEssentials{
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-/* décale tout le contenu sous les bandeaux */
-.app-wrap{
-  padding-top: calc(var(--fixed-header-h) + 90px);
-}
-
 </style>
 </head>
 
@@ -1445,39 +1423,6 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
   </div>
 </div>
 
-<!-- ===== ESSENTIELS (toujours visibles, hors INFO VOL) ===== -->
-<div id="kvEssentials" class="kv-strip">
-  <div class="kv-card">
-    <div class="kv-left">
-      <div class="kv-title">Vol</div>
-      <div class="kv-value">
-        <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
-      </div>
-    </div>
-    <div class="kv-left" style="text-align:right;">
-      <div class="kv-title">Route</div>
-      <div class="kv-value">
-        <span id="kvFrom">---</span> → <span id="kvTo">---</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="kv-card">
-    <div class="kv-left">
-      <div class="kv-title">Immat / Type</div>
-      <div class="kv-value">
-        <span id="kvImmat">------</span> · <span id="kvType">--</span>
-      </div>
-    </div>
-    <div class="kv-left" style="text-align:right;">
-      <div class="kv-title">Salle arr. / Parking</div>
-      <div class="kv-value">
-        <span id="kvBC">----</span> · <span id="kvPark">--</span>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="app-wrap">
 
 <!-- INFO VOL -->
@@ -1487,6 +1432,39 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
   </header>
 
   <div class="card-content">
+
+    <!-- Bandeau ESSENTIEL -->
+    <div class="kv-strip mb-4">
+      <div class="kv-card">
+        <div class="kv-left">
+          <div class="kv-title">Vol</div>
+          <div class="kv-value">
+            <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
+          </div>
+        </div>
+        <div class="kv-left" style="text-align:right;">
+          <div class="kv-title">Route</div>
+          <div class="kv-value">
+            <span id="kvFrom">---</span> → <span id="kvTo">---</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="kv-card">
+        <div class="kv-left">
+          <div class="kv-title">Immat / Type</div>
+          <div class="kv-value">
+            <span id="kvImmat">------</span> · <span id="kvType">--</span>
+          </div>
+        </div>
+        <div class="kv-left" style="text-align:right;">
+          <div class="kv-title">Salle arr. / Parking</div>
+          <div class="kv-value">
+            <span id="kvBC">----</span> · <span id="kvPark">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- DÉTAILS (éditables) -->
     <div id="infoVolDetails" class="grid-auto">
