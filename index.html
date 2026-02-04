@@ -4498,7 +4498,10 @@ function applyAKFlight(f, flow, opts = {}){
 
   /* ================= DEP ================= */
   if(flow === 'DEP'){
-    setValAK('To', (f.adesIata || '') || HOME_IATA);
+
+    // 🔴 TOUJOURS basé sur le DEP lui-même
+    setValAK('From', (f.adepIata || '') || HOME_IATA);
+    setValAK('To',   (f.adesIata || '') || HOME_IATA);
 
     setTimeFromISOAK('SOBT', f.sobt || f.eobt);
     setTimeFromISOAK('AOBT', f.aobt);
@@ -4508,11 +4511,9 @@ function applyAKFlight(f, flow, opts = {}){
     mergeSIFromAK('PreviSI', siDep);
     mergeSIFromAK('FinalSI', siDep);
 
+    // 🔵 On récupère l’ARR liée UNIQUEMENT pour horaires + data ARR
     const prevArr = findLinkedArrForDep(f);
     if(prevArr){
-      // 🔴 FIX IMPORTANT : prendre l'aéroport d’ARRIVÉE de l’ARR (BVA)
-      setValAK('From', (prevArr.adesIata || '') || HOME_IATA);
-
       setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
       setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
 
@@ -4527,13 +4528,11 @@ function applyAKFlight(f, flow, opts = {}){
 
       const siArr = akBuildSI(prevArr, false, { includeDL:false });
       mergeSIFromAK('ArrSI', siArr);
-
-    }else{
-      setValAK('From', HOME_IATA);
     }
 
   /* ================= ARR ================= */
   }else{
+
     setValAK('From', (f.adepIata || '') || HOME_IATA);
 
     setTimeFromISOAK('SIBT', f.sibt || f.eibt);
@@ -4562,56 +4561,16 @@ function applyAKFlight(f, flow, opts = {}){
       const siDep = akBuildSI(nextDep, true, { includeDL:false });
       mergeSIFromAK('PreviSI', siDep);
       mergeSIFromAK('FinalSI', siDep);
-
     }else{
       setValAK('To', HOME_IATA);
     }
   }
-
-  /* ===== META AK + bandeau ===== */
-  let arrFF = '';
-  let depFF = '';
-  let bcForStrip = '';
-
-  if(flow === 'ARR'){
-    arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-    bcForStrip = (f.borderControl || '').toUpperCase().trim();
-
-    const nextDep = findLinkedDepForArr(f);
-    if(nextDep){
-      depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
-    }
-  }else{
-    depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-
-    const prevArr = findLinkedArrForDep(f);
-    if(prevArr){
-      arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
-      bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
-    }
-  }
-
-  storeAKMetaForTab({
-    flow,
-    id: f.id,
-    reg: f.reg || '',
-    ff: (f.fullFlightNumber || f.callsign || ''),
-    timeISO: (flow === 'DEP')
-      ? (f.sobt || f.eobt || f.aobt || f.atot || '')
-      : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
-    pkg: f.pkg || '',
-    arrFF,
-    depFF,
-    bc: bcForStrip
-  });
 
   updateAllCalculations();
   updateTabLabelInstant();
 
   if(!isRefresh){
     closeAKPicker();
-    const flowSel = document.getElementById('akFlow');
-    if(flowSel) flowSel.value = 'DEP';
     showPopup("Vol importé", "#16a34a", 1600);
   }
 }
