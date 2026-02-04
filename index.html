@@ -817,6 +817,16 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   }
 }
 
+/* ===== INPUTS NON GRAS (override global) ===== */
+.input,
+.textarea,
+.select select,
+.ldm-in,
+.ctot-pill,
+.fuel-input {
+  font-weight: 400 !important;
+}
+
 </style>
 </head>
 
@@ -1142,6 +1152,19 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
           <label class="label">SI</label>
           <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
         </div>
+
+        <!-- BOUTON IMAGE -->
+      <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
+        <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
+          LID COMPLETION GUIDE (RYR)
+        </button>
+
+        <div id="finalImageBox" style="display:none; margin-top:12px;">
+          <img id="finalImage"
+               src="https://raw.githubusercontent.com/hugoflying/fiche-escale/main/lid-completion-guide.jpg"
+               style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+        </div>
+      </div>
 
       </div>
     </section>
@@ -4853,6 +4876,11 @@ function shouldOpenFinalLoad(){
   if(diff >  720) diff -= 1440;
 
   return diff >= 0;
+}
+
+function toggleFinalImage(){
+  const box = document.getElementById('finalImageBox');
+  box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
 </script>
