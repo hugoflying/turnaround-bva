@@ -876,32 +876,59 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 #fuelFab{ bottom: 86px; }  /* juste au-dessus de la molette */
 
 
-/* ===== FUEL MENU ===== */
+<!-- ===== FUEL MENU ===== -->
+<div id="fuelBackdrop" onclick="closeFuelMenu()"></div>
 
-#fuelBackdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.40);
-  z-index: 4800;
-  display: none;
-}
+<div id="fuelMenu" role="dialog" aria-modal="true">
 
-#fuelMenu{
-  position: fixed;
-  inset: calc(var(--fixed-header-h) + 10px) 10px 10px 10px;
-  z-index: 4901;
+  <div class="ldm-header">
+    <div class="ldm-title">
+      <strong>FUEL</strong>
+      <span class="tag is-light">SAISIE</span>
+    </div>
+    <button class="button is-small is-light" type="button" onclick="closeFuelMenu()">Fermer</button>
+  </div>
 
-  width: auto;              /* <-- plus de width min(320...) */
-  padding: 12px;
-  border-radius: 18px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,.10);
+  <div class="ldm-body">
+    <section class="ldm-card">
+      <div class="ldm-card-hdr">
+        <div class="ldm-card-title">FUEL</div>
+        <div class="ldm-card-sub">INPUT</div>
+      </div>
 
-  display: none;
-  overflow: auto;           /* <-- scroll interne */
-}
-body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
+      <div class="ldm-grid">
+        <!-- 4 colonnes comme LOAD -->
+        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+          <div class="field" style="margin:0;">
+            <label class="label">BLOCK</label>
+            <input id="BlockFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="6" oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">TAXI</label>
+            <input id="TaxiFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="6" oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">TRIP</label>
+            <input id="TripFuel" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="6" oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">UPLIFT</label>
+            <input id="FuelUplift" class="input ldm-in" type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="6" oninput="digitsOnly(this)">
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+</div>
   
 /* ===== FUEL = LOOK "TOGGLE" (Clair/Locale) ===== */
 
@@ -1012,26 +1039,6 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
     padding: 6px 10px;
   }
 }
-
-/* ===== POPUP FUEL / SETTINGS : MISE EN AVANT ===== */
-  #fuelMenu,
-  #settingsMenu{
-    box-shadow:
-      0 20px 40px rgba(0,0,0,.35),
-      0 8px 20px rgba(0,0,0,.25);
-    background: color-mix(in srgb, var(--card) 92%, #000 8%);
-  }
-
-  body.dark #fuelMenu,
-  body.dark #settingsMenu{
-    background: color-mix(in srgb, var(--card) 88%, #000 12%);
-  }
-
-  #fuelBackdrop,
-  #settingsBackdrop{
-    background: rgba(0,0,0,.45);
-    backdrop-filter: blur(2px);
-  }
 
 /* ===== TABLET 600–900 : bandeaux essentiels sur 1 seule ligne ===== */
 @media (min-width:600px) and (max-width:900px){
