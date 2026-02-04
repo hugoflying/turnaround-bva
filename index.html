@@ -1031,6 +1031,39 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
     backdrop-filter: blur(2px);
   }
 
+/* ===== TABLET 600–900 : bandeaux essentiels sur 1 seule ligne ===== */
+@media (min-width:600px) and (max-width:900px){
+
+  /* 2 cartes sur une seule ligne */
+  .kv-strip{
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px;
+  }
+
+  /* cartes plus compactes */
+  .kv-card{
+    padding: 6px 10px;
+    border-radius: 12px;
+  }
+
+  /* titres plus petits */
+  .kv-title{
+    font-size: .62rem;
+    letter-spacing: .05em;
+  }
+
+  /* valeurs compactes */
+  .kv-value{
+    font-size: .92rem;
+    line-height: 1.1;
+  }
+
+  /* réduit l’espace vertical interne */
+  .kv-left{
+    gap: 0px;
+  }
+}
+
 </style>
 </head>
 
