@@ -4550,15 +4550,14 @@ function applyAKFlight(f, flow, opts = {}){
     setTimeFromISOAK('AOBT', f.aobt);
     setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
 
-    // ✅ merge SI (AK met à jour sans écraser les ajouts manuels)
-    // ❌ DL AK interdit dans LOAD PREVI / FINAL
     const siDep = akBuildSI(f, true, { includeDL:false });
     mergeSIFromAK('PreviSI', siDep);
     mergeSIFromAK('FinalSI', siDep);
 
     const prevArr = findLinkedArrForDep(f);
     if(prevArr){
-      setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
+      // 🔴 FIX IMPORTANT : prendre l'aéroport d’ARRIVÉE de l’ARR (BVA)
+      setValAK('From', (prevArr.adesIata || '') || HOME_IATA);
 
       setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
       setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
@@ -4567,7 +4566,6 @@ function applyAKFlight(f, flow, opts = {}){
         setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
       }
 
-      // ✅ CIE ≠ FR/RK => AK.bags -> POIDS (LOAD ARR)
       const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
       if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
         setIfEmptyOrAK('ArrPOIDS', String(prevArr.bags));
@@ -4575,6 +4573,7 @@ function applyAKFlight(f, flow, opts = {}){
 
       const siArr = akBuildSI(prevArr, false, { includeDL:false });
       mergeSIFromAK('ArrSI', siArr);
+
     }else{
       setValAK('From', HOME_IATA);
     }
@@ -4590,7 +4589,6 @@ function applyAKFlight(f, flow, opts = {}){
       setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
     }
 
-    // ✅ CIE ≠ FR/RK => AK.bags -> POIDS (LOAD ARR)
     const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
     if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
       setIfEmptyOrAK('ArrPOIDS', String(f.bags));
@@ -4607,17 +4605,16 @@ function applyAKFlight(f, flow, opts = {}){
       setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
       setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
 
-      // ✅ merge SI
-      // ❌ DL AK interdit dans LOAD PREVI / FINAL
       const siDep = akBuildSI(nextDep, true, { includeDL:false });
       mergeSIFromAK('PreviSI', siDep);
       mergeSIFromAK('FinalSI', siDep);
+
     }else{
       setValAK('To', HOME_IATA);
     }
   }
 
-  /* ===== bandeau + META AK ===== */
+  /* ===== META AK + bandeau ===== */
   let arrFF = '';
   let depFF = '';
   let bcForStrip = '';
