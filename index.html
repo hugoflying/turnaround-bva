@@ -4032,39 +4032,15 @@ function findLinkedDepForArr(arr){
 
   const deps = window._akCache?.dep || [];
 
-  // linkedId direct ARR -> DEP
-  const lid = (arr?.linkedId || '').trim();
+  // 1) linkedId direct ARR -> DEP
+  const lid = String(arr?.linkedId || '').trim();
   if(lid){
-    const dep = deps.find(d => String(d?.id) === lid);
+    const dep = deps.find(d => String(d?.id || '').trim() === lid);
     if(dep) return dep;
   }
 
-  // lien inverse DEP -> ARR
-  const depBack = deps.find(d => String(d?.linkedId || '').trim() === String(arr?.id));
-  if(depBack) return depBack;
-
-  // fallback reg + premier DEP après ARR
-  const reg = (arr?.reg || '').toUpperCase().trim();
-  if(!reg) return null;
-
-  const arrT = arrTimeMs(arr);
-  if(arrT == null) return null;
-
-  let best = null;
-  let bestT = Infinity;
-
-  for(const d of deps){
-    const r = (d?.reg || '').toUpperCase().trim();
-    if(r !== reg) continue;
-
-    const t = depTimeMs(d);
-    if(t == null) continue;
-    if(t < arrT) continue;
-
-    if(t < bestT){ best = d; bestT = t; }
-  }
-
-  return best;
+  // 2) inverse DEP -> ARR
+  return deps.find(d => String(d?.linkedId || '').trim() === String(arr?.id || '').trim()) || null;
 }
 
 function findLinkedArrForDep(dep){
@@ -4072,39 +4048,15 @@ function findLinkedArrForDep(dep){
 
   const arrs = window._akCache?.arr || [];
 
-  // linkedId direct DEP -> ARR
-  const lid = (dep?.linkedId || '').trim();
+  // 1) linkedId direct DEP -> ARR
+  const lid = String(dep?.linkedId || '').trim();
   if(lid){
-    const arr = arrs.find(a => String(a?.id) === lid);
+    const arr = arrs.find(a => String(a?.id || '').trim() === lid);
     if(arr) return arr;
   }
 
-  // lien inverse ARR -> DEP
-  const arrBack = arrs.find(a => String(a?.linkedId || '').trim() === String(dep?.id));
-  if(arrBack) return arrBack;
-
-  // fallback reg + dernière ARR avant DEP
-  const reg = (dep?.reg || '').toUpperCase().trim();
-  if(!reg) return null;
-
-  const depT = depTimeMs(dep);
-  if(depT == null) return null;
-
-  let best = null;
-  let bestT = -Infinity;
-
-  for(const a of arrs){
-    const r = (a?.reg || '').toUpperCase().trim();
-    if(r !== reg) continue;
-
-    const t = arrTimeMs(a);
-    if(t == null) continue;
-    if(t > depT) continue;
-
-    if(t > bestT){ best = a; bestT = t; }
-  }
-
-  return best;
+  // 2) inverse ARR -> DEP
+  return arrs.find(a => String(a?.linkedId || '').trim() === String(dep?.id || '').trim()) || null;
 }
 
 function depAobtTooOld(dep, minutes = 15){
