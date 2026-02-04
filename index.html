@@ -798,10 +798,11 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   font-size: .95rem;
 }
 
-/* centre la flèche Bulma */
+/* centre la flèche Bulma (sans casser la rotation) */
 .select:not(.is-multiple):not(.is-loading)::after{
   top: 50% !important;
-  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  transform: translateY(-50%) rotate(-45deg) !important;
 }
 
 /* tablette */
