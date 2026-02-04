@@ -701,6 +701,21 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   .dl-wrap .field:has(#DLduree3){ grid-column: 2; grid-row: 3; }
   .dl-wrap .input{ height: var(--inputH); padding: 6px 10px; }
 }
+
+/* Onglet FUEL en jaune (comme LID) */
+#ldmTabFuel{
+  background:#facc15 !important;
+  color:#fff !important;
+  border-color: transparent !important;
+}
+#ldmTabFuel:hover{ filter: brightness(.97); }
+
+/* si actif, on garde jaune */
+.lm-seg .button#ldmTabFuel.is-active{
+  background:#facc15 !important;
+  color:#fff !important;
+}
+
 </style>
 </head>
 
