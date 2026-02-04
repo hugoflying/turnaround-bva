@@ -1070,7 +1070,8 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
       <div class="ldm-grid">
 
-        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+        <!-- ✅ 4 colonnes : PAX / +INF / BAGS / POIDS -->
+        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
           <div class="field" style="margin:0;">
             <label class="label">PAX</label>
             <input class="input ldm-in" id="ArrPAX_MAIN"
@@ -1088,6 +1089,12 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
             <input class="input ldm-in" id="ArrBAGS"
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('arr')">
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="label">POIDS</label>
+            <input class="input ldm-in" id="ArrPOIDS"
+                   type="text" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="5" oninput="digitsOnly(this)">
           </div>
         </div>
 
@@ -1108,9 +1115,9 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
 
       <div class="ldm-grid">
 
-        <!-- PREVI – FR / RK (layout d'origine) -->
+        <!-- ✅ PREVI – FR / RK : 4 colonnes -->
         <div class="ldm-span-2" id="previFRRK">
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
             <div class="field" style="margin:0;">
               <label class="label">PAX</label>
               <input class="input ldm-in" id="PreviPAX_MAIN"
@@ -1128,6 +1135,12 @@ body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
               <input class="input ldm-in" id="PreviBAGS"
                      type="text" inputmode="numeric" pattern="[0-9]*"
                      maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('previ')">
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="label">POIDS</label>
+              <input class="input ldm-in" id="PreviPOIDS"
+                     type="text" inputmode="numeric" pattern="[0-9]*"
+                     maxlength="5" oninput="digitsOnly(this)">
             </div>
           </div>
         </div>
@@ -1781,6 +1794,65 @@ function setTimeFromISOIfEmptyOrAK(id, iso){
   if(isEmptyVal(el) || el.dataset.ak === '1'){
     setTimeFromISOAK(id, iso);
   }
+}
+
+function siLines(txt){
+  return (txt || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function getTabData(){
+  if(!currentTabId) return {};
+  try{ return JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}'); }
+  catch(e){ return {}; }
+}
+  
+function setTabData(data){
+  if(!currentTabId) return;
+  localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+}
+
+/**
+ * Met à jour un SI depuis AK sans écraser les ajouts manuels.
+ * - On retire de l'existant les lignes qui venaient de l'ancien AK
+ * - On met les nouvelles lignes AK en premier
+ * - On rajoute ensuite les lignes manuelles restantes
+ */
+function mergeSIFromAK(fieldId, newAkText){
+  const el = document.getElementById(fieldId);
+  if(!el) return;
+
+  const data = getTabData();
+  data.akSI = data.akSI || {};
+
+  const oldAkText = data.akSI[fieldId] || '';
+  const existing  = el.value || '';
+
+  const newAk  = siLines(newAkText);
+  const oldAk  = new Set(siLines(oldAkText));
+  const existL = siLines(existing);
+
+  // lignes manuelles = existant - (ancien AK)
+  let manual = existL.filter(l => !oldAk.has(l));
+
+  // évite doublons
+  const newSet = new Set(newAk);
+  manual = manual.filter(l => !newSet.has(l));
+
+  const merged = [...newAk, ...manual].join('\n').trim();
+
+  // on applique sans marquer "ak-only"
+  settingFromAK = true;
+  el.value = merged;
+  el.dispatchEvent(new Event('input',  { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  settingFromAK = false;
+
+  // on mémorise la dernière version AK pour le prochain refresh
+  data.akSI[fieldId] = (newAkText || '').trim();
+  setTabData(data);
 }
 
 function setIfEmptyOrAK(id, v){
@@ -4451,10 +4523,11 @@ function applyAKFlight(f, flow, opts = {}){
     setTimeFromISOAK('AOBT', f.aobt);
     setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
 
+    // ✅ merge SI (AK met à jour sans écraser les ajouts manuels)
     // ❌ DL AK interdit dans LOAD PREVI / FINAL
     const siDep = akBuildSI(f, true, { includeDL:false });
-    setIfEmptyOrAK('PreviSI', siDep);
-    setIfEmptyOrAK('FinalSI', siDep);
+    mergeSIFromAK('PreviSI', siDep);
+    mergeSIFromAK('FinalSI', siDep);
 
     const prevArr = findLinkedArrForDep(f);
     if(prevArr){
@@ -4468,7 +4541,7 @@ function applyAKFlight(f, flow, opts = {}){
       }
 
       const siArr = akBuildSI(prevArr, false, { includeDL:false });
-      setIfEmptyOrAK('ArrSI', siArr);
+      mergeSIFromAK('ArrSI', siArr);
     }else{
       setValAK('From', HOME_IATA);
     }
@@ -4485,7 +4558,7 @@ function applyAKFlight(f, flow, opts = {}){
     }
 
     const siArr = akBuildSI(f, false, { includeDL:false });
-    setIfEmptyOrAK('ArrSI', siArr);
+    mergeSIFromAK('ArrSI', siArr);
 
     const nextDep = findLinkedDepForArr(f);
     if(nextDep){
@@ -4495,10 +4568,11 @@ function applyAKFlight(f, flow, opts = {}){
       setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
       setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
 
+      // ✅ merge SI
       // ❌ DL AK interdit dans LOAD PREVI / FINAL
       const siDep = akBuildSI(nextDep, true, { includeDL:false });
-      setIfEmptyOrAK('PreviSI', siDep);
-      setIfEmptyOrAK('FinalSI', siDep);
+      mergeSIFromAK('PreviSI', siDep);
+      mergeSIFromAK('FinalSI', siDep);
     }else{
       setValAK('To', HOME_IATA);
     }
