@@ -4525,10 +4525,6 @@ function applyAKFlight(f, flow, opts = {}){
   }else{
     setValAK('From', (f.adepIata || '') || HOME_IATA);
 
-    // ✅ FIX : si pas de DEP lié (donc pas de destination connue) => destination = HOME
-    // (on le met direct pour éviter un "vide" visible avant linking)
-    setValAK('To', HOME_IATA);
-
     setTimeFromISOAK('SIBT', f.sibt || f.eibt);
     setTimeFromISOAK('AIBT', f.aibt);
 
