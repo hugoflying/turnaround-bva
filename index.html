@@ -4597,6 +4597,12 @@ function applyAKFlight(f, flow, opts = {}){
         setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
       }
 
+      // ✅ CIE ≠ FR/RK => AK.bags -> POIDS (LOAD ARR)
+      const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+      if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
+        setIfEmptyOrAK('ArrPOIDS', String(prevArr.bags));
+      }
+
       const siArr = akBuildSI(prevArr, false, { includeDL:false });
       mergeSIFromAK('ArrSI', siArr);
     }else{
@@ -4612,6 +4618,12 @@ function applyAKFlight(f, flow, opts = {}){
 
     if(f?.paxNb != null){
       setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
+    }
+
+    // ✅ CIE ≠ FR/RK => AK.bags -> POIDS (LOAD ARR)
+    const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+    if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
+      setIfEmptyOrAK('ArrPOIDS', String(f.bags));
     }
 
     const siArr = akBuildSI(f, false, { includeDL:false });
