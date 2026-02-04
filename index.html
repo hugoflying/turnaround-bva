@@ -291,21 +291,6 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 .kv-title{ font-size:.78rem; font-weight:900; color: var(--muted); text-transform:uppercase; }
 .kv-value{ font-size:1.1rem; font-weight:900; color: var(--text); }
 
-/* ===== TABLET 600–900 : bandeaux essentiels sur 1 seule ligne ===== */
-@media (min-width:600px) and (max-width:900px){
-  :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
-
-  .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
-  .kv-card{ padding: 6px 10px; border-radius: 12px; }
-  .kv-title{ font-size: .62rem; letter-spacing: .05em; }
-  .kv-value{ font-size: .92rem; line-height: 1.1; }
-  .kv-left{ gap: 0px; }
-
-  .timer-chip{ min-width: 124px; padding: 8px 12px; }
-  .timer-chip .k{ font-size: .75rem; }
-  .timer-chip .v{ padding: 5px 8px; min-width: 64px; }
-}
-
 /* ===== Alignement visuel SELECT comme INPUT (global) ===== */
 .select.is-fullwidth select{
   height: var(--inputH);
@@ -772,6 +757,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   }
 }
 
+/* ===== TABLET 600–900 ===== */
 @media (min-width:600px) and (max-width:900px){
   :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
 
@@ -790,6 +776,13 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   .span-3{ grid-column: span 3; }
   .span-4{ grid-column: span 4; }
   .span-6{ grid-column: span 6; }
+
+  /* DL : force 3 colonnes */
+  .dl-wrap .dl-grid{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: var(--gap) !important;
+  }
 }
 
 </style>
