@@ -666,12 +666,12 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   .fixed-footer-inner{ padding: 8px 12px; }
 }
 
-/* ===== FAB LOAD (au-dessus du footer fixe) ===== */
+/* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
 #loadFab{
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 14px); /* au-dessus du footer */
-  z-index: 4900;
+  bottom: calc(var(--fixed-footer-h) + 86px); /* ✅ au-dessus de la molette */
+  z-index: 9150;                              /* ✅ visible même si menu/settings */
   width: 52px;
   height: 52px;
   border-radius: 999px;
