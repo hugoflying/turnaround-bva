@@ -759,6 +759,36 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   color:#fff !important;
 }
 
+/* ===== INPUTS NON GRAS (override global) ===== */
+.input,
+.textarea,
+.select select,
+.ldm-in,
+.ctot-pill,
+.fuel-input {
+  font-weight: 400 !important;
+}
+
+@media (min-width:600px) and (max-width:900px){
+  :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
+
+  .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .kv-card{ padding: 6px 10px; border-radius: 12px; }
+  .kv-title{ font-size: .62rem; letter-spacing: .05em; }
+  .kv-value{ font-size: .92rem; line-height: 1.1; }
+  .kv-left{ gap: 0px; }
+
+  .timer-chip{ min-width: 124px; padding: 8px 12px; }
+  .timer-chip .k{ font-size: .75rem; }
+  .timer-chip .v{ padding: 5px 8px; min-width: 64px; }
+
+  /* RESTAURE LA GRILLE TABLETTE */
+  .span-2{ grid-column: span 2; }
+  .span-3{ grid-column: span 3; }
+  .span-4{ grid-column: span 4; }
+  .span-6{ grid-column: span 6; }
+}
+
 </style>
 </head>
 
