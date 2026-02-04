@@ -1803,13 +1803,6 @@ function siLines(txt){
     .filter(Boolean);
 }
 
-// auto-extend textarea (SI)
-function autoResizeTextarea(el){
-  if(!el) return;
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
-
 // normalise pour comparer sans casse
 function normLine(s){
   return (s || '').trim().toUpperCase();
@@ -1838,7 +1831,6 @@ function setTabData(data){
  * - Si une ligne existante "prolonge" une ancienne ligne AK (ex: "1R/19C + ..."),
  *   on remplace le préfixe old AK par le new AK et on garde le suffixe manuel.
  * - Évite les doublons.
- * - Auto-resize de la textarea.
  */
 function mergeSIFromAK(fieldId, newAkText){
   const el = document.getElementById(fieldId);
@@ -1899,7 +1891,6 @@ function mergeSIFromAK(fieldId, newAkText){
 
   settingFromAK = true;
   el.value = merged;
-  autoResizeTextarea(el);
   el.dispatchEvent(new Event('input',  { bubbles:true }));
   el.dispatchEvent(new Event('change', { bubbles:true }));
   settingFromAK = false;
@@ -1909,11 +1900,6 @@ function mergeSIFromAK(fieldId, newAkText){
   setTabData(data);
 }
 
-function autoResizeTextarea(el){
-  if(!el) return;
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
 
 function setIfEmptyOrAK(id, v){
   const el = document.getElementById(id);
@@ -2717,22 +2703,12 @@ function initForm(){
   setDarkMode(storedDark, true);
   setTimeModeUTC(storedUTC, true);
 
-  // ✅ Auto-resize des zones SI (ARR / PREVI / FINAL)
-  ['ArrSI','PreviSI','FinalSI'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-
-    autoResizeTextarea(el);
-    el.addEventListener('input', ()=> autoResizeTextarea(el));
-  });
-
   // 6) Listeners "input" globaux (inchangé)
   [
     'AIBT','SOBT','SIBT','AOBT','CTOT','ArrPNT','ArrPNC','TypeAvion',
 
-    // LOAD (ARR + PREVI)
-    'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS',
-    'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS',
+    // LOAD (ARR+EXP fusionné)
+    'LoadPAX_MAIN','LoadPAX_INF','LoadBAGS','LoadPOIDS',
 
     // FINAL
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
@@ -2757,7 +2733,7 @@ function initForm(){
     el.addEventListener('input', updateAllCalculations);
   });
 
-  // ✅ LOCKS MALE/FEMALE/ADULT
+  // ✅ LOCKS MALE/FEMALE/ADULT (HORS DU if(scroller) !)
   ['FinalMALE','FinalFEMALE','FinalADULT'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
