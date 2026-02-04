@@ -429,15 +429,15 @@ body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.35);
-  z-index: 4800;
+  z-index: 9000;
   display: none;
 }
 
 #settingsFab{
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 14px); /* ✅ au-dessus du footer fixe */
-  z-index: 4900;
+  bottom: calc(var(--fixed-footer-h) + 14px);
+  z-index: 9100;                 /* ✅ au-dessus du footer + header */
   width: 52px;
   height: 52px;
   border-radius: 999px;
@@ -452,7 +452,7 @@ body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   position: fixed;
   right: 14px;
   bottom: calc(var(--fixed-footer-h) + 74px); /* ✅ suit la molette */
-  z-index: 4901;
+  z-index: 9200;                 /* ✅ au-dessus de tout */
   width: min(320px, calc(100vw - 28px));
   border-radius: 16px;
   background: var(--card);
