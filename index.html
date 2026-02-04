@@ -785,36 +785,66 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   }
 }
 
-/* INFO VOL : selects alignés comme inputs (corrige le décalage) */
-#infoVolDetails .select{
+/* ===== INFO VOL : on supprime les champs doublons du bas ===== */
+#infoVolDetails{ display:none; }
+
+/* ===== INFO VOL : mini-grille dans les 2 cartes ARR / DEP ===== */
+.kv-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* tablette = 2 colonnes */
+  gap: 8px 10px;
+  width:100%;
+}
+
+@media (min-width: 769px){
+  .kv-grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); } /* desktop = 4 colonnes */
+}
+
+.kv-field{ display:flex; flex-direction:column; gap:4px; }
+
+.kv-lab{
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* inputs compacts dans le bandeau */
+.kv-in{
   height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(17,24,39,.18);
+  padding: 0 10px;
+  font-weight: 900;
+  background: var(--field-bg);
+  color: var(--field-text);
+  width: 100%;
 }
+.kv-in.uppercase{ text-transform: uppercase; }
 
-#infoVolDetails .select select{
+/* selects compacts + flèche centrée */
+.kv-select select{
   height: 34px !important;
-  line-height: 34px !important;   /* clé : aligne le texte */
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  display: block !important;       /* PAS flex */
-  font-size: .95rem;
+  line-height: 34px !important;
+  border-radius: 10px;
+  font-weight: 900;
+  padding: 0 34px 0 10px !important;
+  background: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  border-color: rgba(17,24,39,.18) !important;
 }
-
-/* centre la flèche Bulma sur la nouvelle hauteur */
-#infoVolDetails .select:not(.is-multiple):not(.is-loading)::after{
+.kv-select:not(.is-multiple):not(.is-loading)::after{
   top: 50% !important;
   transform: translateY(-50%) !important;
   margin-top: 0 !important;
 }
 
-/* tablette : si tu passes à 32px */
+/* tablette plus compact */
 @media (min-width:600px) and (max-width:900px){
-  #infoVolDetails .select,
-  #infoVolDetails .select select{
-    height: 32px !important;
-  }
-  #infoVolDetails .select select{
-    line-height: 32px !important;
-  }
+  .kv-grid{ gap: 6px 10px; }
+  .kv-in{ height: 32px; }
+  .kv-select select{ height: 32px !important; line-height: 32px !important; }
 }
 
 </style>
@@ -1229,180 +1259,136 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 
   <div class="card-content">
 
-    <!-- Bandeau ESSENTIEL -->
+    <!-- Bandeau ESSENTIEL (éditable) : ARR + DEP -->
     <div class="kv-strip mb-4">
+
+      <!-- ===== ARRIVÉE ===== -->
       <div class="kv-card">
-        <div class="kv-left">
-          <div class="kv-title">Vol</div>
-          <div class="kv-value">
-            <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
-          </div>
-        </div>
-        <div class="kv-left" style="text-align:right;">
-          <div class="kv-title">Route</div>
-          <div class="kv-value">
-            <span id="kvFrom">---</span> → <span id="kvTo">---</span>
+        <div class="kv-left" style="width:100%;">
+          <div class="kv-title">Arrivée</div>
+
+          <div class="kv-grid">
+
+            <div class="kv-field">
+              <div class="kv-lab">Vol</div>
+              <div style="display:flex; gap:8px;">
+                <div class="select kv-select" style="flex:0 0 90px;">
+                  <select id="Cie">
+                    <option value="">--</option>
+                    <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
+                    <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
+                    <option>V7</option><option>Autre</option>
+                  </select>
+                </div>
+                <input class="kv-in uppercase" id="NVol" placeholder="N°">
+              </div>
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">Provenance</div>
+              <input class="kv-in uppercase" id="From" maxlength="3" placeholder="FROM">
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">Immat</div>
+              <input class="kv-in uppercase" id="Immat" maxlength="6" placeholder="IMMAT">
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">Type avion</div>
+              <div class="select kv-select">
+                <select id="TypeAvion">
+                  <option value="">--</option>
+                  <option>A319</option><option>A320</option><option>A321</option>
+                  <option>A20N</option><option>A21N</option><option>A21NY</option>
+                  <option>B734</option><option>B737</option><option>B738</option>
+                  <option>B38M</option><option>BCS3</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">SIBT</div>
+              <input class="kv-in" type="time" id="SIBT">
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">AIBT</div>
+              <input class="kv-in" type="time" id="AIBT">
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">Date</div>
+              <input class="kv-in" type="date" id="Date">
+            </div>
+
+            <div class="kv-field">
+              <div class="kv-lab">Parking</div>
+              <div class="select kv-select">
+                <select id="Parking">
+                  <option value="">--</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>9</option><option>10</option><option>11</option><option>12</option>
+                </select>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
+      <!-- ===== DÉPART ===== -->
       <div class="kv-card">
-        <div class="kv-left">
-          <div class="kv-title">Immat / Type</div>
-          <div class="kv-value">
-            <span id="kvImmat">------</span> · <span id="kvType">--</span>
-          </div>
-        </div>
-        <div class="kv-left" style="text-align:right;">
-          <div class="kv-title">Salle arr. / Parking</div>
-          <div class="kv-value">
-            <span id="kvBC">----</span> · <span id="kvPark">--</span>
-          </div>
-        </div>
-      </div>
-    </div>
+        <div class="kv-left" style="width:100%;">
+          <div class="kv-title">Départ</div>
 
-    <!-- DÉTAILS (éditables) -->
-    <div id="infoVolDetails" class="grid-auto">
+          <div class="kv-grid">
 
-      <!-- Date + Parking + Immat + Type avion -->
-      <div class="field span-3">
-        <label class="label">Date</label>
-        <input class="input" type="date" id="Date">
-      </div>
+            <div class="kv-field">
+              <div class="kv-lab">Destination</div>
+              <input class="kv-in uppercase" id="To" maxlength="3" placeholder="TO">
+            </div>
 
-      <div class="field span-3">
-        <label class="label">Parking</label>
-        <div class="select is-fullwidth">
-          <select id="Parking">
-            <option value="">--</option>
-            <option>1</option><option>2</option><option>3</option><option>4</option>
-            <option>5</option><option>6</option><option>7</option><option>8</option>
-            <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
-        </div>
-      </div>
+            <div class="kv-field">
+              <div class="kv-lab">SOBT</div>
+              <input class="kv-in" type="time" id="SOBT">
+            </div>
 
-      <div class="field span-3">
-        <label class="label">Immat</label>
-        <input class="input uppercase" type="text" id="Immat" maxlength="6">
-      </div>
+            <div class="kv-field">
+              <div class="kv-lab">AOBT</div>
+              <input class="kv-in" type="time" id="AOBT">
+            </div>
 
-      <div class="field span-3">
-        <label class="label">Type avion</label>
-        <div class="select is-fullwidth">
-          <select id="TypeAvion">
-            <option value="">--</option>
-            <option>A319</option><option>A320</option><option>A321</option>
-            <option>A20N</option><option>A21N</option><option>A21NY</option>
-            <option>B734</option><option>B737</option><option>B738</option>
-            <option>B38M</option><option>BCS3</option>
-            <option>Autre</option>
-          </select>
-        </div>
-      </div>
+            <!-- Optionnel : miroir en lecture seule si tu veux (à alimenter via JS plus tard) -->
+            <div class="kv-field">
+              <div class="kv-lab">Immat / Type</div>
+              <input class="kv-in uppercase" id="kvImmatTypeMirror" readonly placeholder="—">
+            </div>
 
-      <!-- Cie / N° -->
-      <div class="field span-3">
-        <label class="label">Cie</label>
-        <div class="select is-fullwidth">
-          <select id="Cie">
-            <option value="">--</option>
-            <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
-            <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-            <option>V7</option><option>Autre</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">N°</label>
-        <input class="input uppercase" type="text" id="NVol">
-      </div>
-
-      <!-- From / To -->
-      <div class="field span-3">
-        <label class="label">From</label>
-        <input class="input uppercase" type="text" id="From" maxlength="3">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">To</label>
-        <input class="input uppercase" type="text" id="To" maxlength="3">
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- HORAIRES -->
-<div class="card mb-5">
-  <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-    <p class="card-header-title">HORAIRES</p>
-    <span class="card-header-icon"><span class="icon">⌄</span></span>
-  </header>
-
-  <div class="card-content">
-    <div class="grid-auto">
-
-      <!-- Arrivée -->
-      <div class="span-12">
-        <div class="kv-card" style="padding:12px;">
-          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Arrivée</div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-            <div style="min-width:160px;">
-              <label class="label">SIBT</label>
-              <input class="input" type="time" id="SIBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SIBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',1);updateAllCalculations()">+1</button>
+            <!-- Optionnel : parking départ séparé si tu veux vraiment (sinon supprime ce bloc) -->
+            <div class="kv-field">
+              <div class="kv-lab">Parking (dep)</div>
+              <div class="select kv-select">
+                <select id="ParkingDep">
+                  <option value="">--</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>9</option><option>10</option><option>11</option><option>12</option>
+                </select>
               </div>
             </div>
 
-            <div style="min-width:160px;">
-              <label class="label">AIBT</label>
-              <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Départ -->
-      <div class="span-12">
-        <div class="kv-card" style="padding:12px;">
-          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Départ</div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-            <div style="min-width:160px;">
-              <label class="label">SOBT</label>
-              <input class="input" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SOBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-
-            <div style="min-width:160px;">
-              <label class="label">AOBT</label>
-              <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
     </div>
+
+    <!-- Ancienne zone edit (gardée cachée par CSS, tu peux la supprimer plus tard) -->
+    <div id="infoVolDetails" class="grid-auto"></div>
+
   </div>
 </div>
 
