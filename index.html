@@ -1030,7 +1030,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
       <span id="ldmHint" class="tag is-light">ARRIVÉE</span>
     </div>
 
-    <!-- ✅ 3 onglets : ARR / PREVI / FINAL -->
+    <!-- ✅ 4 onglets : ARR / PREVI / FINAL / FUEL -->
     <div class="lm-seg">
       <button id="ldmTabArr" class="button is-small is-active" type="button"
               onclick="ldmSwitch('arr')">ARR</button>
@@ -1038,6 +1038,8 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
               onclick="ldmSwitch('previ')">PREVI</button>
       <button id="ldmTabFinal" class="button is-small" type="button"
               onclick="ldmSwitch('final')">FINAL</button>
+      <button id="ldmTabFuel" class="button is-small" type="button"
+              onclick="ldmSwitch('fuel')">FUEL</button>
     </div>
 
     <button class="button is-small is-light" type="button" onclick="closeLDM()">Fermer</button>
@@ -1338,6 +1340,46 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
           <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ===== FUEL ===== -->
+    <section class="ldm-card ldm-fuel" id="ldmFuel" style="display:none;">
+      <div class="ldm-card-hdr">
+        <div class="ldm-card-title">FUEL</div>
+        <div class="ldm-card-sub">INPUT</div>
+      </div>
+
+      <div class="ldm-grid">
+        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+          <div class="field" style="margin:0;">
+            <label class="label">BLOCK</label>
+            <input id="BlockFuel" class="input ldm-in" type="text"
+                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">TAXI</label>
+            <input id="TaxiFuel" class="input ldm-in" type="text"
+                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">TRIP</label>
+            <input id="TripFuel" class="input ldm-in" type="text"
+                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   oninput="digitsOnly(this)">
+          </div>
+
+          <div class="field" style="margin:0;">
+            <label class="label">UPLIFT</label>
+            <input id="FuelUplift" class="input ldm-in" type="text"
+                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   oninput="digitsOnly(this)">
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2554,28 +2596,34 @@ function ldmSwitch(mode){
   const sArr   = document.getElementById('ldmArr');
   const sPrevi = document.getElementById('ldmPrevi');
   const sFinal = document.getElementById('ldmFinal');
+  const sFuel  = document.getElementById('ldmFuel');
 
   const tArr   = document.getElementById('ldmTabArr');
   const tPrevi = document.getElementById('ldmTabPrevi');
   const tFinal = document.getElementById('ldmTabFinal');
+  const tFuel  = document.getElementById('ldmTabFuel');
 
   if(sArr)   sArr.style.display   = (mode === 'arr')   ? '' : 'none';
   if(sPrevi) sPrevi.style.display = (mode === 'previ') ? '' : 'none';
   if(sFinal) sFinal.style.display = (mode === 'final') ? '' : 'none';
+  if(sFuel)  sFuel.style.display  = (mode === 'fuel')  ? '' : 'none';
 
   if(tArr)   tArr.classList.toggle('is-active', mode === 'arr');
   if(tPrevi) tPrevi.classList.toggle('is-active', mode === 'previ');
   if(tFinal) tFinal.classList.toggle('is-active', mode === 'final');
+  if(tFuel)  tFuel.classList.toggle('is-active', mode === 'fuel');
 
   const hint = document.getElementById('ldmHint');
   if(hint){
     hint.textContent =
       (mode === 'arr')   ? 'ARRIVÉE' :
       (mode === 'previ') ? 'PREVI' :
-      'FINAL';
+      (mode === 'final') ? 'FINAL' :
+      'FUEL';
   }
 
-  // refresh layout au switch (sinon PREVI peut rester vide)
+  if(mode === 'final') updateFinalTOB();
+
   refreshLDMLayouts();
   updateHeaderOffset();
 }
@@ -5083,44 +5131,10 @@ function shouldOpenFinalLoad(){
   </div>
 </div>
 
-<!-- ===== FUEL MENU ===== -->
-<div id="fuelBackdrop" onclick="closeFuelMenu()"></div>
-
-<div id="fuelMenu" role="dialog" aria-modal="true">
-  <div class="settings-row">
-
-    <div class="fuel-row">
-      <div class="fuel-label">Block fuel</div>
-      <input id="BlockFuel" class="fuel-input" type="number" min="0" step="1">
-    </div>
-
-    <div class="fuel-row">
-      <div class="fuel-label">Taxi fuel</div>
-      <input id="TaxiFuel" class="fuel-input" type="number" min="0" step="1">
-    </div>
-
-    <div class="fuel-row">
-      <div class="fuel-label">Trip fuel</div>
-      <input id="TripFuel" class="fuel-input" type="number" min="0" step="1">
-    </div>
-
-    <div class="fuel-row">
-      <div class="fuel-label">Fuel uplift</div>
-      <input id="FuelUplift" class="fuel-input" type="number" min="0" step="1">
-    </div>
-
-  </div>
-</div>
-
 <!-- ===== FAB LOAD + FUEL ===== -->
 <button id="loadFab" class="button is-info" type="button"
         onclick="toggleLDM()" aria-label="Load">
   🧳
-</button>
-
-<button id="fuelFab" class="button is-warning" type="button"
-        onclick="toggleFuelMenu()" aria-label="Fuel">
-  ⛽
 </button>
 
 </body>
