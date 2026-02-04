@@ -2985,7 +2985,7 @@ function createNewTab(){
   // snapshot initial
   const data = {};
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(!el.id) return;
+    if(el.id === 'utcToggle' || el.id === 'darkToggle') return;
     data[el.id] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : (el.value || '');
   });
   data.infovolOpen = '0';
@@ -3065,6 +3065,8 @@ function clearFormFields(){
     if(!el.id) return;
 
     if(el.type === 'checkbox'){
+      // ✅ ne touche pas aux toggles globaux
+      if(el.id === 'utcToggle' || el.id === 'darkToggle') return;
       el.checked = false;
     }else{
       el.value = '';
@@ -3077,6 +3079,12 @@ function clearFormFields(){
     const today = new Date().toISOString().slice(0,10);
     d.value = today;
   }
+
+  // ✅ re-sync modes globaux (UI + variables) après nettoyage
+  const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
+  const storedUTC  = (localStorage.getItem('modeUTC')  || '0') === '1';
+  setDarkMode(storedDark, true);
+  setTimeModeUTC(storedUTC, true);
 
   // ✅ IMPORTANT : remettre l'état des verrous cohérent
   syncAdultGenderLocks();
@@ -3097,9 +3105,6 @@ function saveCurrentTabData(){
     if(el.type==='checkbox') data[el.id]=el.checked ? '1':'0';
     else data[el.id]=el.value;
   });
-
-  data.modeDark=document.body.classList.contains('dark')?'1':'0';
-  data.modeUTC=isUTC?'1':'0';
 
   data.timer_h40=document.getElementById('timer-h40')?.textContent || '--:--';
   data.timer_h15=document.getElementById('timer-h15')?.textContent || '--:--';
@@ -3123,6 +3128,9 @@ function loadTabData(id){
   const data = JSON.parse(raw);
 
   for(const k in data){
+    // ✅ toggles globaux : jamais restaurés depuis l’onglet
+    if(k === 'utcToggle' || k === 'darkToggle') continue;
+
     const el = document.getElementById(k);
     if(!el) continue;
 
@@ -3132,6 +3140,12 @@ function loadTabData(id){
       el.value = data[k];
     }
   }
+
+  // ✅ re-sync modes globaux (UI + variables) après chargement d'onglet
+  const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
+  const storedUTC  = (localStorage.getItem('modeUTC')  || '0') === '1';
+  setDarkMode(storedDark, true);
+  setTimeModeUTC(storedUTC, true);
 
   // ✅ remettre les verrous cohérents après restauration
   syncAdultGenderLocks();
