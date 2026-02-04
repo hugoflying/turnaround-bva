@@ -2702,14 +2702,35 @@ function setupUppercaseInputs(ids){
 
 /* Autosave */
 function attachAutoSave(){
-  const handler=()=>{
+  let lastChangedId = null;
+
+  const handler = (e)=>{
+    // mémorise quel champ a déclenché
+    lastChangedId = e?.target?.id || null;
+
     clearTimeout(saveTimer);
-    saveTimer=setTimeout(()=>{
+    saveTimer = setTimeout(()=>{
+      // 1) Save
       saveCurrentTabData();
+
+      // 2) UI
       renderTimeline();
       updateHeaderOffset();
-    }, 300);
+
+      // 3) Timers / countdown (IMPORTANT)
+      ensureCountdownRunning();
+
+      // 4) Bandeaux essentiels (si présents dans le DOM)
+      updateInfoStrip();
+
+      // 5) Si tu veux que le nom d’onglet suive les champs vol
+      if(['Cie','NVol','From','To','Date'].includes(lastChangedId)){
+        renderTabs(); // pas besoin de re-save ici, c’est déjà fait
+      }
+
+    }, 250);
   };
+
   document.addEventListener('input', handler, true);
   document.addEventListener('change', handler, true);
 }
@@ -2913,6 +2934,7 @@ function clearFormFields(){
 
   updateAllCalculations();
   updateTabLabelInstant();
+  ensureCountdownRunning();
 }
   
 function saveCurrentTabData(){
@@ -2975,6 +2997,7 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
+  ensureCountdownRunning();
 }
 
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
