@@ -881,26 +881,28 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 #fuelBackdrop{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.35);
+  background: rgba(0,0,0,.40);
   z-index: 4800;
   display: none;
 }
 
 #fuelMenu{
   position: fixed;
-  right: 14px;
-  bottom: 214px;
+  inset: calc(var(--fixed-header-h) + 10px) 10px 10px 10px;
   z-index: 4901;
-  width: min(320px, calc(100vw - 28px));
+
+  width: auto;              /* <-- plus de width min(320...) */
   padding: 12px;
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--card);
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.10);
+
   display: none;
+  overflow: auto;           /* <-- scroll interne */
 }
 body.dark #fuelMenu{ border-color: rgba(255,255,255,.10); }
-
+  
 /* ===== FUEL = LOOK "TOGGLE" (Clair/Locale) ===== */
 
 #fuelMenu .settings-row{
