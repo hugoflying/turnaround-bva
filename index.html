@@ -847,18 +847,16 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 
 }
 
-/* HORAIRES lisibilité labels */
-#SIBT,
-#AIBT,
-#SOBT,
-#AOBT{
-  font-weight:600;
+/* HORAIRES – mêmes labels que partout */
+.card:has(#SIBT) label.label{
+  font-weight:900 !important;
+  font-size: var(--labelSize) !important;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color: var(--text) !important;
+  opacity:.9;
 }
 
-.card:has(#SIBT) .label{
-  color: var(--text) !important;
-  opacity: 1 !important;
-}
 
 </style>
 </head>
