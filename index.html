@@ -827,15 +827,26 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   font-weight: 400 !important;
 }
 
-/* INFO VOL – compacte tablette */
+/* TABLET 600–900 : compaction champs */
 @media (min-width:600px) and (max-width:900px){
 
+  /* INFO VOL */
   #infoVolDetails .field{
-    margin-bottom: 0 !important;   /* <-- coupable principal */
+    margin-bottom:0 !important;
+  }
+  #infoVolDetails{
+    row-gap:6px !important;
   }
 
-  #infoVolDetails{
-    row-gap: 6px !important;       /* espace vertical réel entre lignes */
+  /* LOAD FINAL */
+  #ldmFinal .field{
+    margin-bottom:0 !important;
+  }
+  #ldmFinal .ldm-grid{
+    row-gap:6px !important;
+  }
+  #ldmFinal .ldm-row-4{
+    row-gap:6px !important;
   }
 
 }
