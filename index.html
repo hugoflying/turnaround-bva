@@ -4030,21 +4030,26 @@ function depTimeMs(f){
 function findLinkedDepForArr(arr){
   if(!arr) return null;
 
-  // 1) linkedId direct
+  const deps = window._akCache?.dep || [];
+
+  // 1️⃣ linkedId direct ARR -> DEP
   const lid = (arr?.linkedId || '').trim();
   if(lid){
-    const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
+    const dep = deps.find(d => String(d?.id) === lid);
     if(dep) return dep;
   }
 
-  // 2) fallback reg + premier DEP après ARR
+  // 1️⃣ bis : lien inverse DEP -> ARR
+  const depBack = deps.find(d => String(d?.linkedId || '').trim() === String(arr?.id));
+  if(depBack) return depBack;
+
+  // 2️⃣ fallback reg + premier DEP après ARR
   const reg = (arr?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
   const arrT = arrTimeMs(arr);
   if(arrT == null) return null;
 
-  const deps = window._akCache?.dep || [];
   let best = null;
   let bestT = Infinity;
 
@@ -4056,29 +4061,37 @@ function findLinkedDepForArr(arr){
     if(t == null) continue;
     if(t < arrT) continue;
 
-    if(t < bestT){ best = d; bestT = t; }
+    if(t < bestT){
+      best = d;
+      bestT = t;
+    }
   }
+
   return best;
 }
-
 function findLinkedArrForDep(dep){
   if(!dep) return null;
 
-  // 1) linkedId direct
+  const arrs = window._akCache?.arr || [];
+
+  // 1️⃣ linkedId direct DEP -> ARR
   const lid = (dep?.linkedId || '').trim();
   if(lid){
-    const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
+    const arr = arrs.find(a => String(a?.id) === lid);
     if(arr) return arr;
   }
 
-  // 2) fallback reg + dernière ARR avant DEP
+  // 1️⃣ bis : lien inverse ARR -> DEP
+  const arrBack = arrs.find(a => String(a?.linkedId || '').trim() === String(dep?.id));
+  if(arrBack) return arrBack;
+
+  // 2️⃣ fallback reg + dernière ARR avant DEP
   const reg = (dep?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
   const depT = depTimeMs(dep);
   if(depT == null) return null;
 
-  const arrs = window._akCache?.arr || [];
   let best = null;
   let bestT = -Infinity;
 
@@ -4090,8 +4103,12 @@ function findLinkedArrForDep(dep){
     if(t == null) continue;
     if(t > depT) continue;
 
-    if(t > bestT){ best = a; bestT = t; }
+    if(t > bestT){
+      best = a;
+      bestT = t;
+    }
   }
+
   return best;
 }
 
