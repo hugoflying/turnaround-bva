@@ -759,6 +759,19 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   color:#fff !important;
 }
 
+/* RETARDS : 2 lignes x 3 colonnes dès 600px */
+.dl-grid{
+  display: grid;
+  grid-template-columns: 1fr;  /* mobile <600 */
+  gap: var(--gap);
+}
+
+@media (min-width: 600px){
+  .dl-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 600+ => 3 colonnes */
+  }
+}
+
 @media (min-width:600px) and (max-width:900px){
   :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
 
