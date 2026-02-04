@@ -1803,12 +1803,30 @@ function siLines(txt){
     .filter(Boolean);
 }
 
+// auto-extend textarea (SI)
+function autoResizeTextarea(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// normalise pour comparer sans casse
+function normLine(s){
+  return (s || '').trim().toUpperCase();
+}
+
+// clé simple pour matcher old/new (avant 1er espace ou "+")
+function siKey(line){
+  const up = normLine(line);
+  return up.split(/\s|\+/)[0] || up;
+}
+
 function getTabData(){
   if(!currentTabId) return {};
   try{ return JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}'); }
   catch(e){ return {}; }
 }
-  
+
 function setTabData(data){
   if(!currentTabId) return;
   localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
@@ -1816,9 +1834,11 @@ function setTabData(data){
 
 /**
  * Met à jour un SI depuis AK sans écraser les ajouts manuels.
- * - On retire de l'existant les lignes qui venaient de l'ancien AK
- * - On met les nouvelles lignes AK en premier
- * - On rajoute ensuite les lignes manuelles restantes
+ * - Remplace les anciennes lignes AK par les nouvelles
+ * - Si une ligne existante "prolonge" une ancienne ligne AK (ex: "1R/19C + ..."),
+ *   on remplace le préfixe old AK par le new AK et on garde le suffixe manuel.
+ * - Évite les doublons.
+ * - Auto-resize de la textarea.
  */
 function mergeSIFromAK(fieldId, newAkText){
   const el = document.getElementById(fieldId);
@@ -1830,29 +1850,69 @@ function mergeSIFromAK(fieldId, newAkText){
   const oldAkText = data.akSI[fieldId] || '';
   const existing  = el.value || '';
 
-  const newAk  = siLines(newAkText);
-  const oldAk  = new Set(siLines(oldAkText));
-  const existL = siLines(existing);
+  const newAkLines = siLines(newAkText);
+  const oldAkLines = siLines(oldAkText);
+  const existLines = siLines(existing);
 
-  // lignes manuelles = existant - (ancien AK)
-  let manual = existL.filter(l => !oldAk.has(l));
+  const oldNormSet = new Set(oldAkLines.map(normLine));
+  const newNormSet = new Set(newAkLines.map(normLine));
 
-  // évite doublons
-  const newSet = new Set(newAk);
-  manual = manual.filter(l => !newSet.has(l));
+  const oldByKey = new Map();
+  oldAkLines.forEach(l => oldByKey.set(siKey(l), l));
 
-  const merged = [...newAk, ...manual].join('\n').trim();
+  const newByKey = new Map();
+  newAkLines.forEach(l => newByKey.set(siKey(l), l));
 
-  // on applique sans marquer "ak-only"
+  const manualOut = [];
+
+  for(const line of existLines){
+    const n = normLine(line);
+
+    // si c'est exactement une ancienne ligne AK -> on la drop (elle sera remplacée)
+    if(oldNormSet.has(n)) continue;
+
+    // cas: la ligne existante prolonge une ancienne ligne AK
+    const k = siKey(line);
+    const oldBase = oldByKey.get(k);
+    const newBase = newByKey.get(k);
+
+    if(oldBase && newBase){
+      const oldBaseNorm = normLine(oldBase);
+      const lineNorm = normLine(line);
+
+      if(lineNorm.startsWith(oldBaseNorm)){
+        const suffix = line.slice(oldBase.length).trim(); // garde ce que tu as ajouté
+        const mergedLine = suffix ? `${newBase} ${suffix}` : `${newBase}`;
+
+        if(!newNormSet.has(normLine(mergedLine))){
+          manualOut.push(mergedLine);
+        }
+        continue;
+      }
+    }
+
+    // sinon: vraie ligne manuelle -> on garde si pas doublon avec new AK
+    if(!newNormSet.has(n)) manualOut.push(line);
+  }
+
+  const merged = [...newAkLines, ...manualOut].join('\n').trim();
+
   settingFromAK = true;
   el.value = merged;
+  autoResizeTextarea(el);
   el.dispatchEvent(new Event('input',  { bubbles:true }));
   el.dispatchEvent(new Event('change', { bubbles:true }));
   settingFromAK = false;
 
-  // on mémorise la dernière version AK pour le prochain refresh
+  // mémorise la dernière version AK pour le prochain refresh
   data.akSI[fieldId] = (newAkText || '').trim();
   setTabData(data);
+}
+
+function autoResizeTextarea(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function setIfEmptyOrAK(id, v){
@@ -2657,12 +2717,22 @@ function initForm(){
   setDarkMode(storedDark, true);
   setTimeModeUTC(storedUTC, true);
 
+  // ✅ Auto-resize des zones SI (ARR / PREVI / FINAL)
+  ['ArrSI','PreviSI','FinalSI'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    autoResizeTextarea(el);
+    el.addEventListener('input', ()=> autoResizeTextarea(el));
+  });
+
   // 6) Listeners "input" globaux (inchangé)
   [
     'AIBT','SOBT','SIBT','AOBT','CTOT','ArrPNT','ArrPNC','TypeAvion',
 
-    // LOAD (ARR+EXP fusionné)
-    'LoadPAX_MAIN','LoadPAX_INF','LoadBAGS','LoadPOIDS',
+    // LOAD (ARR + PREVI)
+    'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS',
+    'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS',
 
     // FINAL
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
@@ -2687,7 +2757,7 @@ function initForm(){
     el.addEventListener('input', updateAllCalculations);
   });
 
-  // ✅ LOCKS MALE/FEMALE/ADULT (HORS DU if(scroller) !)
+  // ✅ LOCKS MALE/FEMALE/ADULT
   ['FinalMALE','FinalFEMALE','FinalADULT'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
