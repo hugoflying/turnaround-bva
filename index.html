@@ -762,9 +762,9 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
 
   .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
-  .kv-card{ padding: 6px 10px; border-radius: 12px; }
+  .kv-card{ padding: 10px 12px; border-radius: 12px; }
   .kv-title{ font-size: .62rem; letter-spacing: .05em; }
-  .kv-value{ font-size: .92rem; line-height: 1.1; }
+  .kv-value{ font-size: .92rem; line-height: 1.2; }
   .kv-left{ gap: 0px; }
 
   .timer-chip{ min-width: 124px; padding: 8px 12px; }
@@ -795,7 +795,8 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   line-height: var(--inputH) !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  display: block !important;
+  display: inline-block !important; /* ✅ au lieu de block */
+  width: 100%;                      /* ✅ garde le full width */
   font-size: .95rem;
 }
 
