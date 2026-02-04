@@ -1803,12 +1803,11 @@ function siLines(txt){
     .filter(Boolean);
 }
 
-// normalise pour comparer sans casse
 function normLine(s){
   return (s || '').trim().toUpperCase();
 }
 
-// clé simple pour matcher old/new (avant 1er espace ou "+")
+// clé simple : avant 1er espace ou "+"
 function siKey(line){
   const up = normLine(line);
   return up.split(/\s|\+/)[0] || up;
@@ -1826,11 +1825,10 @@ function setTabData(data){
 }
 
 /**
- * Met à jour un SI depuis AK sans écraser les ajouts manuels.
- * - Remplace les anciennes lignes AK par les nouvelles
- * - Si une ligne existante "prolonge" une ancienne ligne AK (ex: "1R/19C + ..."),
- *   on remplace le préfixe old AK par le new AK et on garde le suffixe manuel.
- * - Évite les doublons.
+ * Merge SI depuis AK sans écraser les ajouts manuels.
+ * Cas spécial: si tu as prolongé la ligne AK ("1R/19C + 1234"),
+ * et que AK devient "1R/19C + 1TEST/85C", alors on veut:
+ * "1R/19C + 1TEST/85C + 1234" (une seule ligne)
  */
 function mergeSIFromAK(fieldId, newAkText){
   const el = document.getElementById(fieldId);
@@ -1849,45 +1847,59 @@ function mergeSIFromAK(fieldId, newAkText){
   const oldNormSet = new Set(oldAkLines.map(normLine));
   const newNormSet = new Set(newAkLines.map(normLine));
 
+  // map old base par key
   const oldByKey = new Map();
   oldAkLines.forEach(l => oldByKey.set(siKey(l), l));
 
-  const newByKey = new Map();
-  newAkLines.forEach(l => newByKey.set(siKey(l), l));
+  // index des lignes AK nouvelles par key (pour pouvoir remplacer)
+  const newIndexByKey = new Map();
+  newAkLines.forEach((l, idx) => {
+    const k = siKey(l);
+    if(!newIndexByKey.has(k)) newIndexByKey.set(k, idx);
+  });
 
+  // résultat = copie des lignes AK
+  const finalLines = [...newAkLines];
+
+  // lignes manuelles séparées (qui ne sont pas du prolongement)
   const manualOut = [];
 
   for(const line of existLines){
     const n = normLine(line);
 
-    // si c'est exactement une ancienne ligne AK -> on la drop (elle sera remplacée)
+    // ancienne ligne AK pure -> on la drop (remplacée par newAk)
     if(oldNormSet.has(n)) continue;
 
-    // cas: la ligne existante prolonge une ancienne ligne AK
+    // tentative de "prolongement" d'une ancienne ligne AK
     const k = siKey(line);
     const oldBase = oldByKey.get(k);
-    const newBase = newByKey.get(k);
 
-    if(oldBase && newBase){
+    if(oldBase && newIndexByKey.has(k)){
       const oldBaseNorm = normLine(oldBase);
       const lineNorm = normLine(line);
 
       if(lineNorm.startsWith(oldBaseNorm)){
-        const suffix = line.slice(oldBase.length).trim(); // garde ce que tu as ajouté
+        const idx = newIndexByKey.get(k);
+        const newBase = finalLines[idx];
+
+        const suffix = line.slice(oldBase.length).trim(); // ce que tu as ajouté
         const mergedLine = suffix ? `${newBase} ${suffix}` : `${newBase}`;
 
-        if(!newNormSet.has(normLine(mergedLine))){
-          manualOut.push(mergedLine);
-        }
-        continue;
+        // remplace la ligne AK par la version enrichie
+        finalLines[idx] = mergedLine;
+
+        // met à jour le set de doublons (au cas où)
+        newNormSet.add(normLine(mergedLine));
+
+        continue; // IMPORTANT: on n'ajoute pas en manuelOut
       }
     }
 
-    // sinon: vraie ligne manuelle -> on garde si pas doublon avec new AK
+    // vraie ligne manuelle séparée -> on garde si pas doublon avec AK
     if(!newNormSet.has(n)) manualOut.push(line);
   }
 
-  const merged = [...newAkLines, ...manualOut].join('\n').trim();
+  const merged = [...finalLines, ...manualOut].join('\n').trim();
 
   settingFromAK = true;
   el.value = merged;
@@ -1899,7 +1911,6 @@ function mergeSIFromAK(fieldId, newAkText){
   data.akSI[fieldId] = (newAkText || '').trim();
   setTabData(data);
 }
-
 
 function setIfEmptyOrAK(id, v){
   const el = document.getElementById(id);
