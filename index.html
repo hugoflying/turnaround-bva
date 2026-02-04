@@ -4032,18 +4032,18 @@ function findLinkedDepForArr(arr){
 
   const deps = window._akCache?.dep || [];
 
-  // 1️⃣ linkedId direct ARR -> DEP
+  // linkedId direct ARR -> DEP
   const lid = (arr?.linkedId || '').trim();
   if(lid){
     const dep = deps.find(d => String(d?.id) === lid);
     if(dep) return dep;
   }
 
-  // 1️⃣ bis : lien inverse DEP -> ARR
+  // lien inverse DEP -> ARR
   const depBack = deps.find(d => String(d?.linkedId || '').trim() === String(arr?.id));
   if(depBack) return depBack;
 
-  // 2️⃣ fallback reg + premier DEP après ARR
+  // fallback reg + premier DEP après ARR
   const reg = (arr?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
@@ -4061,31 +4061,29 @@ function findLinkedDepForArr(arr){
     if(t == null) continue;
     if(t < arrT) continue;
 
-    if(t < bestT){
-      best = d;
-      bestT = t;
-    }
+    if(t < bestT){ best = d; bestT = t; }
   }
 
   return best;
 }
+
 function findLinkedArrForDep(dep){
   if(!dep) return null;
 
   const arrs = window._akCache?.arr || [];
 
-  // 1️⃣ linkedId direct DEP -> ARR
+  // linkedId direct DEP -> ARR
   const lid = (dep?.linkedId || '').trim();
   if(lid){
     const arr = arrs.find(a => String(a?.id) === lid);
     if(arr) return arr;
   }
 
-  // 1️⃣ bis : lien inverse ARR -> DEP
+  // lien inverse ARR -> DEP
   const arrBack = arrs.find(a => String(a?.linkedId || '').trim() === String(dep?.id));
   if(arrBack) return arrBack;
 
-  // 2️⃣ fallback reg + dernière ARR avant DEP
+  // fallback reg + dernière ARR avant DEP
   const reg = (dep?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
@@ -4102,54 +4100,10 @@ function findLinkedArrForDep(dep){
     const t = arrTimeMs(a);
     if(t == null) continue;
     if(t > depT) continue;
-
-    if(t > bestT){
-      best = a;
-      bestT = t;
-    }
-  }
-
-  return best;
-}
-
-function findLinkedArrForDep(dep){
-  if(!dep) return null;
-
-  // 1) linkedId direct
-  const lid = (dep?.linkedId || '').trim();
-  if(lid){
-    const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
-    if(arr){
-      const depT = depTimeMs(dep);
-      const arrT = arrTimeMs(arr);
-      if(depT != null && arrT != null && arrT <= depT && (depT - arrT) <= MAX_LINK_MS) return arr;
-    }
-  }
-
-  // 2) fallback reg + dernière ARR avant DEP
-  const reg = (dep?.reg || '').toUpperCase().trim();
-  if(!reg) return null;
-
-  const depT = depTimeMs(dep);
-  if(depT == null) return null;
-
-  const arrs = window._akCache?.arr || [];
-  let best = null;
-  let bestT = -Infinity;
-
-  for(const a of arrs){
-    const r = (a?.reg || '').toUpperCase().trim();
-    if(r !== reg) continue;
-
-    const t = arrTimeMs(a);
-    if(t == null) continue;
-    if(t > depT) continue;
-
-    // ✅ règle rotation : pas un vieux vol d’hier/matin
-    if((depT - t) > MAX_LINK_MS) continue;
 
     if(t > bestT){ best = a; bestT = t; }
   }
+
   return best;
 }
 
