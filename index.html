@@ -847,6 +847,40 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   .kv-select select{ height: 32px !important; line-height: 32px !important; }
 }
 
+/* TABLET : certains champs en pleine largeur */
+.kv-span-2{ grid-column: 1 / -1; }
+
+/* TABLET : la ligne "Vol" doit respirer */
+@media (min-width:600px) and (max-width:900px){
+  .kv-grid{ grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+
+  /* container CIE + N° */
+  .kv-field > div[style*="display:flex"]{
+    flex-wrap: nowrap;
+  }
+
+  /* select CIE pas trop petit */
+  .kv-card .kv-select{ min-width: 86px; }
+
+  /* N° vol prend le reste et a une largeur mini */
+  #NVol{
+    flex: 1 1 auto;
+    min-width: 110px;
+  }
+
+  /* Champs time/date : évite l’effet “écrasé” */
+  input[type="time"].kv-in,
+  input[type="date"].kv-in{
+    min-width: 120px;
+  }
+
+  /* Parking(dep) : évite le mini champ ridicule */
+  #ParkingDep{
+    min-width: 90px;
+  }
+}
+
+
 </style>
 </head>
 
