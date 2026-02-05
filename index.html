@@ -1923,20 +1923,77 @@ function updateFinalWeightIfNeeded(){
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
 function updateArrExpWeightIfNeeded(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   if(cie !== 'FR' && cie !== 'RK') return;
 
   // EXP uniquement (ARR désactivé)
   const bagsExp = asInt('ExpBAGS');
   const poidsExpEl = document.getElementById('ExpPOIDS');
-  if(bagsExp != null && poidsExpEl && poidsExpEl.value === ''){
+  if(bagsExp != null && poidsExpEl && (poidsExpEl.value || '').trim() === ''){
     poidsExpEl.value = String(bagsExp * 13);
   }
 }
 
-function updateFinalLoadLayout(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+/* ===== Placeholders LOAD FINAL (FR/RK uniquement) ===== */
+function updateFinalPlaceholdersFRRK(){
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
+
   const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const setPH = (id, txt)=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.placeholder = txt || '';
+  };
+
+  // reset
+  ['FinalOA','FinalOB','FinalOC','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
+  if(!isFRRK) return;
+
+  if(type === 'B38M'){
+    setPH('FinalOA', '32 (1-6)');
+    setPH('FinalOB', '129 (7-29)');
+    setPH('FinalOC', '36 (30-35)');
+    setPH('FinalH1', '5 pcs');
+    setPH('FinalH2', '100 pcs');
+    setPH('FinalH3', 'Remainder');
+    setPH('FinalH4', 'Over-spill from H3');
+    return;
+  }
+
+  if(type === 'B738'){
+    setPH('FinalOA', '27 (1-5)');
+    setPH('FinalOB', '132 (6-28)');
+    setPH('FinalOC', '30 (29-33)');
+    setPH('FinalH1', '30 pcs');
+    setPH('FinalH2', '160 pcs');
+    setPH('FinalH3', 'Remainder');
+    setPH('FinalH4', 'Over-spill from H3');
+    return;
+  }
+
+  if(type === 'A320'){
+    setPH('FinalOA', '(1-)');
+    setPH('FinalOB', '132 (6-28)');
+    setPH('FinalOC', '30 (29-33)');
+    // IDs restent FinalH1..H4 même si labels affichent CP1..CP4
+    setPH('FinalH1', '160 pcs');               // CP1
+    setPH('FinalH2', 'Overflow / freight');    // CP2
+    setPH('FinalH3', 'Overflow / freight');    // CP3
+    setPH('FinalH4', 'Not planned');           // CP4
+    return;
+  }
+}
+
+function updateFinalLoadLayout(){
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
+
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  // ✅ CP si : autres compagnies (comme avant) OU FR/RK + A320
+  const useCP = (!isFRRK) || (isFRRK && type === 'A320');
 
   const fieldOf = (id)=>{
     const el = document.getElementById(id);
@@ -2078,10 +2135,12 @@ function updateFinalLoadLayout(){
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
   showField('FinalADULT', isFRRK);
-  setLabel('FinalH1', isFRRK ? 'H1' : 'CP1');
-  setLabel('FinalH2', isFRRK ? 'H2' : 'CP2');
-  setLabel('FinalH3', isFRRK ? 'H3' : 'CP3');
-  setLabel('FinalH4', isFRRK ? 'H4' : 'CP4');
+
+  // ✅ labels H1..H4 => CP1..CP4 si useCP
+  setLabel('FinalH1', useCP ? 'CP1' : 'H1');
+  setLabel('FinalH2', useCP ? 'CP2' : 'H2');
+  setLabel('FinalH3', useCP ? 'CP3' : 'H3');
+  setLabel('FinalH4', useCP ? 'CP4' : 'H4');
 
   // ===== layout =====
   restore();
@@ -2140,7 +2199,6 @@ function updateFinalLoadLayout(){
       if(gbF)    bagsLine.appendChild(gbF);
 
       // ✅ ordre voulu : PAX -> TOB -> ZONES -> BAGS
-      // insertion béton en haut (on insère à l’envers sur firstChild)
       const first = finalGrid.firstChild;
       finalGrid.insertBefore(bagsLine, first);
       finalGrid.insertBefore(zonesLine, bagsLine);
@@ -2149,6 +2207,62 @@ function updateFinalLoadLayout(){
 
       if(paxGridOrig) paxGridOrig.style.display = 'none';
     }
+  }
+
+  // ✅ placeholders après labels/layout (pour coller au type avion)
+  updateFinalPlaceholdersFRRK();
+}
+
+function updateFinalPlaceholdersFRRK(){
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
+
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  const setPH = (id, txt)=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.placeholder = txt || '';
+  };
+
+  // reset par défaut
+  ['FinalOA','FinalOB','FinalOC','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
+  if(!isFRRK) return;
+
+  if(type === 'B38M'){
+    setPH('FinalOA', '32 (1-6)');
+    setPH('FinalOB', '129 (7-29)');
+    setPH('FinalOC', '36 (30-35)');
+    setPH('FinalH1', '5 pcs');
+    setPH('FinalH2', '100 pcs');
+    setPH('FinalH3', 'Remainder');
+    setPH('FinalH4', 'Over-spill from H3');
+    return;
+  }
+
+  if(type === 'B738'){
+    setPH('FinalOA', '27 (1-5)');
+    setPH('FinalOB', '132 (6-28)');
+    setPH('FinalOC', '30 (29-33)');
+    setPH('FinalH1', '30 pcs');
+    setPH('FinalH2', '160 pcs');
+    setPH('FinalH3', 'Remainder');
+    setPH('FinalH4', 'Over-spill from H3');
+    return;
+  }
+
+  if(type === 'A320'){
+    setPH('FinalOA', '(1-)');
+    setPH('FinalOB', '132 (6-28)');
+    setPH('FinalOC', '30 (29-33)');
+
+    // ⚠️ Ici tes labels deviennent CP1..CP4 (via updateFinalLoadLayout),
+    // mais les IDs restent FinalH1..FinalH4, donc on met les placeholders dessus.
+    setPH('FinalH1', '160 pcs');               // CP1
+    setPH('FinalH2', 'Overflow / freight');    // CP2
+    setPH('FinalH3', 'Overflow / freight');    // CP3
+    setPH('FinalH4', 'Not planned');           // CP4
+    return;
   }
 }
 
