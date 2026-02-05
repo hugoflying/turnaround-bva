@@ -363,6 +363,12 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 }
 body.dark #akPopover{ border-color: rgba(255,255,255,.10); }
 
+/* ✅ Quand AK est ouvert : on masque les FAB (LOAD + SETTINGS) */
+body.ak-open #loadFab,
+body.ak-open #settingsFab{
+  display: none !important;
+}
+
 #akBackdrop{
   position: fixed;
   inset: 0;
@@ -4912,6 +4918,13 @@ function shouldOpenFinalLoad(){
 function toggleFinalImage(){
   const box = document.getElementById('finalImageBox');
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+}
+
+function toggleFABs(show){
+  const loadFab = document.getElementById('loadFab');
+  const settingsFab = document.getElementById('settingsFab');
+  if(loadFab) loadFab.style.display = show ? 'inline-flex' : 'none';
+  if(settingsFab) settingsFab.style.display = show ? 'inline-flex' : 'none';
 }
 
 </script>
