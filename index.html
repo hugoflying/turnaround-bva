@@ -984,7 +984,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
           <!-- ✅ ligne LOAD (FR/RK) -->
           <div style="margin-top:10px;">
             <div class="field" style="margin:0;">
-              <label class="label">TOB</label>
+              <label class="label">LOAD</label>
               <input class="input ldm-in" id="PreviTOB_FRRK" type="text" readonly>
             </div>
           </div>
@@ -1978,10 +1978,10 @@ function updateFinalPlaceholdersFRRK(){
     setPH('FinalOB', '60 (11-20)');
     setPH('FinalOC', '60 (21-30)');
     // IDs restent FinalH1..H4 même si labels affichent CP1..CP4
-    setPH('FinalH1', '160 pcs');     // CP1
+    setPH('FinalH1', '160 pcs');               // CP1
     setPH('FinalH2', 'Overflow');    // CP2
     setPH('FinalH3', 'Overflow');    // CP3
-    setPH('FinalH4', 'Not planned'); // CP4
+    setPH('FinalH4', 'Not planned');           // CP4
     return;
   }
 }
@@ -2213,59 +2213,6 @@ function updateFinalLoadLayout(){
   updateFinalPlaceholdersFRRK();
 }
 
-function updateFinalPlaceholdersFRRK(){
-  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
-  const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
-
-  const isFRRK = (cie === 'FR' || cie === 'RK');
-
-  const setPH = (id, txt)=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.placeholder = txt || '';
-  };
-
-  // reset par défaut
-  ['FinalOA','FinalOB','FinalOC','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
-  if(!isFRRK) return;
-
-  if(type === 'B38M'){
-    setPH('FinalOA', '32 (1-6)');
-    setPH('FinalOB', '129 (7-29)');
-    setPH('FinalOC', '36 (30-35)');
-    setPH('FinalH1', '5 pcs');
-    setPH('FinalH2', '100 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
-    return;
-  }
-
-  if(type === 'B738'){
-    setPH('FinalOA', '27 (1-5)');
-    setPH('FinalOB', '132 (6-28)');
-    setPH('FinalOC', '30 (29-33)');
-    setPH('FinalH1', '30 pcs');
-    setPH('FinalH2', '160 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
-    return;
-  }
-
-  if(type === 'A320'){
-    setPH('FinalOA', '60 (1-10)');
-    setPH('FinalOB', '60 (11-20)');
-    setPH('FinalOC', '60 (21-30)');
-
-    // ⚠️ Ici tes labels deviennent CP1..CP4 (via updateFinalLoadLayout),
-    // mais les IDs restent FinalH1..FinalH4, donc on met les placeholders dessus.
-    setPH('FinalH1', '160 pcs');     // CP1
-    setPH('FinalH2', 'Overflow');    // CP2
-    setPH('FinalH3', 'Overflow');    // CP3
-    setPH('FinalH4', 'Not planned'); // CP4
-    return;
-  }
-}
-
 // ===== LOAD PREVI (layout switch) =====
 function updatePreviLoadLayout(){
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
@@ -2293,21 +2240,10 @@ if(!window._cieLayoutHooked){
 }
 
 function updatePreviTOB_FRRK(){
-  const mainTxt = (document.getElementById('PreviPAX_MAIN')?.value || '').trim();
-  const infTxt  = (document.getElementById('PreviPAX_INF')?.value  || '').trim();
+  const main = parseInt(document.getElementById('PreviPAX_MAIN')?.value || '0', 10) || 0;
+  const inf  = parseInt(document.getElementById('PreviPAX_INF')?.value  || '0', 10) || 0;
   const el = document.getElementById('PreviTOB_FRRK');
-  if(!el) return;
-
-  // ✅ si rien saisi -> on n'affiche rien
-  if(mainTxt === '' && infTxt === ''){
-    el.value = '';
-    return;
-  }
-
-  const main = parseInt(mainTxt || '0', 10) || 0;
-  const inf  = parseInt(infTxt  || '0', 10) || 0;
-
-  el.value = `${main} + ${inf}`;
+  if(el) el.value = `${main} + ${inf}`;
 }
 
 function updatePreviTOB(){
@@ -2324,15 +2260,6 @@ function updatePreviTOB(){
   const main = male + female + child;
   const el = document.getElementById('PreviTOB');
   if(el) el.value = `${main} + ${infant}`;
-}
-
-function updateLidGuideVisibility(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
-  const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
-  if(!btn) return;
-
-  const show = (cie === 'FR' || cie === 'RK');
-  btn.style.display = show ? '' : 'none';
 }
 
 /* ===== COUNTDOWN (CD) ===== */
@@ -2739,40 +2666,51 @@ function initForm(){
   const hookStrip = (id, ev='input')=>{
     const el = document.getElementById(id);
     if(!el) return;
-    el.addEventListener(ev, updateInfoStrip);
+    el.addEventListener(ev, ()=>{ updateInfoStrip(); });
   };
 
-  // Champs qui alimentent les cards essentiels (⚠️ PAS Cie/Type/Parking ici pour éviter doublons)
+  // Champs qui alimentent les cards essentiels
   hookStrip('From', 'input');
   hookStrip('To', 'input');
   hookStrip('Immat', 'input');
   hookStrip('NVol', 'input');
+  hookStrip('Cie', 'change');
+  hookStrip('TypeAvion', 'change');
+  hookStrip('Parking', 'change');
 
-  // Parking : label onglet + strip
+  // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateInfoStrip();
   });
 
-  // Cie : label onglet + calculs + strip + règles FR/RK
   document.getElementById('Cie')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateAllCalculations();
     updateInfoStrip();
 
-    updateFinalLoadLayout();       // labels H/CP + layout + placeholders
-    updateLidGuideVisibility();    // bouton LID guide seulement FR/RK
+    updateFinalLoadLayout();          // ✅ labels H/CP + layout
+    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
+    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
   });
 
-  // Type avion : strip + règles FR/RK (layout/placeholders)
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
-    updateFinalLoadLayout();       // labels H/CP + layout + placeholders
+
+    updateFinalLoadLayout();
+    updateFinalPlaceholdersFRRK();
+    updateLidGuideVisibility();
   });
 
-  // Onglet label (déjà géré par hookStrip sur NVol/To mais on garde le label)
-  document.getElementById('NVol')?.addEventListener('input', updateTabLabelInstant);
-  document.getElementById('To')?.addEventListener('input', updateTabLabelInstant);
+  document.getElementById('NVol')?.addEventListener('input', ()=>{
+    updateTabLabelInstant();
+    updateInfoStrip();
+  });
+
+  document.getElementById('To')?.addEventListener('input', ()=>{
+    updateTabLabelInstant();
+    updateInfoStrip();
+  });
 
   setupUppercaseInputs(['NVol','From','To','Immat','BorderControl']);
 
@@ -2825,7 +2763,7 @@ function initForm(){
   // état initial (locks)
   syncAdultGenderLocks();
 
-  // 7) Drag scroll timeline (inchangé)
+  // 7) Drag scroll timeline
   const scroller = document.getElementById('timelineScroll');
   if(scroller){
     let isDown=false, startX=0, startLeft=0;
@@ -2879,6 +2817,7 @@ function initForm(){
   // ✅ état initial UI
   updateInfoStrip();
   updateFinalLoadLayout();
+  updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
 }
 
@@ -3780,7 +3719,7 @@ function setTimeModeUTC(enable, fromInit=false){
 
   const tzLabel = document.getElementById('tzLabel');
   if(tzLabel) tzLabel.textContent = enable ? 'UTC' : 'Locale';
-initForm()
+
   localStorage.setItem('modeUTC', enable ? '1' : '0');
 
   updateAllCalculations();
@@ -4162,26 +4101,18 @@ function openAKPicker(){
   const p = document.getElementById('akPopover');
   const flowSel = document.getElementById('akFlow');
 
-  if(flowSel) flowSel.value = 'DEP'; // reset
-
-  document.body.classList.add('ak-open');   // ✅ active le CSS qui masque les FAB
-  toggleFABs(false);                        // ✅ sécurité (au cas où)
+  if(flowSel) flowSel.value = 'DEP';   // <-- reset ici
 
   if(b) b.style.display = '';
   if(p) p.style.display = 'flex';
-
   loadAKFlights();
 }
 
 function closeAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
-
   if(p) p.style.display = 'none';
   if(b) b.style.display = 'none';
-
-  document.body.classList.remove('ak-open'); // ✅ ré-affiche les FAB
-  toggleFABs(true);                          // ✅ sécurité
 }
 
 async function fetchAK(flow, from, to) {
@@ -4865,6 +4796,22 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === 'Enter') submitRZAModal();
 });
 
+function toggleFABs(show){
+  const loadFab = document.getElementById('loadFab');
+  const settingsFab = document.getElementById('settingsFab');
+  if(loadFab) loadFab.style.display = show ? 'inline-flex' : 'none';
+  if(settingsFab) settingsFab.style.display = show ? 'inline-flex' : 'none';
+}
+
+function updateLidGuideVisibility(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
+  if(!btn) return;
+
+  const show = (cie === 'FR' || cie === 'RK');
+  btn.style.display = show ? '' : 'none';
+}
+
 /* validateForm */
 function validateForm() {
   const val = id => (document.getElementById(id)?.value || "");
@@ -5095,13 +5042,6 @@ function shouldOpenFinalLoad(){
 function toggleFinalImage(){
   const box = document.getElementById('finalImageBox');
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
-}
-
-function toggleFABs(show){
-  const loadFab = document.getElementById('loadFab');
-  const settingsFab = document.getElementById('settingsFab');
-  if(loadFab) loadFab.style.display = show ? 'inline-flex' : 'none';
-  if(settingsFab) settingsFab.style.display = show ? 'inline-flex' : 'none';
 }
 
 </script>
