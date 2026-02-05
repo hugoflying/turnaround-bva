@@ -2422,26 +2422,25 @@ function ensureCountdownRunning(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  const baseOK = !!(sibtTxt && aibtTxt && sobtTxt);
+  // ✅ BVA: AIBT non requis
+  const baseOK = !!(sibtTxt && sobtTxt && (aibtTxt || isBasedAtBVA()));
 
-  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage (donc ça suit si tu modifies AOBT)
+  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage
   if(baseOK && aobtTxt){
     freezeCountdown();
     updateCountdownOnce();
     return;
   }
 
-  // Si base incomplète : on stop + reset
   if(!baseOK){
     stopCountdown(true);
     return;
   }
 
-  // Live
   if(!countdownTimer){
     updateCountdownOnce();
     countdownTimer = setInterval(updateCountdownOnce, 1000);
-  } else {
+  }else{
     updateCountdownOnce();
   }
 }
@@ -2706,7 +2705,6 @@ function initForm(){
   };
 
   // Champs qui alimentent les cards essentiels
-  hookStrip('From', 'input');
   hookStrip('To', 'input');
   hookStrip('Immat', 'input');
   hookStrip('NVol', 'input');
@@ -2726,7 +2724,7 @@ function initForm(){
     updateInfoStrip();
   });
 
-  // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
+  // Label onglet + calculs + strip + règles FR/RK
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateInfoStrip();
@@ -2736,15 +2734,13 @@ function initForm(){
     updateTabLabelInstant();
     updateAllCalculations();
     updateInfoStrip();
-
-    updateFinalLoadLayout();          // ✅ labels H/CP + layout
-    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
-    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
+    updateFinalLoadLayout();
+    updateFinalPlaceholdersFRRK();
+    updateLidGuideVisibility();
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
-
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
@@ -2771,11 +2767,7 @@ function initForm(){
   // 6) Listeners "input" globaux
   [
     'AIBT','SOBT','SIBT','AOBT','CTOT','ArrPNT','ArrPNC','TypeAvion',
-
-    // LOAD (ARR+EXP fusionné)
     'LoadPAX_MAIN','LoadPAX_INF','LoadBAGS','LoadPOIDS',
-
-    // FINAL
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
     'FinalOA','FinalOB','FinalOC','FinalOD',
     'FinalBAGS','FinalPOIDS','FinalGB'
@@ -2788,17 +2780,12 @@ function initForm(){
     });
   });
 
-  [
-    // H-bags seulement pour FINAL
-    'FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4',
-    'FinalGB'
-  ].forEach(id=>{
+  ['FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4','FinalGB'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
     el.addEventListener('input', updateAllCalculations);
   });
 
-  // ✅ LOCKS MALE/FEMALE/ADULT
   ['FinalMALE','FinalFEMALE','FinalADULT'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
@@ -2808,14 +2795,12 @@ function initForm(){
     });
   });
 
-  // état initial (locks)
   syncAdultGenderLocks();
 
   // 7) Drag scroll timeline
   const scroller = document.getElementById('timelineScroll');
   if(scroller){
     let isDown=false, startX=0, startLeft=0;
-
     scroller.addEventListener('mousedown', e=>{
       isDown=true; startX=e.clientX; startLeft=scroller.scrollLeft;
     });
@@ -2827,23 +2812,16 @@ function initForm(){
       scroller.scrollLeft = startLeft - dx;
       e.preventDefault();
     });
-
-    ['wheel','mousedown','touchstart','keydown','scroll'].forEach(ev=>{
-      scroller.addEventListener(ev, ()=>{ timelineUserScrolled = true; }, {passive:true});
-    });
   }
 
-  // 8) Sélection onglet APRÈS que le DOM soit prêt
+  // 8) Sélection onglet
   const lastTab = String(localStorage.getItem('lastTabId') || '');
   const tabsLS  = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   const tabs = Array.isArray(tabsLS) ? tabsLS.map(String) : [];
 
   if(tabs.length > 0){
-    if(lastTab && tabs.includes(lastTab)){
-      switchTab(lastTab);
-    }else{
-      switchTab(tabs[0]);
-    }
+    if(lastTab && tabs.includes(lastTab)) switchTab(lastTab);
+    else switchTab(tabs[0]);
   }else{
     currentTabId = null;
     stopCountdown();
@@ -2851,7 +2829,6 @@ function initForm(){
 
   // 9) Final init
   setDefaultDateToTodayIfEmpty();
-
   updateHeaderOffset();
   window.addEventListener('resize', ()=>{
     updateHeaderOffset();
@@ -2867,6 +2844,9 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
+
+  // ✅ IMPORTANT : lance un calcul complet au démarrage
+  updateAllCalculations();
 }
 
 function updateInfoStrip(){
@@ -3428,6 +3408,7 @@ function updateTOBT() {
     return;
   }
 
+  // ✅ si AIBT vide, on prend SIBT (et pour BVA on s'en fiche)
   const AIBT = aibttxt ? parseHHMM(aibttxt) : SIBT;
   if (AIBT == null) {
     outEl.textContent = '--:--';
@@ -3436,7 +3417,6 @@ function updateTOBT() {
     return;
   }
 
-  // diff signé (minutes), robuste minuit : résultat dans [-720..+720]
   const diffSigned = (t, ref) => {
     let d = t - ref;
     if (d > 720) d -= 1440;
@@ -3444,7 +3424,6 @@ function updateTOBT() {
     return d;
   };
 
-  // Temps "étendus" ancrés sur SIBT (comparaisons correctes même au passage minuit)
   const SIBT_ext = SIBT;
   const AIBT_ext = SIBT_ext + diffSigned(AIBT, SIBT);
   const SOBT_ext = SIBT_ext + diffSigned(SOBT, SIBT);
@@ -3458,32 +3437,32 @@ function updateTOBT() {
 
   let TOBT_raw_ext = null;
 
-  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
-  if (!isDelayed) {
+  // ✅✈️ BVA : avion basé -> pas "en retard", TOBT = SOBT (seul CTOT peut bouger)
+  if(isBasedAtBVA()){
     TOBT_raw_ext = SOBT_ext;
-  } else {
-    // ===== FR / RK : TOBT = max(SOBT, AIBT + turn)
-    if (cie === 'FR' || cie === 'RK') {
-      const turn = crewChange ? 35 : 25;
-      const candidate = AIBT_ext + turn;
-      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
-    }
-
-    // ===== W4 / W6 : TOBT = AIBT + 30/35 selon type
-    else if (cie === 'W4' || cie === 'W6') {
-      const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
-      const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30; // A320/A20N => 30, défaut => 30
-      TOBT_raw_ext = AIBT_ext + turn;
-    }
-
-    // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
-    else {
-      const rot = SOBT_ext - SIBT_ext; // signé (gère minuit / rotation inversée)
-      TOBT_raw_ext = AIBT_ext + rot;
+  }
+  else {
+    // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
+    if (!isDelayed) {
+      TOBT_raw_ext = SOBT_ext;
+    } else {
+      if (cie === 'FR' || cie === 'RK') {
+        const turn = crewChange ? 35 : 25;
+        const candidate = AIBT_ext + turn;
+        TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+      }
+      else if (cie === 'W4' || cie === 'W6') {
+        const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
+        const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
+        TOBT_raw_ext = AIBT_ext + turn;
+      }
+      else {
+        const rot = SOBT_ext - SIBT_ext;
+        TOBT_raw_ext = AIBT_ext + rot;
+      }
     }
   }
 
-  // Raw minutes 0..1439
   let TOBT_raw = ((TOBT_raw_ext % 1440) + 1440) % 1440;
   window._tobtRawMins = TOBT_raw;
 
@@ -3493,7 +3472,6 @@ function updateTOBT() {
   if (ctottxt) {
     const CTOT = parseHHMM(ctottxt);
     if (CTOT != null) {
-      // CTOT étendu autour de TOBT (pour gérer minuit)
       const TOBT_ref = ((TOBT_raw_ext % 1440) + 1440) % 1440;
       const CTOT_ext = TOBT_raw_ext + diffSigned(CTOT, TOBT_ref);
 
