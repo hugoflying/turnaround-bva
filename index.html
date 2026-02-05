@@ -984,7 +984,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
           <!-- ✅ ligne LOAD (FR/RK) -->
           <div style="margin-top:10px;">
             <div class="field" style="margin:0;">
-              <label class="label">LOAD</label>
+              <label class="label">TOB</label>
               <input class="input ldm-in" id="PreviTOB_FRRK" type="text" readonly>
             </div>
           </div>
@@ -2240,10 +2240,21 @@ if(!window._cieLayoutHooked){
 }
 
 function updatePreviTOB_FRRK(){
-  const main = parseInt(document.getElementById('PreviPAX_MAIN')?.value || '0', 10) || 0;
-  const inf  = parseInt(document.getElementById('PreviPAX_INF')?.value  || '0', 10) || 0;
+  const mainTxt = (document.getElementById('PreviPAX_MAIN')?.value || '').trim();
+  const infTxt  = (document.getElementById('PreviPAX_INF')?.value  || '').trim();
   const el = document.getElementById('PreviTOB_FRRK');
-  if(el) el.value = `${main} + ${inf}`;
+  if(!el) return;
+
+  // ✅ si rien saisi -> on n'affiche rien
+  if(mainTxt === '' && infTxt === ''){
+    el.value = '';
+    return;
+  }
+
+  const main = parseInt(mainTxt || '0', 10) || 0;
+  const inf  = parseInt(infTxt  || '0', 10) || 0;
+
+  el.value = `${main} + ${inf}`;
 }
 
 function updatePreviTOB(){
