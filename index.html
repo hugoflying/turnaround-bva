@@ -2739,51 +2739,40 @@ function initForm(){
   const hookStrip = (id, ev='input')=>{
     const el = document.getElementById(id);
     if(!el) return;
-    el.addEventListener(ev, ()=>{ updateInfoStrip(); });
+    el.addEventListener(ev, updateInfoStrip);
   };
 
-  // Champs qui alimentent les cards essentiels
+  // Champs qui alimentent les cards essentiels (⚠️ PAS Cie/Type/Parking ici pour éviter doublons)
   hookStrip('From', 'input');
   hookStrip('To', 'input');
   hookStrip('Immat', 'input');
   hookStrip('NVol', 'input');
-  hookStrip('Cie', 'change');
-  hookStrip('TypeAvion', 'change');
-  hookStrip('Parking', 'change');
 
-  // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
+  // Parking : label onglet + strip
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateInfoStrip();
   });
 
+  // Cie : label onglet + calculs + strip + règles FR/RK
   document.getElementById('Cie')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateAllCalculations();
     updateInfoStrip();
 
-    updateFinalLoadLayout();          // ✅ labels H/CP + layout
-    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
-    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
+    updateFinalLoadLayout();       // labels H/CP + layout + placeholders
+    updateLidGuideVisibility();    // bouton LID guide seulement FR/RK
   });
 
+  // Type avion : strip + règles FR/RK (layout/placeholders)
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
-
-    updateFinalLoadLayout();
-    updateFinalPlaceholdersFRRK();
-    updateLidGuideVisibility();
+    updateFinalLoadLayout();       // labels H/CP + layout + placeholders
   });
 
-  document.getElementById('NVol')?.addEventListener('input', ()=>{
-    updateTabLabelInstant();
-    updateInfoStrip();
-  });
-
-  document.getElementById('To')?.addEventListener('input', ()=>{
-    updateTabLabelInstant();
-    updateInfoStrip();
-  });
+  // Onglet label (déjà géré par hookStrip sur NVol/To mais on garde le label)
+  document.getElementById('NVol')?.addEventListener('input', updateTabLabelInstant);
+  document.getElementById('To')?.addEventListener('input', updateTabLabelInstant);
 
   setupUppercaseInputs(['NVol','From','To','Immat','BorderControl']);
 
@@ -2836,7 +2825,7 @@ function initForm(){
   // état initial (locks)
   syncAdultGenderLocks();
 
-  // 7) Drag scroll timeline
+  // 7) Drag scroll timeline (inchangé)
   const scroller = document.getElementById('timelineScroll');
   if(scroller){
     let isDown=false, startX=0, startLeft=0;
@@ -2890,7 +2879,6 @@ function initForm(){
   // ✅ état initial UI
   updateInfoStrip();
   updateFinalLoadLayout();
-  updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
 }
 
