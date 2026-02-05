@@ -1958,7 +1958,7 @@ function updateFinalPlaceholdersFRRK(){
     setPH('FinalH1', '5 pcs');
     setPH('FinalH2', '100 pcs');
     setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill from H3');
+    setPH('FinalH4', 'Over-spill H3');
     return;
   }
 
@@ -1969,19 +1969,19 @@ function updateFinalPlaceholdersFRRK(){
     setPH('FinalH1', '30 pcs');
     setPH('FinalH2', '160 pcs');
     setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill from H3');
+    setPH('FinalH4', 'Over-spill H3');
     return;
   }
 
   if(type === 'A320'){
-    setPH('FinalOA', '(1-)');
-    setPH('FinalOB', '132 (6-28)');
-    setPH('FinalOC', '30 (29-33)');
+    setPH('FinalOA', '60 (1-10)');
+    setPH('FinalOB', '60 (11-20)');
+    setPH('FinalOC', '60 (21-30)');
     // IDs restent FinalH1..H4 même si labels affichent CP1..CP4
-    setPH('FinalH1', '160 pcs');               // CP1
-    setPH('FinalH2', 'Overflow / freight');    // CP2
-    setPH('FinalH3', 'Overflow / freight');    // CP3
-    setPH('FinalH4', 'Not planned');           // CP4
+    setPH('FinalH1', '160 pcs');     // CP1
+    setPH('FinalH2', 'Overflow');    // CP2
+    setPH('FinalH3', 'Overflow');    // CP3
+    setPH('FinalH4', 'Not planned'); // CP4
     return;
   }
 }
