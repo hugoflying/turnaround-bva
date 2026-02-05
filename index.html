@@ -2714,6 +2714,18 @@ function initForm(){
   hookStrip('TypeAvion', 'change');
   hookStrip('Parking', 'change');
 
+  // ✅ FROM : recalcul complet (BVA => TOBT/CD)
+  document.getElementById('From')?.addEventListener('input', ()=>{
+    updateTabLabelInstant();
+    updateAllCalculations();
+    updateInfoStrip();
+  });
+  document.getElementById('From')?.addEventListener('change', ()=>{
+    updateTabLabelInstant();
+    updateAllCalculations();
+    updateInfoStrip();
+  });
+
   // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
