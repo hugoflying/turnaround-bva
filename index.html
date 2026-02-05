@@ -2326,6 +2326,15 @@ function updatePreviTOB(){
   if(el) el.value = `${main} + ${infant}`;
 }
 
+function updateLidGuideVisibility(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
+  if(!btn) return;
+
+  const show = (cie === 'FR' || cie === 'RK');
+  btn.style.display = show ? '' : 'none';
+}
+
 /* ===== COUNTDOWN (CD) ===== */
 let countdownTimer = null;
 
@@ -3792,15 +3801,6 @@ initForm()
   if(document.getElementById('akPopover')?.style.display !== 'none'){
     loadAKFlights();
   }
-}
-
-function updateLidGuideVisibility(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
-  const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
-  if(!btn) return;
-
-  const show = (cie === 'FR' || cie === 'RK');
-  btn.style.display = show ? '' : 'none';
 }
 
 /* Popup */
