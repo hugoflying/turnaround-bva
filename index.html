@@ -2601,14 +2601,43 @@ function initForm(){
   attachAutoSave();
   window.addEventListener('beforeunload', saveCurrentTabData);
 
-  // 4) Listeners (inchangé)
-  document.getElementById('Parking')?.addEventListener('change', updateTabLabelInstant);
+  // 4) Listeners INFO VOL -> bandeau essentiel instant + label onglet
+  const hookStrip = (id, ev='input')=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener(ev, ()=>{ updateInfoStrip(); });
+  };
+
+  // Champs qui alimentent les cards essentiels
+  hookStrip('From', 'input');
+  hookStrip('To', 'input');
+  hookStrip('Immat', 'input');
+  hookStrip('NVol', 'input');
+  hookStrip('Cie', 'change');
+  hookStrip('TypeAvion', 'change');
+  hookStrip('Parking', 'change');
+
+  // Label onglet + calculs (comportement existant) + strip
+  document.getElementById('Parking')?.addEventListener('change', ()=>{
+    updateTabLabelInstant();
+    updateInfoStrip();
+  });
+
   document.getElementById('Cie')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateAllCalculations();
+    updateInfoStrip();
   });
-  document.getElementById('NVol')?.addEventListener('input', updateTabLabelInstant);
-  document.getElementById('To')?.addEventListener('input', updateTabLabelInstant);
+
+  document.getElementById('NVol')?.addEventListener('input', ()=>{
+    updateTabLabelInstant();
+    updateInfoStrip();
+  });
+
+  document.getElementById('To')?.addEventListener('input', ()=>{
+    updateTabLabelInstant();
+    updateInfoStrip();
+  });
 
   setupUppercaseInputs(['NVol','From','To','Immat','BorderControl']);
 
@@ -2711,6 +2740,9 @@ function initForm(){
   renderTimeline();
   refreshUIForTabs();
   updateFinalTOB();
+
+  // ✅ au cas où l’onglet vient d’être restauré (strip à jour tout de suite)
+  updateInfoStrip();
 }
 
 function updateInfoStrip(){
