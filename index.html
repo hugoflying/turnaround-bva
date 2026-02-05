@@ -2252,16 +2252,16 @@ function updateFinalPlaceholdersFRRK(){
   }
 
   if(type === 'A320'){
-    setPH('FinalOA', '(1-)');
-    setPH('FinalOB', '132 (6-28)');
-    setPH('FinalOC', '30 (29-33)');
+    setPH('FinalOA', '60 (1-10)');
+    setPH('FinalOB', '60 (11-20)');
+    setPH('FinalOC', '60 (21-30)');
 
     // ⚠️ Ici tes labels deviennent CP1..CP4 (via updateFinalLoadLayout),
     // mais les IDs restent FinalH1..FinalH4, donc on met les placeholders dessus.
-    setPH('FinalH1', '160 pcs');               // CP1
-    setPH('FinalH2', 'Overflow / freight');    // CP2
-    setPH('FinalH3', 'Overflow / freight');    // CP3
-    setPH('FinalH4', 'Not planned');           // CP4
+    setPH('FinalH1', '160 pcs');     // CP1
+    setPH('FinalH2', 'Overflow');    // CP2
+    setPH('FinalH3', 'Overflow');    // CP3
+    setPH('FinalH4', 'Not planned'); // CP4
     return;
   }
 }
