@@ -1675,11 +1675,6 @@ function setValAK(id, v){
   settingFromAK = false;
 }
 
-function isBasedAtBVA(){
-  const from = (document.getElementById("From").value || "").trim().toUpperCase();
-  return from === "BVA";
-}
-
 function setTimeFromISOAK(id, iso){
   if(!iso) return;
   const d = new Date(iso);
@@ -2323,35 +2318,25 @@ function updateCountdownOnce(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  // ✅ minimum requis
-  if(!sobtTxt || !sibtTxt){
-    el.textContent = '--:--';
-    el.classList.remove('cd-over');
-    return;
-  }
-
-  // ✈️ vol normal → AIBT requis
-  if(!aibtTxt && !isBasedAtBVA()){
+  if(!aibtTxt || !sobtTxt || !sibtTxt){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
   }
 
   const SIBT = parseHHMM(sibtTxt);
+  const AIBT = parseHHMM(aibtTxt);
   const SOBT = parseHHMM(sobtTxt);
-  const AIBT = aibtTxt ? parseHHMM(aibtTxt) : null;
-
-  if(SIBT == null || SOBT == null){
+  if(SIBT == null || AIBT == null || SOBT == null){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
   }
 
-  // ===== 🎯 CIBLE CD =====
+  // cible = SOBT si retard AIBT<=SIBT, sinon TOBT adj
   let targetMin = null;
-
-  // ✈️ CAS AVION BASE BVA → cible = TOBT direct
-  if(isBasedAtBVA()){
+  if (AIBT <= SIBT) targetMin = SOBT;
+  else {
     const tobt = window._tobtAdjMins;
     if(tobt == null){
       el.textContent = '--:--';
@@ -2360,21 +2345,8 @@ function updateCountdownOnce(){
     }
     targetMin = tobt;
   }
-  // ✈️ CAS NORMAL
-  else{
-    if (AIBT <= SIBT) targetMin = SOBT;
-    else {
-      const tobt = window._tobtAdjMins;
-      if(tobt == null){
-        el.textContent = '--:--';
-        el.classList.remove('cd-over');
-        return;
-      }
-      targetMin = tobt;
-    }
-  }
 
-  // ===== CAS AOBT : figé =====
+  // ===== CAS AOBT : on fige MAIS on recalcule selon AOBT =====
   if(aobtTxt){
     const AOBT = parseHHMM(aobtTxt);
     if(AOBT == null){
@@ -2383,6 +2355,7 @@ function updateCountdownOnce(){
       return;
     }
 
+    // diff = AOBT - cible (signé, gère minuit)
     let diffMin = AOBT - targetMin;
     if(diffMin > 720) diffMin -= 1440;
     if(diffMin < -720) diffMin += 1440;
@@ -2394,11 +2367,13 @@ function updateCountdownOnce(){
     const ss = abs % 60;
 
     el.textContent = `${sign}${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
+    // rouge si + (retard)
     el.classList.toggle('cd-over', totalSeconds > 0);
     return;
   }
 
-  // ===== CAS LIVE =====
+  // ===== CAS NORMAL : live avec NOW (décompte puis +) =====
   const now = getNowMinutes();
 
   let diffMin = targetMin - now.mins;
@@ -2407,13 +2382,13 @@ function updateCountdownOnce(){
 
   const remainingSeconds = diffMin * 60 - now.secs;
 
-  const sign = remainingSeconds <= 0 ? '+' : '';
+  const sign = remainingSeconds <= 0 ? '+' : ''; // quand on dépasse => +
   const abs = Math.abs(remainingSeconds);
   const mm = Math.floor(abs / 60);
   const ss = abs % 60;
 
   el.textContent = `${sign}${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-  el.classList.toggle('cd-over', remainingSeconds < 0);
+  el.classList.toggle('cd-over', remainingSeconds < 0); // rouge quand on est passé à +
 }
 
 function ensureCountdownRunning(){
@@ -2422,25 +2397,26 @@ function ensureCountdownRunning(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  // ✅ BVA: AIBT non requis
-  const baseOK = !!(sibtTxt && sobtTxt && (aibtTxt || isBasedAtBVA()));
+  const baseOK = !!(sibtTxt && aibtTxt && sobtTxt);
 
-  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage
+  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage (donc ça suit si tu modifies AOBT)
   if(baseOK && aobtTxt){
     freezeCountdown();
     updateCountdownOnce();
     return;
   }
 
+  // Si base incomplète : on stop + reset
   if(!baseOK){
     stopCountdown(true);
     return;
   }
 
+  // Live
   if(!countdownTimer){
     updateCountdownOnce();
     countdownTimer = setInterval(updateCountdownOnce, 1000);
-  }else{
+  } else {
     updateCountdownOnce();
   }
 }
@@ -2705,6 +2681,7 @@ function initForm(){
   };
 
   // Champs qui alimentent les cards essentiels
+  hookStrip('From', 'input');
   hookStrip('To', 'input');
   hookStrip('Immat', 'input');
   hookStrip('NVol', 'input');
@@ -2712,19 +2689,7 @@ function initForm(){
   hookStrip('TypeAvion', 'change');
   hookStrip('Parking', 'change');
 
-  // ✅ FROM : recalcul complet (BVA => TOBT/CD)
-  document.getElementById('From')?.addEventListener('input', ()=>{
-    updateTabLabelInstant();
-    updateAllCalculations();
-    updateInfoStrip();
-  });
-  document.getElementById('From')?.addEventListener('change', ()=>{
-    updateTabLabelInstant();
-    updateAllCalculations();
-    updateInfoStrip();
-  });
-
-  // Label onglet + calculs + strip + règles FR/RK
+  // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateInfoStrip();
@@ -2734,13 +2699,15 @@ function initForm(){
     updateTabLabelInstant();
     updateAllCalculations();
     updateInfoStrip();
-    updateFinalLoadLayout();
-    updateFinalPlaceholdersFRRK();
-    updateLidGuideVisibility();
+
+    updateFinalLoadLayout();          // ✅ labels H/CP + layout
+    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
+    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
+
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
@@ -2767,7 +2734,11 @@ function initForm(){
   // 6) Listeners "input" globaux
   [
     'AIBT','SOBT','SIBT','AOBT','CTOT','ArrPNT','ArrPNC','TypeAvion',
+
+    // LOAD (ARR+EXP fusionné)
     'LoadPAX_MAIN','LoadPAX_INF','LoadBAGS','LoadPOIDS',
+
+    // FINAL
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
     'FinalOA','FinalOB','FinalOC','FinalOD',
     'FinalBAGS','FinalPOIDS','FinalGB'
@@ -2780,12 +2751,17 @@ function initForm(){
     });
   });
 
-  ['FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4','FinalGB'].forEach(id=>{
+  [
+    // H-bags seulement pour FINAL
+    'FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4',
+    'FinalGB'
+  ].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
     el.addEventListener('input', updateAllCalculations);
   });
 
+  // ✅ LOCKS MALE/FEMALE/ADULT
   ['FinalMALE','FinalFEMALE','FinalADULT'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
@@ -2795,12 +2771,14 @@ function initForm(){
     });
   });
 
+  // état initial (locks)
   syncAdultGenderLocks();
 
   // 7) Drag scroll timeline
   const scroller = document.getElementById('timelineScroll');
   if(scroller){
     let isDown=false, startX=0, startLeft=0;
+
     scroller.addEventListener('mousedown', e=>{
       isDown=true; startX=e.clientX; startLeft=scroller.scrollLeft;
     });
@@ -2812,16 +2790,23 @@ function initForm(){
       scroller.scrollLeft = startLeft - dx;
       e.preventDefault();
     });
+
+    ['wheel','mousedown','touchstart','keydown','scroll'].forEach(ev=>{
+      scroller.addEventListener(ev, ()=>{ timelineUserScrolled = true; }, {passive:true});
+    });
   }
 
-  // 8) Sélection onglet
+  // 8) Sélection onglet APRÈS que le DOM soit prêt
   const lastTab = String(localStorage.getItem('lastTabId') || '');
   const tabsLS  = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   const tabs = Array.isArray(tabsLS) ? tabsLS.map(String) : [];
 
   if(tabs.length > 0){
-    if(lastTab && tabs.includes(lastTab)) switchTab(lastTab);
-    else switchTab(tabs[0]);
+    if(lastTab && tabs.includes(lastTab)){
+      switchTab(lastTab);
+    }else{
+      switchTab(tabs[0]);
+    }
   }else{
     currentTabId = null;
     stopCountdown();
@@ -2829,6 +2814,7 @@ function initForm(){
 
   // 9) Final init
   setDefaultDateToTodayIfEmpty();
+
   updateHeaderOffset();
   window.addEventListener('resize', ()=>{
     updateHeaderOffset();
@@ -2844,9 +2830,6 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
-
-  // ✅ IMPORTANT : lance un calcul complet au démarrage
-  updateAllCalculations();
 }
 
 function updateInfoStrip(){
@@ -3299,16 +3282,9 @@ function updateLIDVisibility(){
 
 /* CALCULS */
 function updateAllCalculations() {
-
-  // ✅ d’abord fixer les heures “source”
+  updateTimers();
   updateSOBTDefault();
   updateTOBT();
-
-  // ✅ ensuite calculer/afficher les timers + lancer CD
-  updateTimers();
-  ensureCountdownRunning();   // (ta logique BVA/AIBT doit être dedans)
-
-  // le reste inchangé
   updateDLCode();
   redistributeDL();
   updateLID();
@@ -3320,8 +3296,10 @@ function updateAllCalculations() {
   updateArrExpWeightIfNeeded();
   updateFinalWeightIfNeeded();
 
+  ensureCountdownRunning();
   renderTimeline();
   updateHeaderOffset();
+
   updateInfoStrip();
 }
 
@@ -3408,7 +3386,6 @@ function updateTOBT() {
     return;
   }
 
-  // ✅ si AIBT vide, on prend SIBT (et pour BVA on s'en fiche)
   const AIBT = aibttxt ? parseHHMM(aibttxt) : SIBT;
   if (AIBT == null) {
     outEl.textContent = '--:--';
@@ -3417,6 +3394,7 @@ function updateTOBT() {
     return;
   }
 
+  // diff signé (minutes), robuste minuit : résultat dans [-720..+720]
   const diffSigned = (t, ref) => {
     let d = t - ref;
     if (d > 720) d -= 1440;
@@ -3424,6 +3402,7 @@ function updateTOBT() {
     return d;
   };
 
+  // Temps "étendus" ancrés sur SIBT (comparaisons correctes même au passage minuit)
   const SIBT_ext = SIBT;
   const AIBT_ext = SIBT_ext + diffSigned(AIBT, SIBT);
   const SOBT_ext = SIBT_ext + diffSigned(SOBT, SIBT);
@@ -3437,32 +3416,32 @@ function updateTOBT() {
 
   let TOBT_raw_ext = null;
 
-  // ✅✈️ BVA : avion basé -> pas "en retard", TOBT = SOBT (seul CTOT peut bouger)
-  if(isBasedAtBVA()){
+  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
+  if (!isDelayed) {
     TOBT_raw_ext = SOBT_ext;
-  }
-  else {
-    // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
-    if (!isDelayed) {
-      TOBT_raw_ext = SOBT_ext;
-    } else {
-      if (cie === 'FR' || cie === 'RK') {
-        const turn = crewChange ? 35 : 25;
-        const candidate = AIBT_ext + turn;
-        TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
-      }
-      else if (cie === 'W4' || cie === 'W6') {
-        const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
-        const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
-        TOBT_raw_ext = AIBT_ext + turn;
-      }
-      else {
-        const rot = SOBT_ext - SIBT_ext;
-        TOBT_raw_ext = AIBT_ext + rot;
-      }
+  } else {
+    // ===== FR / RK : TOBT = max(SOBT, AIBT + turn)
+    if (cie === 'FR' || cie === 'RK') {
+      const turn = crewChange ? 35 : 25;
+      const candidate = AIBT_ext + turn;
+      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+    }
+
+    // ===== W4 / W6 : TOBT = AIBT + 30/35 selon type
+    else if (cie === 'W4' || cie === 'W6') {
+      const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
+      const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30; // A320/A20N => 30, défaut => 30
+      TOBT_raw_ext = AIBT_ext + turn;
+    }
+
+    // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
+    else {
+      const rot = SOBT_ext - SIBT_ext; // signé (gère minuit / rotation inversée)
+      TOBT_raw_ext = AIBT_ext + rot;
     }
   }
 
+  // Raw minutes 0..1439
   let TOBT_raw = ((TOBT_raw_ext % 1440) + 1440) % 1440;
   window._tobtRawMins = TOBT_raw;
 
@@ -3472,6 +3451,7 @@ function updateTOBT() {
   if (ctottxt) {
     const CTOT = parseHHMM(ctottxt);
     if (CTOT != null) {
+      // CTOT étendu autour de TOBT (pour gérer minuit)
       const TOBT_ref = ((TOBT_raw_ext % 1440) + 1440) % 1440;
       const CTOT_ext = TOBT_raw_ext + diffSigned(CTOT, TOBT_ref);
 
