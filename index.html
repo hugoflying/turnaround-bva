@@ -2731,7 +2731,7 @@ function initForm(){
   hookStrip('TypeAvion', 'change');
   hookStrip('Parking', 'change');
 
-  // Label onglet + calculs (comportement existant) + strip
+  // Label onglet + calculs + strip + règles FR/RK (layout/placeholders/bouton)
   document.getElementById('Parking')?.addEventListener('change', ()=>{
     updateTabLabelInstant();
     updateInfoStrip();
@@ -2741,6 +2741,18 @@ function initForm(){
     updateTabLabelInstant();
     updateAllCalculations();
     updateInfoStrip();
+
+    updateFinalLoadLayout();          // ✅ labels H/CP + layout
+    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
+    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
+  });
+
+  document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
+    updateInfoStrip();
+
+    updateFinalLoadLayout();
+    updateFinalPlaceholdersFRRK();
+    updateLidGuideVisibility();
   });
 
   document.getElementById('NVol')?.addEventListener('input', ()=>{
@@ -2755,13 +2767,13 @@ function initForm(){
 
   setupUppercaseInputs(['NVol','From','To','Immat','BorderControl']);
 
-  // 5) Modes persistés (inchangé)
+  // 5) Modes persistés
   const storedDark = (localStorage.getItem('modeDark')||'0') === '1';
   const storedUTC  = (localStorage.getItem('modeUTC')||'0') === '1';
   setDarkMode(storedDark, true);
   setTimeModeUTC(storedUTC, true);
 
-  // 6) Listeners "input" globaux (inchangé)
+  // 6) Listeners "input" globaux
   [
     'AIBT','SOBT','SIBT','AOBT','CTOT','ArrPNT','ArrPNC','TypeAvion',
 
@@ -2791,7 +2803,7 @@ function initForm(){
     el.addEventListener('input', updateAllCalculations);
   });
 
-  // ✅ LOCKS MALE/FEMALE/ADULT (HORS DU if(scroller) !)
+  // ✅ LOCKS MALE/FEMALE/ADULT
   ['FinalMALE','FinalFEMALE','FinalADULT'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
@@ -2804,7 +2816,7 @@ function initForm(){
   // état initial (locks)
   syncAdultGenderLocks();
 
-  // 7) Drag scroll timeline (inchangé)
+  // 7) Drag scroll timeline
   const scroller = document.getElementById('timelineScroll');
   if(scroller){
     let isDown=false, startX=0, startLeft=0;
@@ -2842,7 +2854,7 @@ function initForm(){
     stopCountdown();
   }
 
-  // 9) Final init (inchangé)
+  // 9) Final init
   setDefaultDateToTodayIfEmpty();
 
   updateHeaderOffset();
@@ -2855,8 +2867,11 @@ function initForm(){
   refreshUIForTabs();
   updateFinalTOB();
 
-  // ✅ au cas où l’onglet vient d’être restauré (strip à jour tout de suite)
+  // ✅ état initial UI
   updateInfoStrip();
+  updateFinalLoadLayout();
+  updateFinalPlaceholdersFRRK();
+  updateLidGuideVisibility();
 }
 
 function updateInfoStrip(){
@@ -3757,7 +3772,7 @@ function setTimeModeUTC(enable, fromInit=false){
 
   const tzLabel = document.getElementById('tzLabel');
   if(tzLabel) tzLabel.textContent = enable ? 'UTC' : 'Locale';
-
+initForm()
   localStorage.setItem('modeUTC', enable ? '1' : '0');
 
   updateAllCalculations();
@@ -3766,6 +3781,15 @@ function setTimeModeUTC(enable, fromInit=false){
   if(document.getElementById('akPopover')?.style.display !== 'none'){
     loadAKFlights();
   }
+}
+
+function updateLidGuideVisibility(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
+  if(!btn) return;
+
+  const show = (cie === 'FR' || cie === 'RK');
+  btn.style.display = show ? '' : 'none';
 }
 
 /* Popup */
