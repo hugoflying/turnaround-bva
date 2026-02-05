@@ -1675,6 +1675,11 @@ function setValAK(id, v){
   settingFromAK = false;
 }
 
+function isBasedAtBVA(){
+  const from = (document.getElementById("From").value || "").trim().toUpperCase();
+  return from === "BVA";
+}
+
 function setTimeFromISOAK(id, iso){
   if(!iso) return;
   const d = new Date(iso);
@@ -2318,25 +2323,35 @@ function updateCountdownOnce(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  if(!aibtTxt || !sobtTxt || !sibtTxt){
+  // ✅ minimum requis
+  if(!sobtTxt || !sibtTxt){
+    el.textContent = '--:--';
+    el.classList.remove('cd-over');
+    return;
+  }
+
+  // ✈️ vol normal → AIBT requis
+  if(!aibtTxt && !isBasedAtBVA()){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
   }
 
   const SIBT = parseHHMM(sibtTxt);
-  const AIBT = parseHHMM(aibtTxt);
   const SOBT = parseHHMM(sobtTxt);
-  if(SIBT == null || AIBT == null || SOBT == null){
+  const AIBT = aibtTxt ? parseHHMM(aibtTxt) : null;
+
+  if(SIBT == null || SOBT == null){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
   }
 
-  // cible = SOBT si retard AIBT<=SIBT, sinon TOBT adj
+  // ===== 🎯 CIBLE CD =====
   let targetMin = null;
-  if (AIBT <= SIBT) targetMin = SOBT;
-  else {
+
+  // ✈️ CAS AVION BASE BVA → cible = TOBT direct
+  if(isBasedAtBVA()){
     const tobt = window._tobtAdjMins;
     if(tobt == null){
       el.textContent = '--:--';
@@ -2345,8 +2360,21 @@ function updateCountdownOnce(){
     }
     targetMin = tobt;
   }
+  // ✈️ CAS NORMAL
+  else{
+    if (AIBT <= SIBT) targetMin = SOBT;
+    else {
+      const tobt = window._tobtAdjMins;
+      if(tobt == null){
+        el.textContent = '--:--';
+        el.classList.remove('cd-over');
+        return;
+      }
+      targetMin = tobt;
+    }
+  }
 
-  // ===== CAS AOBT : on fige MAIS on recalcule selon AOBT =====
+  // ===== CAS AOBT : figé =====
   if(aobtTxt){
     const AOBT = parseHHMM(aobtTxt);
     if(AOBT == null){
@@ -2355,7 +2383,6 @@ function updateCountdownOnce(){
       return;
     }
 
-    // diff = AOBT - cible (signé, gère minuit)
     let diffMin = AOBT - targetMin;
     if(diffMin > 720) diffMin -= 1440;
     if(diffMin < -720) diffMin += 1440;
@@ -2367,13 +2394,11 @@ function updateCountdownOnce(){
     const ss = abs % 60;
 
     el.textContent = `${sign}${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-
-    // rouge si + (retard)
     el.classList.toggle('cd-over', totalSeconds > 0);
     return;
   }
 
-  // ===== CAS NORMAL : live avec NOW (décompte puis +) =====
+  // ===== CAS LIVE =====
   const now = getNowMinutes();
 
   let diffMin = targetMin - now.mins;
@@ -2382,13 +2407,13 @@ function updateCountdownOnce(){
 
   const remainingSeconds = diffMin * 60 - now.secs;
 
-  const sign = remainingSeconds <= 0 ? '+' : ''; // quand on dépasse => +
+  const sign = remainingSeconds <= 0 ? '+' : '';
   const abs = Math.abs(remainingSeconds);
   const mm = Math.floor(abs / 60);
   const ss = abs % 60;
 
   el.textContent = `${sign}${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-  el.classList.toggle('cd-over', remainingSeconds < 0); // rouge quand on est passé à +
+  el.classList.toggle('cd-over', remainingSeconds < 0);
 }
 
 function ensureCountdownRunning(){
@@ -3282,9 +3307,16 @@ function updateLIDVisibility(){
 
 /* CALCULS */
 function updateAllCalculations() {
-  updateTimers();
+
+  // ✅ d’abord fixer les heures “source”
   updateSOBTDefault();
   updateTOBT();
+
+  // ✅ ensuite calculer/afficher les timers + lancer CD
+  updateTimers();
+  ensureCountdownRunning();   // (ta logique BVA/AIBT doit être dedans)
+
+  // le reste inchangé
   updateDLCode();
   redistributeDL();
   updateLID();
@@ -3296,10 +3328,8 @@ function updateAllCalculations() {
   updateArrExpWeightIfNeeded();
   updateFinalWeightIfNeeded();
 
-  ensureCountdownRunning();
   renderTimeline();
   updateHeaderOffset();
-
   updateInfoStrip();
 }
 
