@@ -2315,16 +2315,24 @@ function updateCountdownOnce(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  if(!aibtTxt || !sobtTxt || !sibtTxt){
+  const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const isBVA = (from === 'BVA');
+
+  // ✅ BVA: on exige seulement SOBT (SIBT/AIBT peuvent être vides)
+  // ✅ Autres: on garde l'exigence SIBT + AIBT + SOBT
+  if(!sobtTxt || (!isBVA && (!aibtTxt || !sibtTxt))){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
   }
 
-  const SIBT = parseHHMM(sibtTxt);
-  const AIBT = parseHHMM(aibtTxt);
   const SOBT = parseHHMM(sobtTxt);
-  if(SIBT == null || AIBT == null || SOBT == null){
+
+  // ✅ BVA: on force SIBT=AIBT=SOBT
+  const SIBT = isBVA ? SOBT : parseHHMM(sibtTxt);
+  const AIBT = isBVA ? SOBT : parseHHMM(aibtTxt);
+
+  if(SOBT == null || SIBT == null || AIBT == null){
     el.textContent = '--:--';
     el.classList.remove('cd-over');
     return;
@@ -2394,9 +2402,16 @@ function ensureCountdownRunning(){
   const sobtTxt = document.getElementById('SOBT')?.value || '';
   const aobtTxt = document.getElementById('AOBT')?.value || '';
 
-  const baseOK = !!(sibtTxt && aibtTxt && sobtTxt);
+  const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const isBVA = (from === 'BVA');
 
-  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage (donc ça suit si tu modifies AOBT)
+  // ✅ BVA: SOBT seul suffit
+  // ✅ Autres: SIBT + AIBT + SOBT requis
+  const baseOK = isBVA
+    ? !!sobtTxt
+    : !!(sibtTxt && aibtTxt && sobtTxt);
+
+  // Si AOBT est rempli : pas d'interval, mais on recalcule l'affichage
   if(baseOK && aobtTxt){
     freezeCountdown();
     updateCountdownOnce();
@@ -3360,6 +3375,9 @@ function updateSOBTDefault() {
 /* TOBT + règle CTOT */
 function updateTOBT() {
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
+  const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const isBVA = (from === 'BVA');
+
   const sibttxt = document.getElementById('SIBT')?.value || '';
   const aibttxt = document.getElementById('AIBT')?.value || '';
   const sobttxt = document.getElementById('SOBT')?.value || '';
@@ -3367,14 +3385,15 @@ function updateTOBT() {
 
   const outEl = document.getElementById('timer-tobt');
 
-  if (!cie || !sibttxt || !sobttxt || !outEl) {
+  // ✅ BVA: on n'exige pas SIBT/AIBT (avion déjà là) → on utilise SOBT comme "source"
+  if (!cie || !sobttxt || !outEl || (!sibttxt && !isBVA)) {
     if(outEl) outEl.textContent = '--:--';
     window._tobtRawMins = null;
     window._tobtAdjMins = null;
     return;
   }
 
-  const SIBT = parseHHMM(sibttxt);
+  const SIBT = parseHHMM(isBVA ? sobttxt : sibttxt);
   const SOBT = parseHHMM(sobttxt);
   if (SIBT == null || SOBT == null) {
     outEl.textContent = '--:--';
@@ -3383,7 +3402,8 @@ function updateTOBT() {
     return;
   }
 
-  const AIBT = aibttxt ? parseHHMM(aibttxt) : SIBT;
+  // ✅ BVA: AIBT forcé = SOBT
+  const AIBT = isBVA ? SOBT : (aibttxt ? parseHHMM(aibttxt) : SIBT);
   if (AIBT == null) {
     outEl.textContent = '--:--';
     window._tobtRawMins = null;
@@ -3427,13 +3447,13 @@ function updateTOBT() {
     // ===== W4 / W6 : TOBT = AIBT + 30/35 selon type
     else if (cie === 'W4' || cie === 'W6') {
       const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
-      const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30; // A320/A20N => 30, défaut => 30
+      const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
       TOBT_raw_ext = AIBT_ext + turn;
     }
 
     // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
     else {
-      const rot = SOBT_ext - SIBT_ext; // signé (gère minuit / rotation inversée)
+      const rot = SOBT_ext - SIBT_ext;
       TOBT_raw_ext = AIBT_ext + rot;
     }
   }
@@ -3448,7 +3468,6 @@ function updateTOBT() {
   if (ctottxt) {
     const CTOT = parseHHMM(ctottxt);
     if (CTOT != null) {
-      // CTOT étendu autour de TOBT (pour gérer minuit)
       const TOBT_ref = ((TOBT_raw_ext % 1440) + 1440) % 1440;
       const CTOT_ext = TOBT_raw_ext + diffSigned(CTOT, TOBT_ref);
 
