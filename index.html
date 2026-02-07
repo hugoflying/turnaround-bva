@@ -4672,6 +4672,9 @@ function applyAKFlight(f, flow, opts = {}){
     }
 
     /* ================= DEP ================= */
+    let prevArrUsed = null;
+    let nextDepUsed = null;
+
     if(flow === 'DEP'){
       setValAK('To', (f.adesIata || '') || 'BVA');
 
@@ -4683,16 +4686,15 @@ function applyAKFlight(f, flow, opts = {}){
       mergeSIFromAK('PreviSI', siDep);
       mergeSIFromAK('FinalSI', siDep);
 
-      const prevArr = findLinkedArrForDep(f);
+      const prevArr = findLinkedArrForDep(f); // (déjà filtré "même jour" chez toi)
       if(prevArr){
-        setValAK('From', (prevArr.adepIata || '') || 'BVA');
+        prevArrUsed = prevArr;
 
+        setValAK('From', (prevArr.adepIata || '') || 'BVA');
         setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
         setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
 
-        if(prevArr?.paxNb != null){
-          setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
-        }
+        if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
 
         const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
         if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
@@ -4707,17 +4709,16 @@ function applyAKFlight(f, flow, opts = {}){
 
     /* ================= ARR ================= */
     }else{
+      // provenance (From)
       setValAK('From', (f.adepIata || '') || 'BVA');
 
-      // avion qui dort à BVA par défaut
+      // ✅ par défaut: avion reste à BVA (nuit / pas de rota)
       setValAK('To', 'BVA');
 
       setTimeFromISOAK('SIBT', f.sibt || f.eibt);
       setTimeFromISOAK('AIBT', f.aibt);
 
-      if(f?.paxNb != null){
-        setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
-      }
+      if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
 
       const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
       if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
@@ -4727,8 +4728,10 @@ function applyAKFlight(f, flow, opts = {}){
       const siArr = akBuildSI(f, false, { includeDL:false });
       mergeSIFromAK('ArrSI', siArr);
 
-      const nextDep = findLinkedDepForArr(f);
+      const nextDep = findLinkedDepForArr(f); // (déjà filtré "même jour" chez toi)
       if(nextDep){
+        nextDepUsed = nextDep;
+
         setValAK('To', (nextDep.adesIata || '') || 'BVA');
 
         setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
@@ -4741,7 +4744,29 @@ function applyAKFlight(f, flow, opts = {}){
       }
     }
 
-    /* ===== meta AK ===== */
+    /* ===== BANDEAU ESSENTIEL (akMeta arrFF/depFF) ===== */
+    let arrFF = '';
+    let depFF = '';
+    let bcForStrip = '';
+
+    if(flow === 'ARR'){
+      // ✅ le vol ARR sélectionné DOIT être affiché avant la flèche
+      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+      bcForStrip = (f.borderControl || '').toUpperCase().trim();
+
+      if(nextDepUsed){
+        depFF = (nextDepUsed.fullFlightNumber || nextDepUsed.callsign || '').toUpperCase().trim();
+      }
+    }else{
+      // DEP sélectionné après la flèche
+      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+
+      if(prevArrUsed){
+        arrFF = (prevArrUsed.fullFlightNumber || prevArrUsed.callsign || '').toUpperCase().trim();
+        bcForStrip = (prevArrUsed.borderControl || '').toUpperCase().trim();
+      }
+    }
+
     storeAKMetaForTab({
       flow,
       id: f.id,
@@ -4750,7 +4775,10 @@ function applyAKFlight(f, flow, opts = {}){
       timeISO: (flow === 'DEP')
         ? (f.sobt || f.eobt || f.aobt || f.atot || '')
         : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
-      pkg: f.pkg || ''
+      pkg: f.pkg || '',
+      arrFF,
+      depFF,
+      bc: bcForStrip
     });
 
     updateAllCalculations();
@@ -4759,7 +4787,7 @@ function applyAKFlight(f, flow, opts = {}){
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
   }finally{
-    // fermeture auto du picker
+    // ✅ fermeture auto du picker après sélection (sauf refresh)
     if(!isRefresh){
       closeAKPicker();
       const flowSel = document.getElementById('akFlow');
