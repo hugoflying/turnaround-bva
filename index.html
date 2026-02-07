@@ -4889,36 +4889,8 @@ function validateForm() {
   const faitsTxt = (val("FaitsSaillants") || "").trim();
   const faitsBlock = faitsTxt ? `\n== FAITS SAILLANTS ==\n\n${faitsTxt}\n` : "";
 
-  // LOAD blocks (POIDS + H1..H4 + SI)
-  const loadArrBlock =
-`== LOAD ARR ==
-PAX : ${val("LoadPAX")}
-BAGS : ${val("LoadBAGS")}
-POIDS : ${val("LoadPOIDS")}
-H1 : ${val("LoadH1")} / H2 : ${val("LoadH2")} / H3 : ${val("LoadH3")} / H4 : ${val("LoadH4")}
-SI : ${val("LoadSI")}`;
-
-  const loadExpBlock =
-`== LOAD EXP ==
-PAX : ${val("ExpPAX")}
-BAGS : ${val("ExpBAGS")}
-POIDS : ${val("ExpPOIDS")}
-H1 : ${val("ExpH1")} / H2 : ${val("ExpH2")} / H3 : ${val("ExpH3")} / H4 : ${val("ExpH4")}
-SI : ${val("ExpSI")}`;
-
-  // FINAL : passagers + zones + bagages/poids + H1..H4 + SI
-  const loadFinalBlock =
-`== LOAD FINAL ==
-MALE : ${val("FinalMALE")}
-FEMALE : ${val("FinalFEMALE")}
-ADULT : ${val("FinalADULT")}
-CHILD : ${val("FinalCHILD")}
-INFANT : ${val("FinalINFANT")}
-TOB : ${val("FinalTOB")}
-OA : ${val("FinalOA")} / OB : ${val("FinalOB")} / OC : ${val("FinalOC")} / OD : ${val("FinalOD")}
-BAGS : ${val("FinalBAGS")} / POIDS : ${val("FinalPOIDS")} / GB : ${val("FinalGB")}
-H1 : ${val("FinalH1")} / H2 : ${val("FinalH2")} / H3 : ${val("FinalH3")} / H4 : ${val("FinalH4")}
-SI : ${val("FinalSI")}`;
+  // ✅ Mode horaire (UTC / LOCAL)
+  const timeMode = isUTC ? 'UTC' : 'LOCAL';
 
   const body =
 `Vol : ${cie}${vol}
@@ -4927,6 +4899,7 @@ Rotation : ${from} - ${to}
 Immat : ${immat}
 Type avion : ${typeAvion}
 RZA : ${rza}
+Mode horaire : ${timeMode}
 
 == HORAIRES ==
 
