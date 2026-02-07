@@ -4172,48 +4172,50 @@ function depTimeMs(f){
 }
 
 // ===== Linking : priorité linkedId, sinon reg+temps =====
-function sameDayMs(msA, msB){
-  if(msA == null || msB == null) return false;
+// Helper: clé YYYY-MM-DD selon mode UTC/Locale
+function dayKeyFromMs(ms){
+  if(ms == null) return null;
+  const d = new Date(ms);
 
-  // respecte ton mode UTC/local (selon ton implémentation)
-  const useUTC = (typeof isUTC !== 'undefined')
-    ? !!isUTC
-    : document.body.classList.contains('utc-mode');
-
-  const A = new Date(msA);
-  const B = new Date(msB);
-
-  if(useUTC){
-    return A.getUTCFullYear() === B.getUTCFullYear()
-      && A.getUTCMonth() === B.getUTCMonth()
-      && A.getUTCDate() === B.getUTCDate();
+  // isUTC est déjà dans ton code (toggle)
+  if(window.isUTC){
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2,'0');
+    const da = String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  }else{
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const da = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
   }
-
-  return A.getFullYear() === B.getFullYear()
-    && A.getMonth() === B.getMonth()
-    && A.getDate() === B.getDate();
 }
 
-// ===== Linking : priorité linkedId, sinon reg+temps + même JOUR =====
+function sameOpDay(msA, msB){
+  const a = dayKeyFromMs(msA);
+  const b = dayKeyFromMs(msB);
+  return !!a && !!b && a === b;
+}
+
+// ===== Linking : ARR -> DEP (uniquement même jour) =====
 function findLinkedDepForArr(arr){
   if(!arr) return null;
 
   const arrT = arrTimeMs(arr);
   if(arrT == null) return null;
 
-  // 1) linkedId direct (mais on refuse si pas le même jour)
+  // 1) linkedId direct + garde-fou date
   const lid = (arr?.linkedId || '').trim();
   if(lid){
     const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
     if(dep){
       const depT = depTimeMs(dep);
-      if(depT != null && sameDayMs(arrT, depT)) return dep;
+      if(depT != null && sameOpDay(arrT, depT)) return dep;
+      return null; // ❌ autre jour => pas lié
     }
-    // sinon: on ne link pas
-    return null;
   }
 
-  // 2) fallback reg + premier DEP après ARR (même jour uniquement)
+  // 2) fallback reg + premier DEP après ARR, mais même jour
   const reg = (arr?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
@@ -4227,34 +4229,35 @@ function findLinkedDepForArr(arr){
 
     const t = depTimeMs(d);
     if(t == null) continue;
-    if(t < arrT) continue;
 
-    // ✅ bloque le cas "dep demain matin"
-    if(!sameDayMs(arrT, t)) continue;
+    if(t < arrT) continue;                 // après l'arrivée
+    if(!sameOpDay(arrT, t)) continue;      // ✅ même jour obligatoire
 
     if(t < bestT){ best = d; bestT = t; }
   }
+
   return best;
 }
 
+// ===== Linking : DEP -> ARR (uniquement même jour) =====
 function findLinkedArrForDep(dep){
   if(!dep) return null;
 
   const depT = depTimeMs(dep);
   if(depT == null) return null;
 
-  // 1) linkedId direct (mais on refuse si pas le même jour)
+  // 1) linkedId direct + garde-fou date
   const lid = (dep?.linkedId || '').trim();
   if(lid){
     const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
     if(arr){
       const arrT = arrTimeMs(arr);
-      if(arrT != null && sameDayMs(depT, arrT)) return arr;
+      if(arrT != null && sameOpDay(arrT, depT)) return arr;
+      return null; // ❌ autre jour => pas lié
     }
-    return null;
   }
 
-  // 2) fallback reg + dernière ARR avant DEP (même jour uniquement)
+  // 2) fallback reg + dernier ARR avant DEP, mais même jour
   const reg = (dep?.reg || '').toUpperCase().trim();
   if(!reg) return null;
 
@@ -4268,13 +4271,13 @@ function findLinkedArrForDep(dep){
 
     const t = arrTimeMs(a);
     if(t == null) continue;
-    if(t > depT) continue;
 
-    // ✅ bloque le cas "arrivée la veille"
-    if(!sameDayMs(depT, t)) continue;
+    if(t > depT) continue;                 // avant le départ
+    if(!sameOpDay(t, depT)) continue;      // ✅ même jour obligatoire
 
     if(t > bestT){ best = a; bestT = t; }
   }
+
   return best;
 }
 
