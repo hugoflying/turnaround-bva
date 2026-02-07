@@ -4172,22 +4172,50 @@ function depTimeMs(f){
 }
 
 // ===== Linking : priorité linkedId, sinon reg+temps =====
+function sameDayMs(msA, msB){
+  if(msA == null || msB == null) return false;
+
+  // respecte ton mode UTC/local (selon ton implémentation)
+  const useUTC = (typeof isUTC !== 'undefined')
+    ? !!isUTC
+    : document.body.classList.contains('utc-mode');
+
+  const A = new Date(msA);
+  const B = new Date(msB);
+
+  if(useUTC){
+    return A.getUTCFullYear() === B.getUTCFullYear()
+      && A.getUTCMonth() === B.getUTCMonth()
+      && A.getUTCDate() === B.getUTCDate();
+  }
+
+  return A.getFullYear() === B.getFullYear()
+    && A.getMonth() === B.getMonth()
+    && A.getDate() === B.getDate();
+}
+
+// ===== Linking : priorité linkedId, sinon reg+temps + même JOUR =====
 function findLinkedDepForArr(arr){
   if(!arr) return null;
 
-  // 1) linkedId direct
+  const arrT = arrTimeMs(arr);
+  if(arrT == null) return null;
+
+  // 1) linkedId direct (mais on refuse si pas le même jour)
   const lid = (arr?.linkedId || '').trim();
   if(lid){
     const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
-    if(dep) return dep;
+    if(dep){
+      const depT = depTimeMs(dep);
+      if(depT != null && sameDayMs(arrT, depT)) return dep;
+    }
+    // sinon: on ne link pas
+    return null;
   }
 
-  // 2) fallback reg + premier DEP après ARR
+  // 2) fallback reg + premier DEP après ARR (même jour uniquement)
   const reg = (arr?.reg || '').toUpperCase().trim();
   if(!reg) return null;
-
-  const arrT = arrTimeMs(arr);
-  if(arrT == null) return null;
 
   const deps = window._akCache?.dep || [];
   let best = null;
@@ -4201,6 +4229,9 @@ function findLinkedDepForArr(arr){
     if(t == null) continue;
     if(t < arrT) continue;
 
+    // ✅ bloque le cas "dep demain matin"
+    if(!sameDayMs(arrT, t)) continue;
+
     if(t < bestT){ best = d; bestT = t; }
   }
   return best;
@@ -4209,19 +4240,23 @@ function findLinkedDepForArr(arr){
 function findLinkedArrForDep(dep){
   if(!dep) return null;
 
-  // 1) linkedId direct
+  const depT = depTimeMs(dep);
+  if(depT == null) return null;
+
+  // 1) linkedId direct (mais on refuse si pas le même jour)
   const lid = (dep?.linkedId || '').trim();
   if(lid){
     const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
-    if(arr) return arr;
+    if(arr){
+      const arrT = arrTimeMs(arr);
+      if(arrT != null && sameDayMs(depT, arrT)) return arr;
+    }
+    return null;
   }
 
-  // 2) fallback reg + dernière ARR avant DEP
+  // 2) fallback reg + dernière ARR avant DEP (même jour uniquement)
   const reg = (dep?.reg || '').toUpperCase().trim();
   if(!reg) return null;
-
-  const depT = depTimeMs(dep);
-  if(depT == null) return null;
 
   const arrs = window._akCache?.arr || [];
   let best = null;
@@ -4234,6 +4269,9 @@ function findLinkedArrForDep(dep){
     const t = arrTimeMs(a);
     if(t == null) continue;
     if(t > depT) continue;
+
+    // ✅ bloque le cas "arrivée la veille"
+    if(!sameDayMs(depT, t)) continue;
 
     if(t > bestT){ best = a; bestT = t; }
   }
