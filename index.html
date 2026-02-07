@@ -1366,7 +1366,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
       <div class="field span-3">
         <label class="label">Cie</label>
         <div class="select is-fullwidth">
-          <select id="Cie">
+          <select id="Cie" onchange="updateFinalWeightIfNeeded()">
             <option value="">--</option>
             <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
             <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
@@ -1900,25 +1900,22 @@ function syncAdultGenderLocks(){
 
 /* ===== POIDS auto FR / RK : (BAGS + GB) * 13 ===== */
 function updateFinalWeightIfNeeded(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
-  if(cie !== 'FR' && cie !== 'RK') return;
 
-  const bags = parseInt(document.getElementById('FinalBAGS')?.value || '0', 10);
-  const gb   = parseInt(document.getElementById('FinalGB')?.value   || '0', 10);
+  const cie = (document.getElementById('Cie').value || '').toUpperCase();
+  const poidsField = document.getElementById('FinalPOIDS');
 
-  const poids = (bags + gb) * 13;
-  const poidsEl = document.getElementById('FinalPOIDS');
-  if(!poidsEl) return;
+  // ✈️ CAS FR / RK → calcul auto + verrouillé
+  if(cie === 'FR' || cie === 'RK'){
+    const bags = parseInt(document.getElementById('FinalBAGS').value) || 0;
+    const gb   = parseInt(document.getElementById('FinalGB').value)   || 0;
 
-  if(
-    (document.getElementById('FinalBAGS')?.value || '') === '' &&
-    (document.getElementById('FinalGB')?.value || '') === ''
-  ){
-    poidsEl.value = '';
+    poidsField.readOnly = true;           // 🔒 verrouillé
+    poidsField.value = (bags + gb) * 13;  // ⚙️ calcul auto
     return;
   }
 
-  poidsEl.value = String(poids);
+  // 🛫 AUTRES COMPAGNIES → champ libre
+  poidsField.readOnly = false;            // 🔓 déverrouillé
 }
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
