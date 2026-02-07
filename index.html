@@ -4673,7 +4673,7 @@ function applyAKFlight(f, flow, opts = {}){
 
     /* ================= DEP ================= */
     if(flow === 'DEP'){
-      setValAK('To', (f.adesIata || '') || HOME_IATA);
+      setValAK('To', (f.adesIata || '') || 'BVA');
 
       setTimeFromISOAK('SOBT', f.sobt || f.eobt);
       setTimeFromISOAK('AOBT', f.aobt);
@@ -4685,7 +4685,7 @@ function applyAKFlight(f, flow, opts = {}){
 
       const prevArr = findLinkedArrForDep(f);
       if(prevArr){
-        setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
+        setValAK('From', (prevArr.adepIata || '') || 'BVA');
 
         setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
         setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
@@ -4702,16 +4702,15 @@ function applyAKFlight(f, flow, opts = {}){
         const siArr = akBuildSI(prevArr, false, { includeDL:false });
         mergeSIFromAK('ArrSI', siArr);
       }else{
-        setValAK('From', HOME_IATA);
+        setValAK('From', 'BVA');
       }
 
     /* ================= ARR ================= */
     }else{
-      setValAK('From', (f.adepIata || '') || HOME_IATA);
+      setValAK('From', (f.adepIata || '') || 'BVA');
 
-      // ✅ IMPORTANT : par défaut, on considère que l’avion reste à BVA
-      // (si un DEP lié existe et est valide, il viendra écraser)
-      setValAK('To', HOME_IATA);
+      // avion qui dort à BVA par défaut
+      setValAK('To', 'BVA');
 
       setTimeFromISOAK('SIBT', f.sibt || f.eibt);
       setTimeFromISOAK('AIBT', f.aibt);
@@ -4730,7 +4729,7 @@ function applyAKFlight(f, flow, opts = {}){
 
       const nextDep = findLinkedDepForArr(f);
       if(nextDep){
-        setValAK('To', (nextDep.adesIata || '') || HOME_IATA);
+        setValAK('To', (nextDep.adesIata || '') || 'BVA');
 
         setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
         setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
@@ -4742,29 +4741,7 @@ function applyAKFlight(f, flow, opts = {}){
       }
     }
 
-    /* ===== bandeau + META AK ===== */
-    let arrFF = '';
-    let depFF = '';
-    let bcForStrip = '';
-
-    if(flow === 'ARR'){
-      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-      bcForStrip = (f.borderControl || '').toUpperCase().trim();
-
-      const nextDep2 = findLinkedDepForArr(f);
-      if(nextDep2){
-        depFF = (nextDep2.fullFlightNumber || nextDep2.callsign || '').toUpperCase().trim();
-      }
-    }else{
-      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
-
-      const prevArr2 = findLinkedArrForDep(f);
-      if(prevArr2){
-        arrFF = (prevArr2.fullFlightNumber || prevArr2.callsign || '').toUpperCase().trim();
-        bcForStrip = (prevArr2.borderControl || '').toUpperCase().trim();
-      }
-    }
-
+    /* ===== meta AK ===== */
     storeAKMetaForTab({
       flow,
       id: f.id,
@@ -4773,10 +4750,7 @@ function applyAKFlight(f, flow, opts = {}){
       timeISO: (flow === 'DEP')
         ? (f.sobt || f.eobt || f.aobt || f.atot || '')
         : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
-      pkg: f.pkg || '',
-      arrFF,
-      depFF,
-      bc: bcForStrip
+      pkg: f.pkg || ''
     });
 
     updateAllCalculations();
@@ -4785,7 +4759,7 @@ function applyAKFlight(f, flow, opts = {}){
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
   }finally{
-    // ✅ on ferme TOUJOURS le picker après un "Utiliser" (sauf refresh)
+    // fermeture auto du picker
     if(!isRefresh){
       closeAKPicker();
       const flowSel = document.getElementById('akFlow');
