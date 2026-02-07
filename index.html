@@ -4112,7 +4112,9 @@ function openAKPicker(){
   const p = document.getElementById('akPopover');
   const flowSel = document.getElementById('akFlow');
 
-  if(flowSel) flowSel.value = 'DEP';   // <-- reset ici
+  if(flowSel) flowSel.value = 'DEP';
+
+  document.body.classList.add('ak-open');   // ✅ AJOUT
 
   if(b) b.style.display = '';
   if(p) p.style.display = 'flex';
@@ -4122,8 +4124,11 @@ function openAKPicker(){
 function closeAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
+
   if(p) p.style.display = 'none';
   if(b) b.style.display = 'none';
+
+  document.body.classList.remove('ak-open'); // ✅ AJOUT
 }
 
 async function fetchAK(flow, from, to) {
