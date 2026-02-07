@@ -4670,7 +4670,16 @@ function applyAKFlight(f, flow, opts = {}){
     }
   }
 
+  // helpers date (ignore linking si pas même jour)
+  const sameDayOrNull = (msA, msB) => {
+    if(msA == null || msB == null) return false;
+    return sameDayMs(msA, msB);
+  };
+
   /* ================= DEP ================= */
+  let prevArrUsed = null;
+  let nextDepUsed = null;
+
   if(flow === 'DEP'){
     setValAK('To', (f.adesIata || '') || HOME_IATA);
 
@@ -4684,8 +4693,21 @@ function applyAKFlight(f, flow, opts = {}){
     mergeSIFromAK('PreviSI', siDep);
     mergeSIFromAK('FinalSI', siDep);
 
-    const prevArr = findLinkedArrForDep(f);
+    // linking ARR précédent
+    let prevArr = findLinkedArrForDep(f);
+
+    // ✅ règle: si le vol ARR lié est d'une autre date => on l'ignore (From = HOME_IATA)
     if(prevArr){
+      const depMs = depTimeMs(f);
+      const arrMs = arrTimeMs(prevArr);
+      if(!sameDayOrNull(depMs, arrMs)){
+        prevArr = null;
+      }
+    }
+
+    if(prevArr){
+      prevArrUsed = prevArr;
+
       setValAK('From', (prevArr.adepIata || '') || HOME_IATA);
 
       setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
@@ -4727,8 +4749,21 @@ function applyAKFlight(f, flow, opts = {}){
     const siArr = akBuildSI(f, false, { includeDL:false });
     mergeSIFromAK('ArrSI', siArr);
 
-    const nextDep = findLinkedDepForArr(f);
+    // linking DEP suivant
+    let nextDep = findLinkedDepForArr(f);
+
+    // ✅ règle: si le DEP lié est d'une autre date (ou supérieur) => on l'ignore (To = HOME_IATA)
     if(nextDep){
+      const arrMs = arrTimeMs(f);
+      const depMs = depTimeMs(nextDep);
+      if(!sameDayOrNull(arrMs, depMs)){
+        nextDep = null;
+      }
+    }
+
+    if(nextDep){
+      nextDepUsed = nextDep;
+
       setValAK('To', (nextDep.adesIata || '') || HOME_IATA);
 
       setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
@@ -4754,17 +4789,15 @@ function applyAKFlight(f, flow, opts = {}){
     arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
     bcForStrip = (f.borderControl || '').toUpperCase().trim();
 
-    const nextDep = findLinkedDepForArr(f);
-    if(nextDep){
-      depFF = (nextDep.fullFlightNumber || nextDep.callsign || '').toUpperCase().trim();
+    if(nextDepUsed){
+      depFF = (nextDepUsed.fullFlightNumber || nextDepUsed.callsign || '').toUpperCase().trim();
     }
   }else{
     depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
 
-    const prevArr = findLinkedArrForDep(f);
-    if(prevArr){
-      arrFF = (prevArr.fullFlightNumber || prevArr.callsign || '').toUpperCase().trim();
-      bcForStrip = (prevArr.borderControl || '').toUpperCase().trim();
+    if(prevArrUsed){
+      arrFF = (prevArrUsed.fullFlightNumber || prevArrUsed.callsign || '').toUpperCase().trim();
+      bcForStrip = (prevArrUsed.borderControl || '').toUpperCase().trim();
     }
   }
 
