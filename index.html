@@ -2856,9 +2856,11 @@ function updateInfoStrip(){
   let depFF = '';
   let bcMeta = '';
 
+  let data = null;
+
   try{
     if(currentTabId){
-      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
       arrFF  = (data?.akMeta?.arrFF || '').toUpperCase().trim();
       depFF  = (data?.akMeta?.depFF || '').toUpperCase().trim();
       bcMeta = (data?.akMeta?.bc    || '').toUpperCase().trim();
@@ -2866,10 +2868,16 @@ function updateInfoStrip(){
   }catch(e){}
 
   // fallback manuel : DEP = CIE+N°
+  // ⚠️ sauf si on est sur un FLOW=ARR et que TO=BVA (pas de départ programmé)
   if(!depFF){
-    const cie  = v('Cie');
-    const nvol = v('NVol');
-    if(cie || nvol) depFF = `${cie}${nvol}`.trim();
+    const toNow = (v('To') || '').toUpperCase().trim();
+    const flowMeta = (data?.akMeta?.flow || '').toUpperCase().trim();
+
+    if(!(flowMeta === 'ARR' && toNow === 'BVA')){
+      const cie  = v('Cie');
+      const nvol = v('NVol');
+      if(cie || nvol) depFF = `${cie}${nvol}`.trim();
+    }
   }
 
   set('kvArrVol', arrFF || '—', '—');
