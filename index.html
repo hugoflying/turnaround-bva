@@ -1325,7 +1325,6 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
     <!-- DÉTAILS (éditables) -->
     <div id="infoVolDetails" class="grid-auto">
 
-      <!-- Date + Parking + Immat + Type avion -->
       <div class="field span-3">
         <label class="label">Date</label>
         <input class="input" type="date" id="Date">
@@ -1362,7 +1361,6 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         </div>
       </div>
 
-      <!-- Cie / N° -->
       <div class="field span-3">
         <label class="label">Cie</label>
         <div class="select is-fullwidth">
@@ -1380,10 +1378,11 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         <input class="input uppercase" type="text" id="NVol">
       </div>
 
-      <!-- From / To -->
+      <!-- ✅ FROM déclenche recalculs -->
       <div class="field span-3">
         <label class="label">From</label>
-        <input class="input uppercase" type="text" id="From" maxlength="3">
+        <input class="input uppercase" type="text" id="From" maxlength="3"
+               oninput="updateTOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
       </div>
 
       <div class="field span-3">
