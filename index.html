@@ -2341,7 +2341,7 @@ function updateCountdownOnce(){
   let targetMin = null;
   if (AIBT <= SIBT) targetMin = SOBT;
   else {
-    const tobt = window._tobtAdjMins;
+    const tobt = window._tobtRawMins;
     if(tobt == null){
       el.textContent = '--:--';
       el.classList.remove('cd-over');
@@ -3451,11 +3451,13 @@ function updateTOBT() {
       TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
-    // ===== W4 / W6 : TOBT = AIBT + 30/35 selon type
+    // ===== W4 / W6 : TOBT = max(SOBT, AIBT + 30/35 selon type) ✅ FIX
     else if (cie === 'W4' || cie === 'W6') {
       const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
       const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
-      TOBT_raw_ext = AIBT_ext + turn;
+
+      const candidate = AIBT_ext + turn;
+      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
     // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
