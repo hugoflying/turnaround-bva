@@ -167,7 +167,7 @@ body.has-tab .app-wrap{ display:block; }
   justify-content:center;
 }
 
-#timer-tobt{ background:#16a34a !important; }
+#timer-eobt{ background:#16a34a !important; }
 #timer-h8{ background:#facc15 !important; color:#fff !important; }
 #timer-cd{ background:#93c5fd !important; color:#111 !important; }
 #timer-cd.cd-over{ background:#fee2e2 !important; color:#ef4444 !important; }
@@ -421,7 +421,7 @@ body.dark .timeline-tick-label { color:#cfd4da; }
 body.dark .tl-label { background:#232733; color:#f5f5f5; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
 
 .tl--std  { --c:#64748b; }
-.tl--tobt { --c:#16a34a; }
+.tl--eobt { --c:#16a34a; }
 .tl--ctot { --c:#334155; }
 .tl--ops  { --c:#2563eb; }
 .tl--turn { --c:#ef4444; }
@@ -3390,7 +3390,7 @@ function updateTOBT() {
   const sobttxt = document.getElementById('SOBT')?.value || '';
   const ctottxt = document.getElementById('CTOT')?.value || '';
 
-  const outEl = document.getElementById('timer-tobt');
+  const outEl = document.getElementById('timer-eobt');
 
   // ✅ BVA: on n'exige pas SIBT/AIBT (avion déjà là) → on utilise SOBT comme "source"
   if (!cie || !sobttxt || !outEl || (!sibttxt && !isBVA)) {
@@ -3854,7 +3854,7 @@ function collectTimelineData(){
 
   addPoint('SIBT', SIBT, 'tl--std'); addPoint('AIBT', AIBT, 'tl--std');
   addPoint('SOBT', SOBT, 'tl--std'); addPoint('AOBT', AOBT, 'tl--std');
-  addPoint('TOBT', TOBT, 'tl--tobt'); addPoint('CTOT', CTOT, 'tl--ctot');
+  addPoint('TOBT', TOBT, 'tl--eobt'); addPoint('CTOT', CTOT, 'tl--ctot');
   addPoint('HLE',  H40,  'tl--turn');
   addPoint('H-15', H15,  'tl--turn');
 
@@ -5158,8 +5158,8 @@ function toggleFinalImage(){
     <div class="footer-row">
 
       <div class="timer-chip">
-        <div class="k">TOBT</div>
-        <div id="timer-tobt" class="v">--:--</div>
+        <div class="k">EOBT</div>
+        <div id="timer-eobt" class="v">--:--</div>
       </div>
 
       <div class="timer-chip">
