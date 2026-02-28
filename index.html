@@ -4069,10 +4069,15 @@ function renderTimeline(){
     const bar = document.createElement('div');
     bar.className = `tl-range ${d.cls}`;
     if(d.color){ bar.style.setProperty('--c', d.color); }
-    bar.style.left = `${leftStartPct}%`;
+
+    // ✅ position au CENTRE de la barre (évite le décalage / sortie de timeline)
+    bar.style.left  = `${leftStartPct + widthPct/2}%`;
     bar.style.width = `${widthPct}%`;
-    bar.style.top = `${downStart + d.lane*DUR_LANE_H}px`;
-    bar.style.transform = 'translateX(-50%)';
+    bar.style.top   = `${downStart + d.lane*DUR_LANE_H}px`;
+
+    // ✅ centrage X + Y
+    bar.style.transform = 'translate(-50%, -50%)';
+
     canvas.appendChild(bar);
 
     const lab = document.createElement('div');
