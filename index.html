@@ -4255,6 +4255,18 @@ async function fetchAK(flow, from, to) {
   return Array.isArray(data?.flights) ? data.flights : [];
 }
 
+// ===== Temps + linking (immat) =====
+function arrTimeMs(f){
+  return Date.parse(f?.aibt || f?.eibt || f?.sibt || f?.aldt || f?.eldt || f?.afat || f?.efat || '') || null;
+}
+
+// DEP : si pas d'AOBT, on privilégie EOBT/POBT/CTOT (réaliste) plutôt que SOBT (souvent "ancien plan")
+function depTimeMs(f){
+  return Date.parse(
+    f?.aobt || f?.eobt || f?.pobt || f?.ctot || f?.etot || f?.sobt || ''
+  ) || null;
+}
+
 // ===== Linking : priorité linkedId, sinon reg+temps =====
 // Helper: clé YYYY-MM-DD selon mode UTC/Locale
 function dayKeyFromMs(ms){
