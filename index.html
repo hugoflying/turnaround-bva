@@ -3015,6 +3015,9 @@ function renderTabs(){
 }
 
 function createNewTab(){
+  // ✅ 1) Sauver l'onglet courant AVANT de reset
+  if(currentTabId) saveCurrentTabData();
+
   const id = String(Date.now());
 
   // ajoute l'onglet dans la liste
@@ -3187,7 +3190,18 @@ function loadTabData(id){
     }
   }
 
-  // ✅ re-sync modes globaux (UI + variables) après chargement d'onglet
+  // ✅ Restore visuel des timers (divs non-input)
+  const setTxt = (id, v)=>{
+    const el = document.getElementById(id);
+    if(el && v != null) el.textContent = v;
+  };
+  setTxt('timer-h40',  data.timer_h40);
+  setTxt('timer-h15',  data.timer_h15);
+  setTxt('timer-h8',   data.timer_h8);
+  setTxt('timer-tobt', data.timer_tobt);
+  setTxt('timer-cd',   data.timer_cd);
+
+  // ✅ re-sync modes globaux (UI + variables)
   const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
   const storedUTC  = (localStorage.getItem('modeUTC')  || '0') === '1';
   setDarkMode(storedDark, true);
@@ -3704,24 +3718,40 @@ function clearDLBorders(){
 
 
 /* Utils time */
+function fireTimeEvents(input){
+  if(!input) return;
+  input.dispatchEvent(new Event('input',  { bubbles:true }));
+  input.dispatchEvent(new Event('change', { bubbles:true }));
+}
+
 function setNow(fieldId) {
+  const input = document.getElementById(fieldId);
+  if(!input) return;
+
   const now = new Date();
   const hh = isUTC ? now.getUTCHours() : now.getHours();
   const mm = isUTC ? now.getUTCMinutes() : now.getMinutes();
-  document.getElementById(fieldId).value = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+
+  input.value = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  fireTimeEvents(input); // ✅
 }
+
 function adjustTime(fieldId, delta) {
   const input = document.getElementById(fieldId);
   if (!input || !input.value) return;
+
   let [hh, mm] = input.value.split(':').map(Number);
   let total = hh * 60 + mm + delta;
   if (total < 0) total += 1440;
   if (total >= 1440) total -= 1440;
+
   hh = Math.floor(total / 60);
   mm = total % 60;
-  input.value = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-}
 
+  input.value = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  fireTimeEvents(input); // ✅
+}
+  
 /* Switches */
 function setDarkMode(enable, fromInit=false){
   const currentlyDark = document.body.classList.contains('dark');
