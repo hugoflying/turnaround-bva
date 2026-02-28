@@ -398,19 +398,20 @@ body.dark .timeline-track{ background:#2e2e2e; }
 
 .timeline-tick{
   position: absolute;
-  width: 1px;
+  width: 1px; /* ✅ pas plus gras */
   background: rgba(0,0,0,0.08);
 }
 body.dark .timeline-tick{
   background: #3e444b;
 }
 
+/* ✅ pas plus épais : juste un style léger optionnel */
 .timeline-tick-major{
-  width: 3px;                 /* plus épais */
-  background: rgba(0,0,0,0.25); /* plus visible */
+  width: 1px; /* ✅ identique */
+  background: rgba(0,0,0,0.12);
 }
 body.dark .timeline-tick-major{
-  background: #9ca3af;
+  background: rgba(255,255,255,0.18);
 }
 
 .timeline-tick-label {
@@ -4051,16 +4052,17 @@ function renderTimeline(){
 
     const vline = document.createElement('div');
 
-    // ✅ ticks majeurs (là où l'heure est affichée) plus épais
+    // ✅ ticks majeurs : même épaisseur, mais un poil plus longs (débordent en bas)
     if(t % 5 === 0){
       vline.className = 'timeline-tick timeline-tick-major';
+      vline.style.height = `${finalHeight - 28}px`; // +8px vs normal
     }else{
       vline.className = 'timeline-tick';
+      vline.style.height = `${finalHeight - 36}px`;
     }
 
     vline.style.left = `${leftPct}%`;
     vline.style.top = `${8}px`;
-    vline.style.height = `${finalHeight - 36}px`;
     canvas.appendChild(vline);
 
     if(t % 5 === 0){
