@@ -4008,7 +4008,20 @@ function renderTimeline(){
     });
   }
 
-  const durWithLane = packLanes(durItems);
+  // ✅ 2 lanes réservées : 0 = Débarquement, 1 = Embarquement
+  const fixed = [];
+  const others = [];
+
+  durItems.forEach(d=>{
+    if(d.label === 'Débarquement') fixed.push({ ...d, lane: 0 });
+    else if(d.label === 'Embarquement') fixed.push({ ...d, lane: 1 });
+    else others.push(d);
+  });
+
+  // Les autres durées sont packées à partir de la lane 2
+  const packedOthers = packLanes(others).map(d => ({ ...d, lane: d.lane + 2 }));
+
+  const durWithLane = [...fixed, ...packedOthers];
   const durLaneCount = Math.max(0, ...durWithLane.map(d => d.lane)) + 1;
 
   const finalHeight = Math.max(
@@ -4079,6 +4092,7 @@ function renderTimeline(){
   const lbl = document.getElementById('timelineZoomLabel');
   if(lbl) lbl.textContent = `${Math.round(timelineZoom*100)}%`;
 }
+  
 function setVal(id, v){
   const el = document.getElementById(id);
   if(!el) return;
