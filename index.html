@@ -396,8 +396,22 @@ body.dark #akPopover .ak-header{ border-bottom-color: rgba(255,255,255,.10); }
 }
 body.dark .timeline-track{ background:#2e2e2e; }
 
-.timeline-tick { position: absolute; width: 1px; background:rgba(0,0,0,0.08); }
-body.dark .timeline-tick { background:#3e444b; }
+.timeline-tick{
+  position: absolute;
+  width: 1px;
+  background: rgba(0,0,0,0.08);
+}
+body.dark .timeline-tick{
+  background: #3e444b;
+}
+
+.timeline-tick-major{
+  width: 3px;                 /* plus épais */
+  background: rgba(0,0,0,0.25); /* plus visible */
+}
+body.dark .timeline-tick-major{
+  background: #9ca3af;
+}
 
 .timeline-tick-label {
   position: absolute; transform: translateX(-50%);
@@ -453,6 +467,7 @@ body.dark .tl-range-label { background: rgba(0,0,0,.45); color:#fff; }
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
 body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+
 .timeline-canvas{ position:relative; min-width:600px; width:100%; }
 
 /* DL error */
@@ -4035,7 +4050,14 @@ function renderTimeline(){
     const leftPct = 6 + x*88;
 
     const vline = document.createElement('div');
-    vline.className = 'timeline-tick';
+
+    // ✅ ticks majeurs (là où l'heure est affichée) plus épais
+    if(t % 5 === 0){
+      vline.className = 'timeline-tick timeline-tick-major';
+    }else{
+      vline.className = 'timeline-tick';
+    }
+
     vline.style.left = `${leftPct}%`;
     vline.style.top = `${8}px`;
     vline.style.height = `${finalHeight - 36}px`;
