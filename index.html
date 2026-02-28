@@ -4242,17 +4242,40 @@ function closeAKPicker(){
   document.body.classList.remove('ak-open'); // ✅ AJOUT
 }
 
-async function fetchAK(flow, from, to) {
+async function fetchAK(flow, from, to){
   const url =
     `${AK_PROXY}?flow=${encodeURIComponent(flow)}` +
     `&from=${encodeURIComponent(from)}` +
     `&to=${encodeURIComponent(to)}`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`AK error ${res.status}`);
+  let res;
+  try{
+    res = await fetch(url, {
+      cache: "no-store",
+      credentials: "include",
+    });
+  }catch(e){
+    throw new Error(`AK fetch network error: ${e?.message || e}`);
+  }
+
+  // Si ton backend renvoie une redirection (souvent vers login),
+  // fetch peut “casser” ou te ramener autre chose que /ak.
+  if(res.redirected){
+    // la session a sauté → on force un vrai reload navigateur
+    window.location.reload();
+    return [];
+  }
+
+  if(!res.ok) throw new Error(`AK error ${res.status}`);
 
   const data = await res.json();
-  return Array.isArray(data?.flights) ? data.flights : [];
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.flights)) return data.flights;
+  if (Array.isArray(data?.data)) return data.data;
+
+  console.log("AK payload inconnu:", data);
+  return [];
 }
 
 // ===== Temps + linking (immat) =====
