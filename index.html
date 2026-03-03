@@ -2532,6 +2532,11 @@ function refreshLDMLayouts(){
   try{ updateFinalTOB?.(); }catch(e){}
 }
 
+function shouldOpenPreviLoad(){
+  const t = parseHHMM(document.getElementById('DernierDebarque')?.value || '');
+  return t != null;
+}
+
 function openLDM(mode=null){
   const b = document.getElementById('ldmBackdrop');
   const m = document.getElementById('ldmModal');
@@ -2544,6 +2549,8 @@ function openLDM(mode=null){
   if(mode === null){
     if(shouldOpenFinalLoad()){
       ldmSwitch('final');
+    }else if(shouldOpenPreviLoad()){
+      ldmSwitch('previ');
     }else{
       ldmSwitch('arr');
     }
