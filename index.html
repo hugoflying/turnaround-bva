@@ -3558,8 +3558,9 @@ function updateDLCode() {
   const sobt = parseHHMM(document.getElementById('SOBT')?.value || '');
   const aobt = parseHHMM(document.getElementById('AOBT')?.value || '');
 
-  const tobt = (window._tobtAdjMins != null)
-    ? window._tobtAdjMins
+  // ✅ IMPORTANT: 93/93A doit utiliser la TOBT BRUTE (hors CTOT)
+  const tobt = (window._tobtRawMins != null)
+    ? window._tobtRawMins
     : parseHHMM((document.getElementById('timer-tobt')?.textContent || '').trim());
 
   // si incomplet : on ne force rien
