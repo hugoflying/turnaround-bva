@@ -2641,6 +2641,7 @@ function setTOBValidity(isValid){
   tobEl.classList.toggle('is-invalid', !isValid);
   tobEl.classList.toggle('is-valid', isValid);
 }
+
 // global (à mettre une fois, hors fonction)
 let _finalTOBLastValue = '';
 
@@ -2658,7 +2659,6 @@ function updateFinalTOB(){
   const child  = n('FinalCHILD')  ?? 0;
   const infant = n('FinalINFANT') ?? 0;
 
-  // MAIN = (MALE+FEMALE si au moins 1 rempli) sinon ADULT
   let adultsMain = null;
   if(male != null || female != null){
     adultsMain = (male ?? 0) + (female ?? 0);
@@ -2666,7 +2666,6 @@ function updateFinalTOB(){
     adultsMain = adult;
   }
 
-  // MAIN_TOB = adultsMain + child (SANS infant)
   let main = null;
   if(adultsMain != null) main = adultsMain + child;
 
@@ -2675,7 +2674,6 @@ function updateFinalTOB(){
 
   const siEl = document.getElementById('FinalSI');
 
-  // Si pas assez d’info -> vide + pas d’erreur + reset tracker
   if(main == null){
     tobEl.value = '';
     tobEl.classList.remove('is-invalid','is-valid');
@@ -2683,11 +2681,10 @@ function updateFinalTOB(){
     return;
   }
 
-  // Affichage "MAIN + INFANT"
   const newTOB = `${main} + ${infant}`;
   tobEl.value = newTOB;
 
-  // ✅ Timestamp dans SI FINAL quand TOB est calculé / change
+  // ✅ Ajout ligne dans SI FINAL
   if(newTOB !== _finalTOBLastValue){
     _finalTOBLastValue = newTOB;
 
@@ -2696,7 +2693,7 @@ function updateFinalTOB(){
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
 
     if(siEl){
-      const prefix = 'Communication chiffres porte ';
+      const prefix = 'Communication chiffres porte : ';
       const line = `${prefix}${hh}:${mm}`;
 
       const lines = (siEl.value || '').split('\n').map(s=>s.trim()).filter(Boolean);
@@ -2707,7 +2704,6 @@ function updateFinalTOB(){
     }
   }
 
-  // Validation OA..OD (doit matcher MAIN, pas infant)
   const oa = n('FinalOA') ?? 0;
   const ob = n('FinalOB') ?? 0;
   const oc = n('FinalOC') ?? 0;
