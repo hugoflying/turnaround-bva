@@ -1129,15 +1129,9 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
           </div>
-
           <div class="field" style="margin:0;">
             <label class="label">TOB</label>
             <input class="input ldm-in has-text-weight-bold" id="FinalTOB" readonly>
-
-            <!-- ✅ Timestamp comm chiffres porte -->
-            <p id="FinalTOBCommStamp" class="help" style="margin-top:6px; font-weight:800;">
-              Communication chiffres porte : --
-            </p>
           </div>
         </div>
 
@@ -1226,17 +1220,17 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         </div>
 
         <!-- BOUTON IMAGE -->
-        <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
-          <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
-            LID COMPLETION GUIDE (RYR)
-          </button>
+      <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
+        <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
+          LID COMPLETION GUIDE (RYR)
+        </button>
 
-          <div id="finalImageBox" style="display:none; margin-top:12px;">
-            <img id="finalImage"
-                 src="https://raw.githubusercontent.com/hugoflying/fiche-escale/main/lid-completion-guide.jpg"
-                 style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
-          </div>
+        <div id="finalImageBox" style="display:none; margin-top:12px;">
+          <img id="finalImage"
+               src="https://raw.githubusercontent.com/hugoflying/fiche-escale/main/lid-completion-guide.jpg"
+               style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
         </div>
+      </div>
 
       </div>
     </section>
@@ -2672,20 +2666,20 @@ function updateFinalTOB(){
     adultsMain = adult;
   }
 
-  // MAIN_TO B = adultsMain + child (SANS infant)
+  // MAIN_TOB = adultsMain + child (SANS infant)
   let main = null;
   if(adultsMain != null) main = adultsMain + child;
 
-  const tobEl   = document.getElementById('FinalTOB');
-  const stampEl = document.getElementById('FinalTOBCommStamp');
+  const tobEl = document.getElementById('FinalTOB');
   if(!tobEl) return;
 
-  // Si pas assez d’info -> vide + pas d’erreur + reset stamp
+  const siEl = document.getElementById('FinalSI');
+
+  // Si pas assez d’info -> vide + pas d’erreur + reset tracker
   if(main == null){
     tobEl.value = '';
     tobEl.classList.remove('is-invalid','is-valid');
     _finalTOBLastValue = '';
-    if(stampEl) stampEl.textContent = 'Communication chiffres porte : --';
     return;
   }
 
@@ -2693,7 +2687,7 @@ function updateFinalTOB(){
   const newTOB = `${main} + ${infant}`;
   tobEl.value = newTOB;
 
-  // Timestamp si TOB vient d'être calculé ou a changé
+  // ✅ Timestamp dans SI FINAL quand TOB est calculé / change
   if(newTOB !== _finalTOBLastValue){
     _finalTOBLastValue = newTOB;
 
@@ -2701,7 +2695,16 @@ function updateFinalTOB(){
     const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
 
-    if(stampEl) stampEl.textContent = `Communication chiffres porte : ${hh}:${mm}`;
+    if(siEl){
+      const prefix = 'COMM CHIFFRES PORTE ';
+      const line = `${prefix}${hh}:${mm}`;
+
+      const lines = (siEl.value || '').split('\n').map(s=>s.trim()).filter(Boolean);
+      const kept  = lines.filter(l => !l.startsWith(prefix));
+      kept.push(line);
+
+      siEl.value = kept.join('\n');
+    }
   }
 
   // Validation OA..OD (doit matcher MAIN, pas infant)
@@ -2730,7 +2733,7 @@ function refreshUIForTabs(){
     stopCountdown(true);
   }
 }
-  
+
 /* INIT */
 function initForm(){
   // 1) Créer d’abord tout le DOM dynamique (sinon loadTabData() ne peut pas restaurer)
