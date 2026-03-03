@@ -2696,7 +2696,7 @@ function updateFinalTOB(){
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
 
     if(siEl){
-      const prefix = 'COMM CHIFFRES PORTE ';
+      const prefix = 'Communication chiffres porte ';
       const line = `${prefix}${hh}:${mm}`;
 
       const lines = (siEl.value || '').split('\n').map(s=>s.trim()).filter(Boolean);
