@@ -3907,7 +3907,10 @@ function collectTimelineData(){
   const AIBT = parseHHMM(document.getElementById('AIBT')?.value || '');
   const SOBT = parseHHMM(document.getElementById('SOBT')?.value || '');
   const AOBT = parseHHMM(document.getElementById('AOBT')?.value || '');
+
+  // TOBT affichée = peut être ajustée CTOT (timer). On garde comme avant pour le point fixe.
   const TOBT = parseHHMM((document.getElementById('timer-tobt')?.textContent || '').replace('--:--',''));
+
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
   const H15  = parseHHMM((document.getElementById('timer-h15')?.textContent || '').replace('--:--',''));
   const H40  = parseHHMM((document.getElementById('timer-h40')?.textContent || '').replace('--:--',''));
@@ -3928,8 +3931,32 @@ function collectTimelineData(){
     if(t!=null) fixedPoints.push({label, t, cls:'tl--std'});
   });
 
+  // ===== Cabin release (Dernier débarqué -> Premier embarqué)
+  // Affiché SAUF si (SOBT - SIBT) > 35 ou si Arr PNT/PNC rempli
+  const hasArrCrew = !!(
+    (document.getElementById('ArrPNC')?.value || '').trim() ||
+    (document.getElementById('ArrPNT')?.value || '').trim()
+  );
+
+  let turnMin = null;
+  if(SIBT != null && SOBT != null){
+    turnMin = SOBT - SIBT;
+    if(turnMin < 0) turnMin += 1440; // gère minuit
+  }
+
+  const cabinPair = getPairWindow('DernierDebarque','AvionPremierEmbarque');
+  const showCabinRelease =
+    !!cabinPair &&
+    !hasArrCrew &&
+    (turnMin != null && turnMin <= 35);
+
   const rows = [
     {label:'Débarquement', pair:getPairWindow('PremierDebarque','DernierDebarque'), cls:'tl--turn', color:null},
+
+    ...(showCabinRelease
+      ? [{label:'Cabin release', pair:cabinPair, cls:'tl--std', color:null}]
+      : []),
+
     {label:'Embarquement', pair:getPairWindow('AvionPremierEmbarque','AvionDernierEmbarque'), cls:'tl--ops',  color:null},
     {label:'Avitair',      pair:getPairWindow('ArriveeFuel','DepartFuel'), cls:'tl--std', color:'#f59e0b'},
     {label:'Lift (Arr)',   pair:getPairWindow('ArriveeLiftArr','DepartLiftArr'), cls:'tl--std', color:'#a855f7'},
@@ -3945,6 +3972,7 @@ function collectTimelineData(){
 
   return {fixedPoints, durations, windowInfo};
 }
+  
 function renderTimeline(){
   const scroller = document.getElementById('timelineScroll');
   const canvas   = document.getElementById('timelineCanvas');
