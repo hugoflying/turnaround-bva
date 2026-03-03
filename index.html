@@ -3893,15 +3893,27 @@ function computeTimelineWindow(allTimes){
 
   return {min:0, max:60};
 }
-function getPairWindow(idA,idB){
-  const a = parseHHMM(document.getElementById(idA)?.value || '');
-  const b = parseHHMM(document.getElementById(idB)?.value || '');
+
+function getPairWindow(idA, idB){
+  const elA = document.getElementById(idA);
+  const elB = document.getElementById(idB);
+
+  // ✅ si un des champs n'existe pas (panel caché / non généré), pas de barre
+  if(!elA || !elB) return null;
+
+  const a = parseHHMM(elA.value || '');
+  const b = parseHHMM(elB.value || '');
   if(a==null || b==null) return null;
+
   return [Math.min(a,b), Math.max(a,b)];
 }
+
 function collectTimelineData(){
   const fixedPoints = [];
-  const addPoint = (label, t, cls='tl--std')=>{ if(t==null) return; fixedPoints.push({label, t, cls}); };
+  const addPoint = (label, t, cls='tl--std')=>{
+    if(t==null) return;
+    fixedPoints.push({label, t, cls});
+  };
 
   const SIBT = parseHHMM(document.getElementById('SIBT')?.value || '');
   const AIBT = parseHHMM(document.getElementById('AIBT')?.value || '');
