@@ -5546,64 +5546,90 @@ function validateForm() {
 
   const titre = `[TIMING] ${dateTitre} / ${cie}${vol} ${from}-${to} / ${immat} / ${rza}`;
 
-  const liftArrivee = `${val("ArriveeLiftArr")} - ${val("DepartLiftArr")}`;
-  const liftDepart  = `${val("ArriveeLift")} - ${val("DepartLift")}`;
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  const v    = id => (document.getElementById(id)?.value || '').trim();
+  const line = (label, value, pad=24) => value ? `${(label+' ').padEnd(pad,'.')} ${value}\n` : '';
+  const sep  = label => `\n${'━'.repeat(4)} ${label} ${'━'.repeat(Math.max(0,40-label.length-6))}\n\n`;
 
-  // DL block
+  // ── INFO VOL ──────────────────────────────────────────────────────────────
+  const infoBlock = sep('INFO VOL')
+    + line('Vol',      `${cie}${vol}`)
+    + line('Date',     dateTitre)
+    + line('Rotation', from && to ? `${from} → ${to}` : '')
+    + line('Immat',    immat)
+    + line('Type',     typeAvion)
+    + line('Callsign', v('Callsign'))
+    + line('Parking',  v('Parking'))
+    + line('RZA',      rza)
+    + line('Mode',     isUTC ? 'UTC' : 'LOCAL');
+
+  // ── HORAIRES ──────────────────────────────────────────────────────────────
+  const pad = s => (s||'--:--').padEnd(6);
+  const horBlock = sep('HORAIRES')
+    + `${''.padEnd(16)}Prévu    Réel\n`
+    + `ARR             ${pad(v('SIBT'))}   ${pad(v('AIBT'))}\n`
+    + `DEP             ${pad(v('SOBT'))}   ${pad(v('AOBT'))}\n`
+    + (v('CTOT') ? `CTOT                     ${v('CTOT')}\n` : '')
+    + (v('EOBT') ? `EOBT                     ${v('EOBT')}\n` : '');
+
+  // ── TIMINGS ───────────────────────────────────────────────────────────────
+  const liftArr = (v('ArriveeLiftArr')||v('DepartLiftArr'))
+    ? `${v('ArriveeLiftArr')||'--:--'} - ${v('DepartLiftArr')||'--:--'}` : '';
+  const liftDep = (v('ArriveeLift')||v('DepartLift'))
+    ? `${v('ArriveeLift')||'--:--'} - ${v('DepartLift')||'--:--'}` : '';
+
+  const timBlock = sep('TIMINGS')
+    + line('Arrivée PNT',        v('ArrPNT'))
+    + line('Arrivée PNC',        v('ArrPNC'))
+    + line('1er débarqué (L1)',  v('PremierDebarque'))
+    + line('1er débarqué (L2)',  v('PremierDebarqueL2'))
+    + line('Dernier débarqué',   v('DernierDebarque'))
+    + line('Lift ARR ↑↓',        liftArr)
+    + line('Arrivée fuel',       v('ArriveeFuel'))
+    + line('Arrivée INAD',       v('ArriveeINAD'))
+    + line('Arrivée lift DEP',   v('ArriveeLift') ? liftDep : '')
+    + line('Lift DEP ↑↓',        liftDep)
+    + line('Départ fuel',        v('DepartFuel'))
+    + line('1er embarqué',       v('AvionPremierEmbarque'))
+    + line('Dernier embarqué',   v('AvionDernierEmbarque'))
+    + line('Remise LID/LDS',     v('RemiseLID'))
+    + line('Casque connecté',    v('ConnexionAgentCasque'))
+    + line('Fermeture porte',    v('FermeturePorteAvion'));
+
+  // ── LOAD ─────────────────────────────────────────────────────────────────
+  const arrPax   = v('ArrPAX_MAIN') ? `PAX ${v('ArrPAX_MAIN')}${v('ArrPAX_INF') ? ' + '+v('ArrPAX_INF')+' inf' : ''}  /  BAGS ${v('ArrBAGS')||'—'}  /  POIDS ${v('ArrPOIDS')||'—'} kg` : '';
+  const finPax   = v('FinalTOB')    ? `PAX ${v('FinalTOB')}  /  BAGS ${v('FinalBAGS')||'—'}  /  POIDS ${v('FinalPOIDS')||'—'} kg` : '';
+  const tob      = v('FinalTOB')    ? `TOB ${v('FinalTOB')}   M:${v('FinalMALE')||'—'}  F:${v('FinalFEMALE')||'—'}  CH:${v('FinalCHILD')||'—'}  INF:${v('FinalINFANT')||'—'}` : '';
+  const fret     = [v('FinalOA')&&`OA:${v('FinalOA')}`, v('FinalOB')&&`OB:${v('FinalOB')}`, v('FinalOC')&&`OC:${v('FinalOC')}`, v('FinalOD')&&`OD:${v('FinalOD')}`].filter(Boolean).join('  ');
+
+  const loadBlock = (arrPax||finPax||tob||fret) ? sep('LOAD')
+    + (arrPax ? `ARR    ${arrPax}\n` : '')
+    + (finPax ? `FINAL  ${finPax}\n` : '')
+    + (tob    ? `${tob}\n` : '')
+    + (fret   ? `Fret   ${fret}\n` : '')
+    : '';
+
+  // ── FUEL ─────────────────────────────────────────────────────────────────
+  const fuelBlock = (v('BlockFuel')||v('FuelUplift')||v('TripFuel')||v('TaxiFuel')) ? sep('CARBURANT')
+    + line('Block fuel',   v('BlockFuel') ? v('BlockFuel')+' kg' : '')
+    + line('Trip fuel',    v('TripFuel')  ? v('TripFuel') +' kg' : '')
+    + line('Taxi fuel',    v('TaxiFuel')  ? v('TaxiFuel') +' kg' : '')
+    + line('Uplift',       v('FuelUplift')? v('FuelUplift')+' kg' : '')
+    : '';
+
+  // ── DL ───────────────────────────────────────────────────────────────────
   const dlLines = [];
-  if (val("DLcode1")) dlLines.push(`DL (${val("DLcode1")}) : ${val("DLduree1")} min`);
-  if (val("DLcode2")) dlLines.push(`DL (${val("DLcode2")}) : ${val("DLduree2")} min`);
-  if (val("DLcode3")) dlLines.push(`DL (${val("DLcode3")}) : ${val("DLduree3")} min`);
-  const dlBlock = dlLines.length ? `\n== DL ==\n\n${dlLines.join("\n")}\n` : "";
+  if(v('DLcode1')) dlLines.push(`DL (${v('DLcode1')}) : ${v('DLduree1')||'?'} min`);
+  if(v('DLcode2')) dlLines.push(`DL (${v('DLcode2')}) : ${v('DLduree2')||'?'} min`);
+  if(v('DLcode3')) dlLines.push(`DL (${v('DLcode3')}) : ${v('DLduree3')||'?'} min`);
+  const dlBlock = dlLines.length ? sep('RETARDS') + dlLines.join('\n') + '\n' : '';
 
-  // Faits saillants
-  const faitsTxt = (val("FaitsSaillants") || "").trim();
-  const faitsBlock = faitsTxt ? `\n== FAITS SAILLANTS ==\n\n${faitsTxt}\n` : "";
+  // ── FAITS SAILLANTS ───────────────────────────────────────────────────────
+  const faitsTxt = v('FaitsSaillants');
+  const faitsBlock = faitsTxt ? sep('FAITS SAILLANTS') + faitsTxt + '\n' : '';
 
-  // ✅ Mode horaire (UTC / LOCAL)
-  const timeMode = isUTC ? 'UTC' : 'LOCAL';
-
-  const body =
-`Vol : ${cie}${vol}
-Date : ${dateTitre}
-Rotation : ${from} - ${to}
-Immat : ${immat}
-Type avion : ${typeAvion}
-RZA : ${rza}
-Mode horaire : ${timeMode}
-
-== HORAIRES ==
-
-SIBT : ${val("SIBT")}
-AIBT : ${val("AIBT")}
--
-SOBT : ${val("SOBT")}
-AOBT : ${val("AOBT")}
-CTOT : ${val("CTOT")}
-
-== TIMINGS ==
-
-Arrivée PNT : ${val("ArrPNT")}
-Arrivée PNC : ${val("ArrPNC")}
-
-Premier débarqué : ${val("PremierDebarque")}
-Dernier débarqué : ${val("DernierDebarque")}
-
-Premier embarqué : ${val("AvionPremierEmbarque")}
-Dernier embarqué : ${val("AvionDernierEmbarque")}
-
-Arrivée fuel : ${val("ArriveeFuel")}
-Départ fuel : ${val("DepartFuel")}
-
-Arrivée INAD : ${val("ArriveeINAD")}
-
-Lift arrivée : ${liftArrivee}
-Lift départ  : ${liftDepart}
-
-Remise LID/LDS : ${val("RemiseLID")}
-Fermeture porte avion : ${val("FermeturePorteAvion")}
-
-${[dlBlock, faitsBlock].filter(Boolean).join("\n")}`;
+  const body = [infoBlock, horBlock, timBlock, loadBlock, fuelBlock, dlBlock, faitsBlock]
+    .filter(Boolean).join('');
 
   window.location.href =
     `mailto:trafic@aeroportbeauvais.com?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
