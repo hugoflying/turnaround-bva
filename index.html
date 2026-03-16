@@ -4,68 +4,100 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>SUIVI PERFORMANCE</title>
+<!-- ===== PWA — iOS standalone ===== -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Suivi Perf" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0f1723" />
+
+<!-- Icône iOS (apple-touch-icon) -->
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAFeUlEQVR4nO3dy1UjMRRFUZnVc5hBDJB/KBADzCACeuAWbZv6SKXf031nB2AKc3wRNphTMOD+8fl79DWg3NfH22n0NQy5AAL2YUTg3T4gEfvWK+6mH4SIsaRl3E1umJCRokXYd7VvkJiRqkUr1R4hhIwStda6ykITM0rVaqjoUUHIaKFkrQ8vNDGjlZK2DgVNzGjtaGPZQRMzejnSWlbQxIzecptLDpqYMUpOe0lBEzNGS21wN2hihhUpLVZ/6RsYaTNo1hnW7DW5GjQxw6qtNjlyQMpi0KwzrFtr9FfQxIxZLLXKkQNSroJmnTGb22ZZaEghaEj5CZrjBmZ12S4LDSkEDSl3IXDcwPxiwyw0pBA0pBA0pJw4P0MJCw0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pBA0pkkF/vr+OvgQMIvtHsjHqh6eXwVeCniQX+tLn+yuL7YjsQoewfPRgsbXJL/QtFlubdNBba0zYdVm5L/+MvoDR+OGxjJWQI+kzdJRzpxP2Pss/m0gfOY6wtjiWzHBMc7HQIRwL1crqjJR6v1m5r9yfobd4Pl9bX+I1bhY6hPIvknrYR+8fS/cLC51BdbFnXeMlrhY6hLpfvJnDVr0fWOgCMy620hovcbfQIbT7oloNu2XE1j5nnoeuyNr6zfC8cW0ug265KhYC8hhyxBm6gc/31+7fir0GfMvlGTpqHUGPqEeGbO38HAIL3VSrpWaN17k8Q0ezLajns3EqFrqDkqW2GLDFo0bkPuiHpxeT0Vi8JsshR+6D7iVlpS1GHMIcIUeun+W41CumpTgIuR4WurO41FYjDmHOkCMW+oLlyHqYOeSIhYZEyBELfcPTSiuFHBH0AvWoFUOOCHqFYtTKIUeuX/reovbFV/t81rDQO2Zfai8hRwSdYMaovYUcEXSiWaL2GnJE0Jmshu095IigD7AUNSFfI+iDRkdNyMsIusCIqAl5G0EXGvlrp/iNF1YK9Fzo0UecWRD0RIh6H0EfNCouot5G0BMi6nUEPSmiXkbQB1iJycp1WELQkyPqawSdyWJAFq9pFIIWQdRnBC2EqAk6ywzBeH/1kvflcM5ilCUIOlHt/+vXMiS1SHNw5BiE355rg6ATtPqvq7NHbfH6CXowi1HMjKA7WouXqOsh6B38RcpceJajk5Rgjzz7sXa7NR6IMz7ICHrDqD+C7flxZ4x2C0F3kBtNjajjbagFu4cztFE1QvQWcwgEvarWt/2SqDwGWYqgjXt4eiHsDAS9wMI6p+L/f18jaBFEfUbQjXBMGIOgb1hcOovXZBVBN8A6j0PQF2ZeQh5EZwRdGWGNRdCQQtD/eP3tNDUEDSkEHVhnJQQNKQRdAetsh/ugZ37uOeIB9Z/7oEsRky2ug1ZYZ1xzHXQp1tket0GzzprcBl2q1zrzwMtD0JDiMuga73kBm1wGrYQH1zV3QbPO2twFDW0EnYF1ts/VmzXWeqva3qxcxwxcBb3HYjgWr8kyN0EvrTOx6HETdAgE7MEphBDuH5+/R18IUOrr4+3EsxyQQtCQQtCQchfC+ewx+kKAErFhFhpSCBpSfoLm2IFZXbbLQkMKQUPKVdAcOzCb22ZZaEj5FTQrjVkstbq40EQN69Ya5cgBKatBs9KwaqvNzYUmaliz1yRHDkjZDZqVhhUpLSYtNFFjtNQGk48cRI1RctrLOkMTNXrLbS77h0KiRi9HWjv0LAdRo7WjjR1+2o6o0UpJW1Wi5I1qUEONkazywgprjVK1GqoeImuNHLXHsPpL36w1UrVopWl8rDWWtBy9bmtK3L71+s495HhA3D6MOH6aOO8SuAYLPz/9BWZgKNlEjNVHAAAAAElFTkSuQmCC" />
+
+<!-- Manifest PWA (Android / Chrome) -->
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Suivi+Performance%22%2C%22short_name%22%3A%22Suivi+Perf%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f1723%22%2C%22theme_color%22%3A%22%230f1723%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%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%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%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%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D" />
+
 
 <!-- Bulma -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
 
 <style>
-:root{
-  --bg: #f6f7fb;
-  --card: #ffffff;
-  --text: #111827;
+/* ================================================
+   SUIVI PERFORMANCE — Stylesheet v2
+   Architecture : Mobile-first, 3 breakpoints
+   BP-SM : 480px | BP-MD : 600px | BP-LG : 900px
+   ================================================ */
+
+/* ===== 1. DESIGN TOKENS ===== */
+:root {
+  /* Couleurs */
+  --bg:    #f6f7fb;
+  --card:  #ffffff;
+  --text:  #111827;
   --muted: #6b7280;
-  --shadow: 0 10px 28px rgba(0,0,0,.08);
+
+  /* Ombres */
+  --shadow:  0 10px 28px rgba(0,0,0,.08);
   --shadow2: 0 6px 18px rgba(0,0,0,.10);
+
+  /* Forme */
   --radius: 14px;
 
-  --field-bg: #ffffff;
-  --field-text: #111827;
-  --field-border: rgba(17,24,39,.18);
+  /* Champs */
+  --field-bg:          #ffffff;
+  --field-text:        #111827;
+  --field-border:      rgba(17,24,39,.18);
   --field-placeholder: rgba(107,114,128,.95);
 
+  /* Layout régions fixes — --fixed-header-h mis à jour par ResizeObserver */
   --fixed-header-h: 140px;
-
-  --gap: 10px;
-  --padCard: 12px;
-  --labelSize: .78rem;
-  --inputH: 42px;
-
   --fixed-footer-h: 72px;
+
+  /* Échelle d'espacement */
+  --gap:       10px;
+  --padCard:   12px;
+  --labelSize: .85rem;
+  --inputH:    42px;
 }
 
-@media (min-width: 769px){
-  :root{ --gap: 12px; --padCard: 14px; --inputH: 44px; }
-}
-
-body{ background: var(--bg); color: var(--text); margin: 0; }
-html, body{ min-height: 100%; background: var(--bg) !important; }
-
-html.dark, body.dark{
-  --bg: #0f1115;
-  --card: #151922;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-  --shadow: 0 10px 28px rgba(0,0,0,.45);
-  --shadow2: 0 6px 18px rgba(0,0,0,.50);
-
-  --field-bg: #0f172a;
-  --field-text: #e5e7eb;
-  --field-border: rgba(229,231,235,.16);
+/* ===== 2. DARK MODE — Manuel uniquement (bouton Clair/Sombre) ===== */
+html.dark {
+  --bg:                #0f1115;
+  --card:              #151922;
+  --text:              #e5e7eb;
+  --muted:             #9ca3af;
+  --shadow:            0 10px 28px rgba(0,0,0,.45);
+  --shadow2:           0 6px 18px rgba(0,0,0,.50);
+  --field-bg:          #0f172a;
+  --field-text:        #e5e7eb;
+  --field-border:      rgba(229,231,235,.16);
   --field-placeholder: rgba(156,163,175,.95);
 }
 
-/* ===== FIXED HEADER ===== */
-.fixed-header{
+/* ===== 3. BASE ===== */
+html, body {
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  /* iOS : empêche le scroll sur body pour que position:fixed reste fixe */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ===== 4. FIXED HEADER ===== */
+.fixed-header {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 3000;
-  background: var(--bg) !important;
-  backdrop-filter: none !important;
+  background: var(--bg);
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
-html.dark .fixed-header{ border-bottom-color: rgba(255,255,255,.08); }
+html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
 
-.fixed-header-inner{
+.fixed-header-inner {
   max-width: 1120px;
   margin: 0 auto;
   padding: 10px 14px 12px;
@@ -74,67 +106,73 @@ html.dark .fixed-header{ border-bottom-color: rgba(255,255,255,.08); }
   gap: 10px;
 }
 
-.app-wrap{
+/* ===== 5. MAIN WRAPPER ===== */
+.app-wrap {
+  display: none;
   max-width: 1120px;
   margin: 0 auto;
-  padding: calc(var(--fixed-header-h) + 14px) 14px 14px;
-  padding-bottom: calc(var(--fixed-footer-h) + 18px);
+  padding: calc(var(--fixed-header-h) + 14px) 14px calc(var(--fixed-footer-h) + 18px);
+  /* iOS scroll container — permet au footer/header de rester fixes */
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
 }
+body.has-tab .app-wrap { display: block; }
 
-/* rien afficher tant qu'il n'y a pas d'onglet */
-.app-wrap{ display:none; }
-body.has-tab .app-wrap{ display:block; }
-
-/* Topbar */
-.topbar-inner{
-  display:flex;
-  gap:12px;
-  align-items:center;
+/* ===== 6. TOPBAR ===== */
+.topbar-inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
 }
 
-/* Tabs row */
-.tabs-row{ display:flex; justify-content:center; }
-.tabs-chip{
+/* ===== 7. TABS ===== */
+.tabs-row { display: flex; justify-content: center; }
+
+.tabs-chip {
   width: 100%;
   max-width: 1120px;
   border-radius: 999px;
   padding: 10px 14px;
   background: var(--card);
   box-shadow: var(--shadow2);
-  display:flex;
-  align-items:center;
-  gap:8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   white-space: nowrap;
   scrollbar-width: thin;
 }
-.tabs-chip .button{
+.tabs-chip .button {
   border-radius: 999px;
   flex: 0 0 auto;
   font-weight: 900;
 }
 
-/* bouton refresh collé à chaque onglet */
-.tab-wrap{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
+.tab-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
-.tab-refresh{
-  border-radius: 999px !important;
-  padding: 0 10px !important;
+.tab-refresh {
+  border-radius: 999px;
+  padding: 0 10px;
   height: 36px;
   min-width: 36px;
   font-weight: 900;
 }
-.tab-refresh.is-loading{ pointer-events:none; opacity:.7; }
+.tab-refresh.is-loading { pointer-events: none; opacity: .7; }
 
-/* Timers chips */
+/* ===== 8. TIMER CHIPS ===== */
 .timer-row{
   display:flex;
   gap:10px;
@@ -167,190 +205,247 @@ body.has-tab .app-wrap{ display:block; }
   justify-content:center;
 }
 
-#timer-eobt{ background:#16a34a !important; }
-#timer-h8{ background:#facc15 !important; color:#fff !important; }
-#timer-cd{ background:#93c5fd !important; color:#111 !important; }
-#timer-cd.cd-over{ background:#fee2e2 !important; color:#ef4444 !important; }
 
-/* CTOT éditable */
+#timer-eobt              { background: #16a34a; }
+#timer-h8                { background: #facc15; color: #fff; }
+#timer-cd                { background: #93c5fd; color: #111; }
+#timer-cd.cd-over        { background: #fee2e2; color: #ef4444; }
+
+/* ===== 9. CTOT PILL ===== */
 .ctot-pill{
-  width: auto;
+  /* Identique à .timer-chip .v */
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
   min-width: 70px;
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  background:#334155 !important;
-  color:#fff !important;
-  font-weight: 900 !important;
-  border-radius: 999px !important;
-  padding: 6px 10px !important;
-  text-align:center;
-  height: auto;
-  line-height: 1.2;
-  font-size: 1rem;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Couleur propre CTOT */
+  background: #334155;
+  color: #fff;
+  /* Reset input */
+  border: none;
+  outline: none;
+  box-shadow: none;
   appearance: none;
   -webkit-appearance: none;
+  cursor: default;
+  font-size: inherit;
+  line-height: inherit;
+  width: auto;
+  height: auto;
+  box-sizing: content-box;
 }
 .ctot-pill::-webkit-datetime-edit{ color:#fff; }
 .ctot-pill::-webkit-calendar-picker-indicator{ display:none; -webkit-appearance:none; }
 
-/* Bulma tweaks */
-.card{
+
+/*
+ * Le préfixe "html" (ou "html body") monte la spécificité
+ * suffisamment pour surclasser Bulma sans polluer avec !important.
+ */
+html .card {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   background: var(--card);
   color: var(--text);
 }
-.card-header{
+html .card-header {
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
+  /* Fallback statique pour Safari < 16.2 */
+  background: #dce8fc;
   background: color-mix(in srgb, var(--card) 85%, #3b82f6 15%);
 }
-body.dark .card-header{
+html.dark .card-header {
+  background: #1f2940;
   background: color-mix(in srgb, var(--card) 80%, #60a5fa 20%);
 }
-.card-header-title{ font-weight: 900; color: var(--text) !important; }
-.section-collapse{ cursor: pointer; user-select: none; }
-.collapsed-body{ display: none; }
-.card-content{ padding: var(--padCard) !important; }
+html .card-header-title { font-weight: 900; color: var(--text); }
 
-/* Inputs */
-.input, .select select, .textarea{
+.section-collapse { cursor: pointer; user-select: none; }
+.collapsed-body   { display: none; }
+html .card-content { padding: var(--padCard); }
+
+/* ===== 11. FORM FIELDS — définition unique, poids cohérent ===== */
+html .input,
+html .select select,
+html .textarea {
   border-radius: 12px;
-  background: var(--field-bg) !important;
-  color: var(--field-text) !important;
-  border-color: var(--field-border) !important;
+  background: var(--field-bg);
+  color: var(--field-text);
+  border-color: var(--field-border);
   height: var(--inputH);
-  font-weight: 800;
+  font-weight: 400;        /* Un seul endroit, valeur définitive */
 }
-.textarea{ min-height: 110px; height: auto; }
-.input.uppercase{ text-transform: uppercase; }
-textarea.si-uppercase{ text-transform: uppercase; }
+html .textarea {
+  min-height: 110px;
+  height: auto;
+}
+.input.uppercase       { text-transform: uppercase; }
+textarea.si-uppercase  { text-transform: uppercase; }
 
-.input::placeholder, .textarea::placeholder{ color: var(--field-placeholder) !important; }
+html .input::placeholder,
+html .textarea::placeholder { color: var(--field-placeholder); }
 
-.field .label{
+/* SELECT — alignement vertical, règle unique */
+html .select        { height: auto; }
+html .select select {
+  height: var(--inputH);
+  line-height: var(--inputH);
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: .95rem;
+}
+html .select.is-fullwidth select {
+  display: flex;
+  align-items: center;
+}
+html .select:not(.is-multiple):not(.is-loading)::after {
+  top: 50%;
+  margin-top: 0;
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+/* Labels */
+html .field .label {
   font-weight: 900;
-  color: var(--text) !important;
-  font-size: var(--labelSize) !important;
+  color: var(--text);
+  font-size: var(--labelSize);
   letter-spacing: .02em;
   text-transform: uppercase;
   opacity: .9;
+  margin-bottom: 2px;
+}
+.field-optional .label { opacity: .55; }
+
+/* LDM inputs (surclasse le reset global ci-dessus via spécificité) */
+html .ldm-in {
+  height: 38px;
+  padding: 6px 10px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: .02em;
+}
+html .ldm-ta {
+  min-height: 90px;
+  height: auto;
+  font-weight: 400;
 }
 
-/* FORCE couleur TOB */
-#FinalTOB.is-invalid{ color:#ef4444 !important; }
-#FinalTOB.is-valid{ color: var(--field-text) !important; }
+/* TOB color */
+#FinalTOB.is-invalid { color: #ef4444; }
+#FinalTOB.is-valid   { color: var(--field-text); }
 
-/* Buttons */
-.btn-actions{
-  display:grid;
+/* ===== 12. BUTTONS ===== */
+.button.is-bordeaux       { background: #7f1d1d; color: #fff; border-color: transparent; }
+.button.is-bordeaux:hover { background: #991b1b; }
+
+.btn-actions {
+  display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   margin-top: 8px;
 }
-.btn-actions .button{ border-radius: 12px; font-weight: 900; height: 40px; }
+.btn-actions .button { border-radius: 12px; font-weight: 900; height: 40px; }
+.btn-action-main     { font-size: 1.1rem; height: 44px; padding: 0 22px; }
 
-/* Grilles responsive simples */
-.grid-auto{
-  display:grid;
+/* ===== 13. RESPONSIVE GRID (12 colonnes) ===== */
+.grid-auto {
+  display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--gap);
 }
-.span-12{ grid-column: span 12; }
-.span-6{  grid-column: span 12; }
-.span-4{  grid-column: span 6; }
-.span-3{  grid-column: span 6; }
-@media (min-width: 769px){
-  .span-6{ grid-column: span 6; }
-  .span-4{ grid-column: span 4; }
-  .span-3{ grid-column: span 3; }
-}
+.span-12 { grid-column: span 12; }
+.span-6  { grid-column: span 12; }   /* mobile : pleine largeur */
+.span-4  { grid-column: span 6; }
+.span-3  { grid-column: span 6; }
 
-/* ===== BANDEAUX ESSENTIELS ===== */
-.kv-strip{
-  display:grid;
-  grid-template-columns: 1fr; /* mobile */
-  gap: var(--gap);
-}
-@media (min-width: 600px){
-  .kv-strip{ grid-template-columns: 1fr 1fr; } /* tablette + */
-}
-.kv-card{
+/* ===== 14. KV STRIP ===== */
+.kv-strip { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
+
+.kv-card {
   border-radius: 14px;
-  background: color-mix(in srgb, var(--card) 90%, #3b82f6 10%);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  background: rgba(255,255,255,.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
   padding: 10px 12px;
-  display:flex;
-  align-items:center;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
-body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.kv-left{ display:flex; flex-direction:column; gap:2px; }
-.kv-title{ font-size:.78rem; font-weight:900; color: var(--muted); text-transform:uppercase; }
-.kv-value{ font-size:1.1rem; font-weight:900; color: var(--text); }
-
-/* ===== Alignement visuel SELECT comme INPUT (global) ===== */
-.select.is-fullwidth select{
-  height: var(--inputH);
-  line-height: calc(var(--inputH) - 2px);
-  padding-top: 0;
-  padding-bottom: 0;
-  display: flex;
-  align-items: center;
-  font-weight: 800;
+html.dark .kv-card {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
 }
+.kv-left  { display: flex; flex-direction: column; gap: 2px; }
+.kv-title { font-size: .78rem; font-weight: 900; color: var(--muted); text-transform: uppercase; }
+.kv-value { font-size: 1.1rem; font-weight: 900; color: var(--text); }
 
-/* Popup toast */
-#popup{
+/* ===== 15. POPUP TOAST ===== */
+#popup {
   position: fixed;
   top: calc(var(--fixed-header-h) + 12px);
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 16px;
   border-radius: 12px;
-  color:#fff;
+  color: #fff;
   z-index: 4000;
   box-shadow: var(--shadow);
 }
 
-/* Toggle switch */
-.toggle{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
+/* ===== 16. TOGGLE SWITCH ===== */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--card);
   box-shadow: var(--shadow2);
-  cursor:pointer;
-  user-select:none;
+  cursor: pointer;
+  user-select: none;
   font-weight: 900;
   color: var(--text);
 }
-.toggle input{ position:absolute; opacity:0; pointer-events:none; }
-.toggle .track{
-  width: 44px; height: 26px; border-radius: 999px;
+.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle .track {
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
   background: rgba(148,163,184,.55);
-  position: relative; flex: 0 0 auto;
+  position: relative;
+  flex: 0 0 auto;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
-.toggle .thumb{
-  width: 22px; height: 22px; border-radius: 999px;
-  background: #fff; position:absolute; top: 2px; left: 2px;
+.toggle .thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
   transition: transform .18s ease, background .18s ease;
   box-shadow: 0 6px 16px rgba(0,0,0,.18);
 }
-.toggle input:checked + .track{ background: color-mix(in srgb, #3b82f6 70%, #22c55e 30%); }
-.toggle input:checked + .track .thumb{ transform: translateX(18px); }
+.toggle input:checked + .track {
+  background: #3b82f6;                                        /* Fallback */
+  background: color-mix(in srgb, #3b82f6 70%, #22c55e 30%);
+}
+.toggle input:checked + .track .thumb { transform: translateX(18px); }
 
-/* ===== AK picker (FULLSCREEN POPUP) ===== */
-#akPopover{
+/* ===== 17. AK POPOVER ===== */
+#akPopover {
   position: fixed;
   inset: calc(var(--fixed-header-h) + 12px) 12px 12px 12px;
-  width: auto;
-  transform: none;
   background: var(--card);
   box-shadow: var(--shadow);
   border-radius: 16px;
@@ -361,23 +456,19 @@ body.dark .kv-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   overflow: auto;
   flex-direction: column;
 }
-body.dark #akPopover{ border-color: rgba(255,255,255,.10); }
+html.dark #akPopover { border-color: rgba(255,255,255,.10); }
 
-/* ✅ Quand AK est ouvert : on masque les FAB (LOAD + SETTINGS) */
 body.ak-open #loadFab,
-body.ak-open #settingsFab{
-  display: none !important;
-}
+body.ak-open #settingsFab { display: none; }
 
-#akBackdrop{
+#akBackdrop {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.35);
   z-index: 4600;
   display: none;
 }
-
-#akPopover .ak-header{
+#akPopover .ak-header {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -385,109 +476,205 @@ body.ak-open #settingsFab{
   padding: 10px 0;
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
-body.dark #akPopover .ak-header{ border-bottom-color: rgba(255,255,255,.10); }
+html.dark #akPopover .ak-header { border-bottom-color: rgba(255,255,255,.10); }
+#akList { flex: 1 1 auto; overflow-y: auto; }
 
-#akList{ flex: 1 1 auto; overflow-y: auto; }
-
-/* ===== TIMELINE ===== */
+/* ===== 18. TIMELINE ===== */
 .timeline-track {
-  position: absolute; left:6%; right:6%;
-  height: 4px; background:#cfd4da; transform:translateY(-50%); border-radius:4px;
-}
-body.dark .timeline-track{ background:#2e2e2e; }
-
-.timeline-tick{
   position: absolute;
-  width: 1px; /* ✅ pas plus gras */
-  background: rgba(0,0,0,0.08);
+  left: 6%; right: 6%;
+  height: 4px;
+  background: #cfd4da;
+  transform: translateY(-50%);
+  border-radius: 4px;
 }
-body.dark .timeline-tick{
-  background: #3e444b;
-}
+html.dark .timeline-track { background: #2e2e2e; }
 
-/* ✅ pas plus épais : juste un style léger optionnel */
-.timeline-tick-major{
-  width: 1px; /* ✅ identique */
-  background: rgba(0,0,0,0.12);
-}
-body.dark .timeline-tick-major{
-  background: rgba(255,255,255,0.18);
-}
+.timeline-tick       { position: absolute; width: 1px; background: rgba(0,0,0,.08); }
+html.dark .timeline-tick { background: #3e444b; }
+
+.timeline-tick-major { width: 1px; background: rgba(0,0,0,.12); }
+html.dark .timeline-tick-major { background: rgba(255,255,255,.18); }
 
 .timeline-tick-label {
-  position: absolute; transform: translateX(-50%);
-  font-size: 14px; font-weight: 800; color:#111827;
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
 }
-body.dark .timeline-tick-label { color:#cfd4da; }
+html.dark .timeline-tick-label { color: #cfd4da; }
 
-.tl-event, .tl-range { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; line-height:1; z-index: 1; }
+.tl-event, .tl-range {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  line-height: 1;
+  z-index: 1;
+}
 .tl-dot {
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0,0,0,.15);
   margin: 0 auto 4px;
 }
 .tl-label {
-  padding: 4px 10px; border-radius: 999px;
-  background: #f1f3f5; color:#111; font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f3f5;
+  color: #111;
+  font-size: 14px;
   box-shadow: 0 0 0 1px rgba(0,0,0,.07);
   font-weight: 900;
 }
-body.dark .tl-label { background:#232733; color:#f5f5f5; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+html.dark .tl-label { background: #232733; color: #f5f5f5; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
 
-.tl--std  { --c:#64748b; }
-.tl--eobt { --c:#16a34a; }
-.tl--ctot { --c:#334155; }
-.tl--ops  { --c:#2563eb; }
-.tl--turn { --c:#ef4444; }
+.tl--std  { --c: #64748b; }
+.tl--eobt { --c: #16a34a; }
+.tl--ctot { --c: #334155; }
+.tl--ops  { --c: #2563eb; }
+.tl--turn { --c: #ef4444; }
 .tl-event .tl-dot { background: var(--c); }
 
-.tl-range{
+.tl-range {
   height: 16px;
+  background: rgba(100,116,139,.42);                          /* Fallback */
   background: color-mix(in srgb, var(--c) 42%, transparent);
   border: 2px solid var(--c);
   border-radius: 999px;
   z-index: 2;
 }
-.tl-range-label{
-  position:absolute; top: -22px; left:50%; transform: translateX(-50%);
-  font-size: 13px; background: rgba(255,255,255,.92);
-  padding: 2px 8px; border-radius: 10px; font-weight: 900;
+.tl-range-label {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  background: rgba(255,255,255,.92);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 900;
   color: #111;
 }
-body.dark .tl-range-label { background: rgba(0,0,0,.45); color:#fff; }
+html.dark .tl-range-label { background: rgba(0,0,0,.45); color: #fff; }
 
-.timeline-toolbar{
-  display:flex; align-items:center; gap:8px; margin: 4px 0 10px;
+.timeline-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
   flex-wrap: wrap;
 }
-.timeline-scroll{
-  overflow-x:auto; overflow-y:hidden;
+.timeline-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
   border-radius: 16px;
   background: var(--card);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
-body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+html.dark .timeline-scroll { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.timeline-canvas { position: relative; min-width: 600px; width: 100%; }
 
-.timeline-canvas{ position:relative; min-width:600px; width:100%; }
+/* ===== 19. SETTINGS ===== */
+#settingsBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 9000; display: none; }
 
-/* DL error */
-.dl-error { border: 2px solid #ef4444 !important; border-radius: 12px; }
-
-/* ===== SETTINGS (gear) bottom menu ===== */
-#settingsBackdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  z-index: 9000;
-  display: none;
-}
-
-#settingsFab{
+#settingsFab {
   position: fixed;
   right: 14px;
   bottom: calc(var(--fixed-footer-h) + 14px);
-  z-index: 9100;                 /* ✅ au-dessus du footer + header */
+  z-index: 9100;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  box-shadow: var(--shadow2);
+}
+#settingsMenu {
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--fixed-footer-h) + 74px);
+  z-index: 9200;
+  width: min(320px, calc(100vw - 28px));
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 12px;
+  display: none;
+}
+html.dark #settingsMenu { border-color: rgba(255,255,255,.10); }
+#settingsMenu .settings-title { font-weight: 900; margin-bottom: 10px; }
+#settingsMenu .settings-row   { display: flex; flex-direction: column; gap: 10px; }
+
+/* ===== 20. FOOTER ===== */
+.fixed-footer {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 3500;
+  background: var(--bg);
+  border-top: 1px solid rgba(0,0,0,.08);
+  overflow: visible;
+}
+html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
+
+/* Remplit la safe-area iOS sans gonfler la hauteur visible du footer */
+.fixed-footer::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom));
+  height: env(safe-area-inset-bottom);
+  background: var(--bg);
+}
+.fixed-footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 14px;
+}
+.footer-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap: wrap;
+}
+.footer-timers {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.footer-refresh-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  flex: 0 0 auto;
+  background: var(--card);
+  border: 2px solid var(--field-border);
+  color: var(--text);
+  box-shadow: var(--shadow2);
+  transition: background .15s, transform .1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-refresh-btn:active     { transform: rotate(45deg) scale(.93); }
+.footer-refresh-btn.is-loading { pointer-events: none; opacity: .6; }
+
+/* ===== 21. LOAD FAB ===== */
+#loadFab {
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--fixed-footer-h) + 86px);
+  z-index: 9150;
   width: 52px;
   height: 52px;
   border-radius: 999px;
@@ -498,52 +685,25 @@ body.dark .timeline-scroll{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   box-shadow: var(--shadow2);
 }
 
-#settingsMenu{
-  position: fixed;
-  right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 74px); /* ✅ suit la molette */
-  z-index: 9200;                 /* ✅ au-dessus de tout */
-  width: min(320px, calc(100vw - 28px));
-  border-radius: 16px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,.08);
-  padding: 12px;
-  display: none;
-}
-body.dark #settingsMenu{ border-color: rgba(255,255,255,.10); }
+/* ===== 22. DL (RETARDS) ===== */
+.dl-wrap  { display: block; }
+.dl-grid  { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
+.dl-wrap .input { border-width: 2px; font-weight: 700; }
+#FaitsSaillants { border-width: 2px; }
 
-#settingsMenu .settings-title{ font-weight: 900; margin-bottom: 10px; }
-#settingsMenu .settings-row{ display:flex; flex-direction: column; gap: 10px; }
+#ldmTabFuel { background: #facc15; color: #fff; border-color: transparent; }
+#ldmTabFuel:hover { filter: brightness(.97); }
+.lm-seg .button#ldmTabFuel.is-active { background: #facc15; color: #fff; }
 
-/* ===== RESPONSIVE tweaks ===== */
-@media (max-width: 768px){
-  .timer-chip{ min-width: 128px; }
-  .timeline-canvas{ min-width: 720px; }
-}
-@media (max-width: 420px){
-  .timer-chip{ min-width: 120px; padding: 9px 12px; }
-  .timer-chip .v{ min-width: 64px; }
-  .ctot-pill{ min-width: 64px; }
-}
-@media (max-width: 480px){
-  .timer-row{ gap: 6px; }
-  .timer-chip{ min-width: 96px; padding: 6px 8px; gap: 6px; }
-  .timer-chip .k{ font-size: .7rem; font-weight: 800; }
-  .timer-chip .v{ min-width: 54px; padding: 4px 6px; font-size: .8rem; }
-  .ctot-pill{ min-width: 54px; padding: 4px 6px !important; font-size: .8rem; }
-}
-
-/* ===== LDM modal (neutre) ===== */
-#ldmBackdrop{
+/* ===== 23. LDM MODAL ===== */
+#ldmBackdrop {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.40);
   z-index: 4400;
   display: none;
 }
-
-#ldmModal{
+#ldmModal {
   position: fixed;
   inset: calc(var(--fixed-header-h) + 10px) 10px 10px 10px;
   z-index: 4500;
@@ -555,343 +715,442 @@ body.dark #settingsMenu{ border-color: rgba(255,255,255,.10); }
   flex-direction: column;
   overflow: hidden;
 }
-body.dark #ldmModal{ border-color: rgba(255,255,255,.10); }
+html.dark #ldmModal { border-color: rgba(255,255,255,.10); }
 
-.ldm-header{
+.ldm-header {
   position: sticky;
   top: 0;
   z-index: 3;
-  display:flex;
-  align-items:center;
+  display: flex;
+  align-items: center;
   gap: 10px;
   padding: 10px 12px;
   background: var(--card);
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
-body.dark .ldm-header{ border-bottom-color: rgba(255,255,255,.10); }
+html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.10); }
 
-.ldm-title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex: 1 1 auto;
-}
-.ldm-title strong{ font-weight: 900; font-size: 1.05rem; }
+.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
+.ldm-title strong       { font-weight: 900; font-size: 1.05rem; }
+#ldmHint                { font-weight: 900; border-radius: 999px; }
 
-#ldmHint{ font-weight: 900; border-radius: 999px; }
-
-/* segment buttons */
-.lm-seg{
-  display:inline-flex;
-  gap:6px;
+.lm-seg {
+  display: inline-flex;
+  gap: 6px;
+  background: #e5e5e5;                                               /* Fallback */
   background: color-mix(in srgb, var(--card) 86%, #000 14%);
   padding: 6px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
-body.dark .lm-seg{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.lm-seg .button{
-  border-radius: 999px !important;
-  font-weight: 900;
-  height: 34px;
-}
-.lm-seg .button.is-active{
-  background: #2563eb !important;
-  color: #fff !important;
-  border-color: transparent !important;
-}
+html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 34px; }
+.lm-seg .button.is-active    { background: #2563eb; color: #fff; border-color: transparent; }
 
-.ldm-body{
-  padding: 12px;
-  overflow: auto;
-}
+.ldm-body { padding: 12px; overflow: auto; }
 
-.ldm-card{
+.ldm-card {
   border-radius: 16px;
+  background: #f4f4f4;                                               /* Fallback */
   background: color-mix(in srgb, var(--card) 92%, #000 8%);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
   overflow: hidden;
   margin-bottom: 10px;
 }
-body.dark .ldm-card{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+html.dark .ldm-card { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 
-.ldm-card-hdr{
-  display:flex;
-  align-items:center;
+.ldm-card-hdr {
+  display: flex;
+  align-items: center;
   gap: 10px;
   padding: 10px 12px;
+  background: #ebebeb;                                               /* Fallback */
   background: color-mix(in srgb, var(--card) 88%, #000 12%);
   border-bottom: 1px solid rgba(0,0,0,.06);
 }
-body.dark .ldm-card-hdr{ border-bottom-color: rgba(255,255,255,.08); }
+html.dark .ldm-card-hdr { border-bottom-color: rgba(255,255,255,.08); }
 
-.ldm-card-title{ font-weight: 900; letter-spacing:.08em; }
-.ldm-card-sub{ color: var(--muted); font-weight: 800; font-size: .85rem; margin-left:auto; }
+.ldm-card-title { font-weight: 900; letter-spacing: .08em; }
+.ldm-card-sub   { color: var(--muted); font-weight: 800; font-size: .85rem; margin-left: auto; }
 
-.ldm-grid{
+.ldm-grid {
   padding: 10px 12px 12px;
-  display:grid;
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 10px;
 }
-.ldm-span-2{ grid-column: span 2; }
+.ldm-span-2 { grid-column: span 2; }
 
-.ldm-in{
-  height: 38px !important;
-  padding: 6px 10px !important;
-  font-weight: 900 !important;
-  text-align: center;
-  letter-spacing: .02em;
-}
-.ldm-ta{
-  min-height: 90px !important;
-  height: auto !important;
-  font-weight: 800;
-}
-
-.ldm-row-4{
+.ldm-row-4 {
   grid-column: span 2;
-  display:grid;
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
-.ldm-row-4 .field{ margin: 0 !important; }
-.ldm-row-4 .field .label{
-  margin: 0 0 6px !important;
-  padding: 0 !important;
-  display:block;
-  border-radius: 0;
-  font-size: var(--labelSize) !important;
-  font-weight: 900 !important;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--text) !important;
-  opacity: .9;
-}
-.ldm-row-4 .field .label::before{ display:none !important; content:none !important; }
+.ldm-row-4 .field { margin: 0; }
 
-@media (max-width: 520px){
-  #ldmModal{ inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
-  .ldm-row-4{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ldm-in{ height: 36px !important; padding: 6px 8px !important; }
-  .ldm-ta{ min-height: 86px !important; }
-}
-
+/* ===== 24. MODAL LOCK ===== */
 html.modal-open,
-body.modal-open{
+body.modal-open {
   overflow: hidden;
   height: 100%;
   overscroll-behavior: none;
   touch-action: none;
 }
 
-/* ===== footer fixed bottom (iPad/iOS: fond jusqu'en bas sans grossir) ===== */
-.fixed-footer{
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 3500;
-  background: var(--bg) !important;
-  border-top: 1px solid rgba(0,0,0,.08);
-  overflow: visible; /* important pour le ::after */
+/* ===== 25. ERREUR ===== */
+.dl-error { border: 2px solid #ef4444; border-radius: 12px; }
+
+/* ===== 26. HORAIRES ===== */
+.horaires-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.hor-block    { display: flex; flex-direction: column; gap: 10px; }
+.hor-col-head { display: flex; justify-content: center; padding-bottom: 6px; border-bottom: 2px solid var(--field-border); }
+.hor-badge    { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: .72rem; font-weight: 900; padding: 4px 10px; min-width: 44px; }
+
+.hor-badge-arr          { background: #dbeafe; color: #1d4ed8; }
+html.dark .hor-badge-arr { background: #1e3a8a; color: #93c5fd; }
+.hor-badge-dep          { background: #dcfce7; color: #15803d; }
+html.dark .hor-badge-dep { background: #14532d; color: #86efac; }
+
+.hor-cell { display: flex; flex-direction: column; gap: 4px; }
+.hor-input-sched        { opacity: .6; border-style: dashed; }
+.hor-input-sched:focus  { opacity: 1; border-style: solid; }
+
+/* Horaires — labels identiques au reste */
+html .card:has(#SIBT) label.label {
+  font-weight: 900;
+  font-size: var(--labelSize);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: .9;
 }
 
-html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
+/* ===== 27. INFO VOL ===== */
+.iv-edit-btn             { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0 12px; opacity: .55; transition: opacity .15s; }
+.iv-edit-btn:hover       { opacity: 1; }
+body.iv-editing .iv-edit-btn { opacity: 1; }
 
-/* ✅ remplit la safe-area (home indicator) SANS augmenter la hauteur du footer */
-.fixed-footer::after{
-  content:"";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(-1 * env(safe-area-inset-bottom));
-  height: env(safe-area-inset-bottom);
-  background: var(--bg);
+#ivEdit {
+  border-top: 1px solid var(--field-border);
+  padding-top: 12px;
+  animation: ivFadeIn .18s ease;
+}
+@keyframes ivFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.fixed-footer-inner{
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 10px 14px; /* inchangé => pas de footer plus “épais” */
+.iv-section-title {
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  border-top: 1px solid var(--field-border);
+  padding-top: 10px;
+  margin-bottom: 10px;
 }
 
-.footer-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
-  flex-wrap: wrap;
-}
+.kv-badges-row      { display: flex; gap: 8px; padding: 6px 0 2px; }
+.kv-badges-row .tag { font-weight: 900; font-size: .78rem; border-radius: 8px; }
 
-/* version compacte tablette */
-@media (min-width: 600px) and (max-width: 900px){
-  .fixed-footer-inner{ padding: 8px 12px; }
-}
+/* ===== 28. TIMING GRID ===== */
+#timing-grid .card-content { padding: 10px 12px; }
+#timing-grid .grid-auto    { gap: 6px; row-gap: 12px; }
+#timing-grid .card.mb-4    { margin-bottom: 8px; }
+#timing-grid .hor-col-head { margin-bottom: 6px; }
 
-/* ===== LOAD FAB (au-dessus du footer fixe, au-dessus de SETTINGS) ===== */
-#loadFab{
-  position: fixed;
-  right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 86px); /* ✅ au-dessus de la molette */
-  z-index: 9150;                              /* ✅ visible même si menu/settings */
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  display: inline-flex;
+/* ===== 29. TIME WRAP ===== */
+.time-wrap        { position: relative; display: block; }
+.tw-hidden-input  { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+.tw-display {
+  width: 100%;
+  text-align: center;
+  display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
+  font-size: 1.05rem;
+  cursor: default;
+  user-select: none;
+  border-width: 2px;
+  height: 40px;
+  min-height: 40px;
+}
+.tw-zone {
+  position: absolute;
+  top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  font-weight: 900;
+  color: var(--muted);
+  opacity: .45;
+  cursor: pointer;
+  user-select: none;
+  z-index: 3;
+  border-radius: 8px;
+  transition: opacity .12s, background .12s;
+}
+.tw-zone-left   { left: 0;   width: 30%; }
+.tw-zone-center { left: 30%; width: 40%; }
+.tw-zone-right  { right: 0;  width: 30%; }
+
+.tw-zone:hover              { opacity: 1; background: rgba(0,0,0,.05); }
+.tw-zone-center:hover       { background: rgba(37,99,235,.08); color: #2563eb; }
+html.dark .tw-zone:hover    { background: rgba(255,255,255,.07); }
+.tw-zone:active             { background: rgba(0,0,0,.12); opacity: 1; }
+
+.tw-sched-zone {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  z-index: 3;
+  cursor: default;
+}
+
+/* Couleurs par catégorie */
+.tw-color-is-link     { border-color: #3273dc; color: #3273dc; }
+.tw-color-is-success  { border-color: #15803d; color: #15803d; }
+.tw-color-is-warning  { border-color: #d4a000; color: #7a5800; }
+.tw-color-is-dark     { border-color: #363636; color: #363636; }
+.tw-color-is-bordeaux { border-color: #7f1d1d; color: #7f1d1d; }
+html.dark .tw-color-is-link     { border-color: #5a9eff; color: #5a9eff; }
+html.dark .tw-color-is-success  { border-color: #4ade80; color: #4ade80; }
+html.dark .tw-color-is-warning  { border-color: #f5c400; color: #f5c400; }
+html.dark .tw-color-is-dark     { border-color: #aaa;    color: #ccc; }
+html.dark .tw-color-is-bordeaux { border-color: #ef4444; color: #ef4444; }
+
+.tw-editor {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  font-weight: 900;
+  font-size: 1rem;
+  z-index: 10;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid #3273dc;
+  padding: 0;
+}
+.tw-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  margin-bottom: 1px;
+  flex-shrink: 0;
+}
+
+/* ===== 30. AK LIST ===== */
+.ak-pair-row {
+  display: flex;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: var(--radius);
+  background: var(--card);
+  margin-bottom: 10px;
+  overflow: hidden;
   box-shadow: var(--shadow2);
 }
+html.dark .ak-pair-row { border-color: rgba(255,255,255,.10); }
 
-/* ===== DL WRAPPER ===== */
-.dl-wrap{ display: block; }
+/* Teinte de fond différente ARR (gauche) vs DEP (droite) */
+.ak-half-arr { background: rgba(219,234,254,.25); }   /* bleu très léger */
+.ak-half-dep { background: rgba(220,252,231,.25); }   /* vert très léger */
+html.dark .ak-half-arr { background: rgba(30,58,138,.15); }
+html.dark .ak-half-dep { background: rgba(20,83,45,.15); }
 
-/* ===== MOBILE : 2 colonnes x 3 lignes (Code / Durée) ===== */
-@media (max-width: 599px){
-  .dl-wrap{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap);
+.ak-half         { flex: 1; padding: 10px 10px 10px 14px; min-width: 0; }
+.ak-half-done    { opacity: .5; }
+.ak-half-empty   { flex: 1; background: rgba(0,0,0,.02); min-height: 60px; }
+html.dark .ak-half-empty { background: rgba(255,255,255,.02); }
+.ak-pair-divider { width: 1px; flex-shrink: 0; background: rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; padding: 0; font-size: .9rem; color: var(--muted); }
+html.dark .ak-pair-divider { background: rgba(255,255,255,.10); }
+.ak-half-top     { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px; }
+.ak-flow-badge   { font-size: .62rem; font-weight: 900; padding: 1px 6px; border-radius: 6px; }
+.ak-iata         { font-weight: 900; font-size: .95rem; }
+.ak-half-sub     { font-size: .78rem; font-weight: 700; color: var(--muted); line-height: 1.3; }
+.ak-tsuffix      { font-size: .7em; opacity: .7; font-weight: 600; }
+.ak-use-btn      { margin-top: 6px; }
+
+/* ===== 31. DARK MODE — BOUTONS SPÉCIAUX ===== */
+html.dark #btn-recherche-bag,
+html.dark #btn-inad,
+html.dark #btn-gpu { background: #353839; color: #f3f4f6; border-color: #444; }
+
+html.dark #btn-recherche-bag.is-info,
+html.dark #btn-inad.is-info,
+html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+/* =================================================================
+   RESPONSIVE — Mobile-first, 3 paliers propres
+   Toutes les règles mobile (<480) vivent dans le DEFAULT ci-dessus.
+   Les media queries n'ajoutent que ce qui change vers le haut.
+   ================================================================= */
+
+/* ---------- 600px : tablette petite + desktop ---------- */
+@media (min-width: 600px) {
+  /* Grille 12 colonnes — déverrouille les colonnes fractionnelles */
+  .span-6  { grid-column: span 6; }
+  .span-4  { grid-column: span 4; }
+  .span-3  { grid-column: span 3; }
+
+  /* KV en 2 colonnes */
+  .kv-strip { grid-template-columns: 1fr 1fr; }
+
+  /* DL : 3 colonnes */
+  .dl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* Timeline : plus de place */
+  .timeline-canvas { min-width: 720px; }
+}
+
+/* ---------- 768px : tablette standard ---------- */
+@media (min-width: 768px) {
+  :root {
+    --gap:     12px;
+    --padCard: 14px;
+    --inputH:  44px;
   }
-  .dl-wrap .dl-grid{ display: contents; }
-  .dl-wrap .field:has(#DLcode1){  grid-column: 1; grid-row: 1; }
-  .dl-wrap .field:has(#DLcode2){  grid-column: 1; grid-row: 2; }
-  .dl-wrap .field:has(#DLcode3){  grid-column: 1; grid-row: 3; }
-  .dl-wrap .field:has(#DLduree1){ grid-column: 2; grid-row: 1; }
-  .dl-wrap .field:has(#DLduree2){ grid-column: 2; grid-row: 2; }
-  .dl-wrap .field:has(#DLduree3){ grid-column: 2; grid-row: 3; }
-  .dl-wrap .input{ height: var(--inputH); padding: 6px 10px; }
 }
 
-/* Onglet FUEL en jaune (comme LID) */
-#ldmTabFuel{
-  background:#facc15 !important;
-  color:#fff !important;
-  border-color: transparent !important;
-}
-#ldmTabFuel:hover{ filter: brightness(.97); }
-
-/* si actif, on garde jaune */
-.lm-seg .button#ldmTabFuel.is-active{
-  background:#facc15 !important;
-  color:#fff !important;
+/* ---------- 900px : desktop ---------- */
+@media (min-width: 900px) {
+  :root { --fixed-footer-h: 72px; }
 }
 
-/* RETARDS : 2 lignes x 3 colonnes dès 600px */
-.dl-grid{
-  display: grid;
-  grid-template-columns: 1fr;  /* mobile <600 */
-  gap: var(--gap);
-}
-
-@media (min-width: 600px){
-  .dl-grid{
-    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 600+ => 3 colonnes */
+/* ---------- Compaction tablette 600–899px ---------- */
+@media (min-width: 600px) and (max-width: 899px) {
+  :root {
+    --gap:            8px;
+    --padCard:        9px;
+    --labelSize:      .75rem;
+    --inputH:         36px;
+    --fixed-footer-h: 64px;
   }
-}
 
-/* ===== TABLET 600–900 ===== */
-@media (min-width:600px) and (max-width:900px){
-  :root{ --gap: 8px; --padCard: 9px; --labelSize: .68rem; --inputH: 34px; --fixed-footer-h: 64px; }
-
-  .kv-strip{ grid-template-columns: 1fr 1fr !important; gap: 8px; }
-  .kv-card{ padding: 10px 12px; border-radius: 12px; }
-  .kv-title{ font-size: .62rem; letter-spacing: .05em; }
-  .kv-value{ font-size: .92rem; line-height: 1.2; }
-  .kv-left{ gap: 0px; }
+  .kv-card  { padding: 10px 12px; border-radius: 12px; }
+  .kv-title { font-size: .62rem; letter-spacing: .05em; }
+  .kv-value { font-size: .92rem; line-height: 1.2; }
+  .kv-left  { gap: 0; }
 
   .timer-chip{ min-width: 124px; padding: 8px 12px; }
   .timer-chip .k{ font-size: .75rem; }
   .timer-chip .v{ padding: 5px 8px; min-width: 64px; }
 
-  /* RESTAURE LA GRILLE TABLETTE */
-  .span-2{ grid-column: span 2; }
-  .span-3{ grid-column: span 3; }
-  .span-4{ grid-column: span 4; }
-  .span-6{ grid-column: span 6; }
+  /* Restaure les colonnes tablette */
+  .span-2 { grid-column: span 2; }
+  .span-3 { grid-column: span 3; }
+  .span-4 { grid-column: span 4; }
+  .span-6 { grid-column: span 6; }
 
-  /* DL : force 3 colonnes */
-  .dl-wrap .dl-grid{
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: var(--gap) !important;
-  }
-}
-
-/* SELECT même hauteur que input */
-.select{
-  height: auto !important;          /* ← très important */
-}
-
-.select select{
-  height: var(--inputH) !important;
-  line-height: var(--inputH) !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  font-size: .95rem;
-}
-
-/* centre la flèche Bulma (sans casser la rotation) */
-.select:not(.is-multiple):not(.is-loading)::after{
-  top: 50% !important;
-  margin-top: 0 !important;
-  transform: translateY(-50%) rotate(-45deg) !important;
-}
-
-/* tablette */
-@media (min-width:600px) and (max-width:900px){
-  .select select{
-    height: 32px !important;
-    line-height: 32px !important;
-  }
-}
-
-/* ===== INPUTS NON GRAS (override global) ===== */
-.input,
-.textarea,
-.select select,
-.ldm-in,
-.ctot-pill,
-.fuel-input {
-  font-weight: 400 !important;
-}
-
-/* TABLET 600–900 : compaction champs */
-@media (min-width:600px) and (max-width:900px){
-
-  /* INFO VOL */
-  #infoVolDetails .field{
-    margin-bottom:0 !important;
-  }
-  #infoVolDetails{
-    row-gap:6px !important;
+  /* DL : 3 colonnes forcées */
+  .dl-wrap .dl-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gap);
   }
 
-  /* LOAD FINAL */
-  #ldmFinal .field{
-    margin-bottom:0 !important;
-  }
-  #ldmFinal .ldm-grid{
-    row-gap:6px !important;
-  }
-  #ldmFinal .ldm-row-4{
-    row-gap:6px !important;
-  }
+  html .select select { height: 32px; line-height: 32px; }
 
+  /* Compaction champs */
+  #infoVolDetails .field,
+  #ldmFinal .field { margin-bottom: 0; }
+  #infoVolDetails  { row-gap: 6px; }
+  #ldmFinal .ldm-grid,
+  #ldmFinal .ldm-row-4 { row-gap: 6px; }
+
+  .fixed-footer-inner { padding: 8px 12px; }
 }
 
-/* HORAIRES – mêmes labels que partout */
-.card:has(#SIBT) label.label{
-  font-weight:900 !important;
-  font-size: var(--labelSize) !important;
-  letter-spacing:.02em;
-  text-transform:uppercase;
-  color: var(--text) !important;
-  opacity:.9;
-}
+/* ---------- Mobile < 600px : compaction maximale ---------- */
+@media (max-width: 599px) {
+  :root {
+    --gap:            6px;
+    --padCard:        8px;
+    --labelSize:      .70rem;
+    --inputH:         34px;
+    --fixed-footer-h: 58px;
+    --radius:         10px;
+  }
 
+  /* Layout général */
+  .app-wrap { padding-left: 8px; padding-right: 8px; }
+  html .card-header-title { font-size: .85rem; }
+
+  /* Inputs */
+  html .input,
+  html .select select { font-size: .85rem; padding-left: 8px; padding-right: 8px; }
+
+  /* Boutons action */
+  .btn-actions .button { height: 32px; font-size: .75rem; padding: 0 8px; }
+
+  /* Tabs */
+  .tabs-chip         { padding: 6px 10px; gap: 6px; }
+  .tabs-chip .button { font-size: .78rem; padding: 0 10px; height: 32px; }
+
+  /* Footer — toujours 1 ligne */
+  .footer-timers,
+  .timer-row      { gap: 4px; }
+
+  /* Timer chips */
+  .timer-row{ gap: 6px; }
+  .timer-chip{ min-width: 96px; padding: 6px 8px; gap: 6px; }
+  .timer-chip .k{ font-size: .7rem; font-weight: 800; }
+  .timer-chip .v{ min-width: 54px; padding: 4px 6px; font-size: .8rem; }
+  .ctot-pill{ min-width: 54px; padding: 4px 6px; font-size: .8rem; }
+
+  /* KV */
+  .kv-card  { padding: 8px 10px; border-radius: 10px; }
+  .kv-title { font-size: .58rem; }
+  .kv-value { font-size: .88rem; }
+
+  /* FAB */
+  #loadFab,
+  #settingsFab { width: 42px; height: 42px; font-size: .85rem; }
+
+  /* Horaires — 1 colonne */
+  .horaires-grid { grid-template-columns: 1fr; }
+
+  /* LDM */
+  #ldmModal  { inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
+  .ldm-row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html .ldm-in { height: 36px; padding: 6px 8px; }
+  html .ldm-ta { min-height: 86px; }
+
+  /* AK list */
+  .ak-half        { padding: 7px; }
+  .ak-iata        { font-size: .82rem; }
+  .ak-flow-badge  { font-size: .55rem; padding: 1px 4px; }
+  .ak-half-sub    { font-size: .68rem; }
+  .ak-use-btn     { font-size: .72rem; height: 26px; padding: 0 8px; margin-top: 4px; }
+  .ak-half-top    { gap: 3px; }
+  .ak-half-top .tag { font-size: .6rem; padding: 0 5px; height: auto; }
+
+  /* DL : 2 colonnes x 3 lignes (Code / Durée) */
+  .dl-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .dl-wrap .dl-grid              { display: contents; }
+  .dl-wrap .field:has(#DLcode1)  { grid-column: 1; grid-row: 1; }
+  .dl-wrap .field:has(#DLcode2)  { grid-column: 1; grid-row: 2; }
+  .dl-wrap .field:has(#DLcode3)  { grid-column: 1; grid-row: 3; }
+  .dl-wrap .field:has(#DLduree1) { grid-column: 2; grid-row: 1; }
+  .dl-wrap .field:has(#DLduree2) { grid-column: 2; grid-row: 2; }
+  .dl-wrap .field:has(#DLduree3) { grid-column: 2; grid-row: 3; }
+  .dl-wrap .input                { height: var(--inputH); padding: 6px 10px; }
+}
 
 </style>
 </head>
@@ -906,7 +1165,7 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   <div class="ldm-header">
     <div class="ldm-title">
       <strong>LOAD</strong>
-      <span id="ldmHint" class="tag is-light">ARRIVÉE</span>
+      <span id="ldmHint" class="tag is-light">ARR</span>
     </div>
 
     <!-- ✅ 4 onglets : ARR / PREVI / FINAL / FUEL -->
@@ -1220,17 +1479,23 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         </div>
 
         <!-- BOUTON IMAGE -->
-      <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
-        <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
-          LID COMPLETION GUIDE (RYR)
-        </button>
+        <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
 
-        <div id="finalImageBox" style="display:none; margin-top:12px;">
-          <img id="finalImage"
-               src="https://raw.githubusercontent.com/hugoflying/fiche-escale/main/lid-completion-guide.jpg"
-               style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+
+            <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
+              LID COMPLETION GUIDE (RYR)
+            </button>
+
+          </div>
+
+          <div id="finalImageBox" style="display:none; margin-top:12px;">
+            <img id="finalImage"
+                 src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/lid-completion-guide.jpg"
+                 style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+          </div>
+
         </div>
-      </div>
 
       </div>
     </section>
@@ -1310,49 +1575,94 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 
 <div class="app-wrap">
 
-<!-- INFO VOL -->
+<!-- INFO VOL + HORAIRES -->
 <div class="card mb-5">
   <header class="card-header">
     <p class="card-header-title">INFO VOL</p>
+    <button class="card-header-icon iv-edit-btn" onclick="toggleInfoVolEdit()" title="Modifier">
+      <span id="ivEditIcon">✏️</span>
+    </button>
   </header>
 
   <div class="card-content">
 
-    <!-- Bandeau ESSENTIEL -->
-    <div class="kv-strip mb-4">
+    <!-- Résumé (mode lecture) -->
+    <div id="ivSummary" class="kv-strip mb-3">
       <div class="kv-card">
         <div class="kv-left">
           <div class="kv-title">Vol</div>
-          <div class="kv-value">
-            <span id="kvArrVol">----</span> → <span id="kvDepVol">----</span>
-          </div>
+          <div class="kv-value"><span id="kvArrVol">----</span> → <span id="kvDepVol">----</span></div>
         </div>
         <div class="kv-left" style="text-align:right;">
           <div class="kv-title">Route</div>
-          <div class="kv-value">
-            <span id="kvFrom">---</span> → <span id="kvTo">---</span>
-          </div>
+          <div class="kv-value"><span id="kvFrom">---</span> → <span id="kvTo">---</span></div>
         </div>
       </div>
-
       <div class="kv-card">
         <div class="kv-left">
           <div class="kv-title">Immat / Type</div>
-          <div class="kv-value">
-            <span id="kvImmat">------</span> · <span id="kvType">--</span>
-          </div>
+          <div class="kv-value"><span id="kvImmat">------</span> · <span id="kvType">--</span></div>
         </div>
         <div class="kv-left" style="text-align:right;">
           <div class="kv-title">Salle arr. / Parking</div>
-          <div class="kv-value">
-            <span id="kvBC">----</span> · <span id="kvPark">--</span>
-          </div>
+          <div class="kv-value"><span id="kvBC">----</span> · <span id="kvPark">--</span></div>
         </div>
       </div>
     </div>
 
-    <!-- DÉTAILS (éditables) -->
-    <div id="infoVolDetails" class="grid-auto">
+    <!-- Horaires ARR / DEP -->
+    <div class="horaires-grid mb-3">
+
+      <!-- Bloc ARR -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-arr">ARR</span><span id="ivBadgeArr" style="margin-left:6px;"></span></div>
+        <div class="hor-cell">
+          <label class="label">SIBT</label>
+          <div class="time-wrap" data-id="SIBT">
+            <input type="time" id="SIBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('SIBT')">
+            <div class="input tw-display hor-input-sched tw-sched" id="tw-disp-SIBT">--:--</div>
+            <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
+          </div>
+        </div>
+        <div class="hor-cell">
+          <label class="label">AIBT</label>
+          <div class="time-wrap" data-id="AIBT">
+            <input type="time" id="AIBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('AIBT')">
+            <div class="input tw-display" id="tw-disp-AIBT">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloc DEP -->
+      <div class="hor-block">
+        <div class="hor-col-head"><span class="hor-badge hor-badge-dep">DEP</span><span id="ivBadgeDep" style="margin-left:6px;"></span></div>
+        <div class="hor-cell">
+          <label class="label">SOBT</label>
+          <div class="time-wrap" data-id="SOBT">
+            <input type="time" id="SOBT" class="tw-hidden-input" onchange="manualSOBT=true;updateAllCalculations(); twSync('SOBT')">
+            <div class="input tw-display hor-input-sched tw-sched" id="tw-disp-SOBT">--:--</div>
+            <div class="tw-zone tw-zone-center tw-sched-zone" data-action="now"></div>
+          </div>
+        </div>
+        <div class="hor-cell">
+          <label class="label">AOBT</label>
+          <div class="time-wrap" data-id="AOBT">
+            <input type="time" id="AOBT" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('AOBT')">
+            <div class="input tw-display" id="tw-disp-AOBT">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mode édition infos vol (masqué par défaut) -->
+    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px;">
 
       <div class="field span-3">
         <label class="label">Date</label>
@@ -1378,27 +1688,26 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 
       <div class="field span-3">
         <label class="label">Type avion</label>
-        <div class="select is-fullwidth">
-          <select id="TypeAvion">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input uppercase" type="text" id="TypeAvion" list="typeAvionList" autocomplete="off" maxlength="6" placeholder="--">
+          <datalist id="typeAvionList">
             <option>A319</option><option>A320</option><option>A321</option>
             <option>A20N</option><option>A21N</option><option>A21NY</option>
             <option>B734</option><option>B737</option><option>B738</option>
-            <option>B38M</option><option>BCS3</option>
-            <option>Autre</option>
-          </select>
+            <option>B38M</option><option>BCS3</option><option>CL35</option>
+          </datalist>
         </div>
       </div>
 
       <div class="field span-3">
         <label class="label">Cie</label>
-        <div class="select is-fullwidth">
-          <select id="Cie" onchange="updateFinalWeightIfNeeded()">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
+          <datalist id="cieList">
             <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
             <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-            <option>V7</option><option>Autre</option>
-          </select>
+            <option>V7</option>
+          </datalist>
         </div>
       </div>
 
@@ -1407,87 +1716,20 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
         <input class="input uppercase" type="text" id="NVol">
       </div>
 
-      <!-- ✅ FROM déclenche recalculs -->
+      <div class="field span-3">
+        <label class="label">Callsign</label>
+        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
+      </div>
+
       <div class="field span-3">
         <label class="label">From</label>
         <input class="input uppercase" type="text" id="From" maxlength="3"
-               oninput="updateTOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
+               oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
       </div>
 
       <div class="field span-3">
         <label class="label">To</label>
         <input class="input uppercase" type="text" id="To" maxlength="3">
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- HORAIRES -->
-<div class="card mb-5">
-  <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-    <p class="card-header-title">HORAIRES</p>
-    <span class="card-header-icon"><span class="icon">⌄</span></span>
-  </header>
-
-  <div class="card-content">
-    <div class="grid-auto">
-
-      <!-- Arrivée -->
-      <div class="span-12">
-        <div class="kv-card" style="padding:12px;">
-          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Arrivée</div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-            <div style="min-width:160px;">
-              <label class="label">SIBT</label>
-              <input class="input" type="time" id="SIBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SIBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SIBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-
-            <div style="min-width:160px;">
-              <label class="label">AIBT</label>
-              <input class="input" type="time" id="AIBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('AIBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AIBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Départ -->
-      <div class="span-12">
-        <div class="kv-card" style="padding:12px;">
-          <div style="font-weight:900; color:var(--muted); text-transform:uppercase;">Départ</div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-            <div style="min-width:160px;">
-              <label class="label">SOBT</label>
-              <input class="input" type="time" id="SOBT" onchange="manualSOBT=true;updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('SOBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('SOBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-
-            <div style="min-width:160px;">
-              <label class="label">AOBT</label>
-              <input class="input" type="time" id="AOBT" onchange="updateAllCalculations()">
-              <div class="btn-actions">
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',-1);updateAllCalculations()">-1</button>
-                <button class="button is-link" type="button" onclick="setNow('AOBT');updateAllCalculations()">Now</button>
-                <button class="button is-dark is-light" type="button" onclick="adjustTime('AOBT',1);updateAllCalculations()">+1</button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -1534,27 +1776,37 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
 
   <div class="card-content">
 
+    <div style="margin-bottom:10px;">
+      <button id="delayCodesBtn" class="button is-warning is-light" type="button" onclick="toggleDelayCodes()">
+        DELAY CODES (RYR)
+      </button>
+    </div>
+
+    <div id="delayCodesBox" style="display:none; margin-top:12px;">
+      <img id="delayCodesImage"
+           src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/gops-iata-delay-codes-apr24-rev17.jpg"
+           style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+    </div>
+
     <div class="dl-wrap">
 
-      <!-- LIGNE 1 : DL CODES -->
       <div class="dl-grid dl-codes">
         <div class="field">
           <label class="label">DL Code 1</label>
-          <div class="control"><input class="input" type="text" id="DLcode1"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode1"></div>
         </div>
 
         <div class="field">
           <label class="label">DL Code 2</label>
-          <div class="control"><input class="input" type="text" id="DLcode2"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode2"></div>
         </div>
 
         <div class="field">
           <label class="label">DL Code 3</label>
-          <div class="control"><input class="input" type="text" id="DLcode3"></div>
+          <div class="control"><input class="input uppercase" type="text" id="DLcode3"></div>
         </div>
       </div>
 
-      <!-- LIGNE 2 : DL DURÉES -->
       <div class="dl-grid dl-durees">
         <div class="field">
           <label class="label">DL Durée 1 (min)</label>
@@ -1589,8 +1841,8 @@ html.dark .fixed-footer{ border-top-color: rgba(255,255,255,.08); }
   </div>
 
   <div class="buttons is-centered">
-    <button class="button is-success is-medium" id="validate" onclick="openRZAModal()">VALIDER</button>
-    <button class="button is-danger is-light is-medium" id="reset" onclick="clearAutoSave()">RÉINITIALISER TOUT</button>
+    <button class="button is-success btn-action-main" id="validate" onclick="openRZAModal()">VALIDER</button>
+    <button class="button is-danger is-light btn-action-main" id="reset" onclick="clearAutoSave()">RÉINITIALISER TOUT</button>
   </div>
 
 </div>
@@ -1701,6 +1953,12 @@ function setValAK(id, v){
   el.dispatchEvent(new Event('input',  { bubbles:true }));
   el.dispatchEvent(new Event('change', { bubbles:true }));
   settingFromAK = false;
+
+  // Sync affichage CTOT
+  if(id === 'CTOT'){
+    const d = document.getElementById('timer-ctot');
+    if(d) d.textContent = el.value || '--:--';
+  }
 }
 
 function setTimeFromISOAK(id, iso){
@@ -1748,6 +2006,14 @@ function getTabData(){
 function setTabData(data){
   if(!currentTabId) return;
   localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+
+  // ✅ Synchro inter-appareils : envoyer akMeta dans le patch WebSocket
+  if(typeof pendingPatch !== 'undefined' && !isApplyingRemoteUpdate){
+    pendingPatch['__akMeta'] = JSON.stringify(data.akMeta);
+    if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+      flushPendingPatch();
+    }
+  }
 }
 
 /**
@@ -1858,14 +2124,14 @@ document.addEventListener('input', (e)=>{
 
 /* Timeline */
 let timelineZoom = 1;
-const TL_ZOOM_MIN = 0.5;
+const TL_ZOOM_MIN = 1;
 const TL_ZOOM_MAX = 8;
 const TL_ZOOM_STEP = 0.25;
 window._timelineCurrentRange = null;
 
-/* TOBT brut + TOBT affiché */
-window._tobtRawMins = null;
-window._tobtAdjMins = null;
+/* EOBT brut + EOBT affiché */
+window._eobtRawMins = null;
+window._eobtAdjMins = null;
 
 /* DL */
 let lastDLChanged = 1;
@@ -2366,11 +2632,11 @@ function updateCountdownOnce(){
     return;
   }
 
-  // cible = SOBT si retard AIBT<=SIBT, sinon TOBT adj
+  // cible = SOBT si retard AIBT<=SIBT, sinon EOBT adj
   let targetMin = null;
   if (AIBT <= SIBT) targetMin = SOBT;
   else {
-    const tobt = window._tobtRawMins;
+    const tobt = window._eobtRawMins;
     if(tobt == null){
       el.textContent = '--:--';
       el.classList.remove('cd-over');
@@ -2770,14 +3036,13 @@ function initForm(){
     updateAllCalculations();
     updateInfoStrip();
 
-    updateFinalLoadLayout();          // ✅ labels H/CP + layout
-    updateFinalPlaceholdersFRRK();    // ✅ placeholders selon type (FR/RK)
-    updateLidGuideVisibility();       // ✅ bouton LID guide seulement FR/RK
+    updateFinalLoadLayout();
+    updateFinalPlaceholdersFRRK();
+    updateLidGuideVisibility();
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
     updateInfoStrip();
-
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
@@ -2822,7 +3087,6 @@ function initForm(){
   });
 
   [
-    // H-bags seulement pour FINAL
     'FinalBAGS','FinalH1','FinalH2','FinalH3','FinalH4',
     'FinalGB'
   ].forEach(id=>{
@@ -2900,6 +3164,22 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
+
+  // ✅ forcer MAJ sur DL codes
+  ['DLcode1','DLcode2','DLcode3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const pos = el.selectionStart;
+      el.value = el.value.toUpperCase();
+      el.setSelectionRange(pos, pos);
+    });
+  });
+
+  // ✅ synchro temps réel APRÈS restauration complète du vol
+  setupRealtimeSync();
+  connectFlightSocket();
+  if(typeof twSyncAll === "function") setTimeout(twSyncAll, 50);
 }
 
 function updateInfoStrip(){
@@ -2979,7 +3259,7 @@ function attachAutoSave(){
       saveCurrentTabData();
       renderTimeline();
       updateHeaderOffset();
-    }, 300);
+    }, 1000);
   };
   document.addEventListener('input', handler, true);
   document.addEventListener('change', handler, true);
@@ -3010,10 +3290,14 @@ function renderTabs(){
     const nvol = (data.NVol || '').toUpperCase();
     const to   = (data.To   || '').toUpperCase();
 
-    let left = `${cie}${nvol}`.trim();
+    // ✅ Priorité : depFF > arrFF > Cie+NVol
+    const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
+    const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
+    const volRef = depFF || arrFF || `${cie}${nvol}`.trim();
+
     let label =
-      left || to
-        ? (to ? `${left} | ${to}`.trim() : left)
+      volRef || to
+        ? (to ? `${volRef} | ${to}`.trim() : volRef)
         : 'VOL';
 
     const wrap = document.createElement('span');
@@ -3026,26 +3310,21 @@ function renderTabs(){
     btn.onclick = ()=> switchTab(id);
     btn.ondblclick = ()=> deleteTab(id);
 
-    // bouton refresh ↻ (sans switch)
+    // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
     const r = document.createElement('button');
     r.className = 'button is-light tab-refresh';
     r.type = 'button';
     r.title = 'Rafraîchir depuis AK';
     r.innerHTML = '↻';
-    r.onclick = async (e)=>{
+    r.onclick = async (e) => {
       e.preventDefault();
       e.stopPropagation();
-
       r.classList.add('is-loading');
-      try{
-        await refreshAKTab(id);
-      }finally{
-        r.classList.remove('is-loading');
-      }
+      try { await refreshAKTab(id); }
+      finally { r.classList.remove('is-loading'); }
     };
 
-    // optionnel : griser si pas de akMeta
-    if(!data.akMeta){
+    if (!data.akMeta) {
       r.disabled = true;
       r.title = "Pas de vol AK associé";
       r.style.opacity = '0.45';
@@ -3058,6 +3337,24 @@ function renderTabs(){
   });
 
   updateHeaderOffset();
+}
+
+function getTabFlightKey(tabId){
+  try{
+    const d = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
+    const meta = d?.akMeta;
+    if(meta?.id) return `AK_${meta.id}`;
+    const date = (d.Date||'').replaceAll('-','');
+    const immat = (d.Immat||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const from = (d.From||'').toUpperCase();
+    const to = (d.To||'').toUpperCase();
+    const sibt = (d.SIBT||'').replace(':','');
+    const sobt = (d.SOBT||'').replace(':','');
+    const timeRef = sibt||sobt;
+    const stationRef = from||to;
+    if(date && immat && timeRef && stationRef) return `${date}_${immat}_${stationRef}_${timeRef}`;
+  }catch(_){}
+  return null;
 }
 
 function createNewTab(){
@@ -3126,6 +3423,11 @@ function deleteTab(id){
   if(!confirm('Supprimer cette fiche ?')) return;
 
   id = String(id);
+
+  // ✅ Supprimer du dashboard via WebSocket __delete
+  if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+    socket.send(JSON.stringify({ __delete: '1' }));
+  }
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
@@ -3204,8 +3506,9 @@ function saveCurrentTabData(){
   data.timer_h40=document.getElementById('timer-h40')?.textContent || '--:--';
   data.timer_h15=document.getElementById('timer-h15')?.textContent || '--:--';
   data.timer_h8=document.getElementById('timer-h8')?.textContent || '--:--';
-  data.timer_tobt=document.getElementById('timer-tobt')?.textContent || '--:--';
+  data.timer_tobt=document.getElementById('timer-eobt')?.textContent || '--:--';
   data.timer_cd=document.getElementById('timer-cd')?.textContent || '--:--';
+  data.timer_ctot=document.getElementById('timer-ctot')?.textContent || '--:--';
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
@@ -3244,8 +3547,9 @@ function loadTabData(id){
   setTxt('timer-h40',  data.timer_h40);
   setTxt('timer-h15',  data.timer_h15);
   setTxt('timer-h8',   data.timer_h8);
-  setTxt('timer-tobt', data.timer_tobt);
+  setTxt('timer-eobt', data.timer_tobt);
   setTxt('timer-cd',   data.timer_cd);
+  setTxt('timer-ctot', data.timer_ctot);
 
   // ✅ re-sync modes globaux (UI + variables)
   const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
@@ -3260,8 +3564,15 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
-}
 
+  connectFlightSocket();
+
+  clearTimeout(window._sendFullDebounce);
+  window._sendFullDebounce = setTimeout(() => {
+    sendFullFlightState();
+  }, 2000);
+}
+  
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
 
 /* TIMING FIELDS – ARR / DEP (responsive pro) */
@@ -3269,20 +3580,27 @@ function generateTimingFields(){
   const container = document.getElementById('timing-grid');
   if(!container) return;
 
-  const fieldHTML = (id,label,full=false)=>`
+  const colorDot = {
+    'is-link':     '#3273dc',
+    'is-success':  '#15803d',
+    'is-warning':  '#d97706',
+    'is-dark':     '#636363',
+    'is-bordeaux': '#7f1d1d',
+    'is-purple':   '#7c3aed',
+    'is-jaune':    '#f5c400',
+  };
+  const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
-      <div class="field">
-        <label class="label">${label}</label>
+      <div class="field${optional ? ' field-optional' : ''}">
+        <label class="label"><span class="tw-dot" style="background:${colorDot[nowColor]||'#3273dc'}"></span>${label}</label>
         <div class="control">
-          <input class="input" type="time" id="${id}" onchange="updateAllCalculations()">
-        </div>
-        <div class="btn-actions">
-          <button class="button is-dark is-light" type="button"
-            onclick="adjustTime('${id}',-1);updateAllCalculations()">-1</button>
-          <button class="button is-link" type="button"
-            onclick="setNow('${id}');updateAllCalculations()">Now</button>
-          <button class="button is-dark is-light" type="button"
-            onclick="adjustTime('${id}',1);updateAllCalculations()">+1</button>
+          <div class="time-wrap" data-id="${id}">
+            <input type="time" id="${id}" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('${id}')">
+            <div class="input tw-display" id="tw-disp-${id}">--:--</div>
+            <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
+            <div class="tw-zone tw-zone-center" data-action="now"></div>
+            <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -3292,41 +3610,75 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArriveeFuel','Arrivée Avitair',true)}
-          ${fieldHTML('PremierDebarque','Premier débarqué')}
-          ${fieldHTML('DernierDebarque','Dernier débarqué')}
-          ${fieldHTML('ArriveeLiftArr','Arrivée lift')}
-          ${fieldHTML('DepartLiftArr','Départ lift')}
+          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
+          <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
         </div>
       </div>
     </div>`;
 
   /* ===== DÉPART ===== */
   const depNoHeader = `
-    <div class="card">
+    <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+      <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
+      <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
+      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">GPU</button>
+    </div>
+
+    <!-- Panneau Recherche bag -->
+    <div id="panel-recherche-bag" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          ${fieldHTML('ArrPNT','Arrivée PNT')}
-          ${fieldHTML('ArrPNC','Arrivée PNC')}
-          ${fieldHTML('AvionPremierEmbarque','Premier embarqué')}
-          ${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}
-          ${fieldHTML('ArriveeLift','Arrivée lift')}
-          ${fieldHTML('DepartLift','Départ lift')}
-
-          <!-- Départ Avitair + Arrivée INAD sur la même ligne -->
-          <div class="span-12">
-            <div class="grid-auto">
-              <div class="span-6">
-                ${fieldHTML('DepartFuel','Départ Avitair')}
-              </div>
-              <div class="span-6">
-                ${fieldHTML('ArriveeINAD','Arrivée INAD')}
+          <div class="span-4">
+            <div class="field">
+              <label class="label"><span class="tw-dot" style="background:#636363;"></span>Nombre de bags</label>
+              <div class="control">
+                <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
               </div>
             </div>
           </div>
+          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-dark')}</div>
+          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
 
-          ${fieldHTML('RemiseLID','Remise LID/LDS')}
-          ${fieldHTML('FermeturePorteAvion','Fermeture porte avion')}
+    <!-- Panneau INAD -->
+    <div id="panel-inad" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau GPU -->
+    <div id="panel-gpu" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('BranchementGPU','Branchement GPU',false,false,'is-jaune')}</div>
+          <div class="span-6">${fieldHTML('DebranchementGPU','Débranchement GPU',false,false,'is-jaune')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
+          <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
+          <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartLift','Départ lift',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
+          <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
+          <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
@@ -3363,6 +3715,8 @@ function switchTimingPanel(mode){
   localStorage.setItem('timingPanel', mode);
 }
 
+
+
 /* LID visible FR/RK */
 function updateLIDVisibility(){
   const cie = (document.getElementById('Cie').value||'').toUpperCase();
@@ -3374,13 +3728,15 @@ function updateLIDVisibility(){
 
 /* CALCULS */
 function updateAllCalculations() {
+  setTimeout(updateIVBadges, 0);
   updateTimers();
   updateSOBTDefault();
-  updateTOBT();
+  updateEOBT();
   updateDLCode();
   redistributeDL();
   updateLID();
   updateLIDVisibility();
+  updateDelayCodesVisibility();
 
   updateHBagsValidity('arr');
   updateHBagsValidity('final');
@@ -3413,9 +3769,9 @@ function updateTimers() {
   document.getElementById('timer-h15').textContent = `${String(h15.getHours()).padStart(2, '0')}:${String(h15.getMinutes()).padStart(2, '0')}`;
 }
 
-/* LID = TOBT - 8 */
+/* LID = EOBT - 8 */
 function updateLID() {
-  const tobtRawMins = window._tobtRawMins;
+  const tobtRawMins = window._eobtRawMins;
   const el = document.getElementById('timer-h8');
   if (!el) return;
   if (tobtRawMins == null) { el.textContent = "--:--"; return; }
@@ -3452,8 +3808,8 @@ function updateSOBTDefault() {
     `${String(sobtCalc.getHours()).padStart(2,'0')}:${String(sobtCalc.getMinutes()).padStart(2,'0')}`;
 }
 
-/* TOBT + règle CTOT */
-function updateTOBT() {
+/* EOBT + règle CTOT */
+function updateEOBT() {
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
   const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const isBVA = (from === 'BVA');
@@ -3468,8 +3824,8 @@ function updateTOBT() {
   // ✅ BVA: on n'exige pas SIBT/AIBT (avion déjà là) → on utilise SOBT comme "source"
   if (!cie || !sobttxt || !outEl || (!sibttxt && !isBVA)) {
     if(outEl) outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3477,8 +3833,8 @@ function updateTOBT() {
   const SOBT = parseHHMM(sobttxt);
   if (SIBT == null || SOBT == null) {
     outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3486,8 +3842,8 @@ function updateTOBT() {
   const AIBT = isBVA ? SOBT : (aibttxt ? parseHHMM(aibttxt) : SIBT);
   if (AIBT == null) {
     outEl.textContent = '--:--';
-    window._tobtRawMins = null;
-    window._tobtAdjMins = null;
+    window._eobtRawMins = null;
+    window._eobtAdjMins = null;
     return;
   }
 
@@ -3511,58 +3867,58 @@ function updateTOBT() {
 
   const isDelayed = (AIBT_ext > SIBT_ext);
 
-  let TOBT_raw_ext = null;
+  let EOBT_raw_ext = null;
 
-  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => TOBT = SOBT
+  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => EOBT = SOBT
   if (!isDelayed) {
-    TOBT_raw_ext = SOBT_ext;
+    EOBT_raw_ext = SOBT_ext;
   } else {
-    // ===== FR / RK : TOBT = max(SOBT, AIBT + turn)
+    // ===== FR / RK : EOBT = max(SOBT, AIBT + turn)
     if (cie === 'FR' || cie === 'RK') {
       const turn = crewChange ? 35 : 25;
       const candidate = AIBT_ext + turn;
-      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+      EOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
-    // ===== W4 / W6 : TOBT = max(SOBT, AIBT + 30/35 selon type) ✅ FIX
+    // ===== W4 / W6 : EOBT = max(SOBT, AIBT + 30/35 selon type) ✅ FIX
     else if (cie === 'W4' || cie === 'W6') {
       const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase();
       const turn = (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
 
       const candidate = AIBT_ext + turn;
-      TOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
+      EOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;
     }
 
-    // ===== H4 / U5 / H6 / AUTRE : TOBT = AIBT + (SOBT - SIBT)
+    // ===== H4 / U5 / H6 / AUTRE : EOBT = AIBT + (SOBT - SIBT)
     else {
       const rot = SOBT_ext - SIBT_ext;
-      TOBT_raw_ext = AIBT_ext + rot;
+      EOBT_raw_ext = AIBT_ext + rot;
     }
   }
 
   // Raw minutes 0..1439
-  let TOBT_raw = ((TOBT_raw_ext % 1440) + 1440) % 1440;
-  window._tobtRawMins = TOBT_raw;
+  let EOBT_raw = ((EOBT_raw_ext % 1440) + 1440) % 1440;
+  window._eobtRawMins = EOBT_raw;
 
-  // ===== RÈGLE CTOT : si CTOT > TOBT + 15 => TOBT = CTOT - 15
-  let TOBT_adj_ext = TOBT_raw_ext;
+  // ===== RÈGLE CTOT : si CTOT > EOBT + 15 => EOBT = CTOT - 15
+  let EOBT_adj_ext = EOBT_raw_ext;
 
   if (ctottxt) {
     const CTOT = parseHHMM(ctottxt);
     if (CTOT != null) {
-      const TOBT_ref = ((TOBT_raw_ext % 1440) + 1440) % 1440;
-      const CTOT_ext = TOBT_raw_ext + diffSigned(CTOT, TOBT_ref);
+      const EOBT_ref = ((EOBT_raw_ext % 1440) + 1440) % 1440;
+      const CTOT_ext = EOBT_raw_ext + diffSigned(CTOT, EOBT_ref);
 
-      if (CTOT_ext > (TOBT_raw_ext + 15)) {
-        TOBT_adj_ext = CTOT_ext - 15;
+      if (CTOT_ext > (EOBT_raw_ext + 15)) {
+        EOBT_adj_ext = CTOT_ext - 15;
       }
     }
   }
 
-  let TOBT_adj = ((TOBT_adj_ext % 1440) + 1440) % 1440;
-  window._tobtAdjMins = TOBT_adj;
+  let EOBT_adj = ((EOBT_adj_ext % 1440) + 1440) % 1440;
+  window._eobtAdjMins = EOBT_adj;
 
-  outEl.textContent = fmtHHMM(TOBT_adj);
+  outEl.textContent = fmtHHMM(EOBT_adj);
 }
 
 /* ===== DL (LOGIQUE PROPRE) ===== */
@@ -3588,10 +3944,10 @@ function updateDLCode() {
   const sobt = parseHHMM(document.getElementById('SOBT')?.value || '');
   const aobt = parseHHMM(document.getElementById('AOBT')?.value || '');
 
-  // ✅ IMPORTANT: 93/93A doit utiliser la TOBT BRUTE (hors CTOT)
-  const tobt = (window._tobtRawMins != null)
-    ? window._tobtRawMins
-    : parseHHMM((document.getElementById('timer-tobt')?.textContent || '').trim());
+  // ✅ IMPORTANT: 93/93A doit utiliser la EOBT BRUTE (hors CTOT)
+  const tobt = (window._eobtRawMins != null)
+    ? window._eobtRawMins
+    : parseHHMM((document.getElementById('timer-eobt')?.textContent || '').trim());
 
   // si incomplet : on ne force rien
   if(sobt == null || aobt == null || tobt == null) return;
@@ -3600,7 +3956,7 @@ function updateDLCode() {
   let total = aobt - sobt;
   if(total < 0) total += 1440;
 
-  // 93/93A = TOBT - SOBT (borné)
+  // 93/93A = EOBT - SOBT (borné)
   let fixed = tobt - sobt;
   if(fixed < 0) fixed += 1440;
   fixed = Math.max(0, Math.min(fixed, total));
@@ -3844,10 +4200,42 @@ function setTimeModeUTC(enable, fromInit=false){
   if(ut) ut.checked = enable;
 
   const tzLabel = document.getElementById('tzLabel');
-  if(tzLabel) tzLabel.textContent = enable ? 'UTC' : 'Locale';
+  if(tzLabel) tzLabel.textContent = enable ? 'UTC' : 'Local';
 
   localStorage.setItem('modeUTC', enable ? '1' : '0');
 
+  // ✅ Convertir les valeurs de temps dans TOUS les onglets en localStorage
+  if(!fromInit){
+    const offsetHours = -new Date().getTimezoneOffset() / 60;
+    const timeFields = ['SIBT','AIBT','SOBT','AOBT','CTOT',
+      'ArriveeFuel','PremierDebarque','PremierDebarqueL2','DernierDebarque',
+      'ArriveeLiftArr','DepartLiftArr','ArrPNT','ArrPNC',
+      'AvionPremierEmbarque','AvionDernierEmbarque',
+      'ArriveeLift','DepartLift','DepartFuel','ArriveeINAD',
+      'RemiseLID','FermeturePorteAvion'];
+
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    tabs.forEach(tid => {
+      if(tid === currentTabId) return; // onglet courant déjà mis à jour par les inputs
+      try{
+        const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+        let changed = false;
+        timeFields.forEach(fid => {
+          const val = data[fid];
+          if(!val || !val.includes(':')) return;
+          let [hh, mm] = val.split(':').map(Number);
+          let totalMin = Math.round((enable ? hh - offsetHours : hh + offsetHours) * 60 + mm);
+          totalMin = ((totalMin % 1440) + 1440) % 1440;
+          data[fid] = String(Math.floor(totalMin/60)).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
+          changed = true;
+        });
+        if(changed) localStorage.setItem('tab-'+tid, JSON.stringify(data));
+      }catch(_){}
+    });
+  }
+
+  // Resync TOUS les tw-displays immédiatement après conversion
+  twSyncAll();
   updateAllCalculations();
 
   // 🔁 refresh flight list AK si ouverte
@@ -3893,11 +4281,11 @@ function computeTimelineWindow(allTimes){
 
   const SOBT = parseHHMM(document.getElementById('SOBT')?.value || '');
   const AOBT = parseHHMM(document.getElementById('AOBT')?.value || '');
-  const TOBT = parseHHMM((document.getElementById('timer-tobt')?.textContent || '').replace('--:--',''));
+  const EOBT = parseHHMM((document.getElementById('timer-eobt')?.textContent || '').replace('--:--',''));
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
 
   const starts = [H40, SIBT, AIBT].filter(v => v != null);
-  const ends   = [SOBT, AOBT, TOBT, CTOT].filter(v => v != null);
+  const ends   = [SOBT, AOBT, EOBT, CTOT].filter(v => v != null);
 
   if(starts.length && ends.length){
     let startRef = Math.min(...starts);
@@ -3950,8 +4338,8 @@ function collectTimelineData(){
   const SOBT = parseHHMM(document.getElementById('SOBT')?.value || '');
   const AOBT = parseHHMM(document.getElementById('AOBT')?.value || '');
 
-  // TOBT affichée = peut être ajustée CTOT (timer). On garde comme avant pour le point fixe.
-  const TOBT = parseHHMM((document.getElementById('timer-tobt')?.textContent || '').replace('--:--',''));
+  // EOBT affichée = peut être ajustée CTOT (timer). On garde comme avant pour le point fixe.
+  const EOBT = parseHHMM((document.getElementById('timer-eobt')?.textContent || '').replace('--:--',''));
 
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
   const H15  = parseHHMM((document.getElementById('timer-h15')?.textContent || '').replace('--:--',''));
@@ -3959,7 +4347,7 @@ function collectTimelineData(){
 
   addPoint('SIBT', SIBT, 'tl--std'); addPoint('AIBT', AIBT, 'tl--std');
   addPoint('SOBT', SOBT, 'tl--std'); addPoint('AOBT', AOBT, 'tl--std');
-  addPoint('TOBT', TOBT, 'tl--eobt'); addPoint('CTOT', CTOT, 'tl--ctot');
+  addPoint('EOBT', EOBT, 'tl--eobt'); addPoint('CTOT', CTOT, 'tl--ctot');
   addPoint('HLE',  H40,  'tl--turn');
   addPoint('H-15', H15,  'tl--turn');
 
@@ -4241,23 +4629,27 @@ function escapeHtml(s){
 
 function pickBestTimeForList(f, flow){
   const iso = (v)=> v ? new Date(v) : null;
-
   const toHHMM = (d)=>{
     if(!d || isNaN(d.getTime())) return '';
     const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
     return `${hh}:${mm}`;
   };
-
+  // Retourne { time, suffix } selon la source
   if(flow === 'DEP'){
-    return toHHMM(
-      iso(f.aobt) || iso(f.sobt) || iso(f.eobt) || iso(f.atot) || iso(f.etot)
-    );
+    if(f.aobt) return { time: toHHMM(iso(f.aobt)), suffix: 'A' };
+    if(f.sobt) return { time: toHHMM(iso(f.sobt)), suffix: 'S' };
+    if(f.eobt) return { time: toHHMM(iso(f.eobt)), suffix: 'E' };
+    if(f.atot) return { time: toHHMM(iso(f.atot)), suffix: 'A' };
+    if(f.etot) return { time: toHHMM(iso(f.etot)), suffix: 'E' };
+    return { time: '', suffix: '' };
   }
-
-  return toHHMM(
-    iso(f.aibt) || iso(f.sibt) || iso(f.eibt) || iso(f.aldt) || iso(f.eldt)
-  );
+  if(f.aibt) return { time: toHHMM(iso(f.aibt)), suffix: 'A' };
+  if(f.sibt) return { time: toHHMM(iso(f.sibt)), suffix: 'S' };
+  if(f.eibt) return { time: toHHMM(iso(f.eibt)), suffix: 'E' };
+  if(f.aldt) return { time: toHHMM(iso(f.aldt)), suffix: 'A' };
+  if(f.eldt) return { time: toHHMM(iso(f.eldt)), suffix: 'E' };
+  return { time: '', suffix: '' };
 }
 
   /* ===== SETTINGS MENU ===== */
@@ -4467,205 +4859,211 @@ function depAtotTooOld(dep, minutes = 15){
   return (Date.now() - t) > minutes * 60 * 1000;
 }
 
-// ===== Chargement liste (vols du jour) + TRI + SUPPRESSION ATOT+15 =====
+// ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
 async function loadAKFlights(){
-  const flow = document.getElementById('akFlow')?.value || 'DEP';
   const st   = document.getElementById('akStatus');
   const list = document.getElementById('akList');
-
   if(st) st.textContent = 'Chargement…';
   if(list) list.innerHTML = '';
 
   const now = new Date();
   const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
   const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
-
-  // fenêtre large pour le linking (hier soir -> demain matin)
-  const linkFromDate = new Date(startDay.getTime() - 12*60*60*1000);
-  const linkToDate   = new Date(endDay.getTime()   + 12*60*60*1000);
-
-  const linkFrom = linkFromDate.toISOString().replace(/\.\d{3}Z$/, "Z");
-  const linkTo   = linkToDate.toISOString().replace(/\.\d{3}Z$/, "Z");
+  const linkFrom = new Date(startDay.getTime() - 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
+  const linkTo   = new Date(endDay.getTime()   + 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
 
   try{
-    const [arrAll, depAll] = await Promise.all([
-      fetchAK('ARR', linkFrom, linkTo),
-      fetchAK('DEP', linkFrom, linkTo),
-    ]);
-
-    // cache pour applyAKFlight + linking
+    const [arrAll, depAll] = await Promise.all([fetchAK('ARR',linkFrom,linkTo), fetchAK('DEP',linkFrom,linkTo)]);
     window._akCache = { arr: arrAll, dep: depAll };
 
-    const inToday = (f, flow) => {
-      const t = Date.parse(
-        flow === 'DEP'
-          ? (f.sobt || f.eobt || f.aobt || f.atot || '')
-          : (f.sibt || f.eibt || f.aibt || '')
-      );
+    const inToday = (f, fl) => {
+      const t = Date.parse(fl==='DEP' ? (f.sobt||f.eobt||f.aobt||f.atot||'') : (f.sibt||f.eibt||f.aibt||''));
       return t && t >= startDay.getTime() && t <= endDay.getTime();
     };
 
-    let flights = (flow === 'DEP' ? depAll : arrAll).filter(f => inToday(f, flow));
+    let arrFlights = arrAll.filter(f => inToday(f,'ARR'));
+    let depFlights = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
+    arrFlights = arrFlights.filter(arr => { const nd=findLinkedDepForArr(arr); return !nd || !depAtotTooOld(nd,15); });
 
-    // DEP : virer si ATOT > 15 min (fallback AOBT si pas d'ATOT)
-    if(flow === 'DEP'){
-      flights = flights.filter(d => !depAtotTooOld(d, 15));
+    const usedDep = new Set(), pairs = [];
+    for(const arr of arrFlights){
+      const dep = findLinkedDepForArr(arr);
+      if(dep && !usedDep.has(dep.id)){ pairs.push({arr,dep}); usedDep.add(dep.id); }
+      else { pairs.push({arr, dep:null}); }
     }
+    for(const dep of depFlights){ if(!usedDep.has(dep.id)) pairs.push({arr:null,dep}); }
 
-    // ARR : virer seulement si le DEP lié (après ARR) est parti (ATOT) depuis > 15 min
-    if(flow === 'ARR'){
-      flights = flights.filter(arr => {
-        const nextDep = findLinkedDepForArr(arr);
-        if(!nextDep) return true;                 // repart demain / pas de rota -> on garde
-        return !depAtotTooOld(nextDep, 15);       // on vire quand le DEP lié est trop vieux
-      });
-    }
-
-    // ===== TRI CHRONO =====
-    flights.sort((a,b)=>{
-      const ta = flow === 'DEP' ? depTimeMs(a) : arrTimeMs(a);
-      const tb = flow === 'DEP' ? depTimeMs(b) : arrTimeMs(b);
-
-      if(ta == null && tb == null) return 0;
-      if(ta == null) return 1;
-      if(tb == null) return -1;
-      return ta - tb;
+    pairs.sort((a,b)=>{
+      const ta = a.arr ? arrTimeMs(a.arr) : (a.dep ? depTimeMs(a.dep) : null);
+      const tb = b.arr ? arrTimeMs(b.arr) : (b.dep ? depTimeMs(b.dep) : null);
+      if(ta==null&&tb==null) return 0; if(ta==null) return 1; if(tb==null) return -1;
+      return ta-tb;
     });
 
-    if(st) st.textContent = `${flights.length} vol(s)`;
-    renderAKList(flights, flow);
+    if(st) st.textContent = pairs.length + ' vol(s)';
+    renderAKList(pairs);
 
   }catch(e){
     if(st) st.textContent = `Erreur (${String(e.message || e)})`;
   }
 }
 
+/* =========================
+   BADGES RETARD (référence app.js)
+   ========================= */
+
+const EIBT_CORRECTION_MIN = -4;
+
+function addMinutesToIso(iso, minutes){
+  const t = Date.parse(iso || "");
+  if(!Number.isFinite(t)) return "";
+  return new Date(t + minutes * 60000).toISOString();
+}
+
+function delayMinFrom(plannedIso, actualIso){
+  const p = Date.parse(plannedIso || "");
+  const a = Date.parse(actualIso || "");
+  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
+  return Math.round((a - p) / 60000);
+}
+
+function actualDepIso(f){
+  return f?.aobt || f?.eobt || "";
+}
+
+function actualArrIso(f){
+  if(f?.aibt) return f.aibt;
+
+  if(f?.eibt){
+    return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
+  }
+
+  return "";
+}
+
+function getDelayBadgeHtml(mins){
+  if(mins == null) return "";
+
+  let label = "";
+  let className = "";
+  let extraStyle = "font-weight:900; margin-left:0;";
+
+  if(mins >= 15){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-danger";
+  }
+  else if(mins >= 5){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-warning";
+  }
+  else if(mins <= -10){
+    label = `EN AVANCE ${mins}`;
+    className = "tag is-info";
+  }
+  else{
+    label = "À L’HEURE";
+    className = "tag is-success";
+  }
+
+  return `<span class="${className}" style="${extraStyle}">${label}</span>`;
+}
+
+
+// ===== Couleur bandeau retard (identique au dashboard) =====
+function delayBarColor(mins){
+  if(mins == null) return null;
+  if(mins <= -11)  return '#3b82f6'; // bleu — en avance (<= -11min)
+  if(mins <= 5)    return '#16a34a'; // vert — à l'heure (-10 à +5min)
+  if(mins < 15)    return '#f97316'; // orange — retard < 15min
+  return             '#ef4444';     // rouge — retard >= 15min
+}
+
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
-function renderAKList(flights, flow){
+function renderAKList(pairs){
   const list = document.getElementById('akList');
   if(!list) return;
 
-  function delayMinutes(f, flow){
-    const parse = v => v ? Date.parse(v) : NaN;
+  const safe = obj => JSON.stringify(obj)
+    .replace(/</g,'\u003c').replace(/>/g,'\u003e')
+    .replace(/&/g,'\u0026').replace(/'/g,'\u0027');
 
-    if(flow === 'ARR'){
-      const s = parse(f?.sibt);
-      const r = parse(f?.aibt || f?.eibt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
-    }else{
-      const s = parse(f?.sobt);
-      const r = parse(f?.aobt || f?.eobt);
-      if(!isFinite(s) || !isFinite(r)) return 0;
-      const d = Math.round((r - s) / 60000);
-      return d > 0 ? d : 0;
+  function getStatus(f, flow){
+    let s = (f?.status||f?.milestone||'').toString().toUpperCase();
+    if(s==='SCHEDULED')  return 'PRÉVU';
+    if(s==='CANCELLED')  return 'ANNULÉ';
+    if(s==='SUSPENDED')  return 'SUSPENDU';
+    if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
+    else{
+      if(s==='TERMINATED') return 'ARRIVÉ';
+      if(s==='IN_FLIGHT') return 'EN VOL';
+      const nd = findLinkedDepForArr(f);
+      if(nd){ const ds=(nd.status||nd.milestone||'').toString().toUpperCase(); if(ds==='IN_FLIGHT'||!!nd.atot) return 'DÉCOLLÉ'; }
     }
+    return s||'';
   }
 
-  const safeJsonForOnclick = obj =>
-    JSON.stringify(obj)
-      .replace(/</g,"\\u003c")
-      .replace(/>/g,"\\u003e")
-      .replace(/&/g,"\\u0026")
-      .replace(/'/g,"\\u0027")
-      .replace(/\u2028/g,"\\u2028")
-      .replace(/\u2029/g,"\\u2029");
+  function half(f, flow){
+    if(!f) return '<div class="ak-half ak-half-empty"></div>';
+    const ff    = (f.fullFlightNumber||f.callsign||'').trim();
+    const reg   = (f.reg||'').trim();
+    const stand = (f.pkg||'').toString().replace(/^P/i,'');
+    const {time:t, suffix:tSuffix} = pickBestTimeForList(f, flow);
+    const status = getStatus(f, flow);
+    const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
+    const dly      = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const barColor = delayBarColor(dly);
+    const done     = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
+    const bgBadge  = flow==='ARR' ? '#dbeafe' : '#dcfce7';
+    const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
+    const json     = safe(f);
+    const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
+    const timeStr  = t ? escapeHtml(t)+suf : '—';
 
-  const row = (f)=>{
-    const ff    = (f.fullFlightNumber || f.callsign || '').trim();
-    const reg   = (f.reg || '').trim();
-    const stand = (f.pkg || '').toString().replace(/^P/i,'');
-    const t     = pickBestTimeForList(f, flow);
-
-    let statusRaw = (f.status || f.milestone || '').toString().toUpperCase();
-    let status = statusRaw;
-
-    if(statusRaw === 'SCHEDULED') status = 'PRÉVU';
-
-    if(flow === 'DEP'){
-      if(statusRaw === 'IN_FLIGHT') status = 'DÉCOLLÉ';
-    }else{
-      // ARR
-      if(statusRaw === 'TERMINATED') status = 'ARRIVÉ';
-      if(statusRaw === 'IN_FLIGHT')  status = 'EN VOL';
-
-      // 🔥 ARR affiché DÉCOLLÉ si le DEP lié a décollé
-      const nextDep = findLinkedDepForArr(f);
-      if(nextDep){
-        const depStatusRaw = (nextDep.status || nextDep.milestone || '').toString().toUpperCase();
-        const depIsOff = depStatusRaw === 'IN_FLIGHT' || !!nextDep.atot;
-        if(depIsOff) status = 'DÉCOLLÉ';
+    // Heure estimée : affichée si la meilleure heure est S et qu'il existe une E différente
+    let estimatedStr = '';
+    if(tSuffix === 'S'){
+      const toHHMM = (iso)=>{
+        const d = iso ? new Date(iso) : null;
+        if(!d || isNaN(d.getTime())) return '';
+        const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+        const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+        return `${hh}:${mm}`;
+      };
+      const est = flow==='DEP' ? toHHMM(f.eobt||f.etot||'') : toHHMM(f.eibt||f.eldt||'');
+      if(est && est !== t && barColor !== '#16a34a'){
+        estimatedStr = ' <span style="font-weight:900;color:'+barColor+';">→ '+escapeHtml(est)+'<span style="font-size:.7em;opacity:.8;"> (E)</span></span>';
       }
     }
 
-    const dly = delayMinutes(f, flow);
-    const showDelay = dly >= 5;
-
-    let bg = 'var(--card)';
-    if(flow === 'ARR' && status === 'DÉCOLLÉ'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(flow === 'ARR' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(37,99,235,0.12)';
-    }else if(flow === 'DEP' && statusRaw === 'IN_FLIGHT'){
-      bg = 'rgba(0,0,0,.04)';
-    }else if(showDelay){
-      bg = (dly <= 15)
-        ? 'rgba(245,158,11,0.18)'
-        : 'rgba(239,68,68,0.16)';
-    }
-
-    const mainIata = (flow === 'ARR')
-      ? (f.adepIata || f.adepIcao || '')
-      : (f.adesIata || f.adesIcao || '');
-
-    const delayBadge = showDelay
-      ? `<span class="tag" style="font-weight:900; margin-left:6px;
-           background:${dly<=15 ? 'rgba(245,158,11,0.20)' : 'rgba(239,68,68,0.18)'};">
-           RETARD +${dly}
-         </span>`
+    const opacity  = done ? 'opacity:.55;' : '';
+    // Bandeau coloré : gauche pour ARR, droite pour DEP
+    const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
+    const barHtml  = barColor
+      ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
       : '';
+    const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
+    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+      + barHtml
+      + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
+      + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
+      + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
+      + '</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+(status?' · '+escapeHtml(status):'')+'</div>'
+      + '</div>';
+  }
 
-    const json = safeJsonForOnclick(f);
+  if(!pairs.length){ list.innerHTML = '<p class="has-text-grey">Aucun vol.</p>'; return; }
 
-    return `
-      <div class="card mb-2"
-        style="box-shadow:none;border:1px solid rgba(0,0,0,.08);background:${bg};">
-        <div class="card-content" style="padding:10px 12px;">
-          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
-            <div style="min-width:220px;">
-              <div style="font-weight:900;font-size:1.05rem;display:flex;gap:6px;flex-wrap:wrap;">
-                <span>${escapeHtml(mainIata || '---')}</span>
-                ${delayBadge}
-              </div>
-
-              <div style="color:var(--muted);font-weight:800;font-size:.95rem;">
-                ${escapeHtml(ff || '(sans numéro)')}
-                · Stand ${escapeHtml(stand || '—')}
-                · ${escapeHtml(reg || '—')}
-              </div>
-
-              <div style="color:var(--muted);font-weight:800;font-size:.9rem;">
-                ${escapeHtml(t || '—')}
-                ${status ? '· ' + escapeHtml(status) : ''}
-              </div>
-            </div>
-
-            <button class="button is-small is-link" type="button"
-              onclick='applyAKFlight(${json}, "${flow}")'>
-              Utiliser
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  list.innerHTML = flights.length
-    ? flights.map(row).join('')
-    : `<p class="has-text-grey">Aucun vol.</p>`;
+  list.innerHTML = pairs.map(function(p){
+    return '<div class="ak-pair-row">'
+      + half(p.arr,'ARR')
+      + '<div class="ak-pair-divider">' + (p.arr && p.dep ? '🔗' : '⛓️\u200d💥') + '</div>'
+      + half(p.dep,'DEP')
+      + '</div>';
+  }).join('');
 }
-
+  
 // ===== Import : règles BVA =====
 function akBuildSI(f, allowDL = true, opts = {}){
   const includeDL = opts.includeDL !== undefined ? !!opts.includeDL : true;
@@ -4696,6 +5094,7 @@ function storeAKMetaForTab(meta){
 
     // ✅ clé la plus fiable
     id: String(meta.id || ''),
+    linkedId: String(meta.linkedId || ''),
 
     // ✅ fallback
     reg:  (meta.reg  || '').toUpperCase().trim(),
@@ -4822,16 +5221,15 @@ function applyAKFlight(f, flow, opts = {}){
     if(ac) setValAK('TypeAvion', ac);
 
     const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    // ✅ Callsign brut AK
+    if(f.callsign) setValAK('Callsign', f.callsign);
     if(ff){
       const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
       if(m){
         const cie  = m[1];
         const nvol = m[2];
-        const cieSel = document.getElementById('Cie');
-        if(cieSel){
-          const ok = Array.from(cieSel.options).some(o => o.value === cie);
-          setValAK('Cie', ok ? cie : 'Autre');
-        }
+        // Cie est maintenant un input texte libre — on injecte directement
+        setValAK('Cie', cie);
         setValAK('NVol', nvol);
       }else{
         setValAK('NVol', ff);
@@ -4934,9 +5332,15 @@ function applyAKFlight(f, flow, opts = {}){
       }
     }
 
+    // ID du vol lié résolu par les fonctions de linking (plus fiable que f.linkedId)
+    const resolvedLinkedId = flow === 'DEP'
+      ? (prevArrUsed?.id || f.linkedId || '')
+      : (nextDepUsed?.id || f.linkedId || '');
+
     storeAKMetaForTab({
       flow,
       id: f.id,
+      linkedId: resolvedLinkedId,
       reg: f.reg || '',
       ff: (f.fullFlightNumber || f.callsign || ''),
       timeISO: (flow === 'DEP')
@@ -4951,6 +5355,26 @@ function applyAKFlight(f, flow, opts = {}){
     updateAllCalculations();
     updateTabLabelInstant();
 
+    // ✅ Détecter si un autre onglet a le même vol et le fermer
+    try{
+      const myKey = buildFlightKey();
+      if(myKey){
+        const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+        for(const tid of tabs){
+          if(tid === currentTabId) continue;
+          const otherKey = getTabFlightKey(tid);
+          if(otherKey === myKey){
+            // Même vol déjà ouvert : supprimer l'autre onglet silencieusement
+            localStorage.removeItem('tab-' + tid);
+            const updated = tabs.filter(t => t !== tid);
+            localStorage.setItem('flightTabs', JSON.stringify(updated));
+            renderTabs();
+            break;
+          }
+        }
+      }
+    }catch(_){}
+
   }catch(e){
     showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
   }finally{
@@ -4962,6 +5386,24 @@ function applyAKFlight(f, flow, opts = {}){
       showPopup("Vol importé", "#16a34a", 1600);
     }
   }
+
+  // ✅ Synchro inter-appareils : reconnecter si besoin puis envoyer le state complet
+  setTimeout(() => {
+    try{
+      connectFlightSocket(); // recalcule la clé avec le nouvel akMeta
+    }catch(_){}
+  }, 50);
+  setTimeout(() => {
+    try{
+      if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+        const fullPayload = collectFlightState();
+        if(fullPayload && typeof fullPayload === 'object'){
+          fullPayload['__fromAK'] = '1';
+          socket.send(JSON.stringify(fullPayload));
+        }
+      }
+    }catch(e2){ console.warn('AK sync send error:', e2); }
+  }, 500);
 }
 
 function openRZAModal(){
@@ -5055,6 +5497,23 @@ function updateLidGuideVisibility(){
   btn.style.display = show ? '' : 'none';
 }
 
+function updateDelayCodesVisibility(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const btn = document.getElementById('delayCodesBtn');
+  const box = document.getElementById('delayCodesBox');
+  const show = (cie === 'FR' || cie === 'RK');
+
+  if(btn) btn.style.display = show ? '' : 'none';
+
+  if(box){
+    if(show){
+      box.style.display = 'none';
+    } else {
+      box.style.display = 'none';
+    }
+  }
+}
+  
 /* validateForm */
 function validateForm() {
   const val = id => (document.getElementById(id)?.value || "");
@@ -5227,19 +5686,56 @@ function toggleSettings(){
 
 function clearAutoSave() {
   if (confirm("Tout réinitialiser ?")) {
-    localStorage.clear();
-    location.reload();
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+    const deletePromises = [];
+
+    tabs.forEach(tid => {
+      try{
+        const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+        const meta = data?.akMeta;
+        if(!meta?.id) return;
+        const key = `AK_${meta.id}`;
+
+        if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+          // Onglet courant : socket déjà ouvert
+          socket.send(JSON.stringify({ __delete: '1' }));
+        } else {
+          // Autres onglets : ouvrir un socket temporaire
+          const p = new Promise(resolve => {
+            try{
+              const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
+              ws.onopen = () => {
+                ws.send(JSON.stringify({ __delete: '1' }));
+                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
+              };
+              ws.onerror = () => resolve();
+              setTimeout(resolve, 2000); // timeout sécurité
+            }catch(_){ resolve(); }
+          });
+          deletePromises.push(p);
+        }
+      }catch(_){}
+    });
+
+    // Attendre que tous les deletes soient envoyés avant de recharger
+    Promise.all(deletePromises).then(() => {
+      setTimeout(() => {
+        localStorage.clear();
+        location.reload();
+      }, 1000);
+    });
   }
 }
 
 function shouldOpenFinalLoad(){
-  // TOBT brut (hors CTOT)
-  const tobtRaw = window._tobtRawMins;
+  // EOBT brut (hors CTOT)
+  const tobtRaw = window._eobtRawMins;
   if(tobtRaw == null) return false;
 
   const now = getNowMinutes().mins;
 
-  // seuil = TOBT brut - 15
+  // seuil = EOBT brut - 15
   let diff = now - (tobtRaw - 15);
 
   // gestion minuit (diff dans [-720..+720])
@@ -5254,6 +5750,27 @@ function toggleFinalImage(){
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
+function toggleDelayCodes() {
+  const box = document.getElementById('delayCodesBox');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+}
+
+
+function toggleDepExtra(panel){
+  const el = document.getElementById('panel-' + panel)
+  const btn = document.getElementById('btn-' + panel)
+  if(!el) return
+  const isOpen = el.style.display !== 'none'
+  el.style.display = isOpen ? 'none' : 'block'
+  if(btn){
+    if(isOpen){
+      btn.classList.remove('is-info', 'is-selected')
+    } else {
+      btn.classList.add('is-info', 'is-selected')
+    }
+  }
+}
 </script>
 
 <!-- ===== Airport Keeper Picker ===== -->
@@ -5261,19 +5778,10 @@ function toggleFinalImage(){
 
 <div id="akPopover">
   <div class="ak-header" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
-    <div class="select">
-      <select id="akFlow" onchange="loadAKFlights()">
-        <option value="DEP" selected>DEP</option>
-        <option value="ARR">ARR</option>
-      </select>
-    </div>
-
     <button class="button is-small is-link" type="button" onclick="loadAKFlights()">
       Rafraîchir
     </button>
-
     <span class="tag is-light" id="akStatus">—</span>
-
     <button class="button is-small is-light" type="button"
             style="margin-left:auto"
             onclick="closeAKPicker()">
@@ -5301,7 +5809,7 @@ function toggleFinalImage(){
     </label>
 
     <label class="toggle" style="justify-content:space-between;">
-      <span id="tzLabel">Locale</span>
+      <span id="tzLabel">Local</span>
       <input id="utcToggle" type="checkbox" onchange="setTimeModeUTC(this.checked)">
       <span class="track"><span class="thumb"></span></span>
     </label>
@@ -5309,7 +5817,7 @@ function toggleFinalImage(){
   </div>
 </div>
 
-<!-- ===== FIXED FOOTER (CD / TOBT / CTOT) ===== -->
+<!-- ===== FIXED FOOTER (CD / EOBT / CTOT) ===== -->
 <div class="fixed-footer" id="fixedFooter">
   <div class="fixed-footer-inner">
     <div class="footer-row">
@@ -5321,7 +5829,8 @@ function toggleFinalImage(){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <input id="CTOT" class="ctot-pill" type="time" onchange="updateAllCalculations()">
+        <div id="timer-ctot" class="v" style="background:#334155;">--:--</div>
+        <input id="CTOT" type="hidden">
       </div>
 
       <div class="timer-chip">
@@ -5338,6 +5847,791 @@ function toggleFinalImage(){
         onclick="toggleLDM()" aria-label="Load">
   🧳
 </button>
+
+<script>
+let socket = null;
+let isApplyingRemoteUpdate = false;
+let currentSocketKey = null;
+const debounceTimers = {};
+let realtimeSyncInitialized = false;
+let pendingPatch = {};
+let _flushTimer = null;           /* batch debounce — regroupe les envois */
+let hasReceivedInitialState = false;
+
+function buildFlightKey() {
+  try {
+    if (typeof getTabData === "function") {
+      const data = getTabData();
+      const akId = data?.akMeta?.id ? String(data.akMeta.id).trim() : "";
+      if (akId) return `AK_${akId}`;
+    }
+  } catch (e) {}
+
+  const date = (document.getElementById("Date")?.value || "").replaceAll("-", "");
+  const immat = (document.getElementById("Immat")?.value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+
+  const from = (document.getElementById("From")?.value || "").trim().toUpperCase();
+  const to = (document.getElementById("To")?.value || "").trim().toUpperCase();
+
+  const sibt = (document.getElementById("SIBT")?.value || "").replace(":", "");
+  const sobt = (document.getElementById("SOBT")?.value || "").replace(":", "");
+
+  const timeRef = sibt || sobt;
+  const stationRef = from || to;
+
+  if (!date || !immat || !timeRef || !stationRef) return null;
+
+  return `${date}_${immat}_${stationRef}_${timeRef}`;
+}
+
+function applyRemotePayload(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
+
+  // Si le payload vient d'un applyAKFlight distant → on lève la protection
+  const isFromAK = payload['__fromAK'] === '1';
+
+  const akProtectedFields = isFromAK
+    ? new Set(["Date"])  // on garde seulement Date protégé
+    : new Set(["Date", "Parking", "Immat", "TypeAvion", "From", "To", "SIBT"]);
+
+  // ✅ Traitement spécial : akMeta distant
+  if(payload['__akMeta'] && currentTabId){
+    try{
+      const remoteMeta = JSON.parse(payload['__akMeta']);
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      const localMeta = data.akMeta;
+
+      // Fusionner : on garde le plus récent, mais on complète arrFF/depFF manquants
+      if(!localMeta || (remoteMeta.ts || 0) >= (localMeta.ts || 0)){
+        data.akMeta = remoteMeta;
+      } else {
+        // Local plus récent : compléter arrFF/depFF si l'autre appareil a l'autre moitié
+        if(!localMeta.arrFF && remoteMeta.arrFF) localMeta.arrFF = remoteMeta.arrFF;
+        if(!localMeta.depFF && remoteMeta.depFF) localMeta.depFF = remoteMeta.depFF;
+        if(!localMeta.bc   && remoteMeta.bc)     localMeta.bc   = remoteMeta.bc;
+        data.akMeta = localMeta;
+      }
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+      // Mise à jour du bandeau INFO VOL
+      if(typeof updateInfoStrip === 'function') setTimeout(updateInfoStrip, 0);
+    }catch(e){}
+  }
+
+  isApplyingRemoteUpdate = true;
+  try {
+    Object.entries(payload).forEach(([id, value]) => {
+      if(id === '__akMeta') return; // déjà traité
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      if (akProtectedFields.has(id)) return;
+      if (el.dataset && el.dataset.ak === "1") return;
+
+      const newValue = value ?? "";
+      if (el.value === newValue) return;
+
+      el.value = newValue;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  } finally {
+    isApplyingRemoteUpdate = false;
+    if(typeof twSyncAll === "function") setTimeout(twSyncAll, 0);
+  }
+}
+
+function collectFlightState() {
+  const ids = [
+    "Cie",
+    "NVol",
+    "Callsign",
+    "From",
+    "To",
+    "Date",
+    "Parking",
+    "Immat",
+    "TypeAvion",
+    "SIBT",
+    "SOBT",
+    "EOBT",
+    "AIBT",
+    "AOBT",
+    "CTOT",
+
+    "DLcode1", "DLcode2", "DLcode3",
+    "DLduree1", "DLduree2", "DLduree3",
+    "FaitsSaillants",
+
+    "ArriveeFuel",
+    "PremierDebarque",
+    "PremierDebarqueL2",
+    "DernierDebarque",
+    "ArriveeLiftArr",
+    "DepartLiftArr",
+
+    "ArrPNT",
+    "ArrPNC",
+    "AvionPremierEmbarque",
+    "AvionDernierEmbarque",
+    "ArriveeLift",
+    "DepartLift",
+    "DepartFuel",
+    "ArriveeINAD",
+    "RemiseLID",
+    "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
+
+    "ArrPAX_MAIN",
+    "ArrPAX_INF",
+    "ArrBAGS",
+    "ArrPOIDS",
+    "ArrSI",
+
+    "PreviPAX_MAIN",
+    "PreviPAX_INF",
+    "PreviBAGS",
+    "PreviPOIDS",
+    "PreviTOB_FRRK",
+    "PreviMALE",
+    "PreviFEMALE",
+    "PreviCHILD",
+    "PreviINFANT",
+    "PreviTOB",
+    "PreviBAGS_OTHER",
+    "PreviPOIDS_OTHER",
+    "PreviSI",
+
+    "FinalMALE",
+    "FinalFEMALE",
+    "FinalADULT",
+    "FinalCHILD",
+    "FinalINFANT",
+    "FinalTOB",
+    "FinalOA",
+    "FinalOB",
+    "FinalOC",
+    "FinalOD",
+    "FinalBAGS",
+    "FinalPOIDS",
+    "FinalGB",
+    "FinalH1",
+    "FinalH2",
+    "FinalH3",
+    "FinalH4",
+    "FinalSI",
+
+    "BlockFuel",
+    "TaxiFuel",
+    "TripFuel",
+    "FuelUplift"
+  ];
+
+  const payload = {};
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    payload[id] = el.value || "";
+  });
+
+  // depFF/arrFF pour affichage dashboard
+  try{
+    const meta2 = getTabData()?.akMeta;
+    if(meta2?.depFF) payload['__depFF'] = meta2.depFF;
+    if(meta2?.arrFF) payload['__arrFF'] = meta2.arrFF;
+  }catch(_){}
+
+  // Clé dashboard commune ARR+DEP : min(id, linkedId)
+  try{
+    const meta = getTabData()?.akMeta;
+    const fid = String(meta?.id || '').trim();
+    const lid = String(meta?.linkedId || '').trim();
+    if(fid && lid){
+      payload['__dashboardKey'] = fid < lid ? fid : lid;
+    } else if(fid){
+      payload['__dashboardKey'] = fid;
+    }
+  }catch(_){}
+
+  return payload;
+}
+
+function flushPendingPatch() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!currentSocketKey) return;
+
+  const entries = Object.entries(pendingPatch);
+  if (!entries.length) return;
+
+  const payload = { ...pendingPatch };
+  pendingPatch = {};
+
+  // ✅ Toujours inclure __linkedRoom si une rotation liée existe
+  const lr = getLinkedRoom();
+  if(lr) payload['__linkedRoom'] = lr;
+
+  socket.send(JSON.stringify(payload));
+}
+
+
+function getLinkedRoom() {
+  try {
+    const meta = getTabData()?.akMeta;
+    const linkedId = String(meta?.linkedId || '').trim();
+    if(linkedId){
+      return `AK_${linkedId}`;
+    }
+  } catch(_) {}
+  return null;
+}
+
+
+function sendFullFlightState() {
+  if (isApplyingRemoteUpdate) return;
+
+  const key = buildFlightKey();
+  if (!key) return;
+  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) return;
+
+  const payload = collectFlightState();
+  const lr = getLinkedRoom();
+  if(lr) payload['__linkedRoom'] = lr;
+
+  socket.send(JSON.stringify(payload));
+}
+
+function connectFlightSocket() {
+  const key = buildFlightKey();
+
+  if (!key) {
+    currentSocketKey = null;
+    hasReceivedInitialState = false;
+    pendingPatch = {};
+    if (socket) {
+      try { socket.close(); } catch (e) {}
+      socket = null;
+    }
+    return;
+  }
+
+  if (socket && currentSocketKey === key && socket.readyState <= WebSocket.OPEN) return;
+
+  if (socket) {
+    try { socket.close(); } catch (e) {}
+    socket = null;
+  }
+
+  currentSocketKey = key;
+  hasReceivedInitialState = false;
+  pendingPatch = {};
+
+  socket = new WebSocket(`wss://turnaround-sync.deruellehugo-49c.workers.dev/${encodeURIComponent(key)}`);
+
+  socket.onopen = () => {
+    console.log("WebSocket connecté :", key);
+    flushPendingPatch();
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+
+      if (msg.__type === "init") {
+        hasReceivedInitialState = true;
+        applyRemotePayload(msg.payload || {});
+        flushPendingPatch();
+        /* Le serveur a déjà le state complet — pas besoin de le renvoyer */
+        return;
+      }
+
+      if (msg.__type === "patch") {
+        applyRemotePayload(msg.payload || {});
+        return;
+      }
+
+      applyRemotePayload(msg || {});
+    } catch (err) {
+      console.error("Erreur message WebSocket :", err);
+    }
+  };
+
+  socket.onerror = (err) => {
+    console.error("WebSocket erreur:", err);
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket fermé");
+    if (currentSocketKey === key) {
+      socket = null;
+      hasReceivedInitialState = false;
+    }
+  };
+}
+
+function ensureSocketConnection(retries = 3, delay = 2000) {
+  let count = 0;
+
+  const tryConnect = () => {
+    count++;
+    connectFlightSocket();
+
+    if (socket && currentSocketKey === buildFlightKey()) return;
+    if (count >= retries) return;
+
+    setTimeout(tryConnect, delay);
+  };
+
+  tryConnect();
+}
+
+function sendFieldUpdate(id, value) {
+  if (isApplyingRemoteUpdate) return;
+
+  const key = buildFlightKey();
+  if (!key) return;
+
+  pendingPatch[id] = value;
+
+  if (!socket || currentSocketKey !== key || socket.readyState === WebSocket.CLOSED) {
+    connectFlightSocket();
+    return;
+  }
+
+  if (socket.readyState !== WebSocket.OPEN) return;
+
+  /* Batch debounce : on attend 200ms pour regrouper tous les changements
+     déclenchés par une même interaction avant d'envoyer un seul patch */
+  clearTimeout(_flushTimer);
+  _flushTimer = setTimeout(() => {
+    flushPendingPatch();
+  }, 200);
+}
+
+function setupRealtimeSync() {
+  if (realtimeSyncInitialized) {
+    ensureSocketConnection();
+    return;
+  }
+
+  realtimeSyncInitialized = true;
+
+  const keyFields = [
+    "Date",
+    "Immat",
+    "From",
+    "To",
+    "SIBT",
+    "SOBT",
+    "EOBT",
+    "AIBT",
+    "AOBT",
+    "Cie",
+    "NVol"
+  ];
+
+  keyFields.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("change", () => {
+      ensureSocketConnection();
+    });
+  });
+
+  const syncFields = new Set([
+    "Cie",
+    "NVol",
+    "Callsign",
+    "From",
+    "To",
+    "Date",
+    "Parking",
+    "Immat",
+    "TypeAvion",
+    "SIBT",
+    "SOBT",
+    "EOBT",
+    "AOBT",
+    "AIBT",
+    "CTOT",
+
+    "DLcode1", "DLcode2", "DLcode3",
+    "DLduree1", "DLduree2", "DLduree3",
+    "FaitsSaillants",
+
+    "ArriveeFuel",
+    "PremierDebarque",
+    "PremierDebarqueL2",
+    "DernierDebarque",
+    "ArriveeLiftArr",
+    "DepartLiftArr",
+
+    "ArrPNT",
+    "ArrPNC",
+    "AvionPremierEmbarque",
+    "AvionDernierEmbarque",
+    "ArriveeLift",
+    "DepartLift",
+    "DepartFuel",
+    "ArriveeINAD",
+    "RemiseLID",
+    "FermeturePorteAvion",
+    "ConnexionAgentCasque",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
+
+    "ArrPAX_MAIN",
+    "ArrPAX_INF",
+    "ArrBAGS",
+    "ArrPOIDS",
+    "ArrSI",
+
+    "PreviPAX_MAIN",
+    "PreviPAX_INF",
+    "PreviBAGS",
+    "PreviPOIDS",
+    "PreviTOB_FRRK",
+    "PreviMALE",
+    "PreviFEMALE",
+    "PreviCHILD",
+    "PreviINFANT",
+    "PreviTOB",
+    "PreviBAGS_OTHER",
+    "PreviPOIDS_OTHER",
+    "PreviSI",
+
+    "FinalMALE",
+    "FinalFEMALE",
+    "FinalADULT",
+    "FinalCHILD",
+    "FinalINFANT",
+    "FinalTOB",
+    "FinalOA",
+    "FinalOB",
+    "FinalOC",
+    "FinalOD",
+    "FinalBAGS",
+    "FinalPOIDS",
+    "FinalGB",
+    "FinalH1",
+    "FinalH2",
+    "FinalH3",
+    "FinalH4",
+    "FinalSI",
+
+    "BlockFuel",
+    "TaxiFuel",
+    "TripFuel",
+    "FuelUplift"
+  ]);
+
+  const pushIfSyncField = (event) => {
+    const el = event.target;
+    if (!el || !el.id) return;
+    if (!syncFields.has(el.id)) return;
+    if (el.readOnly) return;
+    // Vérifier si le vol est devenu vide
+    setTimeout(checkAndDeleteIfEmpty, 200);
+
+    const isImmediate =
+      event.type === "change" ||
+      el.tagName === "SELECT" ||
+      el.type === "date" ||
+      el.type === "time";
+
+    if (isImmediate) {
+      clearTimeout(debounceTimers[el.id]);
+      sendFieldUpdate(el.id, el.value);
+      return;
+    }
+
+    clearTimeout(debounceTimers[el.id]);
+    debounceTimers[el.id] = setTimeout(() => {
+      sendFieldUpdate(el.id, el.value);
+    }, 1000);
+  };
+
+  document.addEventListener("input", pushIfSyncField);
+  document.addEventListener("change", pushIfSyncField);
+
+  ensureSocketConnection();
+}
+  
+
+function toggleInfoVolEdit(){
+  const edit = document.getElementById('ivEdit');
+  const icon = document.getElementById('ivEditIcon');
+  const open = edit.style.display === 'none' || edit.style.display === '';
+  edit.style.display = open ? 'grid' : 'none';
+  icon.textContent = open ? '✅' : '✏️';
+}
+
+async function footerRefreshAK(){
+  const btn = document.getElementById('footerRefreshBtn');
+  if(!currentTabId) return;
+  const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+  if(!data.akMeta){
+    btn.style.animation = 'none';
+    btn.textContent = '✕';
+    setTimeout(()=>{ btn.textContent = '↻'; }, 800);
+    return;
+  }
+  btn.classList.add('is-loading');
+  try{
+    await refreshAKTab(currentTabId);
+  }finally{
+    btn.classList.remove('is-loading');
+  }
+}
+
+/* ===== TIME WRAP gestures ===== */
+(function(){
+  const LONG_MS  = 600;
+  const DBL_MS   = 320;
+  const s = {}; // state par id
+
+  function st(id){ if(!s[id]) s[id]={t:null,fired:false,last:0}; return s[id]; }
+
+  function openEdit(id){
+    const wrap = document.querySelector(`.time-wrap[data-id="${id}"]`);
+    const inp  = document.getElementById(id);
+    const disp = document.getElementById('tw-disp-'+id);
+    if(!wrap||!inp||!disp) return;
+    if(wrap.querySelector('.tw-editor')) return;
+
+    const ed = document.createElement('input');
+    ed.type='text'; ed.className='input tw-editor';
+    ed.value=inp.value||''; ed.placeholder='HH:MM';
+    ed.maxLength=5; ed.inputMode='numeric';
+    disp.style.display='none';
+    wrap.appendChild(ed);
+    setTimeout(()=>{ ed.focus(); ed.select(); },30);
+
+    let done=false;
+    function commit(){
+      if(done) return; done=true;
+      const m=(ed.value.trim()).match(/^(\d{1,2}):?(\d{2})$/);
+      if(m){
+        const hh=m[1].padStart(2,'0'),mm=m[2];
+        if(+hh<24&&+mm<60){
+          inp.value=hh+':'+mm;
+          inp.dispatchEvent(new Event('change',{bubbles:true}));
+          twSync(id); updateAllCalculations();
+        }
+      }
+      ed.remove(); disp.style.display='';
+    }
+    ed.addEventListener('blur',commit);
+    ed.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();ed.blur();}
+      if(e.key==='Escape'){done=true;ed.remove();disp.style.display='';}
+    });
+  }
+
+  function clearVal(id){
+    const inp=document.getElementById(id); if(!inp) return;
+    inp.value='';
+    inp.dispatchEvent(new Event('change',{bubbles:true}));
+    twSync(id); updateAllCalculations();
+  }
+
+  /* ---- zone click (−1 / now / +1) ---- */
+  document.addEventListener('click',function(e){
+    const zone=e.target.closest('.tw-zone');
+    if(!zone) return;
+    if(zone.classList.contains('tw-sched-zone')) return; // gérée par long press
+    const wrap=zone.closest('.time-wrap'); if(!wrap) return;
+    const id=wrap.dataset.id; if(!id) return;
+    const action=zone.dataset.action;
+    if(action==='minus') adjustTime(id,-1);
+    else if(action==='plus') adjustTime(id,1);
+    else if(action==='now') setNow(id);
+    updateAllCalculations(); twSync(id);
+    if(window.getSelection) window.getSelection().removeAllRanges();
+    document.activeElement?.blur();
+  });
+
+  /* ---- long press & double-tap sur zone centre ---- */
+  function onStart(id){
+    const o=st(id); o.fired=false;
+    clearTimeout(o.t);
+    o.t=setTimeout(()=>{ o.fired=true; openEdit(id); },LONG_MS);
+  }
+  function onEnd(id){
+    const o=st(id);
+    clearTimeout(o.t);
+    if(o.fired) return;
+    const now=Date.now();
+    if(now-o.last<DBL_MS){ o.last=0; clearVal(id); }
+    else { o.last=now; }
+  }
+  function onCancel(id){ clearTimeout(st(id).t); }
+
+  document.addEventListener('touchstart',function(e){
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onStart(id);
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onEnd(id);
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    onCancel(id);
+  },{passive:true});
+
+  // desktop : long mousedown sur centre = éditer, dblclick = effacer
+  let mTimer=null;
+  document.addEventListener('mousedown',function(e){
+    if(e.button!==0) return;
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    const o=st(id); o.fired=false;
+    mTimer=setTimeout(()=>{ o.fired=true; openEdit(id); },LONG_MS);
+  });
+  document.addEventListener('mouseup',function(){ clearTimeout(mTimer); mTimer=null; });
+  document.addEventListener('dblclick',function(e){
+    const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
+    const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
+    clearVal(id);
+  });
+})();
+
+function twSync(id){
+  const inp = document.getElementById(id);
+  const disp = document.getElementById('tw-disp-' + id);
+  if(!inp || !disp) return;
+  disp.textContent = inp.value || '--:--';
+}
+// Sync all tw displays on load and after calculations
+const _origUpdateAll = typeof updateAllCalculations === 'function' ? updateAllCalculations : null;
+function twSyncAll(){
+  document.querySelectorAll('.time-wrap').forEach(w => {
+    const id = w.dataset.id;
+    if(id) twSync(id);
+  });
+}
+
+function delayMinsFromHHMM(planned, actual){
+  if(!planned || !actual) return null;
+  const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+  let diff = toMin(actual) - toMin(planned);
+  // gestion passage minuit
+  if(diff < -720) diff += 1440;
+  if(diff > 720)  diff -= 1440;
+  return diff;
+}
+
+function updateIVBadges(){
+  const sibt = document.getElementById('SIBT')?.value || '';
+  const aibt = document.getElementById('AIBT')?.value || '';
+  const sobt = document.getElementById('SOBT')?.value || '';
+  const aobt = document.getElementById('AOBT')?.value || '';
+
+  function renderBadge(el, mins){
+    if(!el) return;
+    el.className = '';
+    el.textContent = '';
+    // Badges INFO VOL désactivés
+  }
+
+  const arrEl = document.getElementById('ivBadgeArr');
+  const depEl = document.getElementById('ivBadgeDep');
+
+  // ARR : SIBT planifié, AIBT réel
+  renderBadge(arrEl, delayMinsFromHHMM(sibt, aibt));
+  // DEP : SOBT planifié, AOBT réel
+  renderBadge(depEl, delayMinsFromHHMM(sobt, aobt));
+}
+
+
+
+function checkAndDeleteIfEmpty(){
+  // Le vol est actif tant que Cie + NVol + Date sont présents
+  const cie  = (document.getElementById('Cie')?.value  || '').trim();
+  const nvol = (document.getElementById('NVol')?.value || '').trim();
+  const date = (document.getElementById('Date')?.value || '').trim();
+  const hasData = cie && nvol && date;
+
+  if(!hasData && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+    // Envoyer un state vide via WebSocket → le serveur supprime du dashboard
+    const emptyState = {};
+    ids.forEach(id => { emptyState[id] = ''; });
+    emptyState['Cie'] = '';
+    emptyState['From'] = '';
+    emptyState['To'] = '';
+    emptyState['Immat'] = '';
+    emptyState['Parking'] = '';
+    socket.send(JSON.stringify(emptyState));
+  }
+}
+</script>
+  
+
+<script>
+/* ===== ResizeObserver : --fixed-header-h dynamique ===== */
+(function() {
+  const header = document.querySelector('.fixed-header');
+  if (!header) return;
+  const update = () => {
+    document.documentElement.style.setProperty(
+      '--fixed-header-h', header.offsetHeight + 'px'
+    );
+  };
+  update(); // valeur initiale
+  new ResizeObserver(update).observe(header);
+})();
+
+
+</script>
+
+
+<script>
+/* ===== Service Worker — enregistrement ===== */
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'suivi-perf-v1';
+const PRECACHE = [];   // fichiers à précacher (vide = online-only)
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  if (PRECACHE.length) e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  // Stratégie : Network-first, fallback cache
+  e.respondWith(
+    fetch(e.request)
+      .then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return resp;
+      })
+      .catch(() => caches.match(e.request))
+  );
+});
+`;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl, { scope: '/' })
+    .catch(() => {/* SW optionnel, pas bloquant */});
+}
+</script>
+
+
 
 </body>
 </html>
