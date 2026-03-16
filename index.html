@@ -5546,9 +5546,9 @@ function validateForm() {
 
   const titre = `[TIMING] ${dateTitre} / ${cie}${vol} ${from}-${to} / ${immat} / ${rza}`;
 
-  // ── Helper : label fixe 14 car, valeur alignée col 16 ───────────────────
+  // ── Helper : label + tab + valeur ────────────────────────────────────────
   const v   = id => (document.getElementById(id)?.value || '').trim();
-  const r   = (label, value) => value ? `${label.padEnd(14)}${value}\n` : '';
+  const r   = (label, value) => value ? `${label}\t${value}\n` : '';
   const div = label => `\n--- ${label.toUpperCase()} ${'-'.repeat(Math.max(0, 36-label.length))}\n\n`;
 
   // ── INFO VOL ─────────────────────────────────────────────────────────────
@@ -5564,13 +5564,12 @@ function validateForm() {
     + r('MODE',     isUTC ? 'UTC' : 'LOCAL');
 
   // ── HORAIRES ─────────────────────────────────────────────────────────────
-  const t = s => (s || '--:--').padEnd(5);
   const horBlock = div('HORAIRES')
-    + `${''.padEnd(14)}PREV    REEL\n`
-    + `${'ARR'.padEnd(14)}${t(v('SIBT'))}   ${t(v('AIBT'))}\n`
-    + `${'DEP'.padEnd(14)}${t(v('SOBT'))}   ${t(v('AOBT'))}\n`
-    + (v('EOBT') ? `${'EOBT'.padEnd(14)}${v('EOBT')}\n` : '')
-    + (v('CTOT') ? `${'CTOT'.padEnd(14)}${v('CTOT')}\n` : '');
+    + `\t\tPREV\tREEL\n`
+    + `ARR\t\t${v('SIBT')||'--:--'}\t${v('AIBT')||'--:--'}\n`
+    + `DEP\t\t${v('SOBT')||'--:--'}\t${v('AOBT')||'--:--'}\n`
+    + (v('EOBT') ? `EOBT\t\t${v('EOBT')}\n` : '')
+    + (v('CTOT') ? `CTOT\t\t${v('CTOT')}\n` : '');
 
   // ── TIMINGS ───────────────────────────────────────────────────────────────
   const liftArr = v('ArriveeLiftArr') || v('DepartLiftArr')
@@ -5618,9 +5617,9 @@ function validateForm() {
 
   // ── DL ───────────────────────────────────────────────────────────────────
   const dlLines = [];
-  if(v('DLcode1')) dlLines.push(`${v('DLcode1').padEnd(6)}${v('DLduree1')||'?'} MIN`);
-  if(v('DLcode2')) dlLines.push(`${v('DLcode2').padEnd(6)}${v('DLduree2')||'?'} MIN`);
-  if(v('DLcode3')) dlLines.push(`${v('DLcode3').padEnd(6)}${v('DLduree3')||'?'} MIN`);
+  if(v('DLcode1')) dlLines.push(`${v('DLcode1')}\t${v('DLduree1')||'?'} MIN`);
+  if(v('DLcode2')) dlLines.push(`${v('DLcode2')}\t${v('DLduree2')||'?'} MIN`);
+  if(v('DLcode3')) dlLines.push(`${v('DLcode3')}\t${v('DLduree3')||'?'} MIN`);
   const dlBlock = dlLines.length ? div('RETARDS') + dlLines.join('\n') + '\n' : '';
 
   // ── FAITS SAILLANTS ───────────────────────────────────────────────────────
@@ -5633,7 +5632,7 @@ function validateForm() {
   window.location.href =
     `mailto:trafic@aeroportbeauvais.com?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
 }
-
+   
 /* ===== FUEL ===== */
 function openFuelMenu(){
   const b = document.getElementById('fuelBackdrop');
