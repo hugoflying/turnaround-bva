@@ -350,7 +350,7 @@ html .ldm-ta {
   gap: var(--gap);
 }
 .span-12 { grid-column: span 12; }
-.span-6  { grid-column: span 12; }   /* mobile : pleine largeur */
+.span-6  { grid-column: span 6; }    /* mobile : 2 colonnes */
 .span-4  { grid-column: span 6; }
 .span-3  { grid-column: span 6; }
 
@@ -1200,7 +1200,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   #settingsFab { width: 42px; height: 42px; font-size: .85rem; }
 
   /* Horaires — 1 colonne */
-  .horaires-grid { grid-template-columns: 1fr; }
+  .horaires-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hor-block { gap: 6px; }
+  .hor-block .hor-cell { flex-direction: row; align-items: center; gap: 4px; }
+  .hor-block .hor-cell .label { margin: 0; font-size: .72rem; white-space: nowrap; min-width: 30px; }
+  .hor-block .hor-cell .time-wrap { flex: 1 1 0; min-width: 0; }
 
   /* LDM */
   #ldmModal  { inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
@@ -4005,7 +4009,7 @@ function generateTimingFields(){
           <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
           <div class="span-6">${fieldHTML('RemiseLID','Remise LID/LDS')}</div>
           <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
-          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion agent casque',false,false,'is-purple')}</div>
+          <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion casque',false,false,'is-purple')}</div>
         </div>
       </div>
     </div>`;
