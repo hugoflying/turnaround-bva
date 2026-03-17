@@ -612,26 +612,6 @@ html.dark .tl-range-label { background: rgba(0,0,0,.45); color: #fff; }
 }
 html.dark .timeline-scroll { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 .timeline-canvas { position: relative; min-width: 600px; width: 100%; }
-.tl-now {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 2px;
-  background: #f43f5e;
-  box-shadow: 0 0 6px 2px #f43f5e88;
-  z-index: 10;
-  pointer-events: none;
-  transform: translateX(-50%);
-}
-.tl-now::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px; height: 8px;
-  background: #f43f5e;
-  border-radius: 50%;
-}
 
 /* ===== 19. SETTINGS ===== */
 /* ===== SETTINGS BACKDROP ===== */
@@ -1112,7 +1092,7 @@ html.dark .ak-half-dep { background: rgba(20,83,45,.15); }
 .ak-half-done    { opacity: .5; }
 .ak-half-empty   { flex: 1; background: rgba(0,0,0,.02); min-height: 60px; }
 html.dark .ak-half-empty { background: rgba(255,255,255,.02); }
-.ak-pair-divider { width: 1px; flex-shrink: 0; background: rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; padding: 0; font-size: .9rem; color: var(--muted); }
+.ak-pair-divider { width: 1px; flex-shrink: 0; background: rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: .9rem; color: var(--muted); }
 html.dark .ak-pair-divider { background: rgba(255,255,255,.10); }
 .ak-half-top     { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px; }
 .ak-flow-badge   { font-size: .62rem; font-weight: 900; padding: 1px 6px; border-radius: 6px; }
@@ -1994,7 +1974,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     <div class="card-content" style="padding:10px 12px;">
 
       <!-- Toolbar : tout sur une ligne -->
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:nowrap;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
         <button id="bnModeDrawBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('draw')" title="Dessin">✏️ Stylet</button>
         <button id="bnModeTextBtn" class="button is-small is-light" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
 
@@ -5031,70 +5011,6 @@ function renderTimeline(){
   const lbl = document.getElementById('timelineZoomLabel');
   if(lbl) lbl.textContent = `${Math.round(timelineZoom*100)}%`;
 
-  // Barre "now" : visible seulement si AIBT rempli et AOBT vide ou non encore atteint
-  renderTimelineNow();
-}
-
-let _tlNowInterval = null;
-
-function renderTimelineNow(){
-  const canvas = document.getElementById('timelineCanvas');
-  if(!canvas) return;
-
-  // Supprimer ancienne barre
-  canvas.querySelectorAll('.tl-now').forEach(el => el.remove());
-
-  const aibt = document.getElementById('AIBT')?.value || '';
-  if(!aibt) return;
-
-  const aibtMins = aibt.split(':').map(Number);
-  if(aibtMins.length < 2 || isNaN(aibtMins[0])) return;
-  const aibtTotal = aibtMins[0]*60 + aibtMins[1];
-
-  const aobt = document.getElementById('AOBT')?.value || '';
-  if(aobt){
-    const aobtMins = aobt.split(':').map(Number);
-    if(!isNaN(aobtMins[0]) && (aobtMins[0]*60+aobtMins[1]) <= (()=>{ const n=new Date(); return (isUTC?n.getUTCHours():n.getHours())*60+(isUTC?n.getUTCMinutes():n.getMinutes()); })()) return;
-  }
-
-  const range = window._timelineCurrentRange;
-  if(!range) return;
-  const { min, max } = range;
-  const total = Math.max(1, max - min);
-
-  function drawNow(){
-    canvas.querySelectorAll('.tl-now').forEach(el => el.remove());
-    const now = new Date();
-    const nowMins = (isUTC ? now.getUTCHours() : now.getHours())*60 + (isUTC ? now.getUTCMinutes() : now.getMinutes());
-    if(nowMins < aibtTotal) return; // avant AIBT
-    if(nowMins < min || nowMins > max) return;
-    const leftPct = 6 + ((nowMins - min)/total)*88;
-    const bar = document.createElement('div');
-    bar.className = 'tl-now';
-    bar.style.left = `${leftPct}%`;
-    canvas.appendChild(bar);
-  }
-
-  drawNow();
-
-  // Interval 1s — relancé proprement
-  if(_tlNowInterval) clearInterval(_tlNowInterval);
-  _tlNowInterval = setInterval(()=>{
-    const c = document.getElementById('timelineCanvas');
-    if(!c){ clearInterval(_tlNowInterval); _tlNowInterval=null; return; }
-    // Re-vérifier AOBT
-    const a = document.getElementById('AOBT')?.value || '';
-    if(a){
-      const am = a.split(':').map(Number);
-      const n = new Date();
-      const nm = (isUTC?n.getUTCHours():n.getHours())*60+(isUTC?n.getUTCMinutes():n.getMinutes());
-      if(!isNaN(am[0]) && (am[0]*60+am[1]) <= nm){
-        c.querySelectorAll('.tl-now').forEach(el=>el.remove());
-        clearInterval(_tlNowInterval); _tlNowInterval=null; return;
-      }
-    }
-    drawNow();
-  }, 1000);
 }
   
 function setVal(id, v){
@@ -5558,7 +5474,8 @@ function renderAKList(pairs){
       ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
       : '';
     const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
-    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+    const halfPad   = (flow==='ARR' && barColor) ? 'padding-left:11px;' : '';
+    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+halfPad+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
       + barHtml
       + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
@@ -6382,11 +6299,12 @@ function toggleSettings(){
     try{
       const data = JSON.stringify(_strokes);
       localStorage.setItem(_historyKey, data);
-      // Sync WebSocket
+      // Sync WebSocket — forcer via twSync directement
       const el = document.getElementById('BlocNote');
-      if(el && el.value !== data){
+      if(el){
         el.value = data;
-        el.dispatchEvent(new Event('change', {bubbles:true}));
+        // twSync est défini globalement
+        if(typeof twSync === 'function') twSync('BlocNote');
       }
     }catch(e){}
   }
@@ -6858,6 +6776,8 @@ function collectFlightState() {
     "DLcode1", "DLcode2", "DLcode3",
     "DLduree1", "DLduree2", "DLduree3",
     "FaitsSaillants",
+    "BlocNote",
+    "BlocNote",
 
     "ArriveeFuel",
     "PremierDebarque",
