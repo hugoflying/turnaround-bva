@@ -306,7 +306,14 @@ html .field .label {
   opacity: .9;
   margin-bottom: 2px;
 }
-.field-optional .label { opacity: .55; }
+.hor-cell .label {
+  font-weight: 900;
+  font-size: var(--labelSize);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  opacity: .9;
+  margin-bottom: 2px;
+}
 
 /* LDM inputs (surclasse le reset global ci-dessus via spécificité) */
 html .ldm-in {
@@ -342,6 +349,44 @@ html .ldm-ta {
 }
 .btn-actions .button { border-radius: 12px; font-weight: 900; height: 40px; }
 .btn-action-main     { font-size: 1.1rem; height: 44px; padding: 0 22px; }
+
+/* ===== ACTION BAR ===== */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 4px 0 12px;
+}
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 54px;
+  min-width: 90px;
+  border-radius: 14px;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  padding: 6px 14px;
+}
+.action-btn-icon { font-size: 1.2rem; line-height: 1; }
+.action-btn-label { font-size: .7rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.action-btn--validate { background: #16a34a; color: #fff; }
+.action-btn--validate:hover { background: #15803d; }
+.action-btn--clear    { background: #f59e0b; color: #fff; }
+.action-btn--clear:hover { background: #d97706; }
+.action-btn--reset    { background: #f1f5f9; color: #ef4444; border: 1.5px solid #fca5a5; }
+.action-btn--reset:hover { background: #fee2e2; }
+html.dark .action-btn--reset { background: #1e293b; border-color: #ef4444; }
+
+@media (max-width: 599px) {
+  .action-btn { height: 46px; min-width: 76px; padding: 4px 10px; }
+  .action-btn-icon  { font-size: 1rem; }
+  .action-btn-label { font-size: .62rem; }
+}
 
 /* ===== 13. RESPONSIVE GRID (12 colonnes) ===== */
 .grid-auto {
@@ -641,7 +686,8 @@ html.dark #settingsMenu { border-color: rgba(255,255,255,.10); }
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 html.dark .settings-header { border-bottom-color: rgba(255,255,255,.10); }
-.settings-header strong { font-weight: 900; font-size: 1rem; flex: 1; }
+.settings-header strong { font-weight: 900; font-size: 1rem; flex: 1; color: #111; }
+html.dark .settings-header strong { color: var(--text); }
 
 .settings-body {
   padding: 12px;
@@ -688,6 +734,12 @@ html.dark .settings-item {
   background: var(--bg);
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible;
+  /* iOS : force le footer à rester fixe même lors du scroll */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 
@@ -742,7 +794,7 @@ html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 #loadFab {
   position: fixed;
   right: 14px;
-  bottom: calc(var(--fixed-footer-h) + 86px);
+  bottom: calc(var(--fixed-footer-h) + 72px);
   z-index: 9150;
   width: 52px;
   height: 52px;
@@ -885,7 +937,7 @@ body.modal-open {
   gap: 12px;
   align-items: start;
 }
-.hor-block    { display: flex; flex-direction: column; gap: 10px; }
+.hor-block    { display: flex; flex-direction: column; gap: 12px; }
 .hor-col-head { display: flex; justify-content: center; padding-bottom: 6px; border-bottom: 2px solid var(--field-border); }
 .hor-badge    { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: .72rem; font-weight: 900; padding: 4px 10px; min-width: 44px; }
 
@@ -894,7 +946,7 @@ html.dark .hor-badge-arr { background: #1e3a8a; color: #93c5fd; }
 .hor-badge-dep          { background: #dcfce7; color: #15803d; }
 html.dark .hor-badge-dep { background: #14532d; color: #86efac; }
 
-.hor-cell { display: flex; flex-direction: column; gap: 4px; }
+.hor-cell { display: flex; flex-direction: column; gap: 2px; }
 .hor-input-sched        { opacity: .6; border-style: dashed; }
 .hor-input-sched:focus  { opacity: 1; border-style: solid; }
 
@@ -915,9 +967,15 @@ body.iv-editing .iv-edit-btn { opacity: 1; }
 
 #ivEdit {
   border-top: 1px solid var(--field-border);
-  padding-top: 12px;
+  padding-top: 10px;
   animation: ivFadeIn .18s ease;
+  gap: 6px !important;
+  row-gap: 6px !important;
 }
+#ivEdit .field { margin-bottom: 0; }
+#ivEdit .label { font-size: .72rem; margin-bottom: 2px; }
+#ivEdit .select { width: 100%; }
+#ivEdit .select select { width: 100%; }
 @keyframes ivFadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1717,13 +1775,13 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
       <div class="field span-3">
         <label class="label">Parking</label>
-        <div class="select is-fullwidth">
-          <select id="Parking">
-            <option value="">--</option>
+        <div class="control">
+          <input class="input" type="text" id="Parking" list="parkingList" autocomplete="off" maxlength="4" placeholder="--">
+          <datalist id="parkingList">
             <option>1</option><option>2</option><option>3</option><option>4</option>
             <option>5</option><option>6</option><option>7</option><option>8</option>
             <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
+          </datalist>
         </div>
       </div>
 
@@ -1758,13 +1816,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       </div>
 
       <div class="field span-3">
-        <label class="label">N°</label>
+        <label class="label">N° DE VOL</label>
         <input class="input uppercase" type="text" id="NVol">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Callsign</label>
-        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
       </div>
 
       <div class="field span-3">
@@ -1776,6 +1829,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="field span-3">
         <label class="label">To</label>
         <input class="input uppercase" type="text" id="To" maxlength="3">
+      </div>
+
+      <div class="field span-6">
+        <label class="label">Callsign</label>
+        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
       </div>
 
     </div>
@@ -1832,77 +1890,6 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </div>
 
     <!-- Mode édition infos vol (masqué par défaut) -->
-    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px; margin-bottom:16px;">
-
-      <div class="field span-3">
-        <label class="label">Date</label>
-        <input class="input" type="date" id="Date">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Parking</label>
-        <div class="select is-fullwidth">
-          <select id="Parking">
-            <option value="">--</option>
-            <option>1</option><option>2</option><option>3</option><option>4</option>
-            <option>5</option><option>6</option><option>7</option><option>8</option>
-            <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Immat</label>
-        <input class="input uppercase" type="text" id="Immat" maxlength="6">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Type avion</label>
-        <div class="control">
-          <input class="input uppercase" type="text" id="TypeAvion" list="typeAvionList" autocomplete="off" maxlength="6" placeholder="--">
-          <datalist id="typeAvionList">
-            <option>A319</option><option>A320</option><option>A321</option>
-            <option>A20N</option><option>A21N</option><option>A21NY</option>
-            <option>B734</option><option>B737</option><option>B738</option>
-            <option>B38M</option><option>BCS3</option><option>CL35</option>
-          </datalist>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Cie</label>
-        <div class="control">
-          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
-          <datalist id="cieList">
-            <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
-            <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
-            <option>V7</option>
-          </datalist>
-        </div>
-      </div>
-
-      <div class="field span-3">
-        <label class="label">N°</label>
-        <input class="input uppercase" type="text" id="NVol">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">Callsign</label>
-        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">From</label>
-        <input class="input uppercase" type="text" id="From" maxlength="3"
-               oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
-      </div>
-
-      <div class="field span-3">
-        <label class="label">To</label>
-        <input class="input uppercase" type="text" id="To" maxlength="3">
-      </div>
-
-    </div>
   </div>
 </div>
 
@@ -1940,19 +1927,18 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 <!-- RETARDS -->
 <div class="card mb-5">
   <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-    <p class="card-header-title">RETARDS (Départ)</p>
+    <p class="card-header-title">RETARD</p>
+    <button id="delayCodesBtn" class="button is-small is-warning is-light" type="button"
+            onclick="event.stopPropagation(); toggleDelayCodes()"
+            style="display:none; margin: auto 8px auto 0; font-size:.72rem; font-weight:900;">
+      CODES RYR
+    </button>
     <span class="card-header-icon"><span class="icon">⌄</span></span>
   </header>
 
   <div class="card-content">
 
-    <div style="margin-bottom:10px;">
-      <button id="delayCodesBtn" class="button is-warning is-light" type="button" onclick="toggleDelayCodes()">
-        DELAY CODES (RYR)
-      </button>
-    </div>
-
-    <div id="delayCodesBox" style="display:none; margin-top:12px;">
+    <div id="delayCodesBox" style="display:none; margin-bottom:12px;">
       <img id="delayCodesImage"
            src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/gops-iata-delay-codes-apr24-rev17.jpg"
            style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
@@ -1999,20 +1985,65 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   </div>
 </div>
 
-  <!-- FAITS SAILLANTS -->
+  <!-- BLOC NOTE -->
   <div class="card mb-5">
     <header class="card-header section-collapse" onclick="toggleCardBody(this)">
-      <p class="card-header-title">FAITS SAILLANTS</p>
+      <p class="card-header-title">BLOC NOTE</p>
       <span class="card-header-icon"><span class="icon">⌄</span></span>
     </header>
-    <div class="card-content">
-      <textarea class="textarea" id="FaitsSaillants" placeholder="Faits saillants…"></textarea>
+    <div class="card-content" style="padding:10px 12px;">
+
+      <!-- Toolbar : tout sur une ligne -->
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:nowrap;">
+        <button id="bnModeDrawBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('draw')" title="Dessin">✏️ Stylet</button>
+        <button id="bnModeTextBtn" class="button is-small is-light" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
+
+        <!-- Outils dessin (cachés en mode clavier) -->
+        <div id="bnDrawTools" style="display:flex; align-items:center; gap:6px; flex:1;">
+          <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme</button>
+          <input id="bnSize" type="range" min="1" max="12" value="3"
+                 style="width:70px; cursor:pointer;"
+                 oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
+                 title="Épaisseur">
+          <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:26px;">3px</span>
+          <input id="bnColor" type="color" value="#1e3a8a"
+                 style="width:30px;height:30px;border:none;border-radius:8px;cursor:pointer;padding:2px;"
+                 title="Couleur">
+        </div>
+
+        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button" onclick="bnClear()" title="Tout effacer">🗑 Effacer</button>
+      </div>
+
+      <!-- Mode dessin -->
+      <div id="bnDrawMode" style="overflow:hidden; width:100%;">
+        <canvas id="bnCanvas"
+                style="width:100%; max-width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;">
+        </canvas>
+      </div>
+
+      <!-- Mode clavier -->
+      <div id="bnTextMode" style="display:none;">
+        <textarea id="FaitsSaillants" class="textarea" rows="6"
+                  placeholder="Notes libres…"
+                  style="border-radius:12px; resize:vertical;"
+                  oninput="twSync('FaitsSaillants')"></textarea>
+      </div>
+
+      <input id="BlocNote" type="hidden">
+
     </div>
   </div>
 
-  <div class="buttons is-centered">
-    <button class="button is-success btn-action-main" id="validate" onclick="openRZAModal()">VALIDER</button>
-    <button class="button is-danger is-light btn-action-main" id="reset" onclick="clearAutoSave()">RÉINITIALISER TOUT</button>
+  <div class="action-bar">
+    <button class="button action-btn action-btn--validate" id="validate" onclick="openRZAModal()">
+      <span class="action-btn-icon">✅</span><span class="action-btn-label">Valider</span>
+    </button>
+    <button class="button action-btn action-btn--clear" id="clearFields" onclick="openClearFieldsModal()">
+      <span class="action-btn-icon">🧹</span><span class="action-btn-label">Effacer</span>
+    </button>
+    <button class="button action-btn action-btn--reset" id="reset" onclick="openCloseAllModal()">
+      <span class="action-btn-icon">🗑</span><span class="action-btn-label">Tout fermer</span>
+    </button>
   </div>
 
 </div>
@@ -2037,6 +2068,54 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="buttons is-right">
         <button class="button is-light" type="button" onclick="closeRZAModal(false)">Annuler</button>
         <button class="button is-link" type="button" onclick="submitRZAModal()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmation TOUT FERMER -->
+<div id="closeAllModal" style="display:none; position:fixed; inset:0; z-index:6400; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Tout fermer ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Tous les onglets ouverts seront fermés.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('closeAllModal').style.display='none'">Annuler</button>
+        <button class="button is-danger" type="button" onclick="document.getElementById('closeAllModal').style.display='none'; clearAutoSave();">Fermer tout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmation EFFACER champs -->
+<div id="clearFieldsModal" style="display:none; position:fixed; inset:0; z-index:6300; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Effacer les données du vol ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Les timings, les loads et les retards seront effacés.<br>Les infos vol (Cie, N°, Date…) sont conservées.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('clearFieldsModal').style.display='none'">Annuler</button>
+        <button class="button is-warning" type="button" onclick="confirmClearFields()">Effacer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BLOC NOTE — modal confirmation effacement -->
+<div id="bnClearModal" style="display:none; position:fixed; inset:0; z-index:6200; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Effacer le bloc note ?</p>
+    </header>
+    <div class="card-content">
+      <p style="margin-bottom:16px;">Cette action est irréversible.</p>
+      <div class="buttons is-right">
+        <button class="button is-light" type="button" onclick="document.getElementById('bnClearModal').style.display='none'">Annuler</button>
+        <button class="button is-danger" type="button" onclick="bnConfirmClear()">Effacer</button>
       </div>
     </div>
   </div>
@@ -3736,17 +3815,15 @@ function switchTab(id){
 
   loadTabData(id);
 
+  // Fermer LOAD après chargement — évite de l'avoir ouvert sur le nouvel onglet
+  closeLDM?.();
+
+  // Recharger le bloc note pour le nouvel onglet
+  window.bnReloadTab?.();
+
   renderTabs();
   refreshUIForTabs();
   renderTimeline();
-
-  // ✅ si LOAD est ouvert : remettre les layouts selon la Cie du nouvel onglet
-  const ldmModal = document.getElementById('ldmModal');
-  const isLdmOpen = ldmModal && ldmModal.style.display !== 'none' && ldmModal.style.display !== '';
-  if(isLdmOpen){
-    updateFinalLoadLayout?.();
-    updatePreviLoadLayout?.();
-  }
 }
 
 function deleteTab(id){
@@ -4792,13 +4869,13 @@ function renderTimeline(){
   const canvasPx = Math.max(viewport, Math.round(viewport * timelineZoom));
   canvas.style.width = canvasPx + 'px';
 
-  const MIN_HEIGHT = 180;
-  const PT_LANE_H  = 50;
-  const DUR_LANE_H = 50;
-  const TOP_PAD    = 40;
-  const AFTER_POINTS = 28;
-  const AFTER_TRACK  = 36;
-  const BOTTOM_PAD   = 40;
+  const MIN_HEIGHT = 120;
+  const PT_LANE_H  = 42;
+  const DUR_LANE_H = 36;
+  const TOP_PAD    = 28;
+  const AFTER_POINTS = 18;
+  const AFTER_TRACK  = 24;
+  const BOTTOM_PAD   = 28;
 
   const lanesEndX = [];
   const pointEls = [];
@@ -4819,10 +4896,13 @@ function renderTimeline(){
     el.appendChild(dot); el.appendChild(label);
     canvas.appendChild(el);
 
-    const w = Math.max(label.offsetWidth, 12);
+    // Estimer la largeur du label (offsetWidth=0 car visibility:hidden)
+    const labelText = label.textContent;
+    const charPx = 7.5; // px par caractère approximatif
+    const w = Math.max(labelText.length * charPx + 20, 30);
     const centerX = (leftPct/100) * canvasPx;
-    const startX = centerX - (w/2) - 16;
-    const endX   = centerX + (w/2) + 16;
+    const startX = centerX - (w/2) - 8;
+    const endX   = centerX + (w/2) + 8;
 
     let lane = 0;
     while(lanesEndX[lane] !== undefined && startX <= lanesEndX[lane]) lane++;
@@ -4840,7 +4920,7 @@ function renderTimeline(){
     return { ...d, start: Math.min(aExt,bExt), end: Math.max(aExt,bExt) };
   }).sort((x,y)=> x.start - y.start);
 
-  function packLanes(items, pad = 2){
+  function packLanes(items, pad = 1){
     const lanes = [];
     return items.map(it => {
       let laneIdx = lanes.findIndex(nextFree => it.start >= nextFree);
@@ -6152,9 +6232,318 @@ function toggleSettings(){
   }
 }
 
+/* ===== BLOC NOTE CANVAS ===== */
+(function(){
+  let _bnReady = false;
+  let _tool = 'pen';      // 'pen' | 'eraser-stroke'
+  let _strokes = [];      // [{tool, color, size, pts:[{x,y}]}]
+  let _current = null;
+  let _drawing = false;
+  let _historyKey = null;
+
+  function canvas(){ return document.getElementById('bnCanvas'); }
+  function ctx(){ const c=canvas(); return c ? c.getContext('2d') : null; }
+
+  function bnInit(){
+    const c = canvas();
+    if(!c || _bnReady) return;
+
+    // Attendre que le canvas soit visible et ait une taille
+    const w = c.offsetWidth || c.closest('.card-content')?.offsetWidth || 300;
+    if(w === 0){
+      setTimeout(bnInit, 100);
+      return;
+    }
+
+    _bnReady = true;
+
+    // Taille responsive — haute résolution (devicePixelRatio)
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const parent = c.parentElement || c.closest('.card-content');
+      const cw  = (parent?.clientWidth || c.offsetWidth || 300);
+      const h   = Math.round(cw * 0.45);
+      const pw  = Math.round(cw * dpr);
+      const ph  = Math.round(h * dpr);
+      if(c.width !== pw || c.height !== ph){
+        c.width  = pw;
+        c.height = ph;
+        c.style.width  = cw + 'px';
+        c.style.height = h  + 'px';
+        const g = ctx();
+        if(g) g.scale(dpr, dpr);
+        bnRedraw();
+      }
+    }
+    new ResizeObserver(()=>requestAnimationFrame(resize)).observe(c);
+    resize();
+
+    // Charger depuis storage
+    _historyKey = 'bnCanvas_' + (currentTabId||'default');
+    bnLoad();
+
+    // Événements pointer (stylet + doigt + souris)
+    c.addEventListener('pointerdown', e=>{ e.preventDefault(); bnStart(e); }, {passive:false});
+    c.addEventListener('pointermove', e=>{ e.preventDefault(); bnMove(e);  }, {passive:false});
+    c.addEventListener('pointerup',   e=>{ e.preventDefault(); bnEnd(e);   }, {passive:false});
+    c.addEventListener('pointerleave',e=>{ bnEnd(e); }, {passive:false});
+    // Empêcher menu contextuel et sélection sur appui long (mobile)
+    c.addEventListener('contextmenu', e=>{ e.preventDefault(); }, {passive:false});
+    c.addEventListener('selectstart',  e=>{ e.preventDefault(); }, {passive:false});
+  }
+
+  function bnPt(e){
+    const c = canvas();
+    const r = c.getBoundingClientRect();
+    // Pas de multiplication DPR ici — on travaille en CSS pixels, le scale() du ctx s'en charge
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function bnStart(e){
+    _drawing = true;
+    const pt = bnPt(e);
+    if(_tool === 'eraser-stroke'){
+      _current = { tool:'eraser-stroke', pts:[pt] };
+    } else {
+      const color = document.getElementById('bnColor')?.value || '#1e3a8a';
+      const size  = parseInt(document.getElementById('bnSize')?.value || '3', 10);
+      _current = { tool:'pen', color, size, pts:[pt] };
+    }
+  }
+
+  function bnMove(e){
+    if(!_drawing || !_current) return;
+    _current.pts.push(bnPt(e));
+    bnRedraw();
+    // Dessine le trait en cours
+    bnDrawStroke(_current, ctx());
+  }
+
+  function bnEnd(e){
+    if(!_drawing || !_current) return;
+    _drawing = false;
+    if(_tool === 'eraser-stroke'){
+      // Supprimer les traits qui intersectent le chemin de gomme
+      const erasePts = _current.pts;
+      _strokes = _strokes.filter(s => !bnStrokeIntersects(s, erasePts));
+    } else if(_current.pts.length > 0){
+      _strokes.push(_current);
+    }
+    _current = null;
+    bnRedraw();
+    bnSave();
+  }
+
+  function bnStrokeIntersects(stroke, erasePts){
+    const threshold = 18;
+    for(const ep of erasePts){
+      for(const sp of stroke.pts){
+        const dx = ep.x - sp.x, dy = ep.y - sp.y;
+        if(dx*dx + dy*dy < threshold*threshold) return true;
+      }
+    }
+    return false;
+  }
+
+  function bnDrawStroke(s, c){
+    if(!c || s.pts.length < 1) return;
+    c.save();
+    if(s.tool === 'eraser-stroke'){
+      c.globalCompositeOperation = 'source-over';
+      c.strokeStyle = 'rgba(200,200,200,0.5)';
+      c.lineWidth   = 18;
+      c.setLineDash([4,4]);
+    } else {
+      c.globalCompositeOperation = 'source-over';
+      c.strokeStyle = s.color;
+      c.lineWidth   = s.size;
+      c.setLineDash([]);
+      c.lineCap     = 'round';
+      c.lineJoin    = 'round';
+    }
+    c.beginPath();
+    c.moveTo(s.pts[0].x, s.pts[0].y);
+    for(let i=1; i<s.pts.length; i++) c.lineTo(s.pts[i].x, s.pts[i].y);
+    c.stroke();
+    c.restore();
+  }
+
+  function bnRedraw(){
+    const c2 = canvas(); const g = ctx();
+    if(!c2||!g) return;
+    const dpr = window.devicePixelRatio || 1;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, c2.width / dpr, c2.height / dpr);
+    _strokes.forEach(s => bnDrawStroke(s, g));
+  }
+
+  function bnSave(){
+    if(!_historyKey) return;
+    try{
+      const data = JSON.stringify(_strokes);
+      localStorage.setItem(_historyKey, data);
+      // Sync WebSocket
+      const el = document.getElementById('BlocNote');
+      if(el && el.value !== data){
+        el.value = data;
+        el.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+    }catch(e){}
+  }
+
+  function bnLoad(){
+    _historyKey = 'bnCanvas_' + (currentTabId||'default');
+    try{
+      const raw = localStorage.getItem(_historyKey);
+      const elRaw = document.getElementById('BlocNote')?.value || '';
+      const source = raw || elRaw;
+      if(source) _strokes = JSON.parse(source);
+      else        _strokes = [];
+    }catch(e){ _strokes=[]; }
+    setTimeout(bnRedraw, 50);
+  }
+
+  window.bnSetTool = function(tool){
+    _tool = tool;
+    document.getElementById('bnPen')?.classList.toggle('is-link',   tool==='pen');
+    document.getElementById('bnPen')?.classList.toggle('is-light',  tool!=='pen');
+    document.getElementById('bnEraserStroke')?.classList.toggle('is-warning', tool==='eraser-stroke');
+    document.getElementById('bnEraserStroke')?.classList.toggle('is-light',   tool!=='eraser-stroke');
+  };
+
+  window.bnReloadFromRemote = function(raw){
+    try{
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if(!Array.isArray(parsed)) return;
+      _strokes = parsed;
+      if(_historyKey) localStorage.setItem(_historyKey, JSON.stringify(_strokes));
+      bnRedraw();
+    }catch(e){}
+  };
+  window.bnSwitchMode = function(mode){
+    const drawDiv = document.getElementById('bnDrawMode');
+    const textDiv = document.getElementById('bnTextMode');
+    const drawBtn = document.getElementById('bnModeDrawBtn');
+    const textBtn = document.getElementById('bnModeTextBtn');
+    if(!drawDiv || !textDiv) return;
+    const isDraw = mode === 'draw';
+    drawDiv.style.display = isDraw ? '' : 'none';
+    textDiv.style.display = isDraw ? 'none' : '';
+    const drawTools = document.getElementById('bnDrawTools');
+    if(drawTools) drawTools.style.display = isDraw ? 'flex' : 'none';
+    drawBtn.classList.toggle('is-link',  isDraw);
+    drawBtn.classList.toggle('is-light', !isDraw);
+    textBtn.classList.toggle('is-link',  !isDraw);
+    textBtn.classList.toggle('is-light', isDraw);
+    if(isDraw){
+      setTimeout(()=>{
+        const c = document.getElementById('bnCanvas');
+        if(!c) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w   = c.offsetWidth || c.parentElement?.offsetWidth || 300;
+        const h   = Math.round(w * 0.45);
+        // Forcer les dimensions même si inchangées
+        c.width  = Math.round(w * dpr);
+        c.height = Math.round(h * dpr);
+        c.style.width  = w + 'px';
+        c.style.height = h + 'px';
+        const g = c.getContext('2d');
+        if(g) g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        _bnReady = false;
+        bnInit();
+        bnRedraw();
+      }, 80);
+    }
+    try{ localStorage.setItem('bnMode_'+(currentTabId||'default'), mode); }catch(e){}
+  };
+
+  window.bnClear = function(){
+    const m = document.getElementById('bnClearModal');
+    if(m){ m.style.display = 'flex'; }
+  };
+
+  window.bnConfirmClear = function(){
+    document.getElementById('bnClearModal').style.display = 'none';
+    _strokes = [];
+    bnRedraw();
+    bnSave();
+  };
+
+  window.bnUpdateColor = function(){ /* color picker auto */ };
+
+  // Réinitialiser quand on change d'onglet
+  window.bnReloadTab = function(){
+    _bnReady = false;
+    _strokes = [];
+    _current = null;
+    _drawing = false;
+    // Restaurer le mode (dessin ou clavier)
+    const savedMode = localStorage.getItem('bnMode_'+(currentTabId||'default')) || 'text';
+    setTimeout(()=>{ window.bnSwitchMode?.(savedMode); bnInit(); bnLoad(); }, 100);
+  };
+
+  // Init dès que le canvas est visible
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(bnInit, 200);
+  });
+})();
+
+function openClearFieldsModal(){
+  document.getElementById('clearFieldsModal').style.display = 'flex';
+}
+
+function confirmClearFields(){
+  document.getElementById('clearFieldsModal').style.display = 'none';
+
+  // Champs de timing à effacer (pas les infos vol)
+  const timingIds = [
+    'AIBT','AOBT','PremierDebarque','PremierDebarqueL2','DernierDebarque',
+    'ArrPNT','ArrPNC','ArriveeFuel','DepartFuel','ArriveeLiftArr','DepartLiftArr',
+    'ArriveeLift','DepartLift','AvionPremierEmbarque','AvionDernierEmbarque',
+    'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
+    'CommChiffresPorte',
+    'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
+    'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS','PreviSI',
+    'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
+    'FinalTOB','FinalOA','FinalOB','FinalOC','FinalOD',
+    'FinalBAGS','FinalPOIDS','FinalGB','FinalH1','FinalH2','FinalH3','FinalH4','FinalSI',
+    'BlockFuel','TripFuel','TaxiFuel','FuelUplift',
+    'DLcode1','DLcode2','DLcode3','DLduree1','DLduree2','DLduree3',
+    'FaitsSaillants'
+  ];
+
+  timingIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = '';
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+
+  updateAllCalculations();
+
+  // Effacer aussi le bloc note (canvas + clavier)
+  if(typeof window.bnConfirmClear === 'function'){
+    // Effacer canvas sans confirmation
+    try{
+      window.bnConfirmClear._silent = true;
+      const strokes = [];
+      // Accès direct via bnReloadFromRemote avec tableau vide
+      window.bnReloadFromRemote?.(JSON.stringify(strokes));
+      document.getElementById('BlocNote') && (document.getElementById('BlocNote').value = '[]');
+    }catch(e){}
+  }
+  // Effacer le textarea clavier
+  const fsEl = document.getElementById('FaitsSaillants');
+  if(fsEl){ fsEl.value = ''; fsEl.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+
+function openCloseAllModal(){
+  document.getElementById('closeAllModal').style.display = 'flex';
+}
+
 function clearAutoSave() {
-  if (confirm("Tout réinitialiser ?")) {
-    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+  const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
     const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
     const deletePromises = [];
 
@@ -6193,7 +6582,6 @@ function clearAutoSave() {
         location.reload();
       }, 1000);
     });
-  }
 }
 
 function shouldOpenFinalLoad(){
@@ -6409,6 +6797,16 @@ function applyRemotePayload(payload) {
 
   // Convertit les ISO → HH:MM selon le mode de cet appareil
   const converted = inboundPatch(payload);
+
+  // Mise à jour du bloc note si BlocNote reçu
+  if(converted.BlocNote !== undefined){
+    try{
+      const el = document.getElementById('BlocNote');
+      if(el) el.value = converted.BlocNote;
+      // Recharger les strokes dans le canvas
+      if(typeof window.bnReloadFromRemote === 'function') window.bnReloadFromRemote(converted.BlocNote);
+    }catch(e){}
+  }
 
   isApplyingRemoteUpdate = true;
   try {
