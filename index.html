@@ -310,16 +310,20 @@ html .field .label {
 
 /* LDM inputs (surclasse le reset global ci-dessus via spécificité) */
 html .ldm-in {
-  height: 38px;
-  padding: 6px 10px;
+  height: 48px;
+  padding: 8px 12px;
   font-weight: 900;
   text-align: center;
   letter-spacing: .02em;
+  font-size: 1.1rem;
+  border-radius: 12px;
 }
 html .ldm-ta {
-  min-height: 90px;
+  min-height: 100px;
   height: auto;
   font-weight: 400;
+  font-size: .95rem;
+  border-radius: 12px;
 }
 
 /* TOB color */
@@ -563,10 +567,38 @@ html.dark .tl-range-label { background: rgba(0,0,0,.45); color: #fff; }
 }
 html.dark .timeline-scroll { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 .timeline-canvas { position: relative; min-width: 600px; width: 100%; }
+.tl-now {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: #f43f5e;
+  box-shadow: 0 0 6px 2px #f43f5e88;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.tl-now::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px;
+  background: #f43f5e;
+  border-radius: 50%;
+}
 
 /* ===== 19. SETTINGS ===== */
-#settingsBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 9000; display: none; }
+/* ===== SETTINGS BACKDROP ===== */
+#settingsBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.40);
+  z-index: 9000;
+  display: none;
+}
 
+/* ===== SETTINGS FAB ===== */
 #settingsFab {
   position: fixed;
   right: 14px;
@@ -581,22 +613,72 @@ html.dark .timeline-scroll { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); 
   font-weight: 900;
   box-shadow: var(--shadow2);
 }
+
+/* ===== SETTINGS MODAL — compact ===== */
 #settingsMenu {
   position: fixed;
-  right: 14px;
   bottom: calc(var(--fixed-footer-h) + 74px);
+  right: 14px;
+  transform: none;
   z-index: 9200;
-  width: min(320px, calc(100vw - 28px));
-  border-radius: 16px;
+  width: min(360px, calc(100vw - 32px));
   background: var(--card);
+  border-radius: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,.08);
-  padding: 12px;
+  border: 1px solid rgba(0,0,0,.10);
   display: none;
+  flex-direction: column;
+  overflow: hidden;
 }
 html.dark #settingsMenu { border-color: rgba(255,255,255,.10); }
-#settingsMenu .settings-title { font-weight: 900; margin-bottom: 10px; }
-#settingsMenu .settings-row   { display: flex; flex-direction: column; gap: 10px; }
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--card);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+html.dark .settings-header { border-bottom-color: rgba(255,255,255,.10); }
+.settings-header strong { font-weight: 900; font-size: 1rem; flex: 1; }
+
+.settings-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card) 92%, #000 8%);
+  border: 1px solid rgba(0,0,0,.06);
+  gap: 12px;
+}
+html.dark .settings-item {
+  background: color-mix(in srgb, var(--card) 88%, #fff 12%);
+  border-color: rgba(255,255,255,.08);
+}
+.settings-item-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-item-label strong {
+  font-weight: 900;
+  font-size: .9rem;
+  color: var(--text);
+}
+.settings-item-label span {
+  font-size: .72rem;
+  color: var(--muted);
+  font-weight: 700;
+}
 
 /* ===== 20. FOOTER ===== */
 .fixed-footer {
@@ -710,61 +792,67 @@ html.dark #ldmModal { border-color: rgba(255,255,255,.10); }
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 14px 16px;
   background: var(--card);
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.10); }
 
 .ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
-.ldm-title strong       { font-weight: 900; font-size: 1.05rem; }
+.ldm-title strong       { font-weight: 900; font-size: 1.1rem; }
 #ldmHint                { font-weight: 900; border-radius: 999px; }
 
+/* Onglets ARR / PREVI / FINAL / FUEL */
 .lm-seg {
   display: inline-flex;
-  gap: 6px;
-  background: #e5e5e5;                                               /* Fallback */
+  gap: 4px;
+  background: #e5e5e5;
   background: color-mix(in srgb, var(--card) 86%, #000 14%);
-  padding: 6px;
+  padding: 5px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
 html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 34px; }
+.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 38px; font-size: .9rem; padding: 0 14px; }
 .lm-seg .button.is-active    { background: #2563eb; color: #fff; border-color: transparent; }
 
-.ldm-body { padding: 12px; overflow: auto; }
+.ldm-body { padding: 14px; overflow: auto; }
 
+/* Carte section */
 .ldm-card {
   border-radius: 16px;
-  background: #f4f4f4;                                               /* Fallback */
+  background: #f4f4f4;
   background: color-mix(in srgb, var(--card) 92%, #000 8%);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 html.dark .ldm-card { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 
+/* Header de section */
 .ldm-card-hdr {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  background: #ebebeb;                                               /* Fallback */
-  background: color-mix(in srgb, var(--card) 88%, #000 12%);
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--card) 85%, #3b82f6 15%);
   border-bottom: 1px solid rgba(0,0,0,.06);
 }
-html.dark .ldm-card-hdr { border-bottom-color: rgba(255,255,255,.08); }
+html.dark .ldm-card-hdr {
+  background: color-mix(in srgb, var(--card) 80%, #60a5fa 20%);
+  border-bottom-color: rgba(255,255,255,.08);
+}
 
-.ldm-card-title { font-weight: 900; letter-spacing: .08em; }
+.ldm-card-title { font-weight: 900; font-size: 1rem; letter-spacing: .06em; }
 .ldm-card-sub   { color: var(--muted); font-weight: 800; font-size: .85rem; margin-left: auto; }
 
+/* Grille champs */
 .ldm-grid {
-  padding: 10px 12px 12px;
+  padding: 14px 16px 16px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
+  gap: 12px 14px;
 }
 .ldm-span-2 { grid-column: span 2; }
 
@@ -772,7 +860,7 @@ html.dark .ldm-card-hdr { border-bottom-color: rgba(255,255,255,.08); }
   grid-column: span 2;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 .ldm-row-4 .field { margin: 0; }
 
@@ -787,6 +875,8 @@ body.modal-open {
 
 /* ===== 25. ERREUR ===== */
 .dl-error { border: 2px solid #ef4444; border-radius: 12px; }
+
+
 
 /* ===== 26. HORAIRES ===== */
 .horaires-grid {
@@ -854,7 +944,7 @@ body.iv-editing .iv-edit-btn { opacity: 1; }
 #timing-grid .hor-col-head { margin-bottom: 6px; }
 
 /* ===== 29. TIME WRAP ===== */
-.time-wrap        { position: relative; display: block; }
+.time-wrap        { position: relative; display: block; border-radius: 4px; overflow: hidden; }
 .tw-hidden-input  { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
 
 .tw-display {
@@ -1355,8 +1445,9 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
                  maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
         </div>
 
+        <!-- Ligne 1 : ADULT / CHILD / INFANT -->
         <div class="ldm-span-2"
-             style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;">
+             style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;">
           <div class="field" style="margin:0;">
             <label class="label">ADULT</label>
             <input class="input ldm-in" id="FinalADULT"
@@ -1375,6 +1466,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
           </div>
+        </div>
+
+        <!-- Ligne 2 : TOB -->
+        <div class="ldm-span-2"
+             style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;">
           <div class="field" style="margin:0;">
             <label class="label">TOB</label>
             <input class="input ldm-in has-text-weight-bold" id="FinalTOB" readonly>
@@ -1408,6 +1504,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
           </div>
         </div>
 
+        <!-- Ligne 3 : BAGS POIDS GB -->
         <div class="ldm-row-4">
           <div class="field">
             <label class="label">BAGS</label>
@@ -1416,14 +1513,12 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
                    maxlength="4"
                    oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded()">
           </div>
-
           <div class="field">
             <label class="label">POIDS</label>
             <input class="input ldm-in" id="FinalPOIDS"
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    readonly>
           </div>
-
           <div class="field">
             <label class="label">GB</label>
             <input class="input ldm-in" id="FinalGB"
@@ -1433,36 +1528,47 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
           </div>
         </div>
 
-        <div class="ldm-row-4">
+        <div class="ldm-row-4" id="hBagsRow">
           <div class="field">
             <label class="label">H1</label>
             <input class="input ldm-in" id="FinalH1"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+            <div id="FinalH1w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H2</label>
             <input class="input ldm-in" id="FinalH2"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+            <div id="FinalH2w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H3</label>
             <input class="input ldm-in" id="FinalH3"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+            <div id="FinalH3w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H4</label>
             <input class="input ldm-in" id="FinalH4"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final')">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+            <div id="FinalH4w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
         </div>
 
         <div class="field ldm-span-2">
           <label class="label">SI</label>
           <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
+        </div>
+
+        <div class="field ldm-span-2">
+          <label class="label">Communication chiffres porte</label>
+          <input class="input ldm-in" id="CommChiffresPorte" type="text" readonly
+                 placeholder="Auto — HH:MM"
+                 title="Mis à jour automatiquement à chaque calcul TOB">
         </div>
 
         <!-- BOUTON IMAGE -->
@@ -1597,6 +1703,79 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       </div>
     </div>
 
+
+    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px; margin-bottom:16px;">
+
+      <div class="field span-3">
+        <label class="label">Date</label>
+        <input class="input" type="date" id="Date">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Parking</label>
+        <div class="select is-fullwidth">
+          <select id="Parking">
+            <option value="">--</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Immat</label>
+        <input class="input uppercase" type="text" id="Immat" maxlength="6">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Type avion</label>
+        <div class="control">
+          <input class="input uppercase" type="text" id="TypeAvion" list="typeAvionList" autocomplete="off" maxlength="6" placeholder="--">
+          <datalist id="typeAvionList">
+            <option>A319</option><option>A320</option><option>A321</option>
+            <option>A20N</option><option>A21N</option><option>A21NY</option>
+            <option>B734</option><option>B737</option><option>B738</option>
+            <option>B38M</option><option>BCS3</option><option>CL35</option>
+          </datalist>
+        </div>
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Cie</label>
+        <div class="control">
+          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
+          <datalist id="cieList">
+            <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
+            <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
+            <option>V7</option>
+          </datalist>
+        </div>
+      </div>
+
+      <div class="field span-3">
+        <label class="label">N°</label>
+        <input class="input uppercase" type="text" id="NVol">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">Callsign</label>
+        <input class="input uppercase" type="text" id="Callsign" maxlength="10">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">From</label>
+        <input class="input uppercase" type="text" id="From" maxlength="3"
+               oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();">
+      </div>
+
+      <div class="field span-3">
+        <label class="label">To</label>
+        <input class="input uppercase" type="text" id="To" maxlength="3">
+      </div>
+
+    </div>
+
     <!-- Horaires ARR / DEP -->
     <div class="horaires-grid mb-3">
 
@@ -1649,7 +1828,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </div>
 
     <!-- Mode édition infos vol (masqué par défaut) -->
-    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px;">
+    <div id="ivEdit" class="grid-auto" style="display:none; margin-top:12px; margin-bottom:16px;">
 
       <div class="field span-3">
         <label class="label">Date</label>
@@ -2197,6 +2376,68 @@ let lastDLChanged = 1;
 function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g,''); }
 
 /* ===== H1–H4 vs BAGS (ARR / EXP / FINAL) ===== */
+function updateFinalTHOB(){
+  const tobEl  = document.getElementById('FinalTOB');
+  const crew   = (document.getElementById('FinalCREW')?.value || '').trim();
+  const thobEl = document.getElementById('FinalTHOB');
+  if(!thobEl) return;
+
+  if(!tobEl?.value || !crew){
+    thobEl.value = '';
+    return;
+  }
+
+  // TOB format: "152 + 2" (adults + infant)
+  const tobParts = tobEl.value.split('+').map(s => parseInt(s.trim(), 10));
+  const tobTotal = tobParts.reduce((s, v) => s + (isNaN(v) ? 0 : v), 0);
+
+  // Crew format: "2/4" → pnc=2, pnt=4
+  const crewParts = crew.split('/').map(s => parseInt(s.trim(), 10));
+  const crewTotal = crewParts.reduce((s, v) => s + (isNaN(v) ? 0 : v), 0);
+
+  thobEl.value = tobTotal + crewTotal;
+  thobEl.dispatchEvent(new Event('change', {bubbles:true}));
+}
+
+function updateHWeights(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const show = (cie === 'FR' || cie === 'RK');
+  ['FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id => {
+    const inp = document.getElementById(id);
+    const lbl = document.getElementById(id + 'w');
+    if(!inp) return;
+
+    // Poids (FR/RK uniquement)
+    if(lbl){
+      lbl.style.display = show ? '' : 'none';
+      if(show){
+        const bags = parseInt(inp.value, 10);
+        lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
+      }
+    }
+
+    // Rouge si valeur > max du placeholder (ex: "5 pcs" → max 5)
+    const phMatch = (inp.placeholder || '').match(/^(\d+)/);
+    if(phMatch){
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(inp.value, 10);
+      if(!isNaN(val) && val > max) inp.classList.add('is-danger');
+      else if(inp !== document.activeElement) inp.classList.remove('is-danger');
+    } else {
+      if(inp !== document.activeElement) inp.classList.remove('is-danger');
+    }
+  });
+}
+
+function updateCrewThobVisibility(){
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const show = (cie === 'FR' || cie === 'RK');
+  const crew = document.getElementById('crewField');
+  const thob = document.getElementById('thobField');
+  if(crew) crew.style.display = show ? '' : 'none';
+  if(thob) thob.style.display = show ? '' : 'none';
+}
+
 function updateHBagsValidity(mode){
   if(mode !== 'final') return;
 
@@ -2213,6 +2454,21 @@ function updateHBagsValidity(mode){
   });
 
   bagsEl.classList.toggle('is-invalid', bags > 0 && sum !== bags);
+
+  // Rouge si zone dépasse la valeur max du placeholder
+  ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const phMatch = (el.placeholder || '').match(/^(\d+)/);
+    if(phMatch){
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(el.value, 10);
+      if(!isNaN(val) && val > max) el.classList.add('is-danger');
+      else if(el !== document.activeElement) el.classList.remove('is-danger');
+    } else {
+      if(el !== document.activeElement) el.classList.remove('is-danger');
+    }
+  });
 }
 
 function syncAdultGenderLocks(){
@@ -2869,6 +3125,26 @@ function openLDM(mode=null){
   if(b) b.style.display = '';
   if(m) m.style.display = 'flex';
 
+  updateHWeights(); // poids soutes FR/RK
+  updateCrewThobVisibility(); // CREW/THOB FR/RK
+
+  // Validation max plateau au blur (rouge persistant)
+  const zoneIds = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
+  zoneIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el._blurValidated) return;
+    el._blurValidated = true;
+    el.addEventListener('blur', () => {
+      setTimeout(() => {
+        const phMatch = (el.placeholder || '').match(/^(\d+)/);
+        if(!phMatch){ el.classList.remove('is-danger'); return; }
+        const max = parseInt(phMatch[1], 10);
+        const val = parseInt(el.value, 10);
+        el.classList.toggle('is-danger', !isNaN(val) && val > max);
+      }, 50);
+    });
+  });
+
   if(mode === null){
     if(shouldOpenFinalLoad()){
       ldmSwitch('final');
@@ -2995,8 +3271,6 @@ function updateFinalTOB(){
   const tobEl = document.getElementById('FinalTOB');
   if(!tobEl) return;
 
-  const siEl = document.getElementById('FinalSI');
-
   if(main == null){
     tobEl.value = '';
     tobEl.classList.remove('is-invalid','is-valid');
@@ -3006,6 +3280,7 @@ function updateFinalTOB(){
 
   const newTOB = `${main} + ${infant}`;
   tobEl.value = newTOB;
+  updateFinalTHOB();
 
   // ✅ Ajout ligne dans SI FINAL
   if(newTOB !== _finalTOBLastValue){
@@ -3015,15 +3290,10 @@ function updateFinalTOB(){
     const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
     const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
 
-    if(siEl){
-      const prefix = 'Communication chiffres porte : ';
-      const line = `${prefix}${hh}:${mm}`;
-
-      const lines = (siEl.value || '').split('\n').map(s=>s.trim()).filter(Boolean);
-      const kept  = lines.filter(l => !l.startsWith(prefix));
-      kept.push(line);
-
-      siEl.value = kept.join('\n');
+    const commEl = document.getElementById('CommChiffresPorte');
+    if(commEl){
+      commEl.value = `${hh}:${mm}`;
+      commEl.dispatchEvent(new Event('change', {bubbles:true}));
     }
   }
 
@@ -3221,8 +3491,8 @@ function initForm(){
   updateFinalLoadLayout();
   updateFinalPlaceholdersFRRK();
   updateLidGuideVisibility();
-
-  // ✅ forcer MAJ sur DL codes
+  updateHWeights();
+  updateCrewThobVisibility();
   ['DLcode1','DLcode2','DLcode3'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -3806,6 +4076,46 @@ function updateAllCalculations() {
   updateHeaderOffset();
 
   updateInfoStrip();
+  updateDelayBands();
+}
+
+/* Bandeaux de retard sur AIBT et AOBT */
+function updateDelayBands(){
+  const pairs = [
+    { actual: 'AIBT', planned: 'SIBT', wrap: 'tw-disp-AIBT' },
+    { actual: 'AOBT', planned: 'SOBT', wrap: 'tw-disp-AOBT' }
+  ];
+
+  pairs.forEach(({ actual, planned, wrap }) => {
+    const disp = document.getElementById(wrap);
+    if(!disp) return;
+    const timeWrap = disp.closest('.time-wrap');
+    if(!timeWrap) return;
+
+    disp.style.boxShadow = '';
+
+    const aVal = document.getElementById(actual)?.value || '';
+    const pVal = document.getElementById(planned)?.value || '';
+
+    if(!aVal || !pVal) return;
+
+    const toMins = hhmm => {
+      const [h, m] = hhmm.split(':').map(Number);
+      return isNaN(h) ? null : h * 60 + m;
+    };
+
+    let diff = (toMins(aVal) ?? 0) - (toMins(pVal) ?? 0);
+    if(diff > 720)  diff -= 1440;
+    if(diff < -720) diff += 1440;
+
+    let color;
+    if     (diff <= -6)  color = '#3b82f6';
+    else if(diff <=  0)  color = '#16a34a';
+    else if(diff <  15)  color = '#f97316';
+    else                 color = '#ef4444';
+
+    disp.style.boxShadow = `inset 5px 0 0 ${color}, inset -5px 0 0 ${color}`;
+  });
 }
 
 /* TIMERS HLE/H-15 */
@@ -4636,6 +4946,71 @@ function renderTimeline(){
 
   const lbl = document.getElementById('timelineZoomLabel');
   if(lbl) lbl.textContent = `${Math.round(timelineZoom*100)}%`;
+
+  // Barre "now" : visible seulement si AIBT rempli et AOBT vide ou non encore atteint
+  renderTimelineNow();
+}
+
+let _tlNowInterval = null;
+
+function renderTimelineNow(){
+  const canvas = document.getElementById('timelineCanvas');
+  if(!canvas) return;
+
+  // Supprimer ancienne barre
+  canvas.querySelectorAll('.tl-now').forEach(el => el.remove());
+
+  const aibt = document.getElementById('AIBT')?.value || '';
+  if(!aibt) return;
+
+  const aibtMins = aibt.split(':').map(Number);
+  if(aibtMins.length < 2 || isNaN(aibtMins[0])) return;
+  const aibtTotal = aibtMins[0]*60 + aibtMins[1];
+
+  const aobt = document.getElementById('AOBT')?.value || '';
+  if(aobt){
+    const aobtMins = aobt.split(':').map(Number);
+    if(!isNaN(aobtMins[0]) && (aobtMins[0]*60+aobtMins[1]) <= (()=>{ const n=new Date(); return (isUTC?n.getUTCHours():n.getHours())*60+(isUTC?n.getUTCMinutes():n.getMinutes()); })()) return;
+  }
+
+  const range = window._timelineCurrentRange;
+  if(!range) return;
+  const { min, max } = range;
+  const total = Math.max(1, max - min);
+
+  function drawNow(){
+    canvas.querySelectorAll('.tl-now').forEach(el => el.remove());
+    const now = new Date();
+    const nowMins = (isUTC ? now.getUTCHours() : now.getHours())*60 + (isUTC ? now.getUTCMinutes() : now.getMinutes());
+    if(nowMins < aibtTotal) return; // avant AIBT
+    if(nowMins < min || nowMins > max) return;
+    const leftPct = 6 + ((nowMins - min)/total)*88;
+    const bar = document.createElement('div');
+    bar.className = 'tl-now';
+    bar.style.left = `${leftPct}%`;
+    canvas.appendChild(bar);
+  }
+
+  drawNow();
+
+  // Interval 1s — relancé proprement
+  if(_tlNowInterval) clearInterval(_tlNowInterval);
+  _tlNowInterval = setInterval(()=>{
+    const c = document.getElementById('timelineCanvas');
+    if(!c){ clearInterval(_tlNowInterval); _tlNowInterval=null; return; }
+    // Re-vérifier AOBT
+    const a = document.getElementById('AOBT')?.value || '';
+    if(a){
+      const am = a.split(':').map(Number);
+      const n = new Date();
+      const nm = (isUTC?n.getUTCHours():n.getHours())*60+(isUTC?n.getUTCMinutes():n.getMinutes());
+      if(!isNaN(am[0]) && (am[0]*60+am[1]) <= nm){
+        c.querySelectorAll('.tl-now').forEach(el=>el.remove());
+        clearInterval(_tlNowInterval); _tlNowInterval=null; return;
+      }
+    }
+    drawNow();
+  }, 1000);
 }
   
 function setVal(id, v){
@@ -5105,8 +5480,9 @@ function renderAKList(pairs){
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
       + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
       + '</div>'
-      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Std '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
-      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+(status?' · '+escapeHtml(status):'')+'</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Pkg '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+'</div>'
+      + (status ? '<div style="color:var(--muted);font-size:.72rem;font-weight:800;margin-top:2px;">'+escapeHtml(status)+'</div>' : '')
       + '</div>';
   }
 
@@ -5888,20 +6264,38 @@ function toggleDepExtra(panel){
 </button>
 
 <div id="settingsMenu" role="dialog" aria-modal="true">
-  
-  <div class="settings-row">
-    <label class="toggle" style="justify-content:space-between;">
-      <span id="darkLabel">Clair</span>
-      <input id="darkToggle" type="checkbox" onchange="setDarkMode(this.checked)">
-      <span class="track"><span class="thumb"></span></span>
-    </label>
 
-    <label class="toggle" style="justify-content:space-between;">
-      <span id="tzLabel">Local</span>
-      <input id="utcToggle" type="checkbox" onchange="setTimeModeUTC(this.checked)">
-      <span class="track"><span class="thumb"></span></span>
-    </label>
-   
+  <div class="settings-header">
+    <strong>Paramètres</strong>
+    <button class="button is-small is-light" type="button" onclick="closeSettingsMenu()">Fermer</button>
+  </div>
+
+  <div class="settings-body">
+
+    <!-- Thème -->
+    <div class="settings-item">
+      <div class="settings-item-label">
+        <strong id="darkLabel">Clair</strong>
+        <span>Apparence de l'interface</span>
+      </div>
+      <label class="toggle">
+        <input id="darkToggle" type="checkbox" onchange="setDarkMode(this.checked)">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </div>
+
+    <!-- Fuseau horaire -->
+    <div class="settings-item">
+      <div class="settings-item-label">
+        <strong id="tzLabel">Local</strong>
+        <span>Mode d'affichage des horaires</span>
+      </div>
+      <label class="toggle">
+        <input id="utcToggle" type="checkbox" onchange="setTimeModeUTC(this.checked)">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </div>
+
   </div>
 </div>
 
@@ -6121,6 +6515,9 @@ function collectFlightState() {
     "FinalH3",
     "FinalH4",
     "FinalSI",
+    "CommChiffresPorte",
+    "FinalCREW",
+    "FinalTHOB",
 
     "BlockFuel",
     "TaxiFuel",
@@ -6433,7 +6830,10 @@ function setupRealtimeSync() {
     "BlockFuel",
     "TaxiFuel",
     "TripFuel",
-    "FuelUplift"
+    "FuelUplift",
+    "CommChiffresPorte",
+    "FinalCREW",
+    "FinalTHOB"
   ]);
 
   const pushIfSyncField = (event) => {
