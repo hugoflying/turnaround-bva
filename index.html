@@ -824,29 +824,31 @@ html.dark #ldmModal { border-color: rgba(255,255,255,.10); }
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
   background: var(--card);
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.10); }
 
-.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
+.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .ldm-title strong       { font-weight: 900; font-size: 1.1rem; }
 #ldmHint                { font-weight: 900; border-radius: 999px; }
 
 /* Onglets ARR / PREVI / FINAL / FUEL */
 .lm-seg {
   display: inline-flex;
-  gap: 4px;
+  flex-shrink: 0;
+  gap: 3px;
   background: #e5e5e5;
   background: color-mix(in srgb, var(--card) 86%, #000 14%);
-  padding: 5px;
+  padding: 4px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
 html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 38px; font-size: .9rem; padding: 0 14px; }
+.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 34px; font-size: .82rem; padding: 0 10px; }
 .lm-seg .button.is-active    { background: #2563eb; color: #fff; border-color: transparent; }
 
 .ldm-body { padding: 14px; overflow: auto; }
@@ -886,6 +888,7 @@ html.dark .ldm-card-hdr {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 14px;
 }
+.ldm-grid .field { margin: 0; }
 .ldm-span-2 { grid-column: span 2; }
 
 .ldm-row-4 {
@@ -1247,8 +1250,14 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   /* LDM */
   #ldmModal  { inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
   .ldm-row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #hBagsRow       { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  #bagsPoidsBgRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #ldmFinal .ldm-grid { row-gap: 6px; }
+  #ldmFinal .ldm-row-4 { row-gap: 6px; }
   html .ldm-in { height: 36px; padding: 6px 8px; }
   html .ldm-ta { min-height: 86px; }
+  .ldm-header  { padding: 8px 10px; gap: 6px; }
+  .lm-seg .button { height: 30px; font-size: .74rem; padding: 0 8px; }
 
   /* AK list */
   .ak-half        { padding: 7px; }
@@ -1547,7 +1556,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
         </div>
 
         <!-- Ligne 3 : BAGS POIDS GB -->
-        <div class="ldm-row-4">
+        <div class="ldm-row-4" id="bagsPoidsBgRow" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
           <div class="field">
             <label class="label">BAGS</label>
             <input class="input ldm-in" id="FinalBAGS"
@@ -2470,24 +2479,13 @@ function updateHWeights(){
     const lbl = document.getElementById(id + 'w');
     if(!inp) return;
 
-    // Poids (FR/RK uniquement)
+    // poids (FR/RK uniquement)
     if(lbl){
       lbl.style.display = show ? '' : 'none';
       if(show){
         const bags = parseInt(inp.value, 10);
         lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
       }
-    }
-
-    // Rouge si valeur > max du placeholder (ex: "5 pcs" → max 5)
-    const phMatch = (inp.placeholder || '').match(/^(\d+)/);
-    if(phMatch){
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(inp.value, 10);
-      if(!isNaN(val) && val > max) inp.classList.add('is-danger');
-      else if(inp !== document.activeElement) inp.classList.remove('is-danger');
-    } else {
-      if(inp !== document.activeElement) inp.classList.remove('is-danger');
     }
   });
 }
@@ -2517,21 +2515,6 @@ function updateHBagsValidity(mode){
   });
 
   bagsEl.classList.toggle('is-invalid', bags > 0 && sum !== bags);
-
-  // Rouge si zone dépasse la valeur max du placeholder
-  ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-    const phMatch = (el.placeholder || '').match(/^(\d+)/);
-    if(phMatch){
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(el.value, 10);
-      if(!isNaN(val) && val > max) el.classList.add('is-danger');
-      else if(el !== document.activeElement) el.classList.remove('is-danger');
-    } else {
-      if(el !== document.activeElement) el.classList.remove('is-danger');
-    }
-  });
 }
 
 function syncAdultGenderLocks(){
@@ -2763,6 +2746,12 @@ function updateFinalLoadLayout(){
     if(cache.paxGrid) putBack(cache.paxGrid);
 
     if(paxGridOrig) paxGridOrig.style.display = '';
+
+    // Remettre les conteneurs statiques visibles
+    const bpb = document.getElementById('bagsPoidsBgRow');
+    if(bpb) bpb.style.display = '';
+    const hbr = document.getElementById('hBagsRow');
+    if(hbr) hbr.style.display = '';
   };
 
   const makeRow4 = (className)=>{
@@ -2772,6 +2761,7 @@ function updateFinalLoadLayout(){
     d.style.display = 'grid';
     d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
     d.style.gap = '12px';
+    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
     return d;
   };
 
@@ -2782,6 +2772,7 @@ function updateFinalLoadLayout(){
     d.style.display = 'grid';
     d.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
     d.style.gap = '12px';
+    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
     return d;
   };
 
@@ -2840,6 +2831,10 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(zonesRow, bagsRow);
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
+
+      // Masquer les conteneurs statiques vidés
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
     }
 
   }else{
@@ -2873,6 +2868,12 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(paxLine, tobLine);
 
       if(paxGridOrig) paxGridOrig.style.display = 'none';
+
+      // Masquer bagsPoidsBgRow vidé, repositionner hBagsRow juste après bagsLine
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
+      const hbr = document.getElementById('hBagsRow');
+      if(hbr) bagsLine.after(hbr);
     }
   }
 
@@ -3191,20 +3192,19 @@ function openLDM(mode=null){
   updateHWeights(); // poids soutes FR/RK
   updateCrewThobVisibility(); // CREW/THOB FR/RK
 
-  // Validation max plateau au blur (rouge persistant)
+  // Validation max plateau — rouge persistant sur input, jamais retiré ailleurs
   const zoneIds = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
   zoneIds.forEach(id => {
     const el = document.getElementById(id);
-    if(!el || el._blurValidated) return;
-    el._blurValidated = true;
-    el.addEventListener('blur', () => {
-      setTimeout(() => {
-        const phMatch = (el.placeholder || '').match(/^(\d+)/);
-        if(!phMatch){ el.classList.remove('is-danger'); return; }
-        const max = parseInt(phMatch[1], 10);
-        const val = parseInt(el.value, 10);
-        el.classList.toggle('is-danger', !isNaN(val) && val > max);
-      }, 50);
+    if(!el || el._dangerValidated) return;
+    el._dangerValidated = true;
+    el.addEventListener('input', () => {
+      const phMatch = (el.placeholder || '').match(/^(\d+)/);
+      if(!phMatch) return;
+      const max = parseInt(phMatch[1], 10);
+      const val = parseInt(el.value, 10);
+      if(!isNaN(val) && val > max) el.classList.add('is-danger');
+      else el.classList.remove('is-danger');
     });
   });
 
@@ -7235,14 +7235,30 @@ async function footerRefreshAK(){
     const inp  = document.getElementById(id);
     const disp = document.getElementById('tw-disp-'+id);
     if(!wrap||!inp||!disp) return;
-    if(wrap.querySelector('.tw-editor')) return;
+    if(document.querySelector('.tw-editor[data-for="'+id+'"]')) return;
+
+    const rect = wrap.getBoundingClientRect();
 
     const ed = document.createElement('input');
     ed.type='text'; ed.className='input tw-editor';
+    ed.setAttribute('data-for', id);
     ed.value=inp.value||''; ed.placeholder='HH:MM';
     ed.maxLength=5; ed.inputMode='numeric';
-    disp.style.display='none';
-    wrap.appendChild(ed);
+    ed.setAttribute('enterkeyhint','done');
+
+    // Position fixe sur le wrap, en dehors du time-wrap pour éviter overflow:hidden
+    ed.style.cssText = `
+      position:fixed;
+      top:${rect.top}px; left:${rect.left}px;
+      width:${rect.width}px; height:${rect.height}px;
+      z-index:9999;
+      text-align:center; font-weight:900; font-size:1rem;
+      border-radius:var(--radius);
+      background:var(--card); color:var(--text);
+      border:2px solid #3273dc; padding:0; box-sizing:border-box;
+    `;
+    disp.style.visibility='hidden';
+    document.body.appendChild(ed);
     setTimeout(()=>{ ed.focus(); ed.select(); },30);
 
     let done=false;
@@ -7257,12 +7273,12 @@ async function footerRefreshAK(){
           twSync(id); updateAllCalculations();
         }
       }
-      ed.remove(); disp.style.display='';
+      ed.remove(); disp.style.visibility='';
     }
     ed.addEventListener('blur',commit);
     ed.addEventListener('keydown',e=>{
-      if(e.key==='Enter'){e.preventDefault();ed.blur();}
-      if(e.key==='Escape'){done=true;ed.remove();disp.style.display='';}
+      if(e.key==='Enter'){e.preventDefault();commit();}
+      if(e.key==='Escape'){done=true;ed.remove();disp.style.visibility='';}
     });
   }
 
