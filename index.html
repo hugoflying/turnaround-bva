@@ -2584,7 +2584,22 @@ function updateArrExpWeightIfNeeded(){
   }
 }
 
-/* ===== Placeholders LOAD FINAL (FR/RK uniquement) ===== */
+/* ===== Validation rouge persistante — max plateau ===== */
+function revalidateDangerFields(){
+  const ids = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const phMatch = (el.placeholder || '').match(/^(\d+)/);
+    if(!phMatch) return;
+    const max = parseInt(phMatch[1], 10);
+    const val = parseInt(el.value, 10);
+    if(!isNaN(val) && val > max) el.classList.add('is-danger');
+    // On ne retire jamais ici — seulement via oninput
+  });
+}
+
+
 function updateFinalPlaceholdersFRRK(){
   const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
@@ -2879,6 +2894,7 @@ function updateFinalLoadLayout(){
 
   // ✅ placeholders après labels/layout (pour coller au type avion)
   updateFinalPlaceholdersFRRK();
+  revalidateDangerFields();
 }
 
 // ===== LOAD PREVI (layout switch) =====
@@ -3198,14 +3214,16 @@ function openLDM(mode=null){
     const el = document.getElementById(id);
     if(!el || el._dangerValidated) return;
     el._dangerValidated = true;
-    el.addEventListener('input', () => {
+    const validate = () => {
       const phMatch = (el.placeholder || '').match(/^(\d+)/);
       if(!phMatch) return;
       const max = parseInt(phMatch[1], 10);
       const val = parseInt(el.value, 10);
       if(!isNaN(val) && val > max) el.classList.add('is-danger');
       else el.classList.remove('is-danger');
-    });
+    };
+    el.addEventListener('input', validate);
+    el.addEventListener('change', validate);
   });
 
   if(mode === null){
