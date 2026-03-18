@@ -3998,6 +3998,8 @@ function generateTimingFields(){
     'is-bordeaux': '#7f1d1d',
     'is-purple':   '#7c3aed',
     'is-jaune':    '#f5c400',
+    'is-red':      '#ef4444',
+    'is-pink':     '#ec4899',
   };
   const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
@@ -4044,14 +4046,14 @@ function generateTimingFields(){
         <div class="grid-auto">
           <div class="span-4">
             <div class="field">
-              <label class="label"><span class="tw-dot" style="background:#636363;"></span>Nombre de bags</label>
+              <label class="label"><span class="tw-dot" style="background:#ec4899;"></span>Nombre de bags</label>
               <div class="control">
                 <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
               </div>
             </div>
           </div>
-          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-dark')}</div>
-          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-dark')}</div>
+          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-pink')}</div>
+          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-pink')}</div>
         </div>
       </div>
     </div>
@@ -4060,8 +4062,8 @@ function generateTimingFields(){
     <div id="panel-inad" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-red')}</div>
+          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-red')}</div>
         </div>
       </div>
     </div>
@@ -4070,8 +4072,9 @@ function generateTimingFields(){
     <div id="panel-gpu" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('BranchementGPU','Arrivée Nayak',false,false,'is-jaune')}</div>
-          <div class="span-6">${fieldHTML('DebranchementGPU','Départ Nayak',false,false,'is-jaune')}</div>
+          <div class="span-4">${fieldHTML('AppelNayak','Appel Nayak',false,false,'is-jaune')}</div>
+          <div class="span-4">${fieldHTML('BranchementGPU','Arrivée Nayak',false,false,'is-jaune')}</div>
+          <div class="span-4">${fieldHTML('DebranchementGPU','Départ Nayak',false,false,'is-jaune')}</div>
         </div>
       </div>
     </div>
@@ -6828,7 +6831,7 @@ function collectFlightState() {
     "RemiseLID",
     "FermeturePorteAvion",
     "ConnexionAgentCasque",
-    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","AppelNayak","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
@@ -7139,7 +7142,7 @@ function setupRealtimeSync() {
     "RemiseLID",
     "FermeturePorteAvion",
     "ConnexionAgentCasque",
-    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","BranchementGPU","DebranchementGPU",
+    "RechercheBagNombre","RechercheBagDebut","RechercheBagFin","AnnonceINAD","AppelNayak","BranchementGPU","DebranchementGPU",
 
     "ArrPAX_MAIN",
     "ArrPAX_INF",
