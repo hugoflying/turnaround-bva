@@ -2004,14 +2004,14 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       </div>
 
       <!-- Mode dessin -->
-      <div id="bnDrawMode" style="overflow:hidden; width:100%;">
+      <div id="bnDrawMode" style="display:none; overflow:hidden; width:100%;">
         <canvas id="bnCanvas"
                 style="width:100%; max-width:100%; border-radius:12px; border:1.5px solid var(--field-border); background:#fff; touch-action:none; cursor:crosshair; display:block; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;">
         </canvas>
       </div>
 
       <!-- Mode clavier -->
-      <div id="bnTextMode" style="display:none;">
+      <div id="bnTextMode" style="">
         <textarea id="FaitsSaillants" class="textarea" rows="6"
                   placeholder="Notes libres…"
                   style="border-radius:12px; resize:vertical;"
