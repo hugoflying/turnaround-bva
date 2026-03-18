@@ -1984,11 +1984,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
       <!-- Toolbar : tout sur une ligne -->
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-        <button id="bnModeDrawBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('draw')" title="Dessin">✏️ Stylet</button>
-        <button id="bnModeTextBtn" class="button is-small is-light" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
+        <button id="bnPen" class="button is-small is-light" type="button" onclick="bnSwitchMode('draw'); bnSetTool('pen');" title="Dessin">✏️ Stylet</button>
+        <button id="bnModeTextBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
 
         <!-- Outils dessin (cachés en mode clavier) -->
-        <div id="bnDrawTools" style="display:flex; align-items:center; gap:6px; flex:1;">
+        <div id="bnDrawTools" style="display:none; align-items:center; gap:6px; flex:1;">
           <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme</button>
           <input id="bnSize" type="range" min="1" max="12" value="3"
                  style="width:70px; cursor:pointer;"
@@ -2585,18 +2585,30 @@ function updateArrExpWeightIfNeeded(){
 }
 
 /* ===== Validation rouge persistante — max plateau ===== */
+const _dangerSet = new Set(); // IDs des champs en dépassement
+
+function _applyDanger(id){
+  const el = document.getElementById(id);
+  if(el) el.classList.add('is-danger');
+}
+function _clearDanger(id){
+  _dangerSet.delete(id);
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('is-danger');
+}
 function revalidateDangerFields(){
-  const ids = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-    const phMatch = (el.placeholder || '').match(/^(\d+)/);
-    if(!phMatch) return;
-    const max = parseInt(phMatch[1], 10);
-    const val = parseInt(el.value, 10);
-    if(!isNaN(val) && val > max) el.classList.add('is-danger');
-    // On ne retire jamais ici — seulement via oninput
-  });
+  // Réapplique is-danger sur tous les champs mémorisés comme en dépassement
+  _dangerSet.forEach(id => _applyDanger(id));
+}
+function checkDangerField(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const phMatch = (el.placeholder || '').match(/^(\d+)/);
+  if(!phMatch){ _dangerSet.delete(id); return; }
+  const max = parseInt(phMatch[1], 10);
+  const val = parseInt(el.value, 10);
+  if(!isNaN(val) && val > max){ _dangerSet.add(id); el.classList.add('is-danger'); }
+  else { _dangerSet.delete(id); el.classList.remove('is-danger'); }
 }
 
 
@@ -3208,22 +3220,14 @@ function openLDM(mode=null){
   updateHWeights(); // poids soutes FR/RK
   updateCrewThobVisibility(); // CREW/THOB FR/RK
 
-  // Validation max plateau — rouge persistant sur input, jamais retiré ailleurs
+  // Validation max plateau — rouge persistant via _dangerSet
   const zoneIds = ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'];
   zoneIds.forEach(id => {
     const el = document.getElementById(id);
     if(!el || el._dangerValidated) return;
     el._dangerValidated = true;
-    const validate = () => {
-      const phMatch = (el.placeholder || '').match(/^(\d+)/);
-      if(!phMatch) return;
-      const max = parseInt(phMatch[1], 10);
-      const val = parseInt(el.value, 10);
-      if(!isNaN(val) && val > max) el.classList.add('is-danger');
-      else el.classList.remove('is-danger');
-    };
-    el.addEventListener('input', validate);
-    el.addEventListener('change', validate);
+    el.addEventListener('input',  () => checkDangerField(id));
+    el.addEventListener('change', () => checkDangerField(id));
   });
 
   if(mode === null){
@@ -4031,7 +4035,7 @@ function generateTimingFields(){
     <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
       <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
       <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
-      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">GPU</button>
+      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">Nayak</button>
     </div>
 
     <!-- Panneau Recherche bag -->
@@ -4066,8 +4070,8 @@ function generateTimingFields(){
     <div id="panel-gpu" class="card mb-3" style="display:none;">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('BranchementGPU','Branchement GPU',false,false,'is-jaune')}</div>
-          <div class="span-6">${fieldHTML('DebranchementGPU','Débranchement GPU',false,false,'is-jaune')}</div>
+          <div class="span-6">${fieldHTML('BranchementGPU','Arrivée Nayak',false,false,'is-jaune')}</div>
+          <div class="span-6">${fieldHTML('DebranchementGPU','Départ Nayak',false,false,'is-jaune')}</div>
         </div>
       </div>
     </div>
@@ -4156,6 +4160,9 @@ function updateAllCalculations() {
 
   updateInfoStrip();
   updateDelayBands();
+
+  // Réapplique le rouge sur les champs en dépassement
+  setTimeout(revalidateDangerFields, 0);
 }
 
 /* Bandeaux de retard sur AIBT et AOBT */
@@ -5836,6 +5843,8 @@ function applyAKFlight(f, flow, opts = {}){
       const flowSel = document.getElementById('akFlow');
       if(flowSel) flowSel.value = 'DEP';
       showPopup("Vol importé", "#16a34a", 1600);
+      // Basculer sur l'onglet DÉPART
+      if(typeof switchTimingPanel === 'function') switchTimingPanel('dep');
     }
   }
 
@@ -6359,7 +6368,7 @@ function toggleSettings(){
   window.bnSwitchMode = function(mode){
     const drawDiv = document.getElementById('bnDrawMode');
     const textDiv = document.getElementById('bnTextMode');
-    const drawBtn = document.getElementById('bnModeDrawBtn');
+    const drawBtn = document.getElementById('bnPen');
     const textBtn = document.getElementById('bnModeTextBtn');
     if(!drawDiv || !textDiv) return;
     const isDraw = mode === 'draw';
