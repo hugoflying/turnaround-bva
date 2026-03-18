@@ -3254,6 +3254,10 @@ function closeLDM(){
 
   if(m) m.style.display = 'none';
   if(b) b.style.display = 'none';
+
+  // Sync batch : envoyer tout le state LOAD en une seule requête WS
+  saveCurrentTabData();
+  setTimeout(sendFullFlightState, 100);
 }
 
 function ldmSwitch(mode){
@@ -6222,7 +6226,7 @@ function toggleSettings(){
         c.style.width  = cw + 'px';
         c.style.height = h  + 'px';
         const g = ctx();
-        if(g) g.scale(dpr, dpr);
+        if(g) g.setTransform(dpr, 0, 0, dpr, 0, 0);
         bnRedraw();
       }
     }
@@ -7192,11 +7196,25 @@ function setupRealtimeSync() {
     "FinalTHOB"
   ]);
 
-  const pushIfSyncField = (event) => {
+  // Champs LOAD — synchronisés en batch à la fermeture du modal, pas à chaque frappe
+  const ldmFields = new Set([
+    "ArrPAX_MAIN", "ArrPAX_INF", "ArrBAGS", "ArrPOIDS", "ArrSI",
+    "PreviPAX_MAIN", "PreviPAX_INF", "PreviBAGS", "PreviPOIDS",
+    "PreviTOB_FRRK", "PreviMALE", "PreviFEMALE", "PreviCHILD", "PreviINFANT",
+    "PreviTOB", "PreviBAGS_OTHER", "PreviPOIDS_OTHER", "PreviSI",
+    "FinalMALE", "FinalFEMALE", "FinalADULT", "FinalCHILD", "FinalINFANT",
+    "FinalTOB", "FinalOA", "FinalOB", "FinalOC", "FinalOD",
+    "FinalBAGS", "FinalPOIDS", "FinalGB",
+    "FinalH1", "FinalH2", "FinalH3", "FinalH4", "FinalSI",
+    "BlockFuel", "TaxiFuel", "TripFuel", "FuelUplift",
+    "FinalCREW", "FinalTHOB", "CommChiffresPorte"
+  ]);
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
     if (el.readOnly) return;
+    // Champs LOAD → sync batch à la fermeture du modal, pas à chaque frappe
+    if (ldmFields.has(el.id)) return;
 
     // Marque ce champ comme "modifié récemment" — protège contre l'écho distant
     clearTimeout(_recentlyEdited.get(el.id));
