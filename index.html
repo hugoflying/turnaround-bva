@@ -4106,8 +4106,9 @@ function generateTimingFields(){
     `<div id="panel-arr" style="display:none;">${arrNoHeader}</div>` +
     `<div id="panel-dep" style="display:none;">${depNoHeader}</div>`;
 
-  const saved = localStorage.getItem('timingPanel') || 'dep';
-  switchTimingPanel(saved);
+  const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const defaultPanel = (from === 'BVA') ? 'dep' : 'arr';
+  switchTimingPanel(defaultPanel);
 }
 
 function switchTimingPanel(mode){
@@ -5843,8 +5844,11 @@ function applyAKFlight(f, flow, opts = {}){
       const flowSel = document.getElementById('akFlow');
       if(flowSel) flowSel.value = 'DEP';
       showPopup("Vol importé", "#16a34a", 1600);
-      // Basculer sur l'onglet DÉPART
-      if(typeof switchTimingPanel === 'function') switchTimingPanel('dep');
+      // Basculer sur l'onglet DÉPART si FROM=BVA, sinon ARRIVÉE
+      if(typeof switchTimingPanel === 'function'){
+        const fromVal = (document.getElementById('From')?.value || '').toUpperCase().trim();
+        switchTimingPanel(fromVal === 'BVA' ? 'dep' : 'arr');
+      }
     }
   }
 
