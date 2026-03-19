@@ -50,7 +50,7 @@
   --field-placeholder: rgba(107,114,128,.95);
 
   /* Layout régions fixes — --fixed-header-h mis à jour par ResizeObserver */
-  --fixed-header-h: 140px;
+  --fixed-header-h: 180px;
   --fixed-footer-h: 72px;
 
   /* Échelle d'espacement */
@@ -3405,6 +3405,9 @@ function refreshUIForTabs(){
   document.body.classList.toggle('has-tab', hasTab);
   document.body.classList.toggle('no-tab', !hasTab);
 
+  // Mettre à jour le padding immédiatement après affichage du app-wrap
+  requestAnimationFrame(() => updateHeaderOffset());
+
   if(!hasTab){
     currentTabId = null;
     closeAKPicker();
@@ -3838,9 +3841,60 @@ function deleteTab(id){
 
   id = String(id);
 
-  // ✅ Supprimer du dashboard via WebSocket __delete
-  if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-    socket.send(JSON.stringify({ __delete: '1' }));
+  // Supprimer du dashboard via WebSocket __delete — fiable même si socket fermé
+  const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+  const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+  const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
+
+  if(deleteKey){
+    // Annuler tous les timers pour éviter tout envoi post-suppression
+    clearTimeout(saveTimer); saveTimer = null;
+    // Calculer la clé dashboard avant de supprimer le localStorage
+    const deleteDashKey = (() => {
+      try {
+        const fid = String(tabData?.akMeta?.id || '').trim();
+        const lid = String(tabData?.akMeta?.linkedId || '').trim();
+        if(fid && lid) return fid < lid ? fid : lid;
+        return fid || null;
+      } catch(_){ return null; }
+    })();
+    const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
+
+    // Envoyer aussi au DO lié pour éviter re-upsert via FORWARD
+    const linkedDeleteKey = (() => {
+      try {
+        const lid = String(tabData?.akMeta?.linkedId || '').trim();
+        return lid ? `AK_${lid}` : null;
+      } catch(_){ return null; }
+    })();
+
+    if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+      socket.send(deleteMsg);
+      // Couper immédiatement le socket APRÈS le delete pour éviter tout re-upsert
+      setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
+    } else {
+      // Socket fermé ou autre onglet : connexion temporaire
+      try{
+        const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
+        ws.onopen = () => {
+          ws.send(deleteMsg);
+          setTimeout(() => { try{ ws.close(); }catch(_){} }, 300);
+        };
+        ws.onerror = () => {};
+      }catch(_){}
+    }
+
+    // Supprimer aussi le DO lié
+    if(linkedDeleteKey && linkedDeleteKey !== deleteKey){
+      try{
+        const wsLinked = new WebSocket(WS_BASE + encodeURIComponent(linkedDeleteKey));
+        wsLinked.onopen = () => {
+          wsLinked.send(deleteMsg);
+          setTimeout(() => { try{ wsLinked.close(); }catch(_){} }, 300);
+        };
+        wsLinked.onerror = () => {};
+      }catch(_){}
+    }
   }
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -4144,8 +4198,37 @@ function updateLIDVisibility(){
   updateHeaderOffset();
 }
 
-/* CALCULS */
-function updateAllCalculations() {
+/* ===== Auto-switch vers onglet DÉPART après Dernier débarqué ===== */
+let _autoSwitchDepTimer = null;
+
+function checkAutoSwitchToDep(){
+  // Ne switche que si on est actuellement sur l'onglet ARR
+  const liArr = document.getElementById('seg-arr-li');
+  if(!liArr || !liArr.classList.contains('is-active')) return;
+
+  const dernierDeb = (document.getElementById('DernierDebarque')?.value || '').trim();
+  const arriveeift = (document.getElementById('ArriveeLift')?.value   || '').trim();
+  const departLift = (document.getElementById('DepartLift')?.value    || '').trim();
+
+  // Condition de switch : DernierDebarque rempli
+  if(!dernierDeb){ clearTimeout(_autoSwitchDepTimer); _autoSwitchDepTimer = null; return; }
+
+  // Ne switch pas si ArriveeLift rempli mais DepartLift vide
+  if(arriveeift && !departLift){ clearTimeout(_autoSwitchDepTimer); _autoSwitchDepTimer = null; return; }
+
+  // Switch après 3s (debounce)
+  clearTimeout(_autoSwitchDepTimer);
+  _autoSwitchDepTimer = setTimeout(() => {
+    _autoSwitchDepTimer = null;
+    // Re-vérifier les conditions au moment du switch
+    const dd  = (document.getElementById('DernierDebarque')?.value || '').trim();
+    const al  = (document.getElementById('ArriveeLift')?.value     || '').trim();
+    const dl  = (document.getElementById('DepartLift')?.value      || '').trim();
+    if(dd && !(al && !dl)) switchTimingPanel('dep');
+  }, 3000);
+}
+
+
   setTimeout(updateIVBadges, 0);
   updateTimers();
   updateSOBTDefault();
@@ -4168,6 +4251,9 @@ function updateAllCalculations() {
 
   updateInfoStrip();
   updateDelayBands();
+
+  // Auto-switch vers onglet DÉPART si conditions remplies
+  checkAutoSwitchToDep();
 
   // Réapplique le rouge sur les champs en dépassement
   setTimeout(revalidateDangerFields, 0);
@@ -5859,23 +5945,26 @@ function applyAKFlight(f, flow, opts = {}){
     }
   }
 
-  // ✅ Synchro inter-appareils : reconnecter si besoin puis envoyer le state complet
+  // ✅ Synchro inter-appareils : reconnecter puis envoyer dès que le socket est prêt
   setTimeout(() => {
-    try{
-      connectFlightSocket(); // recalcule la clé avec le nouvel akMeta
-    }catch(_){}
-  }, 50);
-  setTimeout(() => {
-    try{
-      if(!isApplyingRemoteUpdate && socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
-        const fullPayload = collectFlightState();
-        if(fullPayload && typeof fullPayload === 'object'){
-          fullPayload['__fromAK'] = '1';
-          socket.send(JSON.stringify(fullPayload));
-        }
+    try{ connectFlightSocket(); }catch(_){}
+    // Envoyer dès que OPEN, avec retry jusqu'à 5s
+    const tryPush = (attempts) => {
+      if(isApplyingRemoteUpdate) return;
+      if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+        try{
+          const fullPayload = collectFlightState();
+          if(fullPayload && typeof fullPayload === 'object'){
+            fullPayload['__fromAK'] = '1';
+            socket.send(JSON.stringify(fullPayload));
+          }
+        }catch(e){ console.warn('AK sync send error:', e); }
+        return;
       }
-    }catch(e2){ console.warn('AK sync send error:', e2); }
-  }, 500);
+      if(attempts > 0) setTimeout(() => tryPush(attempts - 1), 300);
+    };
+    tryPush(10); // jusqu'à 5s de retry
+  }, 50);
 }
 
 function openRZAModal(){
@@ -6510,16 +6599,22 @@ function clearAutoSave() {
         if(!meta?.id) return;
         const key = `AK_${meta.id}`;
 
+        // Calculer la clé dashboard
+        const fid = String(meta.id || '').trim();
+        const lid = String(meta.linkedId || '').trim();
+        const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid;
+        const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
+
         if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
           // Onglet courant : socket déjà ouvert
-          socket.send(JSON.stringify({ __delete: '1' }));
+          socket.send(deleteMsg);
         } else {
           // Autres onglets : ouvrir un socket temporaire
           const p = new Promise(resolve => {
             try{
               const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
               ws.onopen = () => {
-                ws.send(JSON.stringify({ __delete: '1' }));
+                ws.send(deleteMsg);
                 setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
               };
               ws.onerror = () => resolve();
@@ -6960,12 +7055,24 @@ function sendFullFlightState() {
 
   const key = buildFlightKey();
   if (!key) return;
-  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) return;
+
+  // Si socket pas encore prêt, connecter et réessayer
+  if (!socket || socket.readyState !== WebSocket.OPEN || currentSocketKey !== key) {
+    connectFlightSocket();
+    setTimeout(() => {
+      if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey === key){
+        const payload = collectFlightState();
+        const lr = getLinkedRoom();
+        if(lr) payload['__linkedRoom'] = lr;
+        socket.send(JSON.stringify(payload));
+      }
+    }, 1000);
+    return;
+  }
 
   const payload = collectFlightState();
   const lr = getLinkedRoom();
   if(lr) payload['__linkedRoom'] = lr;
-
   socket.send(JSON.stringify(payload));
 }
 
@@ -6998,6 +7105,21 @@ function connectFlightSocket() {
 
   socket.onopen = () => {
     console.log("WebSocket connecté :", key);
+    // Envoyer le state complet seulement si le vol est actif (Cie+NVol+Date présents)
+    try {
+      const cie  = (document.getElementById('Cie')?.value  || '').trim();
+      const nvol = (document.getElementById('NVol')?.value || '').trim();
+      const date = (document.getElementById('Date')?.value || '').trim();
+      if(cie && nvol && date){
+        const fullPayload = collectFlightState();
+        if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
+          socket.send(JSON.stringify(fullPayload));
+          // State complet envoyé — vider pendingPatch pour éviter le double envoi
+          pendingPatch = {};
+          return;
+        }
+      }
+    } catch(_) {}
     flushPendingPatch();
   };
 
@@ -7209,6 +7331,8 @@ function setupRealtimeSync() {
     "BlockFuel", "TaxiFuel", "TripFuel", "FuelUplift",
     "FinalCREW", "FinalTHOB", "CommChiffresPorte"
   ]);
+
+  const pushIfSyncField = (event) => {
     const el = event.target;
     if (!el || !el.id) return;
     if (!syncFields.has(el.id)) return;
@@ -7535,15 +7659,27 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Stratégie : Network-first, fallback cache
+  // Ne pas intercepter les requêtes non-HTTP (chrome-extension, data:, etc.)
+  if (!e.request.url.startsWith('http')) return;
+  // Ne pas intercepter les WebSocket
+  if (e.request.url.startsWith('ws://') || e.request.url.startsWith('wss://')) return;
+
+  // Stratégie : Network-first, fallback cache, fallback réponse vide
   e.respondWith(
     fetch(e.request)
       .then(resp => {
-        const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        // Ne mettre en cache que les réponses valides GET
+        if (resp.ok && e.request.method === 'GET') {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return resp;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request).then(cached =>
+          cached || new Response('', { status: 503, statusText: 'Offline' })
+        )
+      )
   );
 });
 `;
