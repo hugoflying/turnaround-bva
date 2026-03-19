@@ -89,6 +89,8 @@ html, body {
   z-index: 3000;
   background: var(--bg);
   border-bottom: 1px solid rgba(0,0,0,.08);
+  /* iOS Dynamic Island / notch : décale le contenu sous la zone de sécurité */
+  padding-top: env(safe-area-inset-top);
 }
 html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
 
@@ -1568,7 +1570,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
             <label class="label">POIDS</label>
             <input class="input ldm-in" id="FinalPOIDS"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   readonly>
+                   oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; }">
           </div>
           <div class="field">
             <label class="label">GB</label>
@@ -1795,7 +1797,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <div class="field span-3">
         <label class="label">Cie</label>
         <div class="control">
-          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded()">
+          <input class="input uppercase" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="--" oninput="updateFinalWeightIfNeeded(); updateDLCodeInputMode();">
           <datalist id="cieList">
             <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
             <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
@@ -2567,6 +2569,25 @@ function updateFinalWeightIfNeeded(){
     return;
   }
 
+  // ✈️ CAS W4 / W6 / H4 → POIDS libre + GB s'ajoute (GB × 13)
+  if(cie === 'W4' || cie === 'W6' || cie === 'H4'){
+    const gb = parseInt(document.getElementById('FinalGB').value) || 0;
+    poidsField.readOnly = false; // toujours libre
+    if(gb > 0){
+      // Lire la valeur de base saisie manuellement (sans le GB)
+      const base = parseInt(poidsField.dataset.baseWeight || poidsField.value) || 0;
+      poidsField.dataset.baseWeight = base;
+      poidsField.value = base + (gb * 13);
+    } else {
+      // GB vidé : restaurer la valeur de base
+      if(poidsField.dataset.baseWeight !== undefined){
+        poidsField.value = poidsField.dataset.baseWeight;
+        delete poidsField.dataset.baseWeight;
+      }
+    }
+    return;
+  }
+
   // 🛫 AUTRES COMPAGNIES → champ libre
   poidsField.readOnly = false;            // 🔓 déverrouillé
 }
@@ -2617,6 +2638,7 @@ function updateFinalPlaceholdersFRRK(){
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
 
   const isFRRK = (cie === 'FR' || cie === 'RK');
+  const isW4W6 = (cie === 'W4' || cie === 'W6');
 
   const setPH = (id, txt)=>{
     const el = document.getElementById(id);
@@ -2625,40 +2647,99 @@ function updateFinalPlaceholdersFRRK(){
   };
 
   // reset
-  ['FinalOA','FinalOB','FinalOC','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
-  if(!isFRRK) return;
+  ['FinalOA','FinalOB','FinalOC','FinalOD','FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id=>setPH(id,''));
+  if(!isFRRK && !isW4W6) return;
 
-  if(type === 'B38M'){
-    setPH('FinalOA', '32 (1-6)');
-    setPH('FinalOB', '129 (7-29)');
-    setPH('FinalOC', '36 (30-35)');
-    setPH('FinalH1', '5 pcs');
-    setPH('FinalH2', '100 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
+  // ===== FR / RK =====
+  if(isFRRK){
+    if(type === 'B38M'){
+      setPH('FinalOA', '32 (1-6)');
+      setPH('FinalOB', '129 (7-29)');
+      setPH('FinalOC', '36 (30-35)');
+      setPH('FinalH1', '5 pcs');
+      setPH('FinalH2', '100 pcs');
+      setPH('FinalH3', 'Remainder');
+      setPH('FinalH4', 'Over-spill H3');
+      return;
+    }
+    if(type === 'B738'){
+      setPH('FinalOA', '27 (1-5)');
+      setPH('FinalOB', '132 (6-28)');
+      setPH('FinalOC', '30 (29-33)');
+      setPH('FinalH1', '30 pcs');
+      setPH('FinalH2', '160 pcs');
+      setPH('FinalH3', 'Remainder');
+      setPH('FinalH4', 'Over-spill H3');
+      return;
+    }
+    if(type === 'A320'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '60 (21-30)');
+      setPH('FinalH1', '160 pcs');
+      setPH('FinalH2', 'Overflow');
+      setPH('FinalH3', 'Overflow');
+      setPH('FinalH4', 'Not planned');
+      return;
+    }
     return;
   }
 
-  if(type === 'B738'){
-    setPH('FinalOA', '27 (1-5)');
-    setPH('FinalOB', '132 (6-28)');
-    setPH('FinalOC', '30 (29-33)');
-    setPH('FinalH1', '30 pcs');
-    setPH('FinalH2', '160 pcs');
-    setPH('FinalH3', 'Remainder');
-    setPH('FinalH4', 'Over-spill H3');
-    return;
-  }
-
-  if(type === 'A320'){
-    setPH('FinalOA', '60 (1-10)');
-    setPH('FinalOB', '60 (11-20)');
-    setPH('FinalOC', '60 (21-30)');
-    // IDs restent FinalH1..H4 même si labels affichent CP1..CP4
-    setPH('FinalH1', '160 pcs');               // CP1
-    setPH('FinalH2', 'Overflow');    // CP2
-    setPH('FinalH3', 'Overflow');    // CP3
-    setPH('FinalH4', 'Not planned');           // CP4
+  // ===== W4 / W6 =====
+  if(isW4W6){
+    if(type === 'A20N'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '66 (11-21)');
+      setPH('FinalOC', '60 (22-31)');
+      setPH('FinalH1', '3402 kg');   // CP1
+      // CP2 masqué pour A20N
+      setPH('FinalH3', '2426 kg');   // CP3
+      setPH('FinalH4', '2110 kg');   // CP4
+      return;
+    }
+    if(type === 'A320'){
+      setPH('FinalOA', '66 (1-11)');
+      setPH('FinalOB', '60 (12-21)');
+      setPH('FinalOC', '54 (22-30)');
+      setPH('FinalH1', '3402 kg');   // CP1
+      // CP2 masqué pour A320
+      setPH('FinalH3', '2426 kg');   // CP3
+      setPH('FinalH4', '2110 kg');   // CP4
+      return;
+    }
+    if(type === 'A321'){
+      setPH('FinalOA', '54 (1-9)');
+      setPH('FinalOB', '64 (10-20)');
+      setPH('FinalOC', '58 (21-30)');
+      setPH('FinalOD', '54 (31-39)');
+      setPH('FinalH1', '1140 kg');   // CP1
+      setPH('FinalH2', '2160 kg');   // CP2
+      setPH('FinalH3', '3587 kg');   // CP3
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
+    if(type === 'A21NY'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '59 (21-30)');
+      setPH('FinalOD', '60 (31-40)');
+      setPH('FinalH1', '2202 kg');   // CP1
+      setPH('FinalH2', '3468 kg');   // CP2
+      setPH('FinalH3', '1272 kg');   // CP3 — A321 NEO XLR
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
+    if(type === 'A21N'){
+      setPH('FinalOA', '60 (1-10)');
+      setPH('FinalOB', '60 (11-20)');
+      setPH('FinalOC', '59 (21-30)');
+      setPH('FinalOD', '60 (31-40)');
+      setPH('FinalH1', '2202 kg');   // CP1
+      setPH('FinalH2', '3468 kg');   // CP2
+      setPH('FinalH3', '3587 kg');   // CP3
+      setPH('FinalH4', '2083 kg');   // CP4
+      return;
+    }
     return;
   }
 }
@@ -2810,28 +2891,36 @@ function updateFinalLoadLayout(){
     return d;
   };
 
+  const isW4W6 = (cie === 'W4' || cie === 'W6');
+  const hasOD_W4W6 = isW4W6 && (type === 'A321' || type === 'A21N' || type === 'A21NY');
+  const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
+
   // ===== règles =====
-  showField('FinalMALE',   !isFRRK);
-  showField('FinalFEMALE', !isFRRK);
-  showField('FinalOD',     !isFRRK);
+  showField('FinalMALE',   !isFRRK && !isW4W6);
+  showField('FinalFEMALE', !isFRRK && !isW4W6);
+  showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
+  showField('FinalADULT',  isFRRK || isW4W6);
+
+  // Masquer CP2 pour W4/W6 A20N et A320
+  showField('FinalH2', !hideCP2_W4W6);
 
   setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
   setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
   setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
 
-  showField('FinalADULT', isFRRK);
-
-  // ✅ labels H1..H4 => CP1..CP4 si useCP
-  setLabel('FinalH1', useCP ? 'CP1' : 'H1');
-  setLabel('FinalH2', useCP ? 'CP2' : 'H2');
-  setLabel('FinalH3', useCP ? 'CP3' : 'H3');
-  setLabel('FinalH4', useCP ? 'CP4' : 'H4');
+  // ✅ labels H1..H4 => CP1..CP4 si useCP ou W4/W6
+  const useCPLabel = useCP || isW4W6;
+  setLabel('FinalH1', useCPLabel ? 'CP1' : 'H1');
+  setLabel('FinalH2', useCPLabel ? 'CP2' : 'H2');
+  setLabel('FinalH3', useCPLabel ? 'CP3' : 'H3');
+  setLabel('FinalH4', useCPLabel ? 'CP4' : 'H4');
 
   // ===== layout =====
   restore();
 
-  if(isFRRK){
-    // --- FR/RK ---
+  if(isFRRK || isW4W6){
+    // --- FR/RK et W4/W6 : même structure PAX ---
+    const zonesCount = (isFRRK) ? 3 : (hasOD_W4W6 ? 4 : 3);
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
@@ -2841,10 +2930,11 @@ function updateFinalLoadLayout(){
       const tobRow = makeRowFull('ldm-final-frrk-tob');
       if(tobF) tobRow.appendChild(tobF);
 
-      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      const zonesRow = hasOD_W4W6 ? makeRow4('ldm-final-frrk-zones') : makeRow3('ldm-final-frrk-zones');
       if(oaF) zonesRow.appendChild(oaF);
       if(obF) zonesRow.appendChild(obF);
       if(ocF) zonesRow.appendChild(ocF);
+      if(hasOD_W4W6 && odF) zonesRow.appendChild(odF);
 
       const bagsRow = makeRow3('ldm-final-frrk-bags');
       if(bagsF)  bagsRow.appendChild(bagsF);
@@ -2865,7 +2955,7 @@ function updateFinalLoadLayout(){
     }
 
   }else{
-    // --- AUTRES CIE : ordre FORCÉ ---
+    // --- AUTRES CIE (non FR/RK, non W4/W6) ---
     if(maleF && femaleF && childF && infantF){
       const paxLine = makeRow4('ldm-final-other-paxline');
       paxLine.appendChild(maleF);
@@ -2932,6 +3022,7 @@ if(!window._cieLayoutHooked){
   document.getElementById('Cie')?.addEventListener('change', ()=>{
     updateFinalLoadLayout();
     updatePreviLoadLayout();
+    updateDLCodeInputMode();
   });
 }
 
@@ -3458,6 +3549,7 @@ function initForm(){
     updateFinalLoadLayout();
     updateFinalPlaceholdersFRRK();
     updateLidGuideVisibility();
+    updateDLCodeInputMode();
   });
 
   document.getElementById('TypeAvion')?.addEventListener('change', ()=>{
@@ -4093,9 +4185,20 @@ function generateTimingFields(){
   /* ===== DÉPART ===== */
   const depNoHeader = `
     <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+      <button class="button is-rounded is-light" id="btn-crew" type="button" onclick="toggleDepExtra('crew')" style="font-weight:700;width:160px;">Crew</button>
       <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
       <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
       <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">Nayak</button>
+    </div>
+
+    <!-- Panneau Crew -->
+    <div id="panel-crew" class="card mb-3" style="display:none;">
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+        </div>
+      </div>
     </div>
 
     <!-- Panneau Recherche bag -->
@@ -4140,8 +4243,6 @@ function generateTimingFields(){
     <div class="card">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
           <div class="span-6">${fieldHTML('AvionPremierEmbarque','Premier embarqué')}</div>
           <div class="span-6">${fieldHTML('AvionDernierEmbarque','Dernier embarqué')}</div>
           <div class="span-6">${fieldHTML('ArriveeLift','Arrivée lift',false,false,'is-success')}</div>
@@ -4264,7 +4365,7 @@ function updateAllCalculations() {
 function updateDelayBands(){
   const pairs = [
     { actual: 'AIBT', planned: 'SIBT', wrap: 'tw-disp-AIBT' },
-    { actual: 'AOBT', planned: 'SOBT', wrap: 'tw-disp-AOBT' }
+    { actual: 'AOBT', planned: 'EOBT', wrap: 'tw-disp-AOBT' }
   ];
 
   pairs.forEach(({ actual, planned, wrap }) => {
@@ -4276,12 +4377,27 @@ function updateDelayBands(){
     disp.style.boxShadow = '';
 
     const aVal = document.getElementById(actual)?.value || '';
-    const pVal = document.getElementById(planned)?.value || '';
+    // Pour EOBT : lire la valeur calculée (timer-eobt div) si planned='EOBT'
+    let pVal = '';
+    if(planned === 'EOBT'){
+      const eobtDiv = document.getElementById('timer-eobt');
+      pVal = (eobtDiv?.textContent || '').trim();
+      if(pVal === '--:--' || pVal === '') pVal = '';
+    } else {
+      pVal = document.getElementById(planned)?.value || '';
+    }
 
     if(!aVal || !pVal) return;
 
-    const toMins = hhmm => {
-      const [h, m] = hhmm.split(':').map(Number);
+    const toMins = val => {
+      if(!val) return null;
+      if(val.includes('T') || (val.endsWith('Z') && val.length > 10)){
+        try{
+          const d = new Date(val);
+          if(!isNaN(d.getTime())) return d.getHours()*60 + d.getMinutes();
+        }catch(e){}
+      }
+      const [h, m] = val.split(':').map(Number);
       return isNaN(h) ? null : h * 60 + m;
     };
 
@@ -4290,10 +4406,10 @@ function updateDelayBands(){
     if(diff < -720) diff += 1440;
 
     let color;
-    if     (diff <= -6)  color = '#3b82f6';
-    else if(diff <=  0)  color = '#16a34a';
-    else if(diff <  15)  color = '#f97316';
-    else                 color = '#ef4444';
+    if     (diff <   0)  color = '#3b82f6';  // bleu  : en avance
+    else if(diff === 0)  color = '#16a34a';  // vert  : à l'heure pile
+    else if(diff <  15)  color = '#f97316';  // orange: +1 → +14 min
+    else                 color = '#ef4444';  // rouge : +15 min et plus
 
     disp.style.boxShadow = `inset 5px 0 0 ${color}, inset -5px 0 0 ${color}`;
   });
@@ -6110,93 +6226,141 @@ function validateForm() {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   const v   = id => (document.getElementById(id)?.value || '').trim();
-  const r   = (label, value) => value ? `${label} : ${value}\n` : '';
-  const div = label => `\n--- ${label} ${'-'.repeat(Math.max(0, 40-label.length-5))}\n\n`;
+  const hhmm = val => {
+    if(!val) return '';
+    if(val.includes('T') || (val.endsWith('Z') && val.length > 10)){
+      try{
+        const d = new Date(val);
+        if(!isNaN(d.getTime())){
+          const h = isUTC ? d.getUTCHours() : d.getHours();
+          const m = isUTC ? d.getUTCMinutes() : d.getMinutes();
+          return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        }
+      }catch(e){}
+    }
+    return val;
+  };
+  const t  = id => hhmm(v(id));
+  const r  = (label, value) => value ? `${label} : ${value}\n` : '';
+  const s  = () => `\n- - - - - - - - - - - - - - - - - - - -\n\n`;
+  const br = () => '\n';
 
   // ── INFO VOL ─────────────────────────────────────────────────────────────
-  const infoBlock = div('INFO VOL')
-    + r('Vol',             `${cie}${vol}`)
-    + r('Date',            dateTitre)
-    + r('Rotation',        from && to ? `${from} - ${to}` : '')
-    + r('Immatriculation', immat)
-    + r('Type avion',      typeAvion)
-    + r('Callsign',        v('Callsign'))
-    + r('Parking',         v('Parking'))
-    + r('RZA',             rza)
-    + r('Mode horaire',    isUTC ? 'UTC' : 'LOCAL');
+  let body = '';
+
+  body += r('DATE',        dateTitre);
+  body += r('CIE',         cie);
+  body += r('N° DE VOL',   `${cie}${vol}`);
+  body += r('FROM',        from);
+  body += r('TO',          to);
+  body += r('RZA',         rza);
+  body += r('IMMAT',       immat);
+  body += r('TYPE',        typeAvion);
+  body += r('CALLSIGN',    v('Callsign'));
+  body += r('PARKING',     v('Parking'));
+  body += r('MODE',        isUTC ? 'UTC' : 'LOCAL');
 
   // ── HORAIRES ─────────────────────────────────────────────────────────────
-  const horBlock = div('HORAIRES')
-    + `ARR  PREV ${v('SIBT')||'--:--'}  /  REEL ${v('AIBT')||'--:--'}\n`
-    + `DEP  PREV ${v('SOBT')||'--:--'}  /  REEL ${v('AOBT')||'--:--'}\n`
-    + (v('EOBT') ? `EOBT : ${v('EOBT')}\n` : '')
-    + (v('CTOT') ? `CTOT : ${v('CTOT')}\n` : '');
+  body += s();
+  body += r('SIBT', t('SIBT') || '--:--');
+  body += r('AIBT', t('AIBT') || '--:--');
+  body += r('SOBT', t('SOBT') || '--:--');
+  body += r('AOBT', t('AOBT') || '--:--');
+  if(t('EOBT')) body += r('EOBT', t('EOBT'));
+  if(t('CTOT')) body += r('CTOT', t('CTOT'));
 
   // ── TIMINGS ───────────────────────────────────────────────────────────────
-  const liftArr = v('ArriveeLiftArr') || v('DepartLiftArr')
-    ? `${v('ArriveeLiftArr')||'--:--'} - ${v('DepartLiftArr')||'--:--'}` : '';
-  const liftDep = v('ArriveeLift') || v('DepartLift')
-    ? `${v('ArriveeLift')||'--:--'} - ${v('DepartLift')||'--:--'}` : '';
+  body += s();
 
-  const timBlock = div('TIMINGS')
-    + r('Arrivée PNT',        v('ArrPNT'))
-    + r('Arrivée PNC',        v('ArrPNC'))
-    + r('1er débarqué (L1)',  v('PremierDebarque'))
-    + r('1er débarqué (L2)',  v('PremierDebarqueL2'))
-    + r('Dernier débarqué',   v('DernierDebarque'))
-    + r('Lift arrivée',       liftArr)
-    + r('Arrivée fuel',       v('ArriveeFuel'))
-    + r('Arrivée INAD',       v('ArriveeINAD'))
-    + r('Lift départ',        liftDep)
-    + r('Départ fuel',        v('DepartFuel'))
-    + r('1er embarqué',       v('AvionPremierEmbarque'))
-    + r('Dernier embarqué',   v('AvionDernierEmbarque'))
-    + r('Remise LID/LDS',     v('RemiseLID'))
-    + r('Casque connecté',    v('ConnexionAgentCasque'))
-    + r('Fermeture porte',    v('FermeturePorteAvion'));
+  if(t('ArrPNT'))            { body += r('ARRIVEE PNT', t('ArrPNT')); }
+  if(t('ArrPNC'))            { body += r('ARRIVEE PNC', t('ArrPNC')); }
 
-  // ── LOAD ─────────────────────────────────────────────────────────────────
-  const paxArr = v('ArrPAX_MAIN')
-    ? `${v('ArrPAX_MAIN')} PAX${v('ArrPAX_INF') ? ' + '+v('ArrPAX_INF')+' INF' : ''}  /  ${v('ArrBAGS')||'-'} BAGS  /  ${v('ArrPOIDS')||'-'} KG` : '';
-  const paxFin = v('FinalTOB')
-    ? `${v('FinalTOB')} PAX  /  ${v('FinalBAGS')||'-'} BAGS  /  ${v('FinalPOIDS')||'-'} KG` : '';
-  const tob    = v('FinalTOB')
-    ? `TOB ${v('FinalTOB')}  |  M:${v('FinalMALE')||'-'}  F:${v('FinalFEMALE')||'-'}  CH:${v('FinalCHILD')||'-'}  INF:${v('FinalINFANT')||'-'}` : '';
-  const fret   = [
-    v('FinalOA') && `OA: ${v('FinalOA')}`,
-    v('FinalOB') && `OB: ${v('FinalOB')}`,
-    v('FinalOC') && `OC: ${v('FinalOC')}`,
-    v('FinalOD') && `OD: ${v('FinalOD')}`
-  ].filter(Boolean).join('  |  ');
+  body += br();
+  if(t('PremierDebarque'))   { body += r('PREMIER DEBARQUE (L1)', t('PremierDebarque')); }
+  if(t('PremierDebarqueL2')) { body += r('PREMIER DEBARQUE (L2)', t('PremierDebarqueL2')); }
+  if(t('DernierDebarque'))   { body += r('DERNIER DEBARQUE',      t('DernierDebarque')); }
 
-  const loadBlock = (paxArr||paxFin||tob||fret) ? div('LOAD')
-    + r('ARR',          paxArr)
-    + r('FINAL',        paxFin)
-    + (tob  ? tob  + '\n' : '')
-    + (fret ? 'Fret : ' + fret + '\n' : '')
-    : '';
+  body += br();
+  if(t('ArriveeLiftArr') || t('DepartLiftArr'))
+    body += r('LIFT ARR', `${t('ArriveeLiftArr')||'--:--'} → ${t('DepartLiftArr')||'--:--'}`);
 
-  // ── CARBURANT ─────────────────────────────────────────────────────────────
-  const fuelBlock = (v('BlockFuel')||v('FuelUplift')||v('TripFuel')||v('TaxiFuel')) ? div('CARBURANT')
-    + r('Block fuel', v('BlockFuel')  ? v('BlockFuel')  + ' KG' : '')
-    + r('Trip fuel',  v('TripFuel')   ? v('TripFuel')   + ' KG' : '')
-    + r('Taxi fuel',  v('TaxiFuel')   ? v('TaxiFuel')   + ' KG' : '')
-    + r('Uplift',     v('FuelUplift') ? v('FuelUplift') + ' KG' : '')
-    : '';
+  body += br();
+  if(t('AvionPremierEmbarque')) { body += r('PREMIER EMBARQUE',  t('AvionPremierEmbarque')); }
+  if(t('AvionDernierEmbarque')) { body += r('DERNIER EMBARQUE',  t('AvionDernierEmbarque')); }
 
-  // ── DL ───────────────────────────────────────────────────────────────────
-  const dlLines = [];
-  if(v('DLcode1')) dlLines.push(`DL ${v('DLcode1')} : ${v('DLduree1')||'?'} min`);
-  if(v('DLcode2')) dlLines.push(`DL ${v('DLcode2')} : ${v('DLduree2')||'?'} min`);
-  if(v('DLcode3')) dlLines.push(`DL ${v('DLcode3')} : ${v('DLduree3')||'?'} min`);
-  const dlBlock = dlLines.length ? div('RETARDS') + dlLines.join('\n') + '\n' : '';
+  body += br();
+  if(t('ArriveeLift') || t('DepartLift'))
+    body += r('LIFT DEP', `${t('ArriveeLift')||'--:--'} → ${t('DepartLift')||'--:--'}`);
+  if(t('ArriveeFuel') || t('DepartFuel'))
+    body += r('AVITAIR',  `${t('ArriveeFuel')||'--:--'} → ${t('DepartFuel')||'--:--'}`);
 
-  // ── FAITS SAILLANTS ───────────────────────────────────────────────────────
-  const faitsTxt   = v('FaitsSaillants');
-  const faitsBlock = faitsTxt ? div('FAITS SAILLANTS') + faitsTxt + '\n' : '';
+  body += br();
+  if(t('RemiseLID'))            { body += r('REMISE LID',       t('RemiseLID')); }
+  if(t('FermeturePorteAvion'))  { body += r('FERMETURE PORTE',  t('FermeturePorteAvion')); }
+  if(t('ConnexionAgentCasque')) { body += r('CONNEXION CASQUE', t('ConnexionAgentCasque')); }
 
-  const body = [infoBlock, horBlock, timBlock, loadBlock, fuelBlock, dlBlock, faitsBlock]
-    .filter(Boolean).join('');
+  // ── OPS : INAD / NAYAK ───────────────────────────────────────────────────
+  const hasInad = t('ArriveeINAD') || v('ArrSI');
+  if(hasInad){
+    body += s();
+    if(t('ArriveeINAD')) body += r('INAD / NAYAK', t('ArriveeINAD'));
+    if(v('ArrSI'))       body += r('SI',            v('ArrSI'));
+  }
+
+  // ── LOAD FINAL ────────────────────────────────────────────────────────────
+  const hasFinal = v('FinalTOB') || v('FinalADULT') || v('FinalMALE') || v('FinalBAGS');
+  if(hasFinal){
+    body += s();
+    body += '[ LOAD FINAL ]\n\n';
+
+    if(v('FinalTOB'))    body += r('TOB', v('FinalTOB'));
+
+    const paxDetails = [
+      v('FinalADULT')  && `ADULT ${v('FinalADULT')}`,
+      v('FinalMALE')   && `M ${v('FinalMALE')}`,
+      v('FinalFEMALE') && `F ${v('FinalFEMALE')}`,
+      v('FinalCHILD')  && `CH ${v('FinalCHILD')}`,
+      v('FinalINFANT') && `INF ${v('FinalINFANT')}`,
+    ].filter(Boolean).join('  ');
+    if(paxDetails) body += paxDetails + '\n';
+
+    body += br();
+    if(v('FinalBAGS'))  body += r('BAGS',  v('FinalBAGS'));
+    if(v('FinalGB'))    body += r('GB',    v('FinalGB') + ' pcs');
+    if(v('FinalPOIDS')) body += r('POIDS', v('FinalPOIDS') + ' kg');
+
+    body += br();
+    ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
+      if(v(id)) body += r(id.replace('Final',''), v(id));
+    });
+
+    body += br();
+    [['FinalH1','CP1'],['FinalH2','CP2'],['FinalH3','CP3'],['FinalH4','CP4']].forEach(([id,lbl]) => {
+      if(v(id)) body += r(lbl, v(id));
+    });
+
+    body += br();
+    if(v('CommChiffresPorte')) body += r('COMM. CHIFFRES PORTE', v('CommChiffresPorte'));
+    if(v('FinalSI'))           body += r('SI', v('FinalSI'));
+  }
+
+  // ── RETARDS ───────────────────────────────────────────────────────────────
+  const hasDL = v('DLcode1') || v('DLcode2') || v('DLcode3');
+  if(hasDL){
+    body += s();
+    body += '[ RETARDS ]\n\n';
+    if(v('DLcode1')) body += `DL ${v('DLcode1')}  /  ${v('DLduree1')||'?'} min\n`;
+    if(v('DLcode2')) body += `DL ${v('DLcode2')}  /  ${v('DLduree2')||'?'} min\n`;
+    if(v('DLcode3')) body += `DL ${v('DLcode3')}  /  ${v('DLduree3')||'?'} min\n`;
+  }
+
+  // ── BLOC NOTE ─────────────────────────────────────────────────────────────
+  const faitsTxt = v('FaitsSaillants');
+  if(faitsTxt){
+    body += s();
+    body += '[ BLOC NOTE ]\n\n';
+    body += faitsTxt + '\n';
+  }
 
   window.location.href =
     `mailto:trafic@aeroportbeauvais.com?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
@@ -6664,6 +6828,17 @@ function toggleDelayCodes() {
   box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
+
+function updateDLCodeInputMode(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const numeric = (cie === 'FR' || cie === 'RK' || cie === 'H4' || cie === 'V7');
+  ['DLcode1','DLcode2','DLcode3'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.inputMode = numeric ? 'numeric' : 'text';
+    el.pattern   = numeric ? '[0-9]*' : '';
+  });
+}
 
 function toggleDepExtra(panel){
   const el = document.getElementById('panel-' + panel)
