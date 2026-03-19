@@ -4207,8 +4207,8 @@ function checkAutoSwitchToDep(){
   if(!liArr || !liArr.classList.contains('is-active')) return;
 
   const dernierDeb = (document.getElementById('DernierDebarque')?.value || '').trim();
-  const arriveeift = (document.getElementById('ArriveeLift')?.value   || '').trim();
-  const departLift = (document.getElementById('DepartLift')?.value    || '').trim();
+  const arriveeift = (document.getElementById('ArriveeLiftArr')?.value  || '').trim();
+  const departLift = (document.getElementById('DepartLiftArr')?.value   || '').trim();
 
   // Condition de switch : DernierDebarque rempli
   if(!dernierDeb){ clearTimeout(_autoSwitchDepTimer); _autoSwitchDepTimer = null; return; }
@@ -4221,9 +4221,9 @@ function checkAutoSwitchToDep(){
   _autoSwitchDepTimer = setTimeout(() => {
     _autoSwitchDepTimer = null;
     // Re-vérifier les conditions au moment du switch
-    const dd  = (document.getElementById('DernierDebarque')?.value || '').trim();
-    const al  = (document.getElementById('ArriveeLift')?.value     || '').trim();
-    const dl  = (document.getElementById('DepartLift')?.value      || '').trim();
+    const dd  = (document.getElementById('DernierDebarque')?.value  || '').trim();
+    const al  = (document.getElementById('ArriveeLiftArr')?.value   || '').trim();
+    const dl  = (document.getElementById('DepartLiftArr')?.value    || '').trim();
     if(dd && !(al && !dl)) switchTimingPanel('dep');
   }, 3000);
 }
