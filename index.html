@@ -2066,21 +2066,51 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
 <!-- Modal confirmation TOUT FERMER -->
 <div id="closeAllModal" style="display:none; position:fixed; inset:0; z-index:6400; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
-  <div class="card" style="width:min(360px, 100%);">
+  <div class="card" style="width:min(340px, 100%);">
     <header class="card-header">
       <p class="card-header-title">Tout fermer ?</p>
     </header>
-    <div class="card-content">
-      <p style="margin-bottom:16px; color:var(--muted); font-size:.9rem;">Tous les onglets ouverts seront fermés.</p>
-      <div class="buttons is-right">
-        <button class="button is-light" type="button" onclick="document.getElementById('closeAllModal').style.display='none'">Annuler</button>
-        <button class="button is-danger" type="button" onclick="document.getElementById('closeAllModal').style.display='none'; clearAutoSave();">Fermer tout</button>
+    <div class="card-content" style="padding:1rem;">
+      <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Tous les onglets ouverts seront fermés.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseAll(false)" style="font-weight:800;">
+          📂 Fermer tout
+        </button>
+        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseAll(true)" style="font-weight:800;">
+          🗑 Fermer tout + Supprimer les données
+        </button>
+        <button class="button is-light is-fullwidth" type="button" onclick="document.getElementById('closeAllModal').style.display='none'" style="margin-top:4px;">
+          Annuler
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Modal confirmation EFFACER champs -->
+<!-- Modal fermeture onglet -->
+<div id="tabCloseModal" style="display:none; position:fixed; inset:0; z-index:6500; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(340px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title" id="tabCloseModalTitle">Fermer ce vol ?</p>
+    </header>
+    <div class="card-content" style="padding:1rem;">
+      <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Que voulez-vous faire avec cet onglet ?</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseTab(false)" style="font-weight:800;">
+          📂 Fermer l'onglet
+        </button>
+        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseTab(true)" style="font-weight:800;">
+          🗑 Fermer + Supprimer les données
+        </button>
+        <button class="button is-light is-fullwidth" type="button" onclick="closeTabCloseModal()" style="margin-top:4px;">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="clearFieldsModal" style="display:none; position:fixed; inset:0; z-index:6300; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
   <div class="card" style="width:min(360px, 100%);">
     <header class="card-header">
@@ -2895,11 +2925,11 @@ function updateFinalLoadLayout(){
   const hasOD_W4W6 = isW4W6 && (type === 'A321' || type === 'A21N' || type === 'A21NY');
   const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
 
-  // ===== règles =====
-  showField('FinalMALE',   !isFRRK && !isW4W6);
-  showField('FinalFEMALE', !isFRRK && !isW4W6);
+  // ===== règles visibilité =====
+  showField('FinalMALE',   !isFRRK);   // autres CIE : MALE remplace ADULT
+  showField('FinalFEMALE', !isFRRK);
+  showField('FinalADULT',  isFRRK);    // FR/RK uniquement
   showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
-  showField('FinalADULT',  isFRRK || isW4W6);
 
   // Masquer CP2 pour W4/W6 A20N et A320
   showField('FinalH2', !hideCP2_W4W6);
@@ -2918,12 +2948,43 @@ function updateFinalLoadLayout(){
   // ===== layout =====
   restore();
 
-  if(isFRRK || isW4W6){
-    // --- FR/RK et W4/W6 : même structure PAX ---
-    const zonesCount = (isFRRK) ? 3 : (hasOD_W4W6 ? 4 : 3);
+  if(isFRRK){
+    // --- FR/RK : ADULT / CHILD / INFANT ---
     if(adultF && childF && infantF){
       const paxRow = makeRow3('ldm-final-frrk-pax');
       paxRow.appendChild(adultF);
+      paxRow.appendChild(childF);
+      paxRow.appendChild(infantF);
+
+      const tobRow = makeRowFull('ldm-final-frrk-tob');
+      if(tobF) tobRow.appendChild(tobF);
+
+      const zonesRow = makeRow3('ldm-final-frrk-zones');
+      if(oaF) zonesRow.appendChild(oaF);
+      if(obF) zonesRow.appendChild(obF);
+      if(ocF) zonesRow.appendChild(ocF);
+
+      const bagsRow = makeRow3('ldm-final-frrk-bags');
+      if(bagsF)  bagsRow.appendChild(bagsF);
+      if(poidsF) bagsRow.appendChild(poidsF);
+      if(gbF)    bagsRow.appendChild(gbF);
+      bagsRow.style.marginBottom = '0';
+
+      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
+      finalGrid.insertBefore(zonesRow, bagsRow);
+      finalGrid.insertBefore(tobRow, zonesRow);
+      finalGrid.insertBefore(paxRow, tobRow);
+
+      const bpb = document.getElementById('bagsPoidsBgRow');
+      if(bpb) bpb.style.display = 'none';
+    }
+
+  }else if(isW4W6){
+    // --- W4/W6 : MALE / FEMALE / CHILD / INFANT ---
+    if(maleF && femaleF && childF && infantF){
+      const paxRow = makeRow4('ldm-final-frrk-pax');
+      paxRow.appendChild(maleF);
+      paxRow.appendChild(femaleF);
       paxRow.appendChild(childF);
       paxRow.appendChild(infantF);
 
@@ -2940,8 +3001,6 @@ function updateFinalLoadLayout(){
       if(bagsF)  bagsRow.appendChild(bagsF);
       if(poidsF) bagsRow.appendChild(poidsF);
       if(gbF)    bagsRow.appendChild(gbF);
-
-      // ✅ FR/RK : réduire l’espace sous BAGS/POIDS/GB
       bagsRow.style.marginBottom = '0';
 
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
@@ -2949,7 +3008,7 @@ function updateFinalLoadLayout(){
       finalGrid.insertBefore(tobRow, zonesRow);
       finalGrid.insertBefore(paxRow, tobRow);
 
-      // Masquer les conteneurs statiques vidés
+      if(paxGridOrig) paxGridOrig.style.display = 'none';
       const bpb = document.getElementById('bagsPoidsBgRow');
       if(bpb) bpb.style.display = 'none';
     }
@@ -3786,7 +3845,7 @@ function renderTabs(){
       +
     </button>
     <button class="button is-link is-light" type="button"
-            onclick="createNewTab(); openAKPicker();">
+            onclick="openAKPicker();">
       + Liste vols
     </button>
   `;
@@ -3819,7 +3878,7 @@ function renderTabs(){
     btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
     btn.onclick = ()=> switchTab(id);
-    btn.ondblclick = ()=> deleteTab(id);
+    btn.ondblclick = ()=> openTabCloseModal(id);
 
     // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
     const r = document.createElement('button');
@@ -3927,65 +3986,74 @@ function switchTab(id){
   renderTimeline();
 }
 
-function deleteTab(id){
-  stopCountdown();
-  if(!confirm('Supprimer cette fiche ?')) return;
+let _tabCloseId = null;
 
+function openTabCloseModal(id){
+  _tabCloseId = id;
+  const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+  const cie  = (data.Cie||'').toUpperCase();
+  const nvol = (data.NVol||'').toUpperCase();
+  const depFF = (data?.akMeta?.depFF||'').toUpperCase().trim();
+  const label = depFF || (cie+nvol) || 'ce vol';
+  document.getElementById('tabCloseModalTitle').textContent = label ? `Fermer ${label} ?` : 'Fermer ce vol ?';
+  document.getElementById('tabCloseModal').style.display = 'flex';
+}
+
+function closeTabCloseModal(){
+  document.getElementById('tabCloseModal').style.display = 'none';
+  _tabCloseId = null;
+}
+
+function confirmCloseTab(deleteRemote){
+  const id = _tabCloseId;
+  closeTabCloseModal();
+  if(!id) return;
+  deleteTab(id, deleteRemote);
+}
+
+function deleteTab(id, deleteRemote = false){
+  stopCountdown();
   id = String(id);
 
-  // Supprimer du dashboard via WebSocket __delete — fiable même si socket fermé
-  const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
-  const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
-  const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
-
-  if(deleteKey){
-    // Annuler tous les timers pour éviter tout envoi post-suppression
-    clearTimeout(saveTimer); saveTimer = null;
-    // Calculer la clé dashboard avant de supprimer le localStorage
-    const deleteDashKey = (() => {
-      try {
-        const fid = String(tabData?.akMeta?.id || '').trim();
-        const lid = String(tabData?.akMeta?.linkedId || '').trim();
-        if(fid && lid) return fid < lid ? fid : lid;
-        return fid || null;
-      } catch(_){ return null; }
-    })();
-    const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
-
-    // Envoyer aussi au DO lié pour éviter re-upsert via FORWARD
-    const linkedDeleteKey = (() => {
-      try {
-        const lid = String(tabData?.akMeta?.linkedId || '').trim();
-        return lid ? `AK_${lid}` : null;
-      } catch(_){ return null; }
-    })();
-
-    if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-      socket.send(deleteMsg);
-      // Couper immédiatement le socket APRÈS le delete pour éviter tout re-upsert
-      setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
-    } else {
-      // Socket fermé ou autre onglet : connexion temporaire
-      try{
-        const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
-        ws.onopen = () => {
-          ws.send(deleteMsg);
-          setTimeout(() => { try{ ws.close(); }catch(_){} }, 300);
-        };
-        ws.onerror = () => {};
-      }catch(_){}
+  if(deleteRemote){
+    // Supprimer les données du DO (l'autre tablette sera déconnectée)
+    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+    const tabData = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+    const deleteKey = tabData?.akMeta?.id ? `AK_${tabData.akMeta.id}` : (id === currentTabId ? buildFlightKey() : null);
+    if(deleteKey){
+      const fid = String(tabData?.akMeta?.id || '').trim();
+      const lid = String(tabData?.akMeta?.linkedId || '').trim();
+      const deleteDashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid || null;
+      const deleteMsg = JSON.stringify({ __delete: '1', ...(deleteDashKey ? { __dashboardKey: deleteDashKey } : {}) });
+      if(id === currentTabId && socket && socket.readyState === WebSocket.OPEN){
+        socket.send(deleteMsg);
+        setTimeout(() => { try{ socket.close(); socket = null; currentSocketKey = null; }catch(_){} }, 100);
+      } else {
+        try{
+          const ws = new WebSocket(WS_BASE + encodeURIComponent(deleteKey));
+          ws.onopen = () => { ws.send(deleteMsg); setTimeout(()=>{ try{ ws.close(); }catch(_){} }, 300); };
+          ws.onerror = () => {};
+        }catch(_){}
+      }
+      const linkedKey = tabData?.akMeta?.linkedId ? `AK_${tabData.akMeta.linkedId}` : null;
+      if(linkedKey && linkedKey !== deleteKey){
+        try{
+          const ws2 = new WebSocket(WS_BASE + encodeURIComponent(linkedKey));
+          ws2.onopen = () => { ws2.send(deleteMsg); setTimeout(()=>{ try{ ws2.close(); }catch(_){} }, 300); };
+          ws2.onerror = () => {};
+        }catch(_){}
+      }
     }
+  }
 
-    // Supprimer aussi le DO lié
-    if(linkedDeleteKey && linkedDeleteKey !== deleteKey){
-      try{
-        const wsLinked = new WebSocket(WS_BASE + encodeURIComponent(linkedDeleteKey));
-        wsLinked.onopen = () => {
-          wsLinked.send(deleteMsg);
-          setTimeout(() => { try{ wsLinked.close(); }catch(_){} }, 300);
-        };
-        wsLinked.onerror = () => {};
-      }catch(_){}
+  // Fermeture locale — déconnecter le socket proprement
+  if(id === currentTabId){
+    clearTimeout(window._sendFullDebounce);
+    clearTimeout(saveTimer); saveTimer = null;
+    if(socket && !deleteRemote){
+      try{ socket.close(); }catch(_){}
+      socket = null;
+      currentSocketKey = null;
     }
   }
 
@@ -5880,6 +5948,11 @@ async function refreshAKTab(tabId){
 function applyAKFlight(f, flow, opts = {}){
   const isRefresh = !!opts.refresh;
 
+  // Créer un nouvel onglet seulement si c'est une nouvelle sélection
+  if(!isRefresh){
+    createNewTab();
+  }
+
   try{
     /* ===== champs communs ===== */
     setValAK('Immat', (f.reg || ''));
@@ -6752,52 +6825,54 @@ function openCloseAllModal(){
   document.getElementById('closeAllModal').style.display = 'flex';
 }
 
-function clearAutoSave() {
-  const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+function confirmCloseAll(deleteRemote) {
+  document.getElementById('closeAllModal').style.display = 'none';
+
+  if(deleteRemote){
+    // Supprimer les données sur le DO pour chaque onglet
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
     const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
     const deletePromises = [];
-
     tabs.forEach(tid => {
       try{
         const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
         const meta = data?.akMeta;
         if(!meta?.id) return;
         const key = `AK_${meta.id}`;
-
-        // Calculer la clé dashboard
         const fid = String(meta.id || '').trim();
         const lid = String(meta.linkedId || '').trim();
         const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid;
         const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
-
         if(tid === currentTabId && socket && socket.readyState === WebSocket.OPEN){
-          // Onglet courant : socket déjà ouvert
           socket.send(deleteMsg);
         } else {
-          // Autres onglets : ouvrir un socket temporaire
           const p = new Promise(resolve => {
             try{
               const ws = new WebSocket(WS_BASE + encodeURIComponent(key));
-              ws.onopen = () => {
-                ws.send(deleteMsg);
-                setTimeout(() => { try{ ws.close(); }catch(_){} resolve(); }, 200);
-              };
+              ws.onopen = () => { ws.send(deleteMsg); setTimeout(()=>{ try{ws.close();}catch(_){} resolve(); }, 200); };
               ws.onerror = () => resolve();
-              setTimeout(resolve, 2000); // timeout sécurité
+              setTimeout(resolve, 2000);
             }catch(_){ resolve(); }
           });
           deletePromises.push(p);
         }
       }catch(_){}
     });
-
-    // Attendre que tous les deletes soient envoyés avant de recharger
     Promise.all(deletePromises).then(() => {
-      setTimeout(() => {
-        localStorage.clear();
-        location.reload();
-      }, 1000);
+      setTimeout(() => { localStorage.clear(); location.reload(); }, 1000);
     });
+  } else {
+    // Fermeture locale uniquement — déconnecter proprement
+    clearTimeout(window._sendFullDebounce);
+    clearTimeout(saveTimer); saveTimer = null;
+    if(socket){ try{ socket.close(); }catch(_){} socket = null; currentSocketKey = null; }
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function clearAutoSave() {
+  confirmCloseAll(false);
 }
 
 function shouldOpenFinalLoad(){
