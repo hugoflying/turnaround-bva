@@ -3028,15 +3028,20 @@ function twSync(id) {
   }
 
   /* clicks −1 / now / +1 */
+  const clickTimers = {};
   document.addEventListener('click', function(e) {
     const zone = e.target.closest('.tw-zone'); if (!zone) return;
     const wrap = zone.closest('.time-wrap'); if (!wrap) return;
     const id   = wrap.dataset.id; if (!id) return;
     if (_twTouchHandled && (zone.classList.contains('tw-zone-left') || zone.classList.contains('tw-zone-right'))) return;
     const action = zone.dataset.action;
-    if (action === 'minus') twAdjust(id, -1);
-    else if (action === 'plus') twAdjust(id, +1);
-    else if (action === 'now') twNowUTC(id);
+    if (action === 'minus') { twAdjust(id, -1); return; }
+    if (action === 'plus')  { twAdjust(id, +1); return; }
+    if (action === 'now') {
+      // Délai pour laisser passer un éventuel dblclick
+      clearTimeout(clickTimers[id]);
+      clickTimers[id] = setTimeout(() => { twNowUTC(id); }, DBL_MS + 20);
+    }
     if (window.getSelection) window.getSelection().removeAllRanges();
   });
 
@@ -3087,6 +3092,7 @@ function twSync(id) {
   document.addEventListener('dblclick', function(e) {
     const z = e.target.closest('.tw-zone-center'); if (!z) return;
     const id = z.closest('.time-wrap')?.dataset?.id; if (!id) return;
+    clearTimeout(clickTimers[id]); // annule le clic simple en attente
     twClear(id);
   });
 })();
