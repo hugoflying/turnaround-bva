@@ -3981,6 +3981,9 @@ function switchTab(id){
   // Recharger le bloc note pour le nouvel onglet
   window.bnReloadTab?.();
 
+  // Reset du timer auto-refresh AK pour le nouvel onglet
+  window._autoRefreshAK?.reset();
+
   renderTabs();
   refreshUIForTabs();
   renderTimeline();
@@ -7939,6 +7942,100 @@ self.addEventListener('fetch', e => {
   navigator.serviceWorker.register(swUrl, { scope: '/' })
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
+
+/* ─── Auto-refresh AK toutes les 15 min ──────────────────────────────────────
+ * Conditions :
+ *   1. AvionDernierEmbarque est rempli (dernier embarqué saisi)
+ *   2. AOBT est encore vide (avion pas encore parti)
+ * Une fois AOBT reçu après un refresh, on arrête le timer.
+ * ──────────────────────────────────────────────────────────────────────────── */
+(function initAutoRefreshAK() {
+  const INTERVAL_MS = 8 * 60 * 1000; // 8 minutes
+  let _timer = null;
+  let _stopped = false;
+
+  function shouldAutoRefresh() {
+    // Conditions : Dernier embarqué rempli ET AOBT vide
+    const dernierEmb = (document.getElementById('AvionDernierEmbarque')?.value || '').trim();
+    const aobt       = (document.getElementById('AOBT')?.value || '').trim();
+    return dernierEmb !== '' && aobt === '';
+  }
+
+  function aobIsNowFilled() {
+    return (document.getElementById('AOBT')?.value || '').trim() !== '';
+  }
+
+  async function tick() {
+    if (_stopped) return;
+
+    if (!shouldAutoRefresh()) {
+      // Dernier embarqué pas encore saisi → on ne fait rien, on replanifie
+      return;
+    }
+
+    // Déclencher le refresh AK sur l'onglet actif
+    const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
+    if (!tabId) return;
+
+    console.log('[AutoRefreshAK] Refresh AK déclenché automatiquement');
+    try {
+      await refreshAKTab(tabId);
+    } catch(e) {
+      console.warn('[AutoRefreshAK] Erreur refresh:', e);
+    }
+
+    // Après le refresh, vérifier si AOBT est maintenant renseigné
+    if (aobIsNowFilled()) {
+      console.log('[AutoRefreshAK] AOBT reçu — arrêt du refresh automatique');
+      stopAutoRefresh();
+      showPopup('✅ AOBT reçu — rafraîchissement auto arrêté', '#16a34a', 2500);
+    }
+  }
+
+  function startAutoRefresh() {
+    if (_timer) return;
+    _stopped = false;
+    _timer = setInterval(tick, INTERVAL_MS);
+    console.log('[AutoRefreshAK] Timer démarré (toutes les 15 min)');
+  }
+
+  function stopAutoRefresh() {
+    if (_timer) {
+      clearInterval(_timer);
+      _timer = null;
+    }
+    _stopped = true;
+  }
+
+  function resetAutoRefresh() {
+    // Appelé quand on change d'onglet ou qu'on ferme un vol
+    stopAutoRefresh();
+    _stopped = false;
+    startAutoRefresh();
+  }
+
+  // Démarrer au chargement
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(startAutoRefresh, 3000);
+  });
+
+  // Surveiller le champ AOBT : si rempli manuellement → stop
+  document.addEventListener('change', e => {
+    if (e.target && e.target.id === 'AOBT' && e.target.value) {
+      if (_timer) {
+        stopAutoRefresh();
+        console.log('[AutoRefreshAK] AOBT saisi manuellement — arrêt du refresh auto');
+      }
+    }
+    // Si AOBT effacé → relancer le timer si Dernier embarqué rempli
+    if (e.target && e.target.id === 'AOBT' && !e.target.value) {
+      if (!_timer && !_stopped) startAutoRefresh();
+    }
+  });
+
+  // Exposer pour usage externe (ex: changement d'onglet)
+  window._autoRefreshAK = { start: startAutoRefresh, stop: stopAutoRefresh, reset: resetAutoRefresh };
+})();
 </script>
 
 
