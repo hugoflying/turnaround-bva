@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 <title>SUIVI PERFORMANCE</title>
 <!-- ===== PWA — iOS standalone ===== -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1659,7 +1659,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
           <div id="finalImageBox" style="display:none; margin-top:12px;">
             <img id="finalImage"
                  src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/lid-completion-guide.jpg"
-                 style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+                 style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:zoom-in;"
+                 onclick="openLightbox(this.src)">
           </div>
 
         </div>
@@ -1953,7 +1954,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     <div id="delayCodesBox" style="display:none; margin-bottom:12px;">
       <img id="delayCodesImage"
            src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/gops-iata-delay-codes-apr24-rev17.jpg"
-           style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25);">
+           style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:zoom-in;"
+           onclick="openLightbox(this.src)">
     </div>
 
     <div class="dl-wrap">
@@ -6470,7 +6472,12 @@ function validateForm() {
     });
 
     body += br();
-    [['FinalH1','CP1'],['FinalH2','CP2'],['FinalH3','CP3'],['FinalH4','CP4']].forEach(([id,lbl]) => {
+    const isW4W6email = (cie === 'W4' || cie === 'W6');
+    const h1lbl = isW4W6email ? 'CP1' : 'H1';
+    const h2lbl = isW4W6email ? 'CP2' : 'H2';
+    const h3lbl = isW4W6email ? 'CP3' : 'H3';
+    const h4lbl = isW4W6email ? 'CP4' : 'H4';
+    [[`FinalH1`,h1lbl],[`FinalH2`,h2lbl],[`FinalH3`,h3lbl],[`FinalH4`,h4lbl]].forEach(([id,lbl]) => {
       if(v(id)) body += r(lbl, v(id));
     });
 
@@ -8126,6 +8133,47 @@ self.addEventListener('fetch', e => {
 </script>
 
 
+
+<!-- ===== LIGHTBOX ===== -->
+<div id="lightboxOverlay" onclick="closeLightbox()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(0,0,0,.92); cursor:zoom-out;
+            align-items:center; justify-content:center; padding:16px;
+            touch-action:pinch-zoom; overflow:auto;">
+  <img id="lightboxImg" src="" alt=""
+       onclick="event.stopPropagation()"
+       style="max-width:100%; max-height:100%; object-fit:contain;
+              border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.6);
+              touch-action:pinch-zoom; cursor:default;">
+  <button onclick="closeLightbox()" type="button"
+          style="position:fixed; top:14px; right:18px;
+                 background:rgba(255,255,255,.15); border:none; border-radius:50%;
+                 width:40px; height:40px; font-size:1.3rem; color:#fff;
+                 cursor:pointer; line-height:1;">✕</button>
+</div>
+
+<script>
+function openLightbox(src){
+  const ov = document.getElementById('lightboxOverlay');
+  const img = document.getElementById('lightboxImg');
+  img.src = src;
+  // S'assurer que le lightbox est un enfant direct du body (échappe overflow:hidden du modal LDM)
+  if(ov.parentNode !== document.body) document.body.appendChild(ov);
+  ov.style.display = 'flex';
+  // Autoriser le zoom pinch sur l'image
+  document.querySelector('meta[name="viewport"]').setAttribute('content',
+    'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes');
+  document.addEventListener('keydown', _lightboxKey);
+}
+function closeLightbox(){
+  document.getElementById('lightboxOverlay').style.display = 'none';
+  // Réinterdire le zoom sur l'UI
+  document.querySelector('meta[name="viewport"]').setAttribute('content',
+    'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no');
+  document.removeEventListener('keydown', _lightboxKey);
+}
+function _lightboxKey(e){ if(e.key === 'Escape') closeLightbox(); }
+</script>
 
 </body>
 </html>
