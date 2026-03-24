@@ -1128,6 +1128,11 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   .span-4  { grid-column: span 4; }
   .span-3  { grid-column: span 3; }
 
+  /* Boutons Crew/INAD/Nayak/RechercheBag — taille fixe desktop */
+  .dep-extra-btn { width: 160px; }
+  .poids-corr-short { display: none; }
+  .poids-corr-full  { display: inline; }
+
   /* KV en 2 colonnes */
   .kv-strip { grid-template-columns: 1fr 1fr; }
 
@@ -1253,7 +1258,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   #ldmModal  { inset: calc(var(--fixed-header-h) + 10px) 8px 8px 8px; }
   .ldm-row-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #hBagsRow       { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-  #bagsPoidsBgRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #bagsPoidsBgRow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #ldmFinal .ldm-grid { row-gap: 6px; }
   #ldmFinal .ldm-row-4 { row-gap: 6px; }
   html .ldm-in { height: 36px; padding: 6px 8px; }
@@ -1280,6 +1285,16 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   .dl-wrap .field:has(#DLduree2) { grid-column: 2; grid-row: 2; }
   .dl-wrap .field:has(#DLduree3) { grid-column: 2; grid-row: 3; }
   .dl-wrap .input                { height: var(--inputH); padding: 6px 10px; }
+  /* Boutons Crew / INAD / Recherche Bag / Nayak — plus compacts sur mobile */
+  #btn-crew, #btn-recherche-bag, #btn-inad, #btn-gpu,
+  .dep-extra-btn {
+    width: auto !important;
+    font-size: .78rem !important;
+    height: 32px !important;
+    padding: 0 10px !important;
+  }
+  .poids-corr-full { display: none; }
+  .poids-corr-short { display: inline; }
 }
 
 </style>
@@ -1557,27 +1572,33 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
           </div>
         </div>
 
-        <!-- Ligne 3 : BAGS POIDS GB -->
-        <div class="ldm-row-4" id="bagsPoidsBgRow" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+        <!-- Ligne 3 : BAGS POIDS GB POIDS CORRIGÉ -->
+        <div class="ldm-row-4" id="bagsPoidsBgRow" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
           <div class="field">
             <label class="label">BAGS</label>
             <input class="input ldm-in" id="FinalBAGS"
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    maxlength="4"
-                   oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded()">
+                   oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded(); updatePoidsCorrige()">
           </div>
           <div class="field">
             <label class="label">POIDS</label>
             <input class="input ldm-in" id="FinalPOIDS"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; }">
+                   oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; } updatePoidsCorrige()">
           </div>
           <div class="field">
             <label class="label">GB</label>
             <input class="input ldm-in" id="FinalGB"
                    type="text" inputmode="numeric" pattern="[0-9]*"
                    maxlength="4"
-                   oninput="digitsOnly(this); updateFinalWeightIfNeeded()">
+                   oninput="digitsOnly(this); updateFinalWeightIfNeeded(); updatePoidsCorrige()">
+          </div>
+          <div class="field">
+            <label class="label" style="white-space:nowrap;"><span class="poids-corr-short">POIDS CORR.</span><span class="poids-corr-full">POIDS CORRIGÉ</span></label>
+            <input class="input ldm-in" id="FinalPoidsCorrige"
+                   type="text" readonly
+                   style="background:var(--bg-alt,#f4f6fb);color:var(--muted);font-weight:900;cursor:default;">
           </div>
         </div>
 
@@ -2596,6 +2617,7 @@ function updateFinalWeightIfNeeded(){
 
     poidsField.readOnly = true;           // 🔒 verrouillé
     poidsField.value = (bags + gb) * 13;  // ⚙️ calcul auto
+    updatePoidsCorrige();
     return;
   }
 
@@ -2615,11 +2637,22 @@ function updateFinalWeightIfNeeded(){
         delete poidsField.dataset.baseWeight;
       }
     }
+    updatePoidsCorrige();
     return;
   }
 
   // 🛫 AUTRES COMPAGNIES → champ libre
   poidsField.readOnly = false;            // 🔓 déverrouillé
+  updatePoidsCorrige();
+}
+
+/* ===== POIDS CORRIGÉ = POIDS + GB*13 (si GB > 0, sinon = POIDS) ===== */
+function updatePoidsCorrige(){
+  const poids = parseInt(document.getElementById('FinalPOIDS')?.value) || 0;
+  const gb    = parseInt(document.getElementById('FinalGB')?.value)    || 0;
+  const el    = document.getElementById('FinalPoidsCorrige');
+  if(!el) return;
+  el.value = gb > 0 ? poids + (gb * 13) : poids || '';
 }
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
@@ -2810,9 +2843,10 @@ function updateFinalLoadLayout(){
   const ocF = fieldOf('FinalOC');
   const odF = fieldOf('FinalOD');
 
-  const bagsF  = fieldOf('FinalBAGS');
-  const poidsF = fieldOf('FinalPOIDS');
-  const gbF    = fieldOf('FinalGB');
+  const bagsF      = fieldOf('FinalBAGS');
+  const poidsF     = fieldOf('FinalPOIDS');
+  const gbF        = fieldOf('FinalGB');
+  const poidsCorF  = fieldOf('FinalPoidsCorrige');
 
   if(!maleF || !femaleF) return;
   const finalGrid = maleF.closest('.ldm-grid');
@@ -2965,9 +2999,11 @@ function updateFinalLoadLayout(){
       if(ocF) zonesRow.appendChild(ocF);
 
       const bagsRow = makeRow3('ldm-final-frrk-bags');
-      if(bagsF)  bagsRow.appendChild(bagsF);
-      if(poidsF) bagsRow.appendChild(poidsF);
-      if(gbF)    bagsRow.appendChild(gbF);
+      if(bagsF)     bagsRow.appendChild(bagsF);
+      if(poidsF)    bagsRow.appendChild(poidsF);
+      if(gbF)       bagsRow.appendChild(gbF);
+      if(poidsCorF) bagsRow.appendChild(poidsCorF);
+      bagsRow.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
       bagsRow.style.marginBottom = '0';
 
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
@@ -2998,9 +3034,11 @@ function updateFinalLoadLayout(){
       if(hasOD_W4W6 && odF) zonesRow.appendChild(odF);
 
       const bagsRow = makeRow3('ldm-final-frrk-bags');
-      if(bagsF)  bagsRow.appendChild(bagsF);
-      if(poidsF) bagsRow.appendChild(poidsF);
-      if(gbF)    bagsRow.appendChild(gbF);
+      if(bagsF)     bagsRow.appendChild(bagsF);
+      if(poidsF)    bagsRow.appendChild(poidsF);
+      if(gbF)       bagsRow.appendChild(gbF);
+      if(poidsCorF) bagsRow.appendChild(poidsCorF);
+      bagsRow.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
       bagsRow.style.marginBottom = '0';
 
       finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
@@ -3032,9 +3070,11 @@ function updateFinalLoadLayout(){
       if(odF) zonesLine.appendChild(odF);
 
       const bagsLine = makeRow3('ldm-final-other-bagsline');
-      if(bagsF)  bagsLine.appendChild(bagsF);
-      if(poidsF) bagsLine.appendChild(poidsF);
-      if(gbF)    bagsLine.appendChild(gbF);
+      if(bagsF)     bagsLine.appendChild(bagsF);
+      if(poidsF)    bagsLine.appendChild(poidsF);
+      if(gbF)       bagsLine.appendChild(gbF);
+      if(poidsCorF) bagsLine.appendChild(poidsCorF);
+      bagsLine.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
 
       // ✅ ordre voulu : PAX -> TOB -> ZONES -> BAGS
       const first = finalGrid.firstChild;
@@ -3975,9 +4015,6 @@ function switchTab(id){
 
   loadTabData(id);
 
-  // Fermer LOAD après chargement — évite de l'avoir ouvert sur le nouvel onglet
-  closeLDM?.();
-
   // Recharger le bloc note pour le nouvel onglet
   window.bnReloadTab?.();
 
@@ -4278,10 +4315,10 @@ function generateTimingFields(){
   /* ===== DÉPART ===== */
   const depNoHeader = `
     <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
-      <button class="button is-rounded is-light" id="btn-crew" type="button" onclick="toggleDepExtra('crew')" style="font-weight:700;width:160px;">Crew</button>
-      <button class="button is-rounded is-light" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;width:160px;">Recherche bag</button>
-      <button class="button is-rounded is-light" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;width:160px;">INAD</button>
-      <button class="button is-rounded is-light" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;width:160px;">Nayak</button>
+      <button class="button is-rounded is-light dep-extra-btn" id="btn-crew" type="button" onclick="toggleDepExtra('crew')" style="font-weight:700;">Crew</button>
+      <button class="button is-rounded is-light dep-extra-btn" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;">Recherche bag</button>
+      <button class="button is-rounded is-light dep-extra-btn" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;">INAD</button>
+      <button class="button is-rounded is-light dep-extra-btn" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;">Nayak</button>
     </div>
 
     <!-- Panneau Crew -->
@@ -7972,10 +8009,10 @@ self.addEventListener('fetch', e => {
  * Une fois AOBT reçu après un refresh, on arrête le timer.
  * ──────────────────────────────────────────────────────────────────────────── */
 (function initAutoRefreshAK() {
-  // Séquence des délais en minutes : 7, 5, 5, 5, puis 10 jusqu'à 2h max
-  const SEQUENCE_MINS = [7, 5, 5, 5];
-  const REPEAT_MINS   = 10;
-  const MAX_DURATION_MS = 2 * 60 * 60 * 1000; // 2 heures max
+  // Séquence des délais en minutes : 8, 4, 4, puis 15 pendant 1h max
+  const SEQUENCE_MINS = [8, 4, 4];
+  const REPEAT_MINS   = 15;
+  const MAX_DURATION_MS = 1 * 60 * 60 * 1000; // 1 heure max
 
   let _timer    = null;
   let _stopped  = false;
@@ -8047,7 +8084,7 @@ self.addEventListener('fetch', e => {
     _step      = 0;
     _startedAt = Date.now();
     scheduleNext(true);
-    console.log('[AutoRefreshAK] Séquence démarrée (7→5→5→5→10…, max 2h)');
+    console.log('[AutoRefreshAK] Séquence démarrée (8→4→4→15…, max 1h)');
   }
 
   function stopAutoRefresh() {
