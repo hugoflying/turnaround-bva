@@ -7955,10 +7955,10 @@ self.addEventListener('fetch', e => {
   let _stopped = false;
 
   function shouldAutoRefresh() {
-    // Conditions : Dernier embarqué rempli ET AOBT vide
-    const dernierEmb = (document.getElementById('AvionDernierEmbarque')?.value || '').trim();
-    const aobt       = (document.getElementById('AOBT')?.value || '').trim();
-    return dernierEmb !== '' && aobt === '';
+    // Conditions : Fermeture porte remplie ET AOBT vide
+    const fermeturePorte = (document.getElementById('FermeturePorteAvion')?.value || '').trim();
+    const aobt           = (document.getElementById('AOBT')?.value || '').trim();
+    return fermeturePorte !== '' && aobt === '';
   }
 
   function aobIsNowFilled() {
@@ -7996,7 +7996,7 @@ self.addEventListener('fetch', e => {
     if (_timer) return;
     _stopped = false;
     _timer = setInterval(tick, INTERVAL_MS);
-    console.log('[AutoRefreshAK] Timer démarré (toutes les 15 min)');
+    console.log('[AutoRefreshAK] Timer démarré (toutes les 8 min)');
   }
 
   function stopAutoRefresh() {
