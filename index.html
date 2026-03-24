@@ -4143,6 +4143,11 @@ function saveCurrentTabData(){
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
+  // État du modal LOAD (ouvert/fermé + onglet actif)
+  const ldmModal = document.getElementById('ldmModal');
+  data.ldmOpen = ldmModal && ldmModal.style.display !== 'none' ? '1' : '0';
+  data.ldmMode = _ldmMode || 'arr';
+
   localStorage.setItem('tab-'+currentTabId,JSON.stringify(data));
   localStorage.setItem('lastTabId',currentTabId);
   renderTabs();
@@ -4195,6 +4200,23 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
+
+  // ✅ Restaurer l'onglet de timing (Arrivée / Départ)
+  if(data.timingPanel) {
+    switchTimingPanel(data.timingPanel);
+  }
+
+  // ✅ Restaurer l'état du modal LOAD
+  if(data.ldmOpen === '1' && data.ldmMode) {
+    openLDM(data.ldmMode);
+  } else {
+    // Fermer silencieusement sans déclencher saveCurrentTabData
+    const b = document.getElementById('ldmBackdrop');
+    const m = document.getElementById('ldmModal');
+    if(m) m.style.display = 'none';
+    if(b) b.style.display = 'none';
+    unlockScroll?.();
+  }
 
   connectFlightSocket();
 
@@ -7950,9 +7972,15 @@ self.addEventListener('fetch', e => {
  * Une fois AOBT reçu après un refresh, on arrête le timer.
  * ──────────────────────────────────────────────────────────────────────────── */
 (function initAutoRefreshAK() {
-  const INTERVAL_MS = 8 * 60 * 1000; // 8 minutes
-  let _timer = null;
-  let _stopped = false;
+  // Séquence des délais en minutes : 7, 5, 5, 5, puis 10 jusqu'à 2h max
+  const SEQUENCE_MINS = [7, 5, 5, 5];
+  const REPEAT_MINS   = 10;
+  const MAX_DURATION_MS = 2 * 60 * 60 * 1000; // 2 heures max
+
+  let _timer    = null;
+  let _stopped  = false;
+  let _step     = 0;
+  let _startedAt = null; // timestamp de démarrage
 
   function shouldAutoRefresh() {
     // Conditions : Fermeture porte remplie ET AOBT vide
@@ -7965,50 +7993,72 @@ self.addEventListener('fetch', e => {
     return (document.getElementById('AOBT')?.value || '').trim() !== '';
   }
 
+  function nextDelay() {
+    const mins = _step < SEQUENCE_MINS.length ? SEQUENCE_MINS[_step] : REPEAT_MINS;
+    return mins * 60 * 1000;
+  }
+
   async function tick() {
     if (_stopped) return;
 
-    if (!shouldAutoRefresh()) {
-      // Dernier embarqué pas encore saisi → on ne fait rien, on replanifie
+    // Arrêt après 2h
+    if (_startedAt && Date.now() - _startedAt >= MAX_DURATION_MS) {
+      console.log('[AutoRefreshAK] 2h écoulées — arrêt du refresh automatique');
+      stopAutoRefresh();
       return;
     }
 
-    // Déclencher le refresh AK sur l'onglet actif
-    const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
-    if (!tabId) return;
+    if (!shouldAutoRefresh()) {
+      scheduleNext(false);
+      return;
+    }
 
-    console.log('[AutoRefreshAK] Refresh AK déclenché automatiquement');
+    const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
+    if (!tabId) { scheduleNext(false); return; }
+
+    console.log(`[AutoRefreshAK] Refresh #${_step + 1} — délai suivant : ${_step + 1 < SEQUENCE_MINS.length ? SEQUENCE_MINS[_step + 1] : REPEAT_MINS} min`);
     try {
       await refreshAKTab(tabId);
     } catch(e) {
       console.warn('[AutoRefreshAK] Erreur refresh:', e);
     }
 
-    // Après le refresh, vérifier si AOBT est maintenant renseigné
     if (aobIsNowFilled()) {
       console.log('[AutoRefreshAK] AOBT reçu — arrêt du refresh automatique');
       stopAutoRefresh();
       showPopup('✅ AOBT reçu — rafraîchissement auto arrêté', '#16a34a', 2500);
+      return;
     }
+
+    _step++;
+    scheduleNext(true);
+  }
+
+  function scheduleNext(counted) {
+    if (_stopped) return;
+    const delay = nextDelay();
+    _timer = setTimeout(tick, delay);
+    if (counted) console.log(`[AutoRefreshAK] Prochain refresh dans ${delay / 60000} min`);
   }
 
   function startAutoRefresh() {
     if (_timer) return;
-    _stopped = false;
-    _timer = setInterval(tick, INTERVAL_MS);
-    console.log('[AutoRefreshAK] Timer démarré (toutes les 8 min)');
+    _stopped   = false;
+    _step      = 0;
+    _startedAt = Date.now();
+    scheduleNext(true);
+    console.log('[AutoRefreshAK] Séquence démarrée (7→5→5→5→10…, max 2h)');
   }
 
   function stopAutoRefresh() {
     if (_timer) {
-      clearInterval(_timer);
+      clearTimeout(_timer);
       _timer = null;
     }
     _stopped = true;
   }
 
   function resetAutoRefresh() {
-    // Appelé quand on change d'onglet ou qu'on ferme un vol
     stopAutoRefresh();
     _stopped = false;
     startAutoRefresh();
@@ -8027,7 +8077,7 @@ self.addEventListener('fetch', e => {
         console.log('[AutoRefreshAK] AOBT saisi manuellement — arrêt du refresh auto');
       }
     }
-    // Si AOBT effacé → relancer le timer si Dernier embarqué rempli
+    // Si AOBT effacé → relancer
     if (e.target && e.target.id === 'AOBT' && !e.target.value) {
       if (!_timer && !_stopped) startAutoRefresh();
     }
