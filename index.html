@@ -4972,6 +4972,18 @@ function setTimeModeUTC(enable, fromInit=false){
       const outM = totalMin % 60;
       input.value = `${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}`;
     });
+
+    // ✅ CTOT est type="hidden" — le convertir séparément
+    const ctotEl = document.getElementById('CTOT');
+    if(ctotEl && ctotEl.value && ctotEl.value.includes(':')) {
+      let [hh, mm] = ctotEl.value.split(':').map(Number);
+      let totalMin = Math.round((enable ? hh - offsetHours : hh + offsetHours) * 60 + mm);
+      totalMin = ((totalMin % 1440) + 1440) % 1440;
+      ctotEl.value = String(Math.floor(totalMin/60)).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
+      // Mettre à jour l'affichage timer-ctot
+      const timerCtot = document.getElementById('timer-ctot');
+      if(timerCtot) timerCtot.textContent = ctotEl.value;
+    }
   }
 
   isUTC = enable;
@@ -5017,6 +5029,11 @@ function setTimeModeUTC(enable, fromInit=false){
   // Resync TOUS les tw-displays immédiatement après conversion
   twSyncAll();
   updateAllCalculations();
+
+  // ✅ Resync timer-ctot (type="hidden", non couvert par twSyncAll)
+  const ctotEl2 = document.getElementById('CTOT');
+  const timerCtot2 = document.getElementById('timer-ctot');
+  if(ctotEl2 && timerCtot2) timerCtot2.textContent = ctotEl2.value || '--:--';
 
   // 🔁 refresh flight list AK si ouverte
   if(document.getElementById('akPopover')?.style.display !== 'none'){
