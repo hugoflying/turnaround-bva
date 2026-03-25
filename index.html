@@ -2606,45 +2606,23 @@ function syncAdultGenderLocks(){
 }
 
 
-/* ===== POIDS auto FR / RK : (BAGS + GB) * 13 ===== */
+/* ===== POIDS : FR/RK = BAGS*13 auto (sans GB), autres = libre ===== */
 function updateFinalWeightIfNeeded(){
 
   const cie = (document.getElementById('Cie').value || '').toUpperCase();
   const poidsField = document.getElementById('FinalPOIDS');
 
-  // ✈️ CAS FR / RK → calcul auto + verrouillé
+  // ✈️ CAS FR / RK → POIDS = BAGS * 13 seulement (GB n'entre pas dans POIDS)
   if(cie === 'FR' || cie === 'RK'){
     const bags = parseInt(document.getElementById('FinalBAGS').value) || 0;
-    const gb   = parseInt(document.getElementById('FinalGB').value)   || 0;
-
-    poidsField.readOnly = true;           // 🔒 verrouillé
-    poidsField.value = (bags + gb) * 13;  // ⚙️ calcul auto
+    poidsField.readOnly = true;
+    poidsField.value = bags * 13;
     updatePoidsCorrige();
     return;
   }
 
-  // ✈️ CAS W4 / W6 / H4 → POIDS libre + GB s'ajoute (GB × 13)
-  if(cie === 'W4' || cie === 'W6' || cie === 'H4'){
-    const gb = parseInt(document.getElementById('FinalGB').value) || 0;
-    poidsField.readOnly = false; // toujours libre
-    if(gb > 0){
-      // Lire la valeur de base saisie manuellement (sans le GB)
-      const base = parseInt(poidsField.dataset.baseWeight || poidsField.value) || 0;
-      poidsField.dataset.baseWeight = base;
-      poidsField.value = base + (gb * 13);
-    } else {
-      // GB vidé : restaurer la valeur de base
-      if(poidsField.dataset.baseWeight !== undefined){
-        poidsField.value = poidsField.dataset.baseWeight;
-        delete poidsField.dataset.baseWeight;
-      }
-    }
-    updatePoidsCorrige();
-    return;
-  }
-
-  // 🛫 AUTRES COMPAGNIES → champ libre
-  poidsField.readOnly = false;            // 🔓 déverrouillé
+  // ✈️ TOUS LES AUTRES → POIDS libre, pas de calcul GB dedans
+  poidsField.readOnly = false;
   updatePoidsCorrige();
 }
 
@@ -2654,7 +2632,7 @@ function updatePoidsCorrige(){
   const gb    = parseInt(document.getElementById('FinalGB')?.value)    || 0;
   const el    = document.getElementById('FinalPoidsCorrige');
   if(!el) return;
-  el.value = gb > 0 ? poids + (gb * 13) : poids || '';
+  el.value = gb > 0 ? poids + (gb * 13) : (poids || '');
 }
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
