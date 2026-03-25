@@ -4178,18 +4178,24 @@ function loadTabData(id){
 
   const data = JSON.parse(raw);
 
-  for(const k in data){
-    // ✅ toggles globaux : jamais restaurés depuis l’onglet
-    if(k === 'utcToggle' || k === 'darkToggle') continue;
+  // Bloquer les envois WS pendant le chargement (évite contamination inter-onglets)
+  isApplyingRemoteUpdate = true;
+  try {
+    for(const k in data){
+      // ✅ toggles globaux : jamais restaurés depuis l’onglet
+      if(k === 'utcToggle' || k === 'darkToggle') continue;
 
-    const el = document.getElementById(k);
-    if(!el) continue;
+      const el = document.getElementById(k);
+      if(!el) continue;
 
-    if(el.type === 'checkbox'){
-      el.checked = (data[k] === true || data[k] === '1');
-    }else{
-      el.value = data[k];
+      if(el.type === 'checkbox'){
+        el.checked = (data[k] === true || data[k] === '1');
+      }else{
+        el.value = data[k];
+      }
     }
+  } finally {
+    isApplyingRemoteUpdate = false;
   }
 
   // ✅ Restore visuel des timers (divs non-input)
