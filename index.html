@@ -6053,7 +6053,7 @@ function applyAKFlight(f, flow, opts = {}){
 
       setTimeFromISOAK('SOBT', f.sobt || f.eobt);
       setTimeFromISOAK('AOBT', f.aobt);
-      setTimeFromISOIfEmptyOrAK('CTOT', f.ctot);
+      setTimeFromISOAK('CTOT', f.ctot);  // CTOT toujours mis à jour depuis AK (Eurocontrol)
 
       const siDep = akBuildSI(f, true, { includeDL:false });
       mergeSIFromAK('PreviSI', siDep);
@@ -6109,7 +6109,7 @@ function applyAKFlight(f, flow, opts = {}){
 
         setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
         setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
-        setTimeFromISOIfEmptyOrAK('CTOT', nextDep.ctot);
+        setTimeFromISOAK('CTOT', nextDep.ctot);  // CTOT toujours mis à jour depuis AK
 
         const siDep = akBuildSI(nextDep, true, { includeDL:false });
         mergeSIFromAK('PreviSI', siDep);
