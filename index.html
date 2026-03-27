@@ -1310,11 +1310,16 @@ body.readonly-mode button:not(.readonly-allowed) {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: 4000; /* au-dessus du footer (3500) */
   cursor: not-allowed;
 }
 body.readonly-mode #readonlyOverlay {
   display: block;
+}
+/* Les modals de lock sont toujours cliquables, au-dessus de l'overlay */
+#lockModal, #lockStolenModal, #lockBackdrop,
+#lockModal *, #lockStolenModal * {
+  pointer-events: all !important;
 }
 #readonlyBanner {
   display: none;
@@ -1329,6 +1334,8 @@ body.readonly-mode #readonlyOverlay {
   padding: 5px 12px;
   letter-spacing: .03em;
   cursor: pointer;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 </style>
 </head>
@@ -2152,8 +2159,8 @@ body.readonly-mode #readonlyOverlay {
 <!-- Modal confirmation EFFACER champs -->
 <!-- Modal fermeture onglet -->
 <!-- ===== LOCK MODAL ===== -->
-<div id="lockBackdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:7000;"></div>
-<div id="lockModal" style="display:none; position:fixed; inset:0; z-index:7100; align-items:center; justify-content:center; padding:14px;">
+<div id="lockBackdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:7000; pointer-events:none;"></div>
+<div id="lockModal" style="display:none; position:fixed; inset:0; z-index:7100; align-items:center; justify-content:center; padding:14px; pointer-events:all !important;">
   <div class="card" style="width:min(360px,100%); border-top:4px solid #ef4444;">
     <header class="card-header">
       <p class="card-header-title" style="color:#ef4444;">🔒 Vol en cours de traitement</p>
@@ -6403,8 +6410,30 @@ function requestLock(){
 
 function forceTakeLock(){
   const rza = getRZAForLock();
-  if(!rza) return;
-  if(!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  // Si RZA vide → demander d'abord le RZA
+  if(!rza){
+    closeLockModal();
+    window._rzaContext = 'forceLock';
+    openRZAModalForAK();
+    return;
+  }
+
+  // Si socket pas prêt → reconnecter et réessayer
+  if(!socket || socket.readyState !== WebSocket.OPEN){
+    showPopup('Reconnexion en cours…', '#f59e0b', 1500);
+    connectFlightSocket();
+    setTimeout(() => {
+      if(socket && socket.readyState === WebSocket.OPEN){
+        socket.send(JSON.stringify({ __forceLock: rza }));
+      } else {
+        showPopup('Impossible de reprendre — connexion échouée', '#ef4444', 2500);
+      }
+    }, 1500);
+    return;
+  }
+
+  console.log('[Lock] forceTakeLock → envoi __forceLock pour', rza);
   socket.send(JSON.stringify({ __forceLock: rza }));
 }
 
@@ -6426,6 +6455,10 @@ function showLockModal(rza, ts){
 function closeLockModal(){
   document.getElementById('lockBackdrop').style.display = 'none';
   document.getElementById('lockModal').style.display    = 'none';
+  // Ne pas forcer le readonly ici — laisse le lockStatus remettre à jour si besoin
+  // Sur l'onglet courant : si l'utilisateur annule, on sort du readonly
+  // (si le vol est vraiment verrouillé, le prochain message WS le remettra)
+  setReadonlyMode(false);
 }
 
 function showLockStolenModal(by){
@@ -6529,8 +6562,9 @@ function submitRZAModal(){
     const { f, flow, opts } = window._pendingAKFlight;
     window._pendingAKFlight = null;
     _doApplyAKFlight(f, flow, opts);
-    // Envoyer RZA après que le vol soit chargé (Cie+NVol+Date remplis)
     setTimeout(() => sendFieldUpdate('RZA', v), 1500);
+  } else if(ctx === 'forceLock'){
+    forceTakeLock();
   } else {
     validateForm();
   }
@@ -8047,6 +8081,18 @@ async function footerRefreshAK(){
     ed.maxLength=5; ed.inputMode='numeric';
     ed.setAttribute('enterkeyhint','done');
 
+    function positionEditor(){
+      const r = wrap.getBoundingClientRect();
+      const vv = window.visualViewport;
+      // Sur Android, visualViewport donne les coords réelles après ouverture du clavier
+      const offsetTop  = vv ? vv.offsetTop  : 0;
+      const offsetLeft = vv ? vv.offsetLeft : 0;
+      ed.style.top    = (r.top  + offsetTop)  + 'px';
+      ed.style.left   = (r.left + offsetLeft) + 'px';
+      ed.style.width  = r.width  + 'px';
+      ed.style.height = r.height + 'px';
+    }
+
     // Position fixe sur le wrap, en dehors du time-wrap pour éviter overflow:hidden
     ed.style.cssText = `
       position:fixed;
@@ -8060,6 +8106,13 @@ async function footerRefreshAK(){
     `;
     disp.style.visibility='hidden';
     document.body.appendChild(ed);
+
+    // Recalculer la position quand le clavier Android ouvre (visualViewport resize)
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize', positionEditor);
+      window.visualViewport.addEventListener('scroll', positionEditor);
+    }
+
     setTimeout(()=>{ ed.focus(); ed.select(); },30);
 
     let done=false;
@@ -8075,6 +8128,10 @@ async function footerRefreshAK(){
         }
       }
       ed.remove(); disp.style.visibility='';
+      if(window.visualViewport){
+        window.visualViewport.removeEventListener('resize', positionEditor);
+        window.visualViewport.removeEventListener('scroll', positionEditor);
+      }
     }
     ed.addEventListener('blur',commit);
     ed.addEventListener('keydown',e=>{
