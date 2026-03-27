@@ -6450,7 +6450,7 @@ function closeLockModal(){
 function showLockStolenModal(by){
   const modal = document.getElementById('lockStolenModal');
   const msg   = document.getElementById('lockStolenMsg');
-  if(msg) msg.textContent = `${by || 'Un autre agent'} a repris ce vol. Vous êtes maintenant en lecture seule.`;
+  if(msg) msg.innerHTML = `<strong style="color:#111;font-weight:900;">${by || 'Un autre agent'}</strong> a repris ce vol. Vous êtes maintenant en lecture seule.`;
   if(modal) modal.style.display = 'flex';
 }
 
