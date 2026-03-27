@@ -1297,6 +1297,39 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   .poids-corr-short { display: inline; }
 }
 
+/* ===== MODE LECTURE SEULE ===== */
+body.readonly-mode input:not([type="hidden"]),
+body.readonly-mode select,
+body.readonly-mode textarea,
+body.readonly-mode button:not(.readonly-allowed) {
+  pointer-events: none !important;
+  opacity: 0.55 !important;
+}
+/* Overlay intercepteur de clics en readonly */
+#readonlyOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  cursor: not-allowed;
+}
+body.readonly-mode #readonlyOverlay {
+  display: block;
+}
+#readonlyBanner {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #ef4444;
+  color: #fff;
+  text-align: center;
+  font-size: .82rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  letter-spacing: .03em;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -1741,6 +1774,12 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   </div>
 </div>
 
+<div id="readonlyOverlay" onclick="showLockModal(window._lockOwner)"></div>
+
+<div id="readonlyBanner" onclick="showLockModal(window._lockOwner)" class="readonly-allowed">
+  🔒 LECTURE SEULE — Vol suivi par <span id="readonlyOwner"></span> — Appuyer pour reprendre
+</div>
+
 <div class="app-wrap">
 
 <!-- INFO VOL + HORAIRES -->
@@ -2112,6 +2151,42 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
 <!-- Modal confirmation EFFACER champs -->
 <!-- Modal fermeture onglet -->
+<!-- ===== LOCK MODAL ===== -->
+<div id="lockBackdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:7000;"></div>
+<div id="lockModal" style="display:none; position:fixed; inset:0; z-index:7100; align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px,100%); border-top:4px solid #ef4444;">
+    <header class="card-header">
+      <p class="card-header-title" style="color:#ef4444;">🔒 Vol en cours de traitement</p>
+    </header>
+    <div class="card-content" style="padding:1rem;">
+      <p id="lockModalMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text);">Ce vol est actuellement suivi par <strong id="lockModalRza"></strong>.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="button is-danger is-fullwidth readonly-allowed" type="button" onclick="forceTakeLock()" style="font-weight:800;">
+          🔓 Reprendre le vol
+        </button>
+        <button class="button is-light is-fullwidth readonly-allowed" type="button" onclick="closeLockModal()" style="margin-top:4px;">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOCK STOLEN MODAL ===== -->
+<div id="lockStolenModal" style="display:none; position:fixed; inset:0; z-index:7200; align-items:center; justify-content:center; padding:14px; background:rgba(0,0,0,.55);">
+  <div class="card" style="width:min(360px,100%); border-top:4px solid #f59e0b;">
+    <header class="card-header">
+      <p class="card-header-title" style="color:#d97706;">⚠️ Vol repris</p>
+    </header>
+    <div class="card-content" style="padding:1rem;">
+      <p id="lockStolenMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text);"></p>
+      <button class="button is-warning is-fullwidth readonly-allowed" type="button" onclick="closeLockStolenModal()" style="font-weight:800;">
+        OK
+      </button>
+    </div>
+  </div>
+</div>
+
 <div id="tabCloseModal" style="display:none; position:fixed; inset:0; z-index:6500; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
   <div class="card" style="width:min(340px, 100%);">
     <header class="card-header">
@@ -3596,7 +3671,7 @@ function initForm(){
 
   // 3) Autosave + unload
   attachAutoSave();
-  window.addEventListener('beforeunload', saveCurrentTabData);
+  window.addEventListener('beforeunload', ()=>{ saveCurrentTabData(); releaseLock(); });
 
   // 4) Listeners INFO VOL -> bandeau essentiel instant + label onglet
   const hookStrip = (id, ev='input')=>{
@@ -4000,6 +4075,11 @@ function switchTab(id){
 
   // Reset du timer auto-refresh AK pour le nouvel onglet
   window._autoRefreshAK?.reset();
+
+  // Libérer le lock de l'ancien onglet, demander le lock du nouveau
+  releaseLock();
+  setReadonlyMode(false); // reset — le lockStatus du nouvel onglet remet si besoin
+  setTimeout(() => requestLock(), 800);
 
   renderTabs();
   refreshUIForTabs();
@@ -5479,7 +5559,7 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // ===== Airport Keeper (AK) =====
-const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
+const AK_PROXY = "/ak";
 
 // Ouvrir/Fermer
 function openAKPicker(){
@@ -6013,9 +6093,65 @@ async function refreshAKTab(tabId){
 function applyAKFlight(f, flow, opts = {}){
   const isRefresh = !!opts.refresh;
 
+  // Si nouvelle sélection (pas refresh) → demander RZA d'abord
+  if(!isRefresh){
+    // Stocker le vol en attente et ouvrir le popup RZA
+    window._pendingAKFlight = { f, flow, opts };
+    openRZAModalForAK();
+    return;
+  }
+
+  _doApplyAKFlight(f, flow, opts);
+}
+
+function openRZAModalForAK(){
+  const back  = document.getElementById('rzaBackdrop');
+  const modal = document.getElementById('rzaModal');
+  const inp   = document.getElementById('rzaModalInput');
+  const title = document.querySelector('#rzaModal .card-header-title');
+
+  if(title) title.textContent = 'Votre identifiant (RZA)';
+  if(back) back.style.display = '';
+  if(modal) modal.style.display = 'flex';
+
+  let current = '';
+  try{
+    if(currentTabId){
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      current = (data.RZA || '').toUpperCase().trim();
+    }
+  }catch(e){}
+
+  if(inp){
+    inp.value = current;
+    inp.focus();
+    inp.select();
+    inp.oninput = ()=>{
+      inp.value = (inp.value || '').toUpperCase().replace(/[^A-Z]/g,'').slice(0,3);
+      const ok = inp.value.length >= 2;
+      const help = document.getElementById('rzaHelp');
+      if(help) help.style.display = ok ? 'none' : '';
+    };
+    inp.oninput();
+  }
+
+  // Remplacer temporairement submitRZAModal pour ce contexte
+  window._rzaContext = 'ak';
+}
+
+function _doApplyAKFlight(f, flow, opts = {}){
+  const isRefresh = !!opts.refresh;
+
   // Créer un nouvel onglet seulement si c'est une nouvelle sélection
   if(!isRefresh){
     createNewTab();
+    // Injecter le RZA dans le nouvel onglet (currentTabId vient d'être mis à jour)
+    if(window._pendingRZA && currentTabId){
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      data.RZA = window._pendingRZA;
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+      window._pendingRZA = null;
+    }
   }
 
   try{
@@ -6213,6 +6349,8 @@ function applyAKFlight(f, flow, opts = {}){
             fullPayload['__fromAK'] = '1';
             socket.send(JSON.stringify(fullPayload));
           }
+          // Demander le lock juste après l'envoi du state
+          setTimeout(() => requestLock(), 200);
         }catch(e){ console.warn('AK sync send error:', e); }
         return;
       }
@@ -6222,10 +6360,96 @@ function applyAKFlight(f, flow, opts = {}){
   }, 50);
 }
 
+/* ─── SYSTÈME DE VERROUILLAGE ────────────────────────────────────────────── */
+window._hasLock = false;
+window._lockOwner = null;
+
+function setReadonlyMode(enabled, ownerRza){
+  if(enabled){
+    document.body.classList.add('readonly-mode');
+    window._lockOwner = ownerRza || '???';
+    const banner = document.getElementById('readonlyBanner');
+    const ownerEl = document.getElementById('readonlyOwner');
+    if(ownerEl) ownerEl.textContent = window._lockOwner;
+    if(banner) banner.style.display = '';
+  } else {
+    document.body.classList.remove('readonly-mode');
+    window._lockOwner = null;
+    const banner = document.getElementById('readonlyBanner');
+    if(banner) banner.style.display = 'none';
+  }
+}
+
+function getRZAForLock(){
+  try{
+    if(currentTabId){
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      const rza = (data.RZA || '').toUpperCase().trim();
+      console.log('[Lock] getRZAForLock → tabId=', currentTabId, 'rza=', rza);
+      return rza;
+    }
+  }catch(e){}
+  console.log('[Lock] getRZAForLock → pas de tabId');
+  return '';
+}
+
+function requestLock(){
+  const rza = getRZAForLock();
+  if(!rza){ console.log('[Lock] requestLock annulé — RZA vide'); return; }
+  if(!socket || socket.readyState !== WebSocket.OPEN){ console.log('[Lock] requestLock annulé — socket pas open, state=', socket?.readyState); return; }
+  console.log('[Lock] requestLock → envoi __takeLock pour', rza);
+  socket.send(JSON.stringify({ __takeLock: rza }));
+}
+
+function forceTakeLock(){
+  const rza = getRZAForLock();
+  if(!rza) return;
+  if(!socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(JSON.stringify({ __forceLock: rza }));
+}
+
+function releaseLock(){
+  window._hasLock = false;
+  if(!socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(JSON.stringify({ __releaseLock: '1' }));
+}
+
+function showLockModal(rza, ts){
+  const backdrop = document.getElementById('lockBackdrop');
+  const modal    = document.getElementById('lockModal');
+  const rzaEl    = document.getElementById('lockModalRza');
+  if(rzaEl) rzaEl.textContent = rza || '???';
+  if(backdrop) backdrop.style.display = '';
+  if(modal)    modal.style.display    = 'flex';
+}
+
+function closeLockModal(){
+  document.getElementById('lockBackdrop').style.display = 'none';
+  document.getElementById('lockModal').style.display    = 'none';
+}
+
+function showLockStolenModal(by){
+  const modal = document.getElementById('lockStolenModal');
+  const msg   = document.getElementById('lockStolenMsg');
+  if(msg) msg.textContent = `${by || 'Un autre agent'} a repris ce vol. Vous êtes maintenant en lecture seule.`;
+  if(modal) modal.style.display = 'flex';
+}
+
+function closeLockStolenModal(){
+  document.getElementById('lockStolenModal').style.display = 'none';
+}
+
 function openRZAModal(){
   const back  = document.getElementById('rzaBackdrop');
   const modal = document.getElementById('rzaModal');
   const inp   = document.getElementById('rzaModalInput');
+  const title = document.querySelector('#rzaModal .card-header-title');
+
+  if(title) title.textContent = 'RZA requis';
+  if(back) back.style.display = '';
+  if(modal) modal.style.display = 'flex';
+
+  window._rzaContext = 'validate';
 
   if(back) back.style.display = '';
   if(modal) modal.style.display = 'flex';
@@ -6278,14 +6502,38 @@ function submitRZAModal(){
     return;
   }
 
-  // Stocke RZA dans l'onglet courant
+  // Stocker RZA dans l'onglet courant ET en variable globale
+  window._pendingRZA = v;
   if(currentTabId){
     const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
     data.RZA = v;
     localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
   }
 
-  closeRZAModal(true);
+  // Aussi mettre à jour le champ RZA s'il existe
+  const rzaEl = document.getElementById('RZA');
+  if(rzaEl){ rzaEl.value = v; rzaEl.dispatchEvent(new Event('change',{bubbles:true})); }
+
+  // ✅ Envoyer RZA via WebSocket
+  sendFieldUpdate('RZA', v);
+
+  const ctx = window._rzaContext || 'validate';
+  window._rzaContext = null;
+
+  closeRZAModal(false); // fermer sans déclencher validateForm
+
+  // ✅ Maintenant que le RZA est connu, demander le lock
+  setTimeout(() => requestLock(), 300);
+
+  if(ctx === 'ak' && window._pendingAKFlight){
+    const { f, flow, opts } = window._pendingAKFlight;
+    window._pendingAKFlight = null;
+    _doApplyAKFlight(f, flow, opts);
+    // Envoyer RZA après que le vol soit chargé (Cie+NVol+Date remplis)
+    setTimeout(() => sendFieldUpdate('RZA', v), 1500);
+  } else {
+    validateForm();
+  }
 }
 
 // Enter/Escape
@@ -6357,6 +6605,14 @@ function validateForm() {
   // si pas de RZA -> on ouvre le popup et on stoppe l'envoi
   if(!rza){
     openRZAModal();
+    return;
+  }
+
+  // ✅ Bloquer si pas d'AOBT (sauf vol ARR pur : TO = BVA)
+  const aobt = val('AOBT');
+  const isBVADest = (to || '').toUpperCase().trim() === 'BVA';
+  if(!aobt && !isBVADest){
+    showPopup('⚠️ AOBT manquant — impossible de valider', '#ef4444', 2500);
     return;
   }
 
@@ -7308,6 +7564,15 @@ function collectFlightState() {
     payload[id] = el.value || "";
   });
 
+  // ✅ RZA — stocké en localStorage, pas dans le DOM
+  try{
+    if(currentTabId){
+      const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      const rza = (data.RZA || '').toUpperCase().trim();
+      if(rza) payload['RZA'] = rza;
+    }
+  }catch(_){}
+
   // depFF/arrFF pour affichage dashboard
   try{
     const meta2 = getTabData()?.akMeta;
@@ -7435,13 +7700,16 @@ function connectFlightSocket() {
         const fullPayload = collectFlightState();
         if(fullPayload && typeof fullPayload === 'object' && Object.keys(fullPayload).length > 0){
           socket.send(JSON.stringify(fullPayload));
-          // State complet envoyé — vider pendingPatch pour éviter le double envoi
           pendingPatch = {};
+          // Demander le lock après envoi du state (si RZA connu)
+          setTimeout(() => requestLock(), 300);
           return;
         }
       }
     } catch(_) {}
     flushPendingPatch();
+    // Demander le lock même si pas de state à envoyer
+    setTimeout(() => requestLock(), 300);
   };
 
   socket.onmessage = (event) => {
@@ -7452,12 +7720,48 @@ function connectFlightSocket() {
         hasReceivedInitialState = true;
         applyRemotePayload(msg.payload || {});
         flushPendingPatch();
-        /* Le serveur a déjà le state complet — pas besoin de le renvoyer */
         return;
       }
 
       if (msg.__type === "patch") {
         applyRemotePayload(msg.payload || {});
+        return;
+      }
+
+      // Messages de lock
+      if (msg.__type === "lockGranted") {
+        window._hasLock = true;
+        setReadonlyMode(false);
+        closeLockModal();
+        console.log('[Lock] lockGranted pour', msg.rza);
+        return;
+      }
+
+      if (msg.__type === "lockDenied") {
+        window._hasLock = false;
+        setReadonlyMode(true, msg.rza);
+        console.log('[Lock] lockDenied — vol tenu par', msg.rza);
+        showLockModal(msg.rza, msg.ts);
+        return;
+      }
+
+      if (msg.__type === "lockStolen") {
+        window._hasLock = false;
+        setReadonlyMode(true, msg.by);
+        console.log('[Lock] lockStolen par', msg.by);
+        showLockStolenModal(msg.by);
+        return;
+      }
+
+      if (msg.__type === "lockStatus") {
+        console.log('[Lock] lockStatus — locked=', msg.locked, 'rza=', msg.rza, '_hasLock=', window._hasLock);
+        if (!msg.locked) {
+          closeLockModal();
+          if (!window._hasLock) requestLock();
+        } else if (msg.locked && !window._hasLock) {
+          setReadonlyMode(true, msg.rza);
+          showLockModal(msg.rza, msg.ts);
+        }
         return;
       }
 
@@ -8130,6 +8434,55 @@ self.addEventListener('fetch', e => {
 
   // Exposer pour usage externe (ex: changement d'onglet)
   window._autoRefreshAK = { start: startAutoRefresh, stop: stopAutoRefresh, reset: resetAutoRefresh };
+})();
+
+/* ─── Refresh AK unique 5 min après premier embarqué ─────────────────────── */
+(function initPremierEmbRefresh() {
+  let _timer = null;
+
+  function scheduleRefresh() {
+    if (_timer) return; // déjà planifié
+    _timer = setTimeout(async () => {
+      _timer = null;
+      const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
+      if (!tabId) return;
+      // Ne pas déclencher si AOBT déjà renseigné
+      const aobt = (document.getElementById('AOBT')?.value || '').trim();
+      if (aobt) return;
+      console.log('[AutoRefreshAK] Refresh après premier embarqué (5 min)');
+      try { await refreshAKTab(tabId); } catch(e) {}
+    }, 5 * 60 * 1000);
+    console.log('[AutoRefreshAK] Refresh planifié dans 5 min (premier embarqué)');
+  }
+
+  function cancelRefresh() {
+    if (_timer) { clearTimeout(_timer); _timer = null; }
+  }
+
+  document.addEventListener('change', e => {
+    if (!e.target) return;
+    // Déclencheur : AvionPremierEmbarque rempli
+    if (e.target.id === 'AvionPremierEmbarque' && e.target.value) {
+      scheduleRefresh();
+    }
+    // Annuler si AOBT reçu
+    if (e.target.id === 'AOBT' && e.target.value) {
+      cancelRefresh();
+    }
+    // Annuler si premier embarqué effacé
+    if (e.target.id === 'AvionPremierEmbarque' && !e.target.value) {
+      cancelRefresh();
+    }
+  });
+
+  // Annuler aussi au changement d'onglet
+  const _origReset = window._autoRefreshAK?.reset;
+  window._autoRefreshAK = window._autoRefreshAK || {};
+  const _prevReset = window._autoRefreshAK.reset;
+  window._autoRefreshAK.reset = function() {
+    cancelRefresh();
+    if (_prevReset) _prevReset();
+  };
 })();
 </script>
 
