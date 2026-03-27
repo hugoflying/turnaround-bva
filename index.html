@@ -7472,8 +7472,8 @@ function applyRemotePayload(payload) {
       // Ne pas écraser un champ en cours d'édition
       if (document.activeElement === el) return;
 
-      // Ne pas écraser un champ modifié récemment par l'utilisateur
-      if (_recentlyEdited.has(id)) return;
+      // Ne pas écraser un champ modifié récemment — sauf en lecture seule (l'user ne peut pas éditer)
+      if (_recentlyEdited.has(id) && !document.body.classList.contains('readonly-mode')) return;
 
       el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
