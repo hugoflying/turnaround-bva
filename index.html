@@ -2166,7 +2166,7 @@ body.readonly-mode #readonlyOverlay {
       <p class="card-header-title" style="color:#ef4444;">🔒 Vol en cours de traitement</p>
     </header>
     <div class="card-content" style="padding:1rem;">
-      <p id="lockModalMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text);">Ce vol est actuellement suivi par <strong id="lockModalRza"></strong>.</p>
+      <p id="lockModalMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text);">Ce vol est actuellement suivi par <strong id="lockModalRza" style="color:#111;font-weight:900;"></strong>.</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <button class="button is-danger is-fullwidth readonly-allowed" type="button" onclick="forceTakeLock()" style="font-weight:800;">
           🔓 Reprendre le vol
@@ -2186,7 +2186,7 @@ body.readonly-mode #readonlyOverlay {
       <p class="card-header-title" style="color:#d97706;">⚠️ Vol repris</p>
     </header>
     <div class="card-content" style="padding:1rem;">
-      <p id="lockStolenMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text);"></p>
+      <p id="lockStolenMsg" style="margin-bottom:16px; font-size:.92rem; color:var(--text); font-weight:700;"></p>
       <button class="button is-warning is-fullwidth readonly-allowed" type="button" onclick="closeLockStolenModal()" style="font-weight:800;">
         OK
       </button>
@@ -2200,13 +2200,9 @@ body.readonly-mode #readonlyOverlay {
       <p class="card-header-title" id="tabCloseModalTitle">Fermer ce vol ?</p>
     </header>
     <div class="card-content" style="padding:1rem;">
-      <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Que voulez-vous faire avec cet onglet ?</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseTab(false)" style="font-weight:800;">
-          📂 Fermer l'onglet
-        </button>
-        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseTab(true)" style="font-weight:800;">
-          🗑 Fermer + Supprimer les données
+        <button class="button is-danger is-fullwidth" type="button" onclick="confirmCloseTab()" style="font-weight:800;">
+          Fermer le vol
         </button>
         <button class="button is-light is-fullwidth" type="button" onclick="closeTabCloseModal()" style="margin-top:4px;">
           Annuler
@@ -4080,11 +4076,9 @@ function switchTab(id){
   // Recharger le bloc note pour le nouvel onglet
   window.bnReloadTab?.();
 
-  // Reset du timer auto-refresh AK pour le nouvel onglet
-  window._autoRefreshAK?.reset();
-
   // Libérer le lock de l'ancien onglet, demander le lock du nouveau
   releaseLock();
+  window._cancelPremierEmbRefresh?.();
   setReadonlyMode(false); // reset — le lockStatus du nouvel onglet remet si besoin
   setTimeout(() => requestLock(), 800);
 
@@ -4111,11 +4105,18 @@ function closeTabCloseModal(){
   _tabCloseId = null;
 }
 
-function confirmCloseTab(deleteRemote){
+function confirmCloseTab(){
   const id = _tabCloseId;
   closeTabCloseModal();
   if(!id) return;
-  deleteTab(id, deleteRemote);
+
+  // Décider automatiquement : supprimer si aucun timing renseigné
+  const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+  const timingFields = ['AIBT','AOBT','SIBT','SOBT','PremierDebarque','DernierDebarque',
+    'AvionPremierEmbarque','AvionDernierEmbarque','FermeturePorteAvion','ArriveeFuel'];
+  const hasTimings = timingFields.some(f => (data[f] || '').trim() !== '');
+
+  deleteTab(id, !hasTimings);
 }
 
 function deleteTab(id, deleteRemote = false){
@@ -4767,22 +4768,8 @@ function updateEOBT() {
   let EOBT_raw = ((EOBT_raw_ext % 1440) + 1440) % 1440;
   window._eobtRawMins = EOBT_raw;
 
-  // ===== RÈGLE CTOT : si CTOT > EOBT + 15 => EOBT = CTOT - 15
-  let EOBT_adj_ext = EOBT_raw_ext;
-
-  if (ctottxt) {
-    const CTOT = parseHHMM(ctottxt);
-    if (CTOT != null) {
-      const EOBT_ref = ((EOBT_raw_ext % 1440) + 1440) % 1440;
-      const CTOT_ext = EOBT_raw_ext + diffSigned(CTOT, EOBT_ref);
-
-      if (CTOT_ext > (EOBT_raw_ext + 15)) {
-        EOBT_adj_ext = CTOT_ext - 15;
-      }
-    }
-  }
-
-  let EOBT_adj = ((EOBT_adj_ext % 1440) + 1440) % 1440;
+  // EOBT brut — pas de règle CTOT
+  let EOBT_adj = EOBT_raw;
   window._eobtAdjMins = EOBT_adj;
 
   outEl.textContent = fmtHHMM(EOBT_adj);
@@ -4855,9 +4842,19 @@ function updateDLCode() {
 /* DL redistribution */
 function dldChanged(index){
   lastDLChanged = index;
-  if(index === 1) dlTouched1 = true;
-  if(index === 2) dlTouched2 = true;
-  if(index === 3) dlTouched3 = true;
+  const fieldId = 'DLduree' + index;
+  const val = parseInt(document.getElementById(fieldId)?.value || '') || 0;
+
+  if(val === 0){
+    // Effacement → reset le touched pour redistribuer vers le haut
+    if(index === 1){ dlTouched1 = false; dlTouched2 = false; dlTouched3 = false; }
+    if(index === 2){ dlTouched2 = false; dlTouched3 = false; }
+    if(index === 3){ dlTouched3 = false; }
+  } else {
+    if(index === 1) dlTouched1 = true;
+    if(index === 2) dlTouched2 = true;
+    if(index === 3) dlTouched3 = true;
+  }
   redistributeDL();
 }
 
@@ -4884,78 +4881,69 @@ function redistributeDL(){
   if(total == null){ clearDLBorders(); return; }
 
   const c1 = document.getElementById('DLcode1');
+  const c2 = document.getElementById('DLcode2');
+  const c3 = document.getElementById('DLcode3');
   const f1 = document.getElementById('DLduree1');
   const f2 = document.getElementById('DLduree2');
   const f3 = document.getElementById('DLduree3');
-  if(!c1 || !f1 || !f2 || !f3) return;
+  if(!c1||!f1||!f2||!f3) return;
 
-  let d1 = parseInt(f1.value)||0;
-  let d2 = parseInt(f2.value)||0;
-  let d3 = parseInt(f3.value)||0;
+  const v1 = (c1.value||'').toUpperCase().trim();
+  const has93 = (v1==='93'||v1==='93A');
+  const clamp = (x,mn,mx)=>Math.max(mn,Math.min(mx,x));
 
-  const v1 = (c1.value || '').toUpperCase().trim();
-  const has93 = (v1 === '93' || v1 === '93A');
-
-  const clamp = (x, min, max)=> Math.max(min, Math.min(max, x));
+  let d1=0, d2=0, d3=0;
 
   if(has93){
-    // DL1 = 93/93A, reste = total - d1
-    d1 = clamp(d1, 0, total);
+    // ── AVEC 93/93A en DL1 ──────────────────────────────────────────────
+    d1 = clamp(parseInt(f1.value)||0, 0, total);
     const remain = Math.max(0, total - d1);
 
-    // ✅ règle clé : tant que l'user n'a pas touché DL2/DL3 -> TOUT en DL2
     if(!dlTouched2 && !dlTouched3){
-      d2 = remain;
-      d3 = 0;
-    }else if(dlTouched3){
-      // l'user pilote DL3 => DL2 prend le reste
-      d3 = clamp(d3, 0, remain);
-      d2 = remain - d3;
-    }else{
-      // l'user pilote DL2 => DL3 prend le reste
-      d2 = clamp(d2, 0, remain);
+      // Rien de touché → tout le reste en DL2
+      d2 = remain; d3 = 0;
+    } else if(dlTouched2 && !dlTouched3){
+      // Agent a saisi DL2 → DL3 prend le reste
+      d2 = clamp(parseInt(f2.value)||0, 0, remain);
       d3 = remain - d2;
+    } else if(!dlTouched2 && dlTouched3){
+      // Agent a saisi DL3 → DL2 prend le reste
+      d3 = clamp(parseInt(f3.value)||0, 0, remain);
+      d2 = remain - d3;
+    } else {
+      // Les deux touchés → on respecte les deux, DL3 s'ajuste
+      d2 = clamp(parseInt(f2.value)||0, 0, remain);
+      d3 = clamp(parseInt(f3.value)||0, 0, remain - d2);
     }
 
-    f1.value = d1 || '';
-    f2.value = d2 || '';
-    f3.value = d3 || '';
-
-    const sum = d1 + d2 + d3;
-    if(sum !== total) markLastFilledDLError();
-    else clearDLBorders();
-    return;
-  }
-
-  // ===== PAS DE 93/93A : par défaut TOUT en DL1 =====
-  if(!dlTouched1 && !dlTouched2 && !dlTouched3){
-    d1 = total; d2 = 0; d3 = 0;
-  }else if(dlTouched3){
-    // l'user pilote DL3 => DL2 puis DL1 prennent le reste (dans cet ordre)
-    d3 = clamp(d3, 0, total);
-    const rem23 = total - d3;
-    d2 = clamp(d2, 0, rem23);
-    d1 = total - d2 - d3;
-  }else if(dlTouched2){
-    // l'user pilote DL2 => DL3 prend le reste, DL1 complète
-    d2 = clamp(d2, 0, total);
-    const rem2 = total - d2;
-    d3 = clamp(d3, 0, rem2);
-    d1 = total - d2 - d3;
-  }else{
-    // l'user pilote DL1 => DL2 prend le reste, DL3 = 0 par défaut
-    d1 = clamp(d1, 0, total);
-    const rem1 = total - d1;
-    if(!dlTouched2 && !dlTouched3){
-      d2 = rem1; d3 = 0;
-    }else if(dlTouched3){
-      d3 = clamp(d3, 0, rem1);
-      d2 = rem1 - d3;
-    }else{
-      d2 = clamp(d2, 0, rem1);
-      d3 = rem1 - d2;
+  } else {
+    // ── SANS 93/93A : cascade DL1 → DL2 → DL3 ──────────────────────────
+    if(!dlTouched1 && !dlTouched2 && !dlTouched3){
+      // Rien touché → tout en DL1
+      d1 = total; d2 = 0; d3 = 0;
+    } else if(dlTouched1 && !dlTouched2 && !dlTouched3){
+      // Agent pilote DL1 → reste en DL2
+      d1 = clamp(parseInt(f1.value)||0, 0, total);
+      d2 = total - d1; d3 = 0;
+    } else if(dlTouched1 && dlTouched2 && !dlTouched3){
+      // Agent pilote DL1 et DL2 → reste en DL3
+      d1 = clamp(parseInt(f1.value)||0, 0, total);
+      d2 = clamp(parseInt(f2.value)||0, 0, total - d1);
+      d3 = total - d1 - d2;
+    } else if(dlTouched1 && dlTouched2 && dlTouched3){
+      // Tout touché → respecter DL1+DL2, DL3 s'ajuste
+      d1 = clamp(parseInt(f1.value)||0, 0, total);
+      d2 = clamp(parseInt(f2.value)||0, 0, total - d1);
+      d3 = clamp(parseInt(f3.value)||0, 0, total - d1 - d2);
+    } else {
+      // Cas atypiques → tout en DL1
+      d1 = total; d2 = 0; d3 = 0;
     }
   }
+
+  // ── Règle de cascade : DL2 vide si DL1 vide, DL3 vide si DL2 vide ───
+  if(!d1) { d2 = 0; d3 = 0; }
+  else if(!d2) { d3 = 0; }
 
   f1.value = d1 || '';
   f2.value = d2 || '';
@@ -6455,10 +6443,8 @@ function showLockModal(rza, ts){
 function closeLockModal(){
   document.getElementById('lockBackdrop').style.display = 'none';
   document.getElementById('lockModal').style.display    = 'none';
-  // Ne pas forcer le readonly ici — laisse le lockStatus remettre à jour si besoin
-  // Sur l'onglet courant : si l'utilisateur annule, on sort du readonly
-  // (si le vol est vraiment verrouillé, le prochain message WS le remettra)
-  setReadonlyMode(false);
+  // Ne PAS lever le readonly ici — l'utilisateur a juste fermé le popup
+  // Le readonly reste actif si le lock appartient à quelqu'un d'autre
 }
 
 function showLockStolenModal(by){
@@ -8145,6 +8131,9 @@ async function footerRefreshAK(){
     inp.value='';
     inp.dispatchEvent(new Event('change',{bubbles:true}));
     twSync(id); updateAllCalculations();
+    // Forcer l'envoi immédiat de la valeur vide pour la synchro
+    _recentlyEdited.delete(id); // lever la protection pour que l'envoi passe
+    sendFieldUpdate(id, '');
   }
 
   /* ---- zone click (−1 / now / +1) ---- */
@@ -8371,128 +8360,6 @@ self.addEventListener('fetch', e => {
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
 
-/* ─── Auto-refresh AK toutes les 15 min ──────────────────────────────────────
- * Conditions :
- *   1. AvionDernierEmbarque est rempli (dernier embarqué saisi)
- *   2. AOBT est encore vide (avion pas encore parti)
- * Une fois AOBT reçu après un refresh, on arrête le timer.
- * ──────────────────────────────────────────────────────────────────────────── */
-(function initAutoRefreshAK() {
-  // Séquence des délais en minutes : 8, 4, 4, puis 15 pendant 1h max
-  const SEQUENCE_MINS = [8, 4, 4];
-  const REPEAT_MINS   = 15;
-  const MAX_DURATION_MS = 1 * 60 * 60 * 1000; // 1 heure max
-
-  let _timer    = null;
-  let _stopped  = false;
-  let _step     = 0;
-  let _startedAt = null; // timestamp de démarrage
-
-  function shouldAutoRefresh() {
-    // Conditions : Fermeture porte remplie ET AOBT vide
-    const fermeturePorte = (document.getElementById('FermeturePorteAvion')?.value || '').trim();
-    const aobt           = (document.getElementById('AOBT')?.value || '').trim();
-    return fermeturePorte !== '' && aobt === '';
-  }
-
-  function aobIsNowFilled() {
-    return (document.getElementById('AOBT')?.value || '').trim() !== '';
-  }
-
-  function nextDelay() {
-    const mins = _step < SEQUENCE_MINS.length ? SEQUENCE_MINS[_step] : REPEAT_MINS;
-    return mins * 60 * 1000;
-  }
-
-  async function tick() {
-    if (_stopped) return;
-
-    // Arrêt après 2h
-    if (_startedAt && Date.now() - _startedAt >= MAX_DURATION_MS) {
-      console.log('[AutoRefreshAK] 2h écoulées — arrêt du refresh automatique');
-      stopAutoRefresh();
-      return;
-    }
-
-    if (!shouldAutoRefresh()) {
-      scheduleNext(false);
-      return;
-    }
-
-    const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
-    if (!tabId) { scheduleNext(false); return; }
-
-    console.log(`[AutoRefreshAK] Refresh #${_step + 1} — délai suivant : ${_step + 1 < SEQUENCE_MINS.length ? SEQUENCE_MINS[_step + 1] : REPEAT_MINS} min`);
-    try {
-      await refreshAKTab(tabId);
-    } catch(e) {
-      console.warn('[AutoRefreshAK] Erreur refresh:', e);
-    }
-
-    if (aobIsNowFilled()) {
-      console.log('[AutoRefreshAK] AOBT reçu — arrêt du refresh automatique');
-      stopAutoRefresh();
-      showPopup('✅ AOBT reçu — rafraîchissement auto arrêté', '#16a34a', 2500);
-      return;
-    }
-
-    _step++;
-    scheduleNext(true);
-  }
-
-  function scheduleNext(counted) {
-    if (_stopped) return;
-    const delay = nextDelay();
-    _timer = setTimeout(tick, delay);
-    if (counted) console.log(`[AutoRefreshAK] Prochain refresh dans ${delay / 60000} min`);
-  }
-
-  function startAutoRefresh() {
-    if (_timer) return;
-    _stopped   = false;
-    _step      = 0;
-    _startedAt = Date.now();
-    scheduleNext(true);
-    console.log('[AutoRefreshAK] Séquence démarrée (8→4→4→15…, max 1h)');
-  }
-
-  function stopAutoRefresh() {
-    if (_timer) {
-      clearTimeout(_timer);
-      _timer = null;
-    }
-    _stopped = true;
-  }
-
-  function resetAutoRefresh() {
-    stopAutoRefresh();
-    _stopped = false;
-    startAutoRefresh();
-  }
-
-  // Démarrer au chargement
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(startAutoRefresh, 3000);
-  });
-
-  // Surveiller le champ AOBT : si rempli manuellement → stop
-  document.addEventListener('change', e => {
-    if (e.target && e.target.id === 'AOBT' && e.target.value) {
-      if (_timer) {
-        stopAutoRefresh();
-        console.log('[AutoRefreshAK] AOBT saisi manuellement — arrêt du refresh auto');
-      }
-    }
-    // Si AOBT effacé → relancer
-    if (e.target && e.target.id === 'AOBT' && !e.target.value) {
-      if (!_timer && !_stopped) startAutoRefresh();
-    }
-  });
-
-  // Exposer pour usage externe (ex: changement d'onglet)
-  window._autoRefreshAK = { start: startAutoRefresh, stop: stopAutoRefresh, reset: resetAutoRefresh };
-})();
-
 /* ─── Refresh AK unique 5 min après premier embarqué ─────────────────────── */
 (function initPremierEmbRefresh() {
   let _timer = null;
@@ -8532,14 +8399,9 @@ self.addEventListener('fetch', e => {
     }
   });
 
-  // Annuler aussi au changement d'onglet
-  const _origReset = window._autoRefreshAK?.reset;
-  window._autoRefreshAK = window._autoRefreshAK || {};
-  const _prevReset = window._autoRefreshAK.reset;
-  window._autoRefreshAK.reset = function() {
-    cancelRefresh();
-    if (_prevReset) _prevReset();
-  };
+  // Annuler aussi au changement d'onglet via switchTab
+  const _origSwitchTab = window.switchTab;
+  window._cancelPremierEmbRefresh = cancelRefresh;
 })();
 </script>
 
