@@ -4941,10 +4941,6 @@ function redistributeDL(){
     }
   }
 
-  // ── Règle de cascade : DL2 vide si DL1 vide, DL3 vide si DL2 vide ───
-  if(!d1) { d2 = 0; d3 = 0; }
-  else if(!d2) { d3 = 0; }
-
   f1.value = d1 || '';
   f2.value = d2 || '';
   f3.value = d3 || '';
