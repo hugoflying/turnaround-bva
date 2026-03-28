@@ -7150,18 +7150,9 @@ function confirmClearFields(){
 
   updateAllCalculations();
 
-  // Supprimer du dashboard (effacement = plus de timings)
+  // Envoyer le state complet avec timings vides → dashboard passe en "EN ATTENTE"
   clearTimeout(window._sendFullDebounce);
-  if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
-    const tabData = getTabData();
-    const fid = String(tabData?.akMeta?.id || '').trim();
-    const lid = String(tabData?.akMeta?.linkedId || '').trim();
-    const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid || null;
-    const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
-    setTimeout(() => {
-      if(socket && socket.readyState === WebSocket.OPEN) socket.send(deleteMsg);
-    }, 300);
-  }
+  window._sendFullDebounce = setTimeout(() => sendFullFlightState(), 500);
 
   // Effacer aussi le bloc note (canvas + clavier)
   if(typeof window.bnConfirmClear === 'function'){
