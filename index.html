@@ -7143,6 +7143,21 @@ function confirmClearFields(){
 
   updateAllCalculations();
 
+  // Envoyer le state mis à jour puis supprimer du dashboard
+  clearTimeout(window._sendFullDebounce);
+  window._sendFullDebounce = setTimeout(() => {
+    sendFullFlightState();
+    // Supprimer du dashboard (plus de timings = vol terminé côté dashboard)
+    if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+      const tabData = getTabData();
+      const fid = String(tabData?.akMeta?.id || '').trim();
+      const lid = String(tabData?.akMeta?.linkedId || '').trim();
+      const dashKey = (fid && lid) ? (fid < lid ? fid : lid) : fid || null;
+      const deleteMsg = JSON.stringify({ __delete: '1', ...(dashKey ? { __dashboardKey: dashKey } : {}) });
+      socket.send(deleteMsg);
+    }
+  }, 500);
+
   // Effacer aussi le bloc note (canvas + clavier)
   if(typeof window.bnConfirmClear === 'function'){
     // Effacer canvas sans confirmation
