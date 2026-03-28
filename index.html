@@ -2140,13 +2140,9 @@ body.readonly-mode #readonlyOverlay {
       <p class="card-header-title">Tout fermer ?</p>
     </header>
     <div class="card-content" style="padding:1rem;">
-      <p style="margin-bottom:14px; color:var(--muted); font-size:.88rem;">Tous les onglets ouverts seront fermés.</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseAll(false)" style="font-weight:800;">
-          📂 Fermer tout
-        </button>
-        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseAll(true)" style="font-weight:800;">
-          🗑 Fermer tout + Supprimer les données
+        <button class="button is-danger is-fullwidth" type="button" onclick="confirmCloseAll()" style="font-weight:800;">
+          Fermer tous les vols
         </button>
         <button class="button is-light is-fullwidth" type="button" onclick="document.getElementById('closeAllModal').style.display='none'" style="margin-top:4px;">
           Annuler
@@ -7167,17 +7163,23 @@ function openCloseAllModal(){
   document.getElementById('closeAllModal').style.display = 'flex';
 }
 
-function confirmCloseAll(deleteRemote) {
+function confirmCloseAll() {
   document.getElementById('closeAllModal').style.display = 'none';
 
-  if(deleteRemote){
-    // Supprimer les données sur le DO pour chaque onglet
-    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
-    const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
-    const deletePromises = [];
-    tabs.forEach(tid => {
-      try{
-        const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+  const timingFields = ['AIBT','AOBT','SIBT','SOBT','PremierDebarque','DernierDebarque',
+    'AvionPremierEmbarque','AvionDernierEmbarque','FermeturePorteAvion','ArriveeFuel'];
+
+  const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+  const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
+  const deletePromises = [];
+
+  tabs.forEach(tid => {
+    try{
+      const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+      const hasTimings = timingFields.some(f => (data[f] || '').trim() !== '');
+
+      // Si pas de timings → supprimer du DO
+      if(!hasTimings){
         const meta = data?.akMeta;
         if(!meta?.id) return;
         const key = `AK_${meta.id}`;
@@ -7198,23 +7200,28 @@ function confirmCloseAll(deleteRemote) {
           });
           deletePromises.push(p);
         }
-      }catch(_){}
-    });
-    Promise.all(deletePromises).then(() => {
-      setTimeout(() => { localStorage.clear(); location.reload(); }, 1000);
-    });
-  } else {
-    // Fermeture locale uniquement — déconnecter proprement
+      }
+    }catch(_){}
+  });
+
+  // Fermeture locale après envoi des suppressions
+  const doClose = () => {
     clearTimeout(window._sendFullDebounce);
     clearTimeout(saveTimer); saveTimer = null;
     if(socket){ try{ socket.close(); }catch(_){} socket = null; currentSocketKey = null; }
     localStorage.clear();
     location.reload();
+  };
+
+  if(deletePromises.length > 0){
+    Promise.all(deletePromises).then(() => setTimeout(doClose, 500));
+  } else {
+    doClose();
   }
 }
 
 function clearAutoSave() {
-  confirmCloseAll(false);
+  confirmCloseAll();
 }
 
 function shouldOpenFinalLoad(){
