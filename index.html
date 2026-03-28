@@ -8389,6 +8389,17 @@ self.addEventListener('fetch', e => {
     if (e.target.id === 'AvionPremierEmbarque' && e.target.value) {
       scheduleRefresh();
     }
+    // Déclencheur : AIBT renseigné → refresh AK dans 15s
+    if (e.target.id === 'AIBT' && e.target.value) {
+      setTimeout(async () => {
+        const aobt = (document.getElementById('AOBT')?.value || '').trim();
+        if (aobt) return; // déjà parti
+        const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
+        if (!tabId) return;
+        console.log('[AutoRefreshAK] Refresh après AIBT (15s)');
+        try { await refreshAKTab(tabId); } catch(e) {}
+      }, 15 * 1000);
+    }
     // Annuler si AOBT reçu
     if (e.target.id === 'AOBT' && e.target.value) {
       cancelRefresh();
