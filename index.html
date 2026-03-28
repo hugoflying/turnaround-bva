@@ -2197,8 +2197,11 @@ body.readonly-mode #readonlyOverlay {
     </header>
     <div class="card-content" style="padding:1rem;">
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="button is-danger is-fullwidth" type="button" onclick="confirmCloseTab()" style="font-weight:800;">
-          Fermer le vol
+        <button class="button is-warning is-fullwidth" type="button" onclick="confirmCloseTab(false)" style="font-weight:800;">
+          📂 Fermer l'onglet
+        </button>
+        <button class="button is-danger is-light is-fullwidth" type="button" onclick="confirmCloseTab(true)" style="font-weight:800;">
+          🗑 Fermer + Supprimer les données
         </button>
         <button class="button is-light is-fullwidth" type="button" onclick="closeTabCloseModal()" style="margin-top:4px;">
           Annuler
@@ -4101,18 +4104,11 @@ function closeTabCloseModal(){
   _tabCloseId = null;
 }
 
-function confirmCloseTab(){
+function confirmCloseTab(deleteRemote){
   const id = _tabCloseId;
   closeTabCloseModal();
   if(!id) return;
-
-  // Décider automatiquement : supprimer si aucun timing renseigné
-  const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
-  const timingFields = ['AIBT','AOBT','SIBT','SOBT','PremierDebarque','DernierDebarque',
-    'AvionPremierEmbarque','AvionDernierEmbarque','FermeturePorteAvion','ArriveeFuel'];
-  const hasTimings = timingFields.some(f => (data[f] || '').trim() !== '');
-
-  deleteTab(id, !hasTimings);
+  deleteTab(id, deleteRemote);
 }
 
 function deleteTab(id, deleteRemote = false){
@@ -7150,9 +7146,19 @@ function confirmClearFields(){
 
   updateAllCalculations();
 
-  // Envoyer le state complet avec timings vides → dashboard passe en "EN ATTENTE"
+  // Forcer l'envoi des champs vidés au DO (pour update dashboard)
   clearTimeout(window._sendFullDebounce);
-  window._sendFullDebounce = setTimeout(() => sendFullFlightState(), 500);
+  window._sendFullDebounce = setTimeout(() => {
+    // Construire un patch avec tous les champs vidés
+    const patch = {};
+    timingIds.forEach(id => { patch[id] = ''; });
+    // Envoyer via le socket directement
+    if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+      socket.send(JSON.stringify(patch));
+    } else {
+      sendFullFlightState();
+    }
+  }, 300);
 
   // Effacer aussi le bloc note (canvas + clavier)
   if(typeof window.bnConfirmClear === 'function'){
@@ -8145,12 +8151,12 @@ async function footerRefreshAK(){
     inp.value='';
     inp.dispatchEvent(new Event('change',{bubbles:true}));
     twSync(id); updateAllCalculations();
-    // Forcer l'envoi immédiat de la valeur vide pour la synchro
+    // Forcer l'envoi direct via socket (bypass isApplyingRemoteUpdate)
     _recentlyEdited.delete(id);
-    sendFieldUpdate(id, '');
-    // Envoyer le full state pour que le dashboard mette à jour le statut
-    clearTimeout(window._sendFullDebounce);
-    window._sendFullDebounce = setTimeout(() => sendFullFlightState(), 500);
+    const patch = { [id]: '' };
+    if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
+      socket.send(JSON.stringify(patch));
+    }
   }
 
   /* ---- zone click (−1 / now / +1) ---- */
