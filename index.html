@@ -7535,8 +7535,14 @@ function applyRemotePayload(payload) {
       // Ne pas écraser un champ en cours d'édition
       if (document.activeElement === el) return;
 
-      // Ne pas écraser un champ modifié récemment — sauf en lecture seule (l'user ne peut pas éditer)
+      // Ne pas écraser un champ modifié récemment — sauf en lecture seule
       if (_recentlyEdited.has(id) && !document.body.classList.contains('readonly-mode')) return;
+
+      // Ne jamais écraser une valeur locale existante avec une valeur vide distante
+      if(newValue === '' && el.value !== '') return;
+
+      // Ne jamais écraser une valeur saisie manuellement (pas via AK) — sauf en readonly
+      if(el.value !== '' && el.dataset.ak !== '1' && !document.body.classList.contains('readonly-mode')) return;
 
       el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
