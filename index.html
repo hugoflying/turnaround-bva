@@ -1298,18 +1298,22 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 }
 
 /* ===== MODE LECTURE SEULE ===== */
-body.readonly-mode input:not([type="hidden"]),
-body.readonly-mode select,
-body.readonly-mode textarea,
-body.readonly-mode button:not(.readonly-allowed) {
+body.readonly-mode input:not([type="hidden"]):not(.fixed-header *),
+body.readonly-mode select:not(.fixed-header *),
+body.readonly-mode textarea:not(.fixed-header *),
+body.readonly-mode button:not(.readonly-allowed):not(.fixed-header button):not(.fixed-footer button) {
   pointer-events: none !important;
   opacity: 0.55 !important;
+}
+.fixed-header button, .fixed-footer button {
+  pointer-events: all !important;
+  opacity: 1 !important;
 }
 /* Overlay intercepteur de clics en readonly */
 #readonlyOverlay {
   display: none;
   position: fixed;
-  inset: 0;
+  inset: var(--fixed-header-h) 0 0 0; /* commence sous le header */
   z-index: 4000; /* au-dessus du footer (3500) */
   cursor: not-allowed;
 }
