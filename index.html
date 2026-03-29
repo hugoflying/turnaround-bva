@@ -1309,6 +1309,17 @@ body.readonly-mode button:not(.readonly-allowed):not(.fixed-header button):not(.
   pointer-events: all !important;
   opacity: 1 !important;
 }
+/* Boutons de navigation consultables en readonly */
+body.readonly-mode #ldmTabArr,
+body.readonly-mode #ldmTabPrevi,
+body.readonly-mode #ldmTabFinal,
+body.readonly-mode #ldmTabFuel,
+body.readonly-mode #seg-arr-li a,
+body.readonly-mode #seg-dep-li a,
+body.readonly-mode #settingsFab {
+  pointer-events: all !important;
+  opacity: 1 !important;
+}
 /* Overlay intercepteur de clics en readonly */
 #readonlyOverlay {
   display: none;
@@ -7790,7 +7801,20 @@ function connectFlightSocket() {
 
       if (msg.__type === "init") {
         hasReceivedInitialState = true;
-        applyRemotePayload(msg.payload || {});
+
+        // Vérifier si on a déjà des données locales significatives
+        const localData = currentTabId ? JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}') : {};
+        const localHasData = localData.NVol && localData.Cie;
+
+        if(localHasData){
+          // On a des données locales → ne pas écraser avec le state distant
+          // Envoyer notre state local au DO pour qu'il soit le référent
+          console.log('[Init] Données locales présentes → conservation + envoi au DO');
+          setTimeout(() => sendFullFlightState(), 300);
+        } else {
+          // Pas de données locales → appliquer le state du DO normalement
+          applyRemotePayload(msg.payload || {});
+        }
         flushPendingPatch();
         return;
       }
