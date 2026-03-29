@@ -7187,10 +7187,10 @@ function confirmClearFields(){
   // Forcer l'envoi des champs vidés au DO (pour update dashboard)
   clearTimeout(window._sendFullDebounce);
   window._sendFullDebounce = setTimeout(() => {
-    // Construire un patch avec tous les champs vidés
-    const patch = {};
+    // Construire un patch avec tous les champs vidés + flag effacement intentionnel
+    const patch = { __clearAll: '1' };
     timingIds.forEach(id => { patch[id] = ''; });
-    // Envoyer via le socket directement
+    // Envoyer via le socket directement → broadcast à tous les clients du vol
     if(socket && socket.readyState === WebSocket.OPEN && currentSocketKey){
       socket.send(JSON.stringify(patch));
     } else {
@@ -7478,9 +7478,11 @@ function applyRemotePayload(payload) {
 
   // Si le payload vient d'un applyAKFlight distant → on lève la protection
   const isFromAK = payload['__fromAK'] === '1';
+  // Si c'est un effacement intentionnel (bouton Effacer) → on accepte les vides
+  const isClearAll = payload['__clearAll'] === '1';
 
   const akProtectedFields = isFromAK
-    ? new Set(["Date"])  // on garde seulement Date protégé
+    ? new Set(["Date"])
     : new Set(["Date", "Parking", "Immat", "TypeAvion", "From", "To", "SIBT"]);
 
   // ✅ Traitement spécial : akMeta distant
@@ -7539,10 +7541,11 @@ function applyRemotePayload(payload) {
       if (_recentlyEdited.has(id) && !document.body.classList.contains('readonly-mode')) return;
 
       // Ne jamais écraser une valeur locale existante avec une valeur vide distante
-      if(newValue === '' && el.value !== '') return;
+      // Exception : effacement intentionnel (__clearAll)
+      if(newValue === '' && el.value !== '' && !isClearAll) return;
 
-      // Ne jamais écraser une valeur saisie manuellement (pas via AK) — sauf en readonly
-      if(el.value !== '' && el.dataset.ak !== '1' && !document.body.classList.contains('readonly-mode')) return;
+      // Ne jamais écraser une valeur saisie manuellement — sauf en readonly ou effacement
+      if(el.value !== '' && el.dataset.ak !== '1' && !document.body.classList.contains('readonly-mode') && !isClearAll) return;
 
       el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -7807,20 +7810,8 @@ function connectFlightSocket() {
 
       if (msg.__type === "init") {
         hasReceivedInitialState = true;
-
-        // Vérifier si on a déjà des données locales significatives
-        const localData = currentTabId ? JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}') : {};
-        const localHasData = localData.NVol && localData.Cie;
-
-        if(localHasData){
-          // On a des données locales → ne pas écraser avec le state distant
-          // Envoyer notre state local au DO pour qu'il soit le référent
-          console.log('[Init] Données locales présentes → conservation + envoi au DO');
-          setTimeout(() => sendFullFlightState(), 300);
-        } else {
-          // Pas de données locales → appliquer le state du DO normalement
-          applyRemotePayload(msg.payload || {});
-        }
+        // Appliquer le state distant — applyRemotePayload protège les valeurs locales non vides
+        applyRemotePayload(msg.payload || {});
         flushPendingPatch();
         return;
       }
