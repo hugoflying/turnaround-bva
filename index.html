@@ -5883,7 +5883,7 @@ function renderAKList(pairs){
   const list = document.getElementById('akList');
   if(!list) return;
 
-  // Construire une map akId → RZA depuis les tabs ouverts
+  // Construire la map akId → RZA depuis localStorage (local) + serveur (async)
   const akIdToRza = {};
   try{
     const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -5895,6 +5895,21 @@ function renderAKList(pairs){
       if(rza && meta?.linkedId) akIdToRza[String(meta.linkedId)] = rza;
     });
   }catch(_){}
+
+  // Rendu immédiat avec données locales, puis mise à jour avec données serveur
+  _renderAKListWithRza(pairs, list, akIdToRza);
+
+  // Fetch serveur en arrière-plan pour enrichir avec les autres tablettes
+  fetch('https://turnaround-sync.deruellehugo-49c.workers.dev/rzamap')
+    .then(r => r.ok ? r.json() : {})
+    .then(serverMap => {
+      Object.assign(akIdToRza, serverMap);
+      _renderAKListWithRza(pairs, list, akIdToRza);
+    })
+    .catch(() => {});
+}
+
+function _renderAKListWithRza(pairs, list, akIdToRza){
 
   const safe = obj => JSON.stringify(obj)
     .replace(/</g,'\u003c').replace(/>/g,'\u003e')
