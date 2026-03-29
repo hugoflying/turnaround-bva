@@ -5879,12 +5879,23 @@ function delayBarColor(mins){
 }
 
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
+let _rzaMapCache = {};
+let _rzaMapLastFetch = 0;
+
+async function fetchRzaMap(){
+  try{
+    const r = await fetch('https://turnaround-sync.deruellehugo-49c.workers.dev/rzamap');
+    if(r.ok) _rzaMapCache = await r.json();
+    _rzaMapLastFetch = Date.now();
+  }catch(_){}
+}
+
 function renderAKList(pairs){
   const list = document.getElementById('akList');
   if(!list) return;
 
-  // Construire la map akId → RZA depuis localStorage (local) + serveur (async)
-  const akIdToRza = {};
+  // Map locale
+  const akIdToRza = { ..._rzaMapCache };
   try{
     const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
     tabs.forEach(tid => {
@@ -5896,17 +5907,25 @@ function renderAKList(pairs){
     });
   }catch(_){}
 
-  // Rendu immédiat avec données locales, puis mise à jour avec données serveur
   _renderAKListWithRza(pairs, list, akIdToRza);
 
-  // Fetch serveur en arrière-plan pour enrichir avec les autres tablettes
-  fetch('https://turnaround-sync.deruellehugo-49c.workers.dev/rzamap')
-    .then(r => r.ok ? r.json() : {})
-    .then(serverMap => {
-      Object.assign(akIdToRza, serverMap);
-      _renderAKListWithRza(pairs, list, akIdToRza);
-    })
-    .catch(() => {});
+  // Re-fetch si cache vieux de plus de 30s
+  if(Date.now() - _rzaMapLastFetch > 30000){
+    fetchRzaMap().then(() => {
+      const updated = { ..._rzaMapCache };
+      try{
+        const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+        tabs.forEach(tid => {
+          const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+          const meta = data.akMeta;
+          const rza  = (data.RZA || '').toUpperCase().trim();
+          if(rza && meta?.id)       updated[String(meta.id)]       = rza;
+          if(rza && meta?.linkedId) updated[String(meta.linkedId)] = rza;
+        });
+      }catch(_){}
+      _renderAKListWithRza(pairs, list, updated);
+    });
+  }
 }
 
 function _renderAKListWithRza(pairs, list, akIdToRza){
@@ -7575,12 +7594,9 @@ function applyRemotePayload(payload) {
       // Ne pas écraser un champ modifié récemment — sauf en lecture seule
       if (_recentlyEdited.has(id) && !document.body.classList.contains('readonly-mode')) return;
 
-      // Ne jamais écraser une valeur locale existante avec une valeur vide distante
+      // Ne jamais écraser une valeur locale avec une valeur vide distante
       // Exception : effacement intentionnel (__clearAll)
       if(newValue === '' && el.value !== '' && !isClearAll) return;
-
-      // Ne jamais écraser une valeur saisie manuellement — sauf en readonly ou effacement
-      if(el.value !== '' && el.dataset.ak !== '1' && !document.body.classList.contains('readonly-mode') && !isClearAll) return;
 
       el.value = newValue;
       el.dispatchEvent(new Event("input", { bubbles: true }));
