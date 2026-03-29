@@ -1316,7 +1316,8 @@ body.readonly-mode #ldmTabFinal,
 body.readonly-mode #ldmTabFuel,
 body.readonly-mode #seg-arr-li a,
 body.readonly-mode #seg-dep-li a,
-body.readonly-mode #settingsFab {
+body.readonly-mode #settingsFab,
+body.readonly-mode #loadFab {
   pointer-events: all !important;
   opacity: 1 !important;
 }
@@ -7668,8 +7669,10 @@ function collectFlightState() {
   // depFF/arrFF pour affichage dashboard
   try{
     const meta2 = getTabData()?.akMeta;
-    if(meta2?.depFF) payload['__depFF'] = meta2.depFF;
-    if(meta2?.arrFF) payload['__arrFF'] = meta2.arrFF;
+    if(meta2?.depFF)    payload['__depFF']    = meta2.depFF;
+    if(meta2?.arrFF)    payload['__arrFF']    = meta2.arrFF;
+    if(meta2?.id)       payload['__akId']     = String(meta2.id);
+    if(meta2?.linkedId) payload['__linkedId'] = String(meta2.linkedId);
   }catch(_){}
 
   // Clé dashboard commune ARR+DEP : min(id, linkedId)
