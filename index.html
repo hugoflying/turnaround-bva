@@ -6155,6 +6155,9 @@ function _doApplyAKFlight(f, flow, opts = {}){
       localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
       window._pendingRZA = null;
     }
+    // ✅ Réinitialiser le readonly — nouveau vol = nouvelle session
+    setReadonlyMode(false);
+    window._hasLock = false;
   }
 
   try{
@@ -7799,6 +7802,8 @@ function connectFlightSocket() {
         setReadonlyMode(false);
         closeLockModal();
         console.log('[Lock] lockGranted pour', msg.rza);
+        // Renvoyer notre state local au DO pour écraser le state de l'autre agent
+        setTimeout(() => sendFullFlightState(), 300);
         return;
       }
 
