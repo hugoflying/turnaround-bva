@@ -5883,6 +5883,19 @@ function renderAKList(pairs){
   const list = document.getElementById('akList');
   if(!list) return;
 
+  // Construire une map akId → RZA depuis les tabs ouverts
+  const akIdToRza = {};
+  try{
+    const tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    tabs.forEach(tid => {
+      const data = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+      const meta = data.akMeta;
+      const rza  = (data.RZA || '').toUpperCase().trim();
+      if(rza && meta?.id)       akIdToRza[String(meta.id)]       = rza;
+      if(rza && meta?.linkedId) akIdToRza[String(meta.linkedId)] = rza;
+    });
+  }catch(_){}
+
   const safe = obj => JSON.stringify(obj)
     .replace(/</g,'\u003c').replace(/>/g,'\u003e')
     .replace(/&/g,'\u0026').replace(/'/g,'\u0027');
@@ -5919,7 +5932,13 @@ function renderAKList(pairs){
     const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
     const timeStr  = t ? escapeHtml(t)+suf : '—';
 
-    // Heure estimée : affichée si la meilleure heure est S et qu'il existe une E différente
+    // RZA badge
+    const rza = akIdToRza[String(f.id || f._id || '')] || '';
+    const rzaHtml = rza
+      ? '<span style="font-size:.62rem;font-weight:900;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;margin-left:4px;">'+escapeHtml(rza)+'</span>'
+      : '';
+
+    // Heure estimée
     let estimatedStr = '';
     if(tSuffix === 'S'){
       const toHHMM = (iso)=>{
@@ -5936,7 +5955,6 @@ function renderAKList(pairs){
     }
 
     const opacity  = done ? 'opacity:.55;' : '';
-    // Bandeau coloré : gauche pour ARR, droite pour DEP
     const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
     const barHtml  = barColor
       ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
@@ -5948,6 +5966,7 @@ function renderAKList(pairs){
       + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
       + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
+      + rzaHtml
       + '</div>'
       + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Pkg '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
       + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+'</div>'
