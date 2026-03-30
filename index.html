@@ -1543,6 +1543,20 @@ body.readonly-mode #readonlyOverlay {
           <textarea class="textarea si-uppercase ldm-ta" id="PreviSI"></textarea>
         </div>
 
+        <!-- POUSSETTES -->
+        <div class="field">
+          <label class="label">POUSSETTES PORTE</label>
+          <input class="input ldm-in" id="PreviPoussettesPorte"
+                 type="text" inputmode="numeric" pattern="[0-9]*"
+                 maxlength="3" oninput="digitsOnly(this)">
+        </div>
+        <div class="field">
+          <label class="label">POUSSETTES CBS</label>
+          <input class="input ldm-in" id="PreviPoussettesCBS"
+                 type="text" inputmode="numeric" pattern="[0-9]*"
+                 maxlength="3" oninput="digitsOnly(this)">
+        </div>
+
       </div>
     </section>
 
@@ -6264,7 +6278,15 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
       setTimeFromISOAK('SOBT', f.sobt || f.eobt);
       setTimeFromISOAK('AOBT', f.aobt);
-      setTimeFromISOAK('CTOT', f.ctot);  // CTOT toujours mis à jour depuis AK (Eurocontrol)
+      // CTOT : mis à jour depuis AK, et effacé si AK n'en a plus
+      if(f.ctot){
+        setTimeFromISOAK('CTOT', f.ctot);
+      } else {
+        const ctotEl = document.getElementById('CTOT');
+        if(ctotEl && ctotEl.dataset.ak === '1'){
+          setValAK('CTOT', '');
+        }
+      }
 
       const siDep = akBuildSI(f, true, { includeDL:false });
       mergeSIFromAK('PreviSI', siDep);
@@ -6320,7 +6342,14 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
         setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
         setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
-        setTimeFromISOAK('CTOT', nextDep.ctot);  // CTOT toujours mis à jour depuis AK
+        if(nextDep.ctot){
+          setTimeFromISOAK('CTOT', nextDep.ctot);
+        } else {
+          const ctotEl = document.getElementById('CTOT');
+          if(ctotEl && ctotEl.dataset.ak === '1'){
+            setValAK('CTOT', '');
+          }
+        }
 
         const siDep = akBuildSI(nextDep, true, { includeDL:false });
         mergeSIFromAK('PreviSI', siDep);
@@ -7213,6 +7242,7 @@ function confirmClearFields(){
     'CommChiffresPorte',
     'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
     'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS','PreviSI',
+    'PreviPoussettesPorte','PreviPoussettesCBS',
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
     'FinalTOB','FinalOA','FinalOB','FinalOC','FinalOD',
     'FinalBAGS','FinalPOIDS','FinalGB','FinalH1','FinalH2','FinalH3','FinalH4','FinalSI',
@@ -8097,6 +8127,7 @@ function setupRealtimeSync() {
     "PreviPAX_MAIN", "PreviPAX_INF", "PreviBAGS", "PreviPOIDS",
     "PreviTOB_FRRK", "PreviMALE", "PreviFEMALE", "PreviCHILD", "PreviINFANT",
     "PreviTOB", "PreviBAGS_OTHER", "PreviPOIDS_OTHER", "PreviSI",
+    "PreviPoussettesPorte", "PreviPoussettesCBS",
     "FinalMALE", "FinalFEMALE", "FinalADULT", "FinalCHILD", "FinalINFANT",
     "FinalTOB", "FinalOA", "FinalOB", "FinalOC", "FinalOD",
     "FinalBAGS", "FinalPOIDS", "FinalGB",
