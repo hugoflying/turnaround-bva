@@ -3477,11 +3477,6 @@ function refreshLDMLayouts(){
   try{ updateFinalTOB?.(); }catch(e){}
 }
 
-function shouldOpenPreviLoad(){
-  const t = parseHHMM(document.getElementById('DernierDebarque')?.value || '');
-  return t != null;
-}
-
 function openLDM(mode=null){
   const b = document.getElementById('ldmBackdrop');
   const m = document.getElementById('ldmModal');
@@ -3505,13 +3500,7 @@ function openLDM(mode=null){
   });
 
   if(mode === null){
-    if(shouldOpenFinalLoad()){
-      ldmSwitch('final');
-    }else if(shouldOpenPreviLoad()){
-      ldmSwitch('previ');
-    }else{
-      ldmSwitch('arr');
-    }
+    ldmSwitch(getAutoLDMMode());
   }else{
     ldmSwitch(mode);
   }
@@ -4087,6 +4076,13 @@ function createNewTab(){
 function switchTab(id){
   stopCountdown();
   saveCurrentTabData();
+
+  // Fermer le modal LDM avant de charger le nouvel onglet
+  const ldmB = document.getElementById('ldmBackdrop');
+  const ldmM = document.getElementById('ldmModal');
+  if(ldmM) ldmM.style.display = 'none';
+  if(ldmB) ldmB.style.display = 'none';
+  unlockScroll?.();
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
@@ -7368,21 +7364,44 @@ function clearAutoSave() {
   confirmCloseAll();
 }
 
-function shouldOpenFinalLoad(){
-  // EOBT brut (hors CTOT)
-  const tobtRaw = window._eobtRawMins;
-  if(tobtRaw == null) return false;
+function getAutoLDMMode(){
+  const premierEmb  = (document.getElementById('AvionPremierEmbarque')?.value || '').trim();
+  const premierDeb  = (document.getElementById('PremierDebarque')?.value || '').trim();
+  const aibtVal     = (document.getElementById('AIBT')?.value || '').trim();
+
+  // 1. Premier Embarqué renseigné → FINAL
+  if(premierEmb) return 'final';
+
+  // 2. Pas d'AIBT → PREVI par défaut
+  const aibt = parseHHMM(aibtVal);
+  if(aibt == null) return 'previ';
 
   const now = getNowMinutes().mins;
 
-  // seuil = EOBT brut - 15
-  let diff = now - (tobtRaw - 15);
+  // Calculer la borne : PremierDebarque + 7min (si renseigné)
+  const deb = parseHHMM(premierDeb);
+  let debPlus7 = null;
+  if(deb != null){
+    debPlus7 = (deb + 7) % 1440;
+  }
 
-  // gestion minuit (diff dans [-720..+720])
-  if(diff < -720) diff += 1440;
-  if(diff >  720) diff -= 1440;
+  // Savoir où on en est par rapport à AIBT
+  let diffAibt = now - aibt;
+  if(diffAibt < -720) diffAibt += 1440;
+  if(diffAibt >  720) diffAibt -= 1440;
 
-  return diff >= 0;
+  if(diffAibt < 0) return 'previ'; // avant AIBT → PREVI
+
+  // Si PremierDebarque+7min atteint → PREVI
+  if(debPlus7 != null){
+    let diffDeb = now - debPlus7;
+    if(diffDeb < -720) diffDeb += 1440;
+    if(diffDeb >  720) diffDeb -= 1440;
+    if(diffDeb >= 0) return 'previ';
+  }
+
+  // Entre AIBT et PremierDebarque+7min → ARR
+  return 'arr';
 }
 
 function toggleFinalImage(){
