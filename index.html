@@ -1677,28 +1677,28 @@ body.readonly-mode #readonlyOverlay {
             <label class="label">H1</label>
             <input class="input ldm-in" id="FinalH1"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
             <div id="FinalH1w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H2</label>
             <input class="input ldm-in" id="FinalH2"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
             <div id="FinalH2w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H3</label>
             <input class="input ldm-in" id="FinalH3"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
             <div id="FinalH3w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
           <div class="field">
             <label class="label">H4</label>
             <input class="input ldm-in" id="FinalH4"
                    type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights()">
+                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
             <div id="FinalH4w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
           </div>
         </div>
@@ -1708,11 +1708,19 @@ body.readonly-mode #readonlyOverlay {
           <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
         </div>
 
-        <div class="field ldm-span-2">
-          <label class="label">Communication chiffres porte</label>
-          <input class="input ldm-in" id="CommChiffresPorte" type="text" readonly
-                 placeholder="Auto — HH:MM"
-                 title="Mis à jour automatiquement à chaque calcul TOB">
+        <div class="field ldm-span-2" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+          <div>
+            <label class="label">Communication chiffres porte</label>
+            <input class="input ldm-in" id="CommChiffresPorte" type="text" readonly
+                   placeholder="Auto — HH:MM"
+                   title="Mis à jour automatiquement à chaque calcul TOB">
+          </div>
+          <div>
+            <label class="label">Communication chargement piste</label>
+            <input class="input ldm-in" id="CommChargementPiste" type="text" readonly
+                   placeholder="Auto — HH:MM"
+                   title="Mis à jour automatiquement quand H1/H2/H3/H4 (CP1–CP4) changent">
+          </div>
         </div>
 
         <!-- BOUTON IMAGE -->
@@ -3595,6 +3603,29 @@ function setTOBValidity(isValid){
 
 // global (à mettre une fois, hors fonction)
 let _finalTOBLastValue = '';
+let _commChargLastValue = '';
+
+function updateCommChargementPiste(){
+  // Construire une "signature" des valeurs H1-H4 remplies
+  const ids = ['FinalH1','FinalH2','FinalH3','FinalH4'];
+  const vals = ids.map(id => (document.getElementById(id)?.value || '').trim());
+  const filled = vals.filter(v => v !== '');
+  if(!filled.length) return; // rien de rempli → on ne touche pas
+
+  const sig = vals.join('|');
+  if(sig === _commChargLastValue) return; // même combinaison → pas de re-timestamp
+  _commChargLastValue = sig;
+
+  const d = new Date();
+  const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+  const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+
+  const el = document.getElementById('CommChargementPiste');
+  if(el){
+    el.value = `${hh}:${mm}`;
+    el.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+}
 
 function updateFinalTOB(){
   const n = (id)=>{
@@ -6884,6 +6915,7 @@ function validateForm() {
 
     body += br();
     if(v('CommChiffresPorte')) body += r('COMM. CHIFFRES PORTE', v('CommChiffresPorte'));
+    if(v('CommChargementPiste')) body += r('COMM. CHARGEMENT PISTE', v('CommChargementPiste'));
     if(v('FinalSI'))           body += r('SI', v('FinalSI'));
   }
 
@@ -7254,7 +7286,7 @@ function confirmClearFields(){
     'ArrPNT','ArrPNC','ArriveeFuel','DepartFuel','ArriveeLiftArr','DepartLiftArr',
     'ArriveeLift','DepartLift','AvionPremierEmbarque','AvionDernierEmbarque',
     'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
-    'CommChiffresPorte',
+    'CommChiffresPorte', 'CommChargementPiste',
     'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
     'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS','PreviSI',
     'PreviPoussettesPorte','PreviPoussettesCBS',
@@ -7758,7 +7790,7 @@ function collectFlightState() {
     "FinalH3",
     "FinalH4",
     "FinalSI",
-    "CommChiffresPorte",
+    "CommChiffresPorte", "CommChargementPiste",
     "FinalCREW",
     "FinalTHOB",
 
@@ -8154,7 +8186,7 @@ function setupRealtimeSync() {
     "TaxiFuel",
     "TripFuel",
     "FuelUplift",
-    "CommChiffresPorte",
+    "CommChiffresPorte", "CommChargementPiste",
     "FinalCREW",
     "FinalTHOB"
   ]);
@@ -8171,7 +8203,7 @@ function setupRealtimeSync() {
     "FinalBAGS", "FinalPOIDS", "FinalGB",
     "FinalH1", "FinalH2", "FinalH3", "FinalH4", "FinalSI",
     "BlockFuel", "TaxiFuel", "TripFuel", "FuelUplift",
-    "FinalCREW", "FinalTHOB", "CommChiffresPorte"
+    "FinalCREW", "FinalTHOB", "CommChiffresPorte", "CommChargementPiste"
   ]);
 
   const pushIfSyncField = (event) => {
