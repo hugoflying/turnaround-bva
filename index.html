@@ -5940,9 +5940,14 @@ function renderAKList(pairs){
 
 function _renderAKListWithRza(pairs, list, akIdToRza){
 
-  const safe = obj => JSON.stringify(obj)
-    .replace(/</g,'\u003c').replace(/>/g,'\u003e')
-    .replace(/&/g,'\u0026').replace(/'/g,'\u0027');
+  // ── Cache global : stocke chaque objet vol par son id ──────────────────────
+  // Évite d'inliner le JSON (parfois très volumineux) dans les attributs onclick,
+  // ce qui causait des échecs silencieux sur les vols DEP avec routeIcao long.
+  window._akFlightById = window._akFlightById || {};
+  pairs.forEach(p => {
+    if(p.arr && p.arr.id) window._akFlightById[String(p.arr.id)] = p.arr;
+    if(p.dep && p.dep.id) window._akFlightById[String(p.dep.id)] = p.dep;
+  });
 
   function getStatus(f, flow){
     let s = (f?.status||f?.milestone||'').toString().toUpperCase();
@@ -5972,7 +5977,6 @@ function _renderAKListWithRza(pairs, list, akIdToRza){
     const done     = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
     const bgBadge  = flow==='ARR' ? '#dbeafe' : '#dcfce7';
     const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
-    const json     = safe(f);
     const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
     const timeStr  = t ? escapeHtml(t)+suf : '—';
 
@@ -6005,7 +6009,12 @@ function _renderAKListWithRza(pairs, list, akIdToRza){
       : '';
     const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
     const halfPad   = (flow==='ARR' && barColor) ? 'padding-left:11px;' : '';
-    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+halfPad+'" onclick=\'applyAKFlight('+json+',"'+flow+'")\'>'
+
+    // ── onclick : on passe uniquement l'ID et le flow ──────────────────────
+    const safeId = escapeHtml(String(f.id || f._id || ''));
+    const onclick = 'onclick="_akClickFlight(\'' + safeId + '\',\'' + flow + '\')"';
+
+    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+halfPad+'" '+onclick+'>'
       + barHtml
       + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
       + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
@@ -6027,6 +6036,16 @@ function _renderAKListWithRza(pairs, list, akIdToRza){
       + half(p.dep,'DEP')
       + '</div>';
   }).join('');
+}
+
+// ── Gestionnaire de clic AK — lookup par ID dans le cache ──────────────────
+function _akClickFlight(id, flow){
+  const f = window._akFlightById && window._akFlightById[id];
+  if(!f){
+    console.warn('[AK] Vol introuvable dans le cache, id=', id);
+    return;
+  }
+  applyAKFlight(f, flow);
 }
   
 // ===== Import : règles BVA =====
