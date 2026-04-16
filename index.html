@@ -5540,8 +5540,9 @@ async function fetchAK(flow) {
 
   const res = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${FR24_TOKEN}`,
-      'Accept':        'application/json',
+      'Authorization':  `Bearer ${FR24_TOKEN}`,
+      'Accept':         'application/json',
+      'Accept-Version': 'v1',
     }
   });
 
