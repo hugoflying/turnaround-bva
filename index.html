@@ -2274,7 +2274,10 @@ function updateHeaderOffset(){
 }
 
 /* Vars */
-let isUTC=false;
+let isUTC = false;
+let currentTabId = null;
+let saveTimer = null;
+let settingFromAK = false;
 
 /* =====================================================================
    DOM/localStorage : HH:MM
@@ -5510,7 +5513,7 @@ function closeAKPicker(){
 
 // ===== FlightRadar24 API (Explorer plan) =====
 // Token Bearer — à récupérer sur https://fr24api.flightradar24.com
-const FR24_TOKEN   = '019d978d-db9f-700c-a03e-02df065e48e6|4xdqzJeBTKGJ2cz3mNfLk9dlLRQz6eOfxgJbiEqr5e0dc28a';
+const FR24_TOKEN   = 'VOTRE_TOKEN_FR24_ICI';
 const FR24_BASE    = 'https://fr24api.flightradar24.com/api/v1';
 const FR24_AIRPORT = 'BVA'; // Code IATA de Beauvais Tillé
 
@@ -5527,8 +5530,9 @@ async function fetchAK(flow) {
   // Pour les DEP : flights partant de BVA  → airports=outbound:BVA
   const direction = flow === 'DEP' ? 'outbound' : 'inbound';
 
-  // ✅ Bon chemin : historic/flight-summaries/full
-  const url = `${FR24_BASE}/historic/flight-summaries/full`
+  // Endpoint flight-summary/full : retourne callsign, immat, type avion,
+  // origine/destination, horaires planifiés ET réels (SIBT, AIBT, SOBT, AOBT)
+  const url = `${FR24_BASE}/flight-summary/full`
     + `?airports=${direction}:${FR24_AIRPORT}`
     + `&flight_datetime_from=${encodeURIComponent(fmt(from))}`
     + `&flight_datetime_to=${encodeURIComponent(fmt(to))}`
@@ -5538,7 +5542,6 @@ async function fetchAK(flow) {
     headers: {
       'Authorization': `Bearer ${FR24_TOKEN}`,
       'Accept':        'application/json',
-      'Accept-Version':'v1',
     }
   });
 
@@ -5552,46 +5555,43 @@ async function fetchAK(flow) {
   // La réponse FR24 est { data: [...] }
   const flights = Array.isArray(data?.data) ? data.data : [];
 
-  // Conversion timestamp ISO UTC → HH:MM local (ou UTC si pas de TZ)
-  const toHHMM = iso => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d)) return '';
-    // Retourne HH:MM en UTC (les horaires FR24 sont en UTC)
-    return d.toISOString().slice(11, 16);
-  };
-
   return flights.map(f => {
-    // ✅ Mapping selon la vraie structure FR24 flight-summary
-    // Champs réels : fr24_id, flight, callsign, operated_as, type, reg,
-    //                orig_iata, orig_icao, dest_iata, dest_icao,
-    //                datetime_takeoff, datetime_landed, flight_ended
+    const airline  = f.airline  || {};
+    const aircraft = f.aircraft || {};
+    const origin   = f.origin      || {};
+    const dest     = f.destination || {};
+    const dep      = f.departure   || {};
+    const arr      = f.arrival     || {};
 
     // Numéro de vol ex: "FR1540" → cie="FR", nvol="1540"
     const flightNum = (f.flight || '').replace(/\s+/g, '');
     const numParts  = flightNum.match(/^([A-Z]{2,3})(\d+.*)$/) || [];
-    const cie  = numParts[1] || f.operated_as || f.painted_as || '';
+    const cie  = numParts[1] || airline.iata || airline.icao || '';
     const nvol = numParts[2] || '';
+
+    // Type avion : aircraft.model peut être { code, text } ou une string
+    const typeAvion = typeof aircraft.model === 'object'
+      ? (aircraft.model?.code || aircraft.model?.text || '')
+      : (aircraft.model || '');
 
     return {
       id:        f.fr24_id || f.flight || '',
       Cie:       cie,
       NVol:      nvol,
       Callsign:  f.callsign || '',
-      TypeAvion: f.type || '',
-      Immat:     f.reg  || '',
-      From:      flow === 'DEP' ? FR24_AIRPORT : (f.orig_iata  || f.orig_icao  || ''),
-      To:        flow === 'DEP' ? (f.dest_iata || f.dest_icao  || '') : FR24_AIRPORT,
+      TypeAvion: typeAvion,
+      Immat:     aircraft.registration || '',
+      From:      flow === 'DEP' ? FR24_AIRPORT : (origin.iata || origin.icao || ''),
+      To:        flow === 'DEP' ? (dest.iata   || dest.icao   || '') : FR24_AIRPORT,
 
-      // FR24 flight-summary fournit les heures réelles de décollage/atterrissage.
-      // SIBT/SOBT planifiés ne sont pas disponibles dans cet endpoint.
-      sibt: flow === 'ARR' ? '' : '',                           // non disponible
-      aibt: flow === 'ARR' ? toHHMM(f.datetime_landed)  : '',
-      sobt: flow === 'DEP' ? '' : '',                           // non disponible
-      aobt: flow === 'DEP' ? toHHMM(f.datetime_takeoff) : '',
-      eobt: flow === 'DEP' ? toHHMM(f.datetime_takeoff) : '',
+      // Horaires ISO 8601 — FR24 retourne des timestamps UTC
+      sibt: flow === 'ARR' ? (arr.scheduled || '') : '',
+      aibt: flow === 'ARR' ? (arr.actual    || '') : '',
+      sobt: flow === 'DEP' ? (dep.scheduled || '') : '',
+      aobt: flow === 'DEP' ? (dep.actual    || '') : '',
+      eobt: flow === 'DEP' ? (dep.revised   || dep.estimated || dep.scheduled || '') : '',
 
-      status:   (f.flight_ended === true || f.flight_ended === 'true') ? 'landed' : 'active',
+      status:   f.status || '',
       _raw:     f,
     };
   });
