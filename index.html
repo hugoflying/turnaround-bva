@@ -19,7 +19,8 @@
 
 
 <!-- Bulma -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+<link rel="stylesheet" href="/css/bulma.min.css">
+
 
 <style>
 /* ================================================
@@ -4192,6 +4193,9 @@ function deleteTab(id, deleteRemote = false){
   stopCountdown();
   id = String(id);
 
+  // Récupérer les métadonnées AVANT suppression pour nettoyer le cache RZA
+  const _tabDataBeforeDelete = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
+
   if(deleteRemote){
     // Supprimer les données du DO (l'autre tablette sera déconnectée)
     const WS_BASE = 'wss://turnaround-sync.deruellehugo-49c.workers.dev/';
@@ -4243,6 +4247,32 @@ function deleteTab(id, deleteRemote = false){
   tabs.splice(idx, 1);
   localStorage.setItem('flightTabs', JSON.stringify(tabs));
   localStorage.removeItem('tab-' + id);
+
+  // Vider le RZA de ce vol dans le cache local immédiatement
+  // → le badge AK disparaît sans attendre le prochain fetch (30s)
+  try {
+    const meta = _tabDataBeforeDelete?.akMeta;
+    if (meta?.id)       delete _rzaMapCache[String(meta.id)];
+    if (meta?.linkedId) delete _rzaMapCache[String(meta.linkedId)];
+  } catch(_) {}
+
+  // Vérifier si d'autres tabs ouverts ont ce vol (multi-RZA) → recompute le badge
+  try {
+    const remainingTabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+    const meta = _tabDataBeforeDelete?.akMeta;
+    if (meta?.id || meta?.linkedId) {
+      remainingTabs.forEach(tid => {
+        const d = JSON.parse(localStorage.getItem('tab-'+tid) || '{}');
+        const m = d.akMeta;
+        const rza = (d.RZA || '').toUpperCase().trim();
+        if (!rza) return;
+        if (m?.id       && (String(m.id)       === String(meta?.id)       || String(m.id)       === String(meta?.linkedId)))
+          _rzaMapCache[String(m.id)]       = rza;
+        if (m?.linkedId && (String(m.linkedId) === String(meta?.id)       || String(m.linkedId) === String(meta?.linkedId)))
+          _rzaMapCache[String(m.linkedId)] = rza;
+      });
+    }
+  } catch(_) {}
 
   if(tabs.length > 0){
     const nextId = tabs[Math.max(0, idx - 1)];
@@ -5622,6 +5652,8 @@ document.addEventListener('keydown', (e)=>{
 const AK_PROXY = "https://airportkeeper-proxy.deruellehugo-49c.workers.dev/ak";
 
 // Ouvrir/Fermer
+let _rzaMapPollTimer = null;
+
 function openAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
@@ -5634,6 +5666,13 @@ function openAKPicker(){
   if(b) b.style.display = '';
   if(p) p.style.display = 'flex';
   loadAKFlights();
+
+  // Poll rzamap toutes les 8s tant que le panneau est ouvert
+  clearInterval(_rzaMapPollTimer);
+  _rzaMapPollTimer = setInterval(async () => {
+    await fetchRzaMap();
+    if (window._lastAKPairs) renderAKList(window._lastAKPairs);
+  }, 8000);
 }
 
 function closeAKPicker(){
@@ -5644,6 +5683,10 @@ function closeAKPicker(){
   if(b) b.style.display = 'none';
 
   document.body.classList.remove('ak-open'); // ✅ AJOUT
+
+  // Arrêter le poll
+  clearInterval(_rzaMapPollTimer);
+  _rzaMapPollTimer = null;
 }
 
 async function fetchAK(flow, from, to) {
@@ -5932,6 +5975,7 @@ async function fetchRzaMap(){
 }
 
 function renderAKList(pairs){
+  window._lastAKPairs = pairs; // mémoriser pour re-render en cas de MAJ RZA
   const list = document.getElementById('akList');
   if(!list) return;
 
@@ -5951,7 +5995,7 @@ function renderAKList(pairs){
   _renderAKListWithRza(pairs, list, akIdToRza);
 
   // Re-fetch si cache vieux de plus de 30s
-  if(Date.now() - _rzaMapLastFetch > 30000){
+  if(Date.now() - _rzaMapLastFetch > 8000){
     fetchRzaMap().then(() => {
       const updated = { ..._rzaMapCache };
       try{
@@ -7970,7 +8014,27 @@ function connectFlightSocket() {
       }
 
       if (msg.__type === "patch") {
-        applyRemotePayload(msg.payload || {});
+        const payload = msg.payload || {};
+        applyRemotePayload(payload);
+
+        // Si le RZA a changé → invalider le cache et re-fetch pour MAJ liste AK
+        if ('RZA' in payload) {
+          try {
+            const meta = getTabData()?.akMeta;
+            const newRza = (payload.RZA || '').toUpperCase().trim();
+            if (meta?.id) {
+              if (newRza) _rzaMapCache[String(meta.id)] = newRza;
+              else        delete _rzaMapCache[String(meta.id)];
+            }
+            if (meta?.linkedId) {
+              if (newRza) _rzaMapCache[String(meta.linkedId)] = newRza;
+              else        delete _rzaMapCache[String(meta.linkedId)];
+            }
+            // Forcer re-fetch serveur + re-render liste AK
+            _rzaMapLastFetch = 0;
+            if (window._lastAKPairs) renderAKList(window._lastAKPairs);
+          } catch(_) {}
+        }
         return;
       }
 
@@ -8428,6 +8492,7 @@ async function footerRefreshAK(){
     const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
     const id=z.closest('.time-wrap')?.dataset?.id; if(!id) return;
     onEnd(id);
+
   },{passive:true});
   document.addEventListener('touchmove',function(e){
     const z=e.target.closest('.tw-zone-center, .tw-sched-zone'); if(!z) return;
