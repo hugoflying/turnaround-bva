@@ -5512,15 +5512,24 @@ function closeAKPicker(){
 }
 
 // ===== AeroDataBox API (via RapidAPI) =====
-const AERODATABOX_KEY  = '951653a61fmsh18474e0b1f49047p1919dajsn5bb6cdb824c8';
+const AERODATABOX_KEY  = 'VOTRE_CLE_RAPIDAPI_ICI';
 const AERODATABOX_HOST = 'aerodatabox.p.rapidapi.com';
 const ADB_ICAO         = 'LFOB'; // Beauvais Tillé
 
 async function fetchAK(flow) {
   const now  = new Date();
   const from = new Date(now.getTime() -  3 * 3600 * 1000);
-  const to   = new Date(now.getTime() + 12 * 3600 * 1000);
-  const fmt  = d => d.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+  const to   = new Date(now.getTime() + 11 * 3600 * 1000);
+
+  // AeroDataBox attend l'heure LOCALE au format YYYY-MM-DDTHH:mm (sans Z)
+  const fmt = d => {
+    const Y  = d.getFullYear();
+    const M  = String(d.getMonth()+1).padStart(2,'0');
+    const D  = String(d.getDate()).padStart(2,'0');
+    const h  = String(d.getHours()).padStart(2,'0');
+    const m  = String(d.getMinutes()).padStart(2,'0');
+    return `${Y}-${M}-${D}T${h}:${m}`;
+  };
 
   const direction = flow === 'DEP' ? 'Departure' : 'Arrival';
   const url = `https://aerodatabox.p.rapidapi.com/flights/airports/icao/${ADB_ICAO}/${fmt(from)}/${fmt(to)}`
