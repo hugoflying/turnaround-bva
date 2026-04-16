@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
 
 <!-- Manifest PWA (Android / Chrome) -->
-<link rel="manifest" href="/manifest.json" />
+<link rel="manifest" href="manifest.json" />
 
 
 <!-- Bulma -->
@@ -5516,7 +5516,17 @@ const AERODATABOX_KEY  = 'VOTRE_CLE_RAPIDAPI_ICI';
 const AERODATABOX_HOST = 'aerodatabox.p.rapidapi.com';
 const ADB_ICAO         = 'LFOB'; // Beauvais Tillé
 
+// Cache local — évite de re-fetcher à chaque ouverture du panneau
+const _adbCache = { ARR: null, DEP: null };
+const _adbCacheTs = { ARR: 0,   DEP: 0   };
+const ADB_CACHE_MS = 5 * 60 * 1000; // 5 minutes
+
 async function fetchAK(flow) {
+  // Servir depuis le cache si < 5 min
+  if (_adbCache[flow] && (Date.now() - _adbCacheTs[flow]) < ADB_CACHE_MS) {
+    return _adbCache[flow];
+  }
+
   const now  = new Date();
   const from = new Date(now.getTime() -  3 * 3600 * 1000);
   const to   = new Date(now.getTime() + 11 * 3600 * 1000);
@@ -5548,7 +5558,7 @@ async function fetchAK(flow) {
               : Array.isArray(data?.arrivals)   ? data.arrivals
               : [];
 
-  return items.map(item => {
+  const result = items.map(item => {
     const mv       = item.movement   || {};
     const airline  = item.airline    || {};
     const aircraft = item.aircraft   || {};
@@ -5577,6 +5587,11 @@ async function fetchAK(flow) {
       _raw:      item,
     };
   });
+
+  // Mettre en cache
+  _adbCache[flow]   = result;
+  _adbCacheTs[flow] = Date.now();
+  return result;
 }
 
 // ===== Temps + linking (immat) =====
@@ -7031,49 +7046,7 @@ function checkAndDeleteIfEmpty(){
 <script>
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE = 'suivi-perf-v1';
-const PRECACHE = [];   // fichiers à précacher (vide = online-only)
-
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  if (PRECACHE.length) e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  // Ne pas intercepter les requêtes non-HTTP (chrome-extension, data:, etc.)
-  if (!e.request.url.startsWith('http')) return;
-
-  // Stratégie : Network-first, fallback cache, fallback réponse vide
-  e.respondWith(
-    fetch(e.request)
-      .then(resp => {
-        // Ne mettre en cache que les réponses valides GET
-        if (resp.ok && e.request.method === 'GET') {
-          const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return resp;
-      })
-      .catch(() =>
-        caches.match(e.request).then(cached =>
-          cached || new Response('', { status: 503, statusText: 'Offline' })
-        )
-      )
-  );
-});
-`;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, { scope: '/' })
+  navigator.serviceWorker.register('sw.js', { scope: '/' })
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
 
