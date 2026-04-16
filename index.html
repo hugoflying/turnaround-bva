@@ -5508,68 +5508,88 @@ function closeAKPicker(){
 
 }
 
-// ===== AeroDataBox API =====
-const AERODATABOX_KEY = 'VOTRE_CLE_RAPIDAPI_ICI';
-const AERODATABOX_HOST = 'aerodatabox.p.rapidapi.com';
-const AERODATABOX_ICAO = 'LFOB'; // Beauvais Tillé
+// ===== FlightRadar24 API (Explorer plan) =====
+// Token Bearer — à récupérer sur https://fr24api.flightradar24.com
+const FR24_TOKEN   = '019d978d-db9f-700c-a03e-02df065e48e6|4xdqzJeBTKGJ2cz3mNfLk9dlLRQz6eOfxgJbiEqr5e0dc28a';
+const FR24_BASE    = 'https://fr24api.flightradar24.com/api/v1';
+const FR24_AIRPORT = 'BVA'; // Code IATA de Beauvais Tillé
 
 async function fetchAK(flow) {
-  // Fenêtre glissante : -2h → +10h autour de maintenant
-  const now = new Date();
-  const from = new Date(now.getTime() - 2*3600*1000);
-  const to   = new Date(now.getTime() + 10*3600*1000);
+  // Fenêtre glissante : -3h → +12h autour de maintenant
+  const now  = new Date();
+  const from = new Date(now.getTime() -  3 * 3600 * 1000);
+  const to   = new Date(now.getTime() + 12 * 3600 * 1000);
 
-  const fmt = d => d.toISOString().slice(0,16); // YYYY-MM-DDTHH:mm
+  // Format ISO 8601 requis par FR24
+  const fmt = d => d.toISOString().replace('.000Z', 'Z');
 
-  const direction = flow === 'DEP' ? 'Departure' : 'Arrival';
-  const url = `https://aerodatabox.p.rapidapi.com/flights/airports/icao/${AERODATABOX_ICAO}/${fmt(from)}/${fmt(to)}?withLeg=true&direction=${direction}&withCancelled=false&withCodeshared=false&withCargo=false&withPrivate=false`;
+  // Pour les ARR : flights arrivant à BVA → airports=inbound:BVA
+  // Pour les DEP : flights partant de BVA  → airports=outbound:BVA
+  const direction = flow === 'DEP' ? 'outbound' : 'inbound';
+
+  // Endpoint flight-summary/full : retourne callsign, immat, type avion,
+  // origine/destination, horaires planifiés ET réels (SIBT, AIBT, SOBT, AOBT)
+  const url = `${FR24_BASE}/flight-summary/full`
+    + `?airports=${direction}:${FR24_AIRPORT}`
+    + `&flight_datetime_from=${encodeURIComponent(fmt(from))}`
+    + `&flight_datetime_to=${encodeURIComponent(fmt(to))}`
+    + `&limit=100`;
 
   const res = await fetch(url, {
     headers: {
-      'X-RapidAPI-Key': AERODATABOX_KEY,
-      'X-RapidAPI-Host': AERODATABOX_HOST,
+      'Authorization': `Bearer ${FR24_TOKEN}`,
+      'Accept':        'application/json',
     }
   });
-  if (!res.ok) throw new Error(`AeroDataBox error ${res.status}`);
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`FR24 error ${res.status}: ${err.slice(0,120)}`);
+  }
+
   const data = await res.json();
 
-  // Normaliser le format AeroDataBox → format compatible avec le reste du code
-  const flights = Array.isArray(data?.departures || data?.arrivals)
-    ? (data.departures || data.arrivals)
-    : [];
+  // La réponse FR24 est { data: [...] }
+  const flights = Array.isArray(data?.data) ? data.data : [];
 
-  return flights.map(item => {
-    const mv = item.movement || {};
-    const airline = item.airline || {};
-    const aircraft = item.aircraft || {};
-    const leg = item.movement || {};
-    const num = item.number || '';
-    const iata = airline.iata || '';
-    const icao = airline.icao || '';
+  return flights.map(f => {
+    const airline  = f.airline  || {};
+    const aircraft = f.aircraft || {};
+    const origin   = f.origin      || {};
+    const dest     = f.destination || {};
+    const dep      = f.departure   || {};
+    const arr      = f.arrival     || {};
 
-    // Extraire numéro de vol (ex: "FR 1540" → cie="FR", nvol="1540")
-    const numParts = num.replace(/\s+/g, '').match(/^([A-Z]{2,3})(\d+.*)$/) || [];
-    const cie  = numParts[1] || iata || icao || '';
+    // Numéro de vol ex: "FR1540" → cie="FR", nvol="1540"
+    const flightNum = (f.flight || '').replace(/\s+/g, '');
+    const numParts  = flightNum.match(/^([A-Z]{2,3})(\d+.*)$/) || [];
+    const cie  = numParts[1] || airline.iata || airline.icao || '';
     const nvol = numParts[2] || '';
 
+    // Type avion : aircraft.model peut être { code, text } ou une string
+    const typeAvion = typeof aircraft.model === 'object'
+      ? (aircraft.model?.code || aircraft.model?.text || '')
+      : (aircraft.model || '');
+
     return {
-      id:         item.number || '',
-      Cie:        cie,
-      NVol:       nvol,
-      Callsign:   item.callSign || '',
-      TypeAvion:  aircraft.model || '',
-      Immat:      aircraft.reg || '',
-      From:       flow === 'DEP' ? AERODATABOX_ICAO : (mv.airport?.icao || mv.airport?.iata || ''),
-      To:         flow === 'DEP' ? (mv.airport?.icao || mv.airport?.iata || '') : AERODATABOX_ICAO,
-      // Horaires ISO
-      sibt:       flow === 'ARR' ? (mv.scheduledTime?.local || mv.scheduledTime?.utc || '') : '',
-      aibt:       flow === 'ARR' ? (mv.actualTime?.local || mv.revisedTime?.local || '') : '',
-      sobt:       flow === 'DEP' ? (mv.scheduledTime?.local || mv.scheduledTime?.utc || '') : '',
-      aobt:       flow === 'DEP' ? (mv.actualTime?.local || mv.revisedTime?.local || '') : '',
-      eobt:       flow === 'DEP' ? (mv.revisedTime?.local || '') : '',
-      status:     item.status || '',
-      // Champs originaux pour compatibilité
-      _raw: item,
+      id:        f.fr24_id || f.flight || '',
+      Cie:       cie,
+      NVol:      nvol,
+      Callsign:  f.callsign || '',
+      TypeAvion: typeAvion,
+      Immat:     aircraft.registration || '',
+      From:      flow === 'DEP' ? FR24_AIRPORT : (origin.iata || origin.icao || ''),
+      To:        flow === 'DEP' ? (dest.iata   || dest.icao   || '') : FR24_AIRPORT,
+
+      // Horaires ISO 8601 — FR24 retourne des timestamps UTC
+      sibt: flow === 'ARR' ? (arr.scheduled || '') : '',
+      aibt: flow === 'ARR' ? (arr.actual    || '') : '',
+      sobt: flow === 'DEP' ? (dep.scheduled || '') : '',
+      aobt: flow === 'DEP' ? (dep.actual    || '') : '',
+      eobt: flow === 'DEP' ? (dep.revised   || dep.estimated || dep.scheduled || '') : '',
+
+      status:   f.status || '',
+      _raw:     f,
     };
   });
 }
