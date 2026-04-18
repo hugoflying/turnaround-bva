@@ -2336,10 +2336,7 @@ function setValAK(id, v){
   settingFromAK = false;
 
   // Sync affichage CTOT
-  if(id === 'CTOT'){
-    const d = document.getElementById('timer-ctot');
-    if(d) d.textContent = el.value || '--:--';
-  }
+  // CTOT — l'input est maintenant directement dans le footer, pas besoin de timer-ctot
 }
 
 function setTimeFromISOAK(id, iso){
@@ -4156,7 +4153,7 @@ function saveCurrentTabData(){
   data.timer_h8=document.getElementById('timer-h8')?.textContent || '--:--';
   data.timer_tobt=document.getElementById('timer-eobt')?.textContent || '--:--';
   data.timer_cd=document.getElementById('timer-cd')?.textContent || '--:--';
-  data.timer_ctot=document.getElementById('timer-ctot')?.textContent || '--:--';
+  data.timer_ctot = document.getElementById('CTOT')?.value || '';
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
@@ -4208,7 +4205,7 @@ function loadTabData(id){
   setTxt('timer-h8',   data.timer_h8);
   setTxt('timer-eobt', data.timer_tobt);
   setTxt('timer-cd',   data.timer_cd);
-  setTxt('timer-ctot', data.timer_ctot);
+  if(data.timer_ctot){ const ctotEl=document.getElementById('CTOT'); if(ctotEl) ctotEl.value=data.timer_ctot; }
 
   // ✅ re-sync modes globaux (UI + variables)
   const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
@@ -4961,9 +4958,7 @@ function setTimeModeUTC(enable, fromInit=false){
       let totalMin = Math.round((enable ? hh - offsetHours : hh + offsetHours) * 60 + mm);
       totalMin = ((totalMin % 1440) + 1440) % 1440;
       ctotEl.value = String(Math.floor(totalMin/60)).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
-      // Mettre à jour l'affichage timer-ctot
-      const timerCtot = document.getElementById('timer-ctot');
-      if(timerCtot) timerCtot.textContent = ctotEl.value;
+      // CTOT — l'input footer est déjà mis à jour via ctotEl.value ci-dessus
     }
   }
 
@@ -5011,9 +5006,6 @@ function setTimeModeUTC(enable, fromInit=false){
   twSyncAll();
   updateAllCalculations();
 
-  // ✅ Resync timer-ctot (type="hidden", non couvert par twSyncAll)
-  const ctotEl2 = document.getElementById('CTOT');
-  const timerCtot2 = document.getElementById('timer-ctot');
   if(ctotEl2 && timerCtot2) timerCtot2.textContent = ctotEl2.value || '--:--';
 
   // 🔁 refresh flight list AK si ouverte
@@ -6720,8 +6712,10 @@ function toggleDepExtra(panel){
 
       <div class="timer-chip">
         <div class="k">CTOT</div>
-        <div id="timer-ctot" class="v" style="background:#334155;">--:--</div>
-        <input id="CTOT" type="hidden">
+        <input id="CTOT" type="text" inputmode="numeric" maxlength="5" placeholder="--:--"
+               class="v" style="background:#334155; border:none; cursor:text; width:70px; outline:none; font-family:inherit;"
+               oninput="this.value=this.value.replace(/[^0-9:]/g,''); const v=this.value.replace(':',''); if(v.length===4) this.value=v.slice(0,2)+':'+v.slice(2);"
+               onchange="updateAllCalculations(); saveCurrentTabData();">
       </div>
 
       <div class="timer-chip">
