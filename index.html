@@ -3916,29 +3916,7 @@ function renderTabs(){
     btn.onclick = ()=> switchTab(id);
     btn.ondblclick = ()=> openTabCloseModal(id);
 
-    // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
-    const r = document.createElement('button');
-    r.className = 'button is-light tab-refresh';
-    r.type = 'button';
-    r.title = 'Rafraîchir depuis AK';
-    r.innerHTML = '↻';
-    r.onclick = async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      r.classList.add('is-loading');
-      try { await refreshAKTab(id); }
-      finally { r.classList.remove('is-loading'); }
-    };
-
-    if (!data.akMeta) {
-      r.disabled = true;
-      r.title = "Pas de vol AK associé";
-      r.style.opacity = '0.45';
-      r.style.cursor = 'not-allowed';
-    }
-
     wrap.appendChild(btn);
-    wrap.appendChild(r);
     tabBar.appendChild(wrap);
   });
 
@@ -3998,7 +3976,19 @@ function createNewTab(){
 
 function switchTab(id){
   stopCountdown();
-  saveCurrentTabData();
+
+  // Sauvegarder l'onglet courant directement en localStorage sans déclencher d'events
+  if(currentTabId){
+    try{
+      let data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      document.querySelectorAll('input, select, textarea').forEach(el=>{
+        if(!el.id) return;
+        if(el.type==='checkbox') data[el.id]=el.checked ? '1':'0';
+        else data[el.id]=el.value;
+      });
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+    }catch(_){}
+  }
 
   // Fermer le modal LDM avant de charger le nouvel onglet
   const ldmB = document.getElementById('ldmBackdrop');
@@ -4021,9 +4011,7 @@ function switchTab(id){
   // Recharger le bloc note pour le nouvel onglet
   window.bnReloadTab?.();
 
-  // Libérer le lock de l'ancien onglet, demander le lock du nouveau
   window._cancelPremierEmbRefresh?.();
-  setReadonlyMode(false); // reset — le lockStatus du nouvel onglet remet si besoin
 
   renderTabs();
   refreshUIForTabs();
@@ -7041,60 +7029,8 @@ if ('serviceWorker' in navigator) {
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
 
-/* ─── Refresh AK unique 5 min après premier embarqué ─────────────────────── */
-(function initPremierEmbRefresh() {
-  let _timer = null;
 
-  function scheduleRefresh() {
-    if (_timer) return; // déjà planifié
-    _timer = setTimeout(async () => {
-      _timer = null;
-      const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
-      if (!tabId) return;
-      // Ne pas déclencher si AOBT déjà renseigné
-      const aobt = (document.getElementById('AOBT')?.value || '').trim();
-      if (aobt) return;
-      console.log('[AutoRefreshAK] Refresh après premier embarqué (5 min)');
-      try { await refreshAKTab(tabId); } catch(e) {}
-    }, 5 * 60 * 1000);
-    console.log('[AutoRefreshAK] Refresh planifié dans 5 min (premier embarqué)');
-  }
 
-  function cancelRefresh() {
-    if (_timer) { clearTimeout(_timer); _timer = null; }
-  }
-
-  document.addEventListener('change', e => {
-    if (!e.target) return;
-    // Déclencheur : AvionPremierEmbarque rempli
-    if (e.target.id === 'AvionPremierEmbarque' && e.target.value) {
-      scheduleRefresh();
-    }
-    // Déclencheur : AIBT renseigné → refresh AK dans 15s (seulement si saisi manuellement)
-    if (e.target.id === 'AIBT' && e.target.value && !isApplyingRemoteUpdate && !settingFromAK) {
-      setTimeout(async () => {
-        const aobt = (document.getElementById('AOBT')?.value || '').trim();
-        if (aobt) return; // déjà parti
-        const tabId = typeof currentTabId !== 'undefined' ? currentTabId : null;
-        if (!tabId) return;
-        console.log('[AutoRefreshAK] Refresh après AIBT (15s)');
-        try { await refreshAKTab(tabId); } catch(e) {}
-      }, 15 * 1000);
-    }
-    // Annuler si AOBT reçu
-    if (e.target.id === 'AOBT' && e.target.value) {
-      cancelRefresh();
-    }
-    // Annuler si premier embarqué effacé
-    if (e.target.id === 'AvionPremierEmbarque' && !e.target.value) {
-      cancelRefresh();
-    }
-  });
-
-  // Annuler aussi au changement d'onglet via switchTab
-  const _origSwitchTab = window.switchTab;
-  window._cancelPremierEmbRefresh = cancelRefresh;
-})();
 </script>
 
 
