@@ -3870,7 +3870,6 @@ function attachAutoSave(){
     clearTimeout(saveTimer);
     saveTimer=setTimeout(()=>{
       saveCurrentTabData();
-      renderTabs();
       renderTimeline();
       updateHeaderOffset();
     }, 1000);
@@ -3981,9 +3980,32 @@ function createNewTab(){
 
 function switchTab(id){
   stopCountdown();
-  saveCurrentTabData();
 
-  // Fermer le modal LDM avant de charger le nouvel onglet
+  // Sauvegarder l'onglet courant DIRECTEMENT en localStorage
+  // sans appeler saveCurrentTabData() qui appelle renderTabs() et détruit le DOM
+  if(currentTabId){
+    try{
+      let data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      document.querySelectorAll('input, select, textarea').forEach(el=>{
+        if(!el.id) return;
+        if(el.type==='checkbox') data[el.id]=el.checked ? '1':'0';
+        else data[el.id]=el.value;
+      });
+      data.timer_h40  = document.getElementById('timer-h40')?.textContent  || '--:--';
+      data.timer_h15  = document.getElementById('timer-h15')?.textContent  || '--:--';
+      data.timer_h8   = document.getElementById('timer-h8')?.textContent   || '--:--';
+      data.timer_tobt = document.getElementById('timer-eobt')?.textContent || '--:--';
+      data.timer_cd   = document.getElementById('timer-cd')?.textContent   || '--:--';
+      data.timer_ctot = document.getElementById('timer-ctot')?.textContent || '--:--';
+      data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
+      const ldmModal = document.getElementById('ldmModal');
+      data.ldmOpen = ldmModal && ldmModal.style.display !== 'none' ? '1' : '0';
+      data.ldmMode = _ldmMode || 'arr';
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+    }catch(_){}
+  }
+
+  // Fermer le modal LDM
   const ldmB = document.getElementById('ldmBackdrop');
   const ldmM = document.getElementById('ldmModal');
   if(ldmM) ldmM.style.display = 'none';
@@ -3992,18 +4014,17 @@ function switchTab(id){
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
-
   id = String(id);
   if(!tabs.includes(id)) return;
 
+  // Mettre à jour currentTabId AVANT renderTabs
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
   loadTabData(id);
-
   window.bnReloadTab?.();
 
-  renderTabs();
+  renderTabs();       // un seul appel, avec le bon currentTabId → onglet en bleu
   refreshUIForTabs();
   renderTimeline();
 }
@@ -4157,6 +4178,7 @@ function saveCurrentTabData(){
 
   localStorage.setItem('tab-'+currentTabId,JSON.stringify(data));
   localStorage.setItem('lastTabId',currentTabId);
+  renderTabs();
 }
 
 function loadTabData(id){
@@ -4233,9 +4255,6 @@ function loadTabData(id){
 
   clearTimeout(window._sendFullDebounce);
   window._sendFullDebounce = setTimeout(() => {}, 2000);
-
-  // Mettre à jour l'onglet actif en bleu
-  renderTabs();
 }
   
 function updateTabLabelInstant(){ saveCurrentTabData(); renderTabs(); }
