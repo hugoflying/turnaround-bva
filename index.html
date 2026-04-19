@@ -3910,6 +3910,7 @@ function renderTabs(activeId){
 
     const wrap = document.createElement('span');
     wrap.className = 'tab-wrap';
+    wrap.dataset.tabId = id; // stocker l'id pour updateActiveTab
 
     const btn = document.createElement('button');
     btn.className = `button ${id === activeId ? 'is-link' : 'is-light'}`;
@@ -3922,6 +3923,18 @@ function renderTabs(activeId){
   });
 
   updateHeaderOffset();
+}
+
+// Met à jour le bleu sans reconstruire le DOM
+function updateActiveTab(id){
+  id = String(id);
+  document.querySelectorAll('#tab-bar .tab-wrap').forEach(wrap => {
+    const btn = wrap.querySelector('button');
+    if(!btn) return;
+    const isActive = wrap.dataset.tabId === id;
+    btn.classList.toggle('is-link',  isActive);
+    btn.classList.toggle('is-light', !isActive);
+  });
 }
 
 function getTabFlightKey(tabId){
@@ -4018,10 +4031,13 @@ function switchTab(id){
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
+  // Forcer le bleu immédiatement SANS reconstruire le DOM
+  updateActiveTab(id);
+
   loadTabData(id);
   window.bnReloadTab?.();
 
-  renderTabs(id);     // passer l'id explicitement — indépendant de currentTabId
+  renderTabs(id);
   refreshUIForTabs();
   renderTimeline();
 }
