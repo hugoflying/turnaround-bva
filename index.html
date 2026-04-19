@@ -145,6 +145,9 @@ body.has-tab .app-wrap { display: block; }
   border-radius: 999px;
   flex: 0 0 auto;
   font-weight: 900;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .tab-wrap {
@@ -3881,7 +3884,9 @@ function renderTabs(){
   if(!tabBar) return;
 
   tabBar.innerHTML = `
-    <button class="button is-success is-light" type="button" onclick="createNewTab()">
+    <button class="button is-success is-light" type="button"
+            style="touch-action:manipulation;-webkit-tap-highlight-color:transparent;"
+            onclick="createNewTab()">
       +
     </button>
   `;
@@ -3913,8 +3918,24 @@ function renderTabs(){
     const btn = document.createElement('button');
     btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
-    btn.onclick = ()=> switchTab(id);
-    btn.ondblclick = ()=> openTabCloseModal(id);
+    btn.type = 'button';
+
+    let _tapped = false;
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if(_tapped) return;
+      _tapped = true;
+      setTimeout(() => _tapped = false, 400);
+      switchTab(id);
+    }, { passive: false });
+    btn.addEventListener('click', (e) => {
+      if(_tapped) return; // déjà géré par touchend
+      switchTab(id);
+    });
+    btn.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      openTabCloseModal(id);
+    });
 
     wrap.appendChild(btn);
     tabBar.appendChild(wrap);
