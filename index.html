@@ -3916,7 +3916,18 @@ function renderTabs(activeId){
     btn.className = `button ${id === activeId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
     btn.onclick = ()=> switchTab(id);
-    btn.ondblclick = ()=> openTabCloseModal(id);
+
+    // Double-tap mobile pour fermer (ondblclick ne marche pas sur mobile)
+    let _lastTap = 0;
+    btn.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if(now - _lastTap < 350){
+        e.preventDefault();
+        openTabCloseModal(id);
+      }
+      _lastTap = now;
+    }, { passive: false });
+    btn.ondblclick = ()=> openTabCloseModal(id); // fallback desktop
 
     wrap.appendChild(btn);
     tabBar.appendChild(wrap);
@@ -3956,12 +3967,10 @@ function getTabFlightKey(tabId){
 }
 
 function createNewTab(){
-  // ✅ 1) Sauver l'onglet courant AVANT de reset
+  // 1) Sauver l'onglet courant
   if(currentTabId) saveCurrentTabData();
 
   const id = String(Date.now());
-
-  // ajoute l'onglet dans la liste
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
   if(!tabs.includes(id)) tabs.push(id);
@@ -3970,22 +3979,40 @@ function createNewTab(){
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
-  clearFormFields(); // reset champs
+  // 2) Vider le formulaire DIRECTEMENT sans déclencher updateTabLabelInstant→renderTabs
+  document.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(!el.id || el.id === 'utcToggle' || el.id === 'darkToggle') return;
+    if(el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+  const dateEl = document.getElementById('Date');
+  if(dateEl) dateEl.value = new Date().toISOString().slice(0,10);
 
-  // snapshot initial
+  // Re-sync modes globaux
+  const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
+  const storedUTC  = (localStorage.getItem('modeUTC')  || '0') === '1';
+  setDarkMode(storedDark, true);
+  setTimeModeUTC(storedUTC, true);
+  syncAdultGenderLocks();
+
+  // 3) Snapshot initial
   const data = {};
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(el.id === 'utcToggle' || el.id === 'darkToggle') return;
+    if(!el.id || el.id === 'utcToggle' || el.id === 'darkToggle') return;
     data[el.id] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : (el.value || '');
   });
   data.infovolOpen = '0';
-
   localStorage.setItem('tab-'+id, JSON.stringify(data));
 
-  renderTabs();
+  // 4) Mettre à jour l'UI — UN SEUL renderTabs à la fin
+  stopCountdown(true);
+  updateActiveTab(id);
+  renderTabs(id);
   refreshUIForTabs();
   updateInfoStrip();
+  updateAllCalculations();
   renderTimeline();
+  if(typeof twSyncAll === 'function') setTimeout(twSyncAll, 50);
 }
 
 function switchTab(id){
