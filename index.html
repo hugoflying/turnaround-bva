@@ -19,7 +19,7 @@
 
 
 <!-- Bulma -->
-<link rel="stylesheet" href="css/bulma.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
 
 
 <style>
@@ -3967,52 +3967,66 @@ function getTabFlightKey(tabId){
 }
 
 function createNewTab(){
-  // 1) Sauver l'onglet courant
-  if(currentTabId) saveCurrentTabData();
+  // 1) Sauver l'onglet courant DIRECTEMENT en localStorage
+  // — sans saveCurrentTabData() qui appelle renderTabs() et détruit le bouton "+"
+  if(currentTabId){
+    try{
+      let d = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      document.querySelectorAll('input, select, textarea').forEach(el=>{
+        if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
+        d[el.id] = el.type==='checkbox' ? (el.checked?'1':'0') : el.value;
+      });
+      d.timer_h40  = document.getElementById('timer-h40')?.textContent  || '--:--';
+      d.timer_h15  = document.getElementById('timer-h15')?.textContent  || '--:--';
+      d.timer_h8   = document.getElementById('timer-h8')?.textContent   || '--:--';
+      d.timer_tobt = document.getElementById('timer-eobt')?.textContent || '--:--';
+      d.timer_cd   = document.getElementById('timer-cd')?.textContent   || '--:--';
+      d.timer_ctot = document.getElementById('timer-ctot')?.textContent || '--:--';
+      d.timingPanel = localStorage.getItem('timingPanel') || 'dep';
+      const ldmModal = document.getElementById('ldmModal');
+      d.ldmOpen = ldmModal && ldmModal.style.display !== 'none' ? '1' : '0';
+      d.ldmMode = typeof _ldmMode !== 'undefined' ? _ldmMode : 'arr';
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(d));
+    }catch(_){}
+  }
 
+  // 2) Créer le nouvel onglet
   const id = String(Date.now());
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
   if(!tabs.includes(id)) tabs.push(id);
   localStorage.setItem('flightTabs', JSON.stringify(tabs));
-
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
-  // 2) Vider le formulaire DIRECTEMENT sans déclencher updateTabLabelInstant→renderTabs
+  // 3) Vider le formulaire directement (sans déclencher de chaîne d'events)
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(!el.id || el.id === 'utcToggle' || el.id === 'darkToggle') return;
-    if(el.type === 'checkbox') el.checked = false;
+    if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
+    if(el.type==='checkbox') el.checked = false;
     else el.value = '';
   });
   const dateEl = document.getElementById('Date');
   if(dateEl) dateEl.value = new Date().toISOString().slice(0,10);
 
-  // Re-sync modes globaux
-  const storedDark = (localStorage.getItem('modeDark') || '0') === '1';
-  const storedUTC  = (localStorage.getItem('modeUTC')  || '0') === '1';
-  setDarkMode(storedDark, true);
-  setTimeModeUTC(storedUTC, true);
-  syncAdultGenderLocks();
-
-  // 3) Snapshot initial
+  // 4) Snapshot initial en localStorage
   const data = {};
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(!el.id || el.id === 'utcToggle' || el.id === 'darkToggle') return;
-    data[el.id] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : (el.value || '');
+    if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
+    data[el.id] = (el.type==='checkbox') ? (el.checked?'1':'0') : (el.value||'');
   });
   data.infovolOpen = '0';
   localStorage.setItem('tab-'+id, JSON.stringify(data));
 
-  // 4) Mettre à jour l'UI — UN SEUL renderTabs à la fin
+  // 5) Mettre à jour l'UI — UN SEUL renderTabs à la fin
   stopCountdown(true);
   updateActiveTab(id);
   renderTabs(id);
   refreshUIForTabs();
   updateInfoStrip();
+  syncAdultGenderLocks();
   updateAllCalculations();
   renderTimeline();
-  if(typeof twSyncAll === 'function') setTimeout(twSyncAll, 50);
+  setTimeout(()=>{ if(typeof twSyncAll==='function') twSyncAll(); }, 50);
 }
 
 function switchTab(id){
