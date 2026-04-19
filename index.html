@@ -3884,9 +3884,7 @@ function renderTabs(){
   if(!tabBar) return;
 
   tabBar.innerHTML = `
-    <button class="button is-success is-light" type="button"
-            style="touch-action:manipulation;-webkit-tap-highlight-color:transparent;"
-            onclick="createNewTab()">
+    <button class="button is-success is-light" type="button" onclick="createNewTab()">
       +
     </button>
   `;
@@ -3919,23 +3917,8 @@ function renderTabs(){
     btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
     btn.type = 'button';
-
-    let _tapped = false;
-    btn.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if(_tapped) return;
-      _tapped = true;
-      setTimeout(() => _tapped = false, 400);
-      switchTab(id);
-    }, { passive: false });
-    btn.addEventListener('click', (e) => {
-      if(_tapped) return; // déjà géré par touchend
-      switchTab(id);
-    });
-    btn.addEventListener('dblclick', (e) => {
-      e.preventDefault();
-      openTabCloseModal(id);
-    });
+    btn.onclick = () => switchTab(id);
+    btn.ondblclick = () => openTabCloseModal(id);
 
     wrap.appendChild(btn);
     tabBar.appendChild(wrap);
@@ -3963,94 +3946,62 @@ function getTabFlightKey(tabId){
 }
 
 function createNewTab(){
-  // 1) Sauvegarder l'onglet courant silencieusement
-  if(currentTabId){
-    try{
-      let d = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
-      document.querySelectorAll('input, select, textarea').forEach(el=>{
-        if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
-        d[el.id] = el.type==='checkbox' ? (el.checked?'1':'0') : el.value;
-      });
-      localStorage.setItem('tab-'+currentTabId, JSON.stringify(d));
-    }catch(_){}
-  }
+  // ✅ 1) Sauver l'onglet courant AVANT de reset
+  if(currentTabId) saveCurrentTabData();
 
-  // 2) Créer le nouvel onglet
   const id = String(Date.now());
+
+  // ajoute l'onglet dans la liste
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
-  tabs.push(id);
+  if(!tabs.includes(id)) tabs.push(id);
   localStorage.setItem('flightTabs', JSON.stringify(tabs));
-  localStorage.setItem('lastTabId', id);
-  currentTabId = id;
 
-  // 3) Initialiser les données (vide + date du jour)
-  const data = { infovolOpen: '0' };
+  currentTabId = id;
+  localStorage.setItem('lastTabId', id);
+
+  clearFormFields(); // reset champs
+
+  // snapshot initial
+  const data = {};
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
-    data[el.id] = el.type==='checkbox' ? (el.checked?'1':'0') : '';
+    if(el.id === 'utcToggle' || el.id === 'darkToggle') return;
+    data[el.id] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : (el.value || '');
   });
-  const today = new Date().toISOString().slice(0,10);
-  data['Date'] = today;
+  data.infovolOpen = '0';
+
   localStorage.setItem('tab-'+id, JSON.stringify(data));
 
-  // 4) Vider le formulaire directement SANS déclencher d'events
-  document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
-    if(el.type==='checkbox') el.checked = false;
-    else el.value = '';
-  });
-  const dateEl = document.getElementById('Date');
-  if(dateEl) dateEl.value = today;
-
-  // 5) Mettre à jour l'UI
-  stopCountdown(true);
   renderTabs();
   refreshUIForTabs();
   updateInfoStrip();
-  updateAllCalculations();
   renderTimeline();
-  if(typeof twSyncAll === 'function') setTimeout(twSyncAll, 50);
 }
 
 function switchTab(id){
-  id = String(id);
-
   stopCountdown();
+  saveCurrentTabData();
 
-  // 1) Sauvegarder l'onglet courant silencieusement
-  if(currentTabId && id !== currentTabId){
-    try{
-      let d = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
-      document.querySelectorAll('input, select, textarea').forEach(el=>{
-        if(!el.id || el.id==='utcToggle' || el.id==='darkToggle') return;
-        d[el.id] = el.type==='checkbox' ? (el.checked?'1':'0') : el.value;
-      });
-      localStorage.setItem('tab-'+currentTabId, JSON.stringify(d));
-    }catch(_){}
-  }
-
-  // 2) Fermer LDM
-  const ldmM = document.getElementById('ldmModal');
+  // Fermer le modal LDM avant de charger le nouvel onglet
   const ldmB = document.getElementById('ldmBackdrop');
+  const ldmM = document.getElementById('ldmModal');
   if(ldmM) ldmM.style.display = 'none';
   if(ldmB) ldmB.style.display = 'none';
   unlockScroll?.();
 
-  // 3) Vérifier que le tab existe
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
-  if(!Array.isArray(tabs) || !tabs.includes(id)) return;
+  if(!Array.isArray(tabs)) tabs = [];
 
-  // 4) Basculer
+  id = String(id);
+  if(!tabs.includes(id)) return;
+
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
-  // 5) Charger les données + resync affichage time widgets
   loadTabData(id);
-  if(typeof twSyncAll === 'function') setTimeout(twSyncAll, 30);
+
   window.bnReloadTab?.();
 
-  // 6) Mettre à jour l'UI
   renderTabs();
   refreshUIForTabs();
   renderTimeline();
