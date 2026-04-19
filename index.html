@@ -3994,12 +3994,11 @@ function createNewTab(){
 
 function switchTab(id){
   id = String(id);
-  if(id === currentTabId) return; // déjà sur cet onglet
 
   stopCountdown();
 
   // 1) Sauvegarder l'onglet courant silencieusement
-  if(currentTabId){
+  if(currentTabId && id !== currentTabId){
     try{
       let d = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
       document.querySelectorAll('input, select, textarea').forEach(el=>{
@@ -4025,8 +4024,9 @@ function switchTab(id){
   currentTabId = id;
   localStorage.setItem('lastTabId', id);
 
-  // 5) Charger les données
+  // 5) Charger les données + resync affichage time widgets
   loadTabData(id);
+  if(typeof twSyncAll === 'function') setTimeout(twSyncAll, 30);
   window.bnReloadTab?.();
 
   // 6) Mettre à jour l'UI
