@@ -3910,24 +3910,29 @@ function renderTabs(activeId){
 
     const wrap = document.createElement('span');
     wrap.className = 'tab-wrap';
-    wrap.dataset.tabId = id; // stocker l'id pour updateActiveTab
+    wrap.dataset.tabId = id;
 
     const btn = document.createElement('button');
     btn.className = `button ${id === activeId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
-    btn.onclick = ()=> switchTab(id);
 
-    // Double-tap mobile pour fermer (ondblclick ne marche pas sur mobile)
-    let _lastTap = 0;
-    btn.addEventListener('touchend', (e) => {
+    // Double-tap sur touchstart — se déclenche AVANT le click → AVANT renderTabs
+    // Timestamp global par tab ID → survit aux reconstructions DOM
+    if(!window._tabDoubleTapTs) window._tabDoubleTapTs = {};
+    btn.addEventListener('touchstart', e => {
       const now = Date.now();
-      if(now - _lastTap < 350){
-        e.preventDefault();
+      const last = window._tabDoubleTapTs[id] || 0;
+      if(last > 0 && now - last < 400){
+        e.preventDefault(); // bloque click → switchTab ne se déclenche pas
+        window._tabDoubleTapTs[id] = 0;
         openTabCloseModal(id);
+      } else {
+        window._tabDoubleTapTs[id] = now;
       }
-      _lastTap = now;
     }, { passive: false });
-    btn.ondblclick = ()=> openTabCloseModal(id); // fallback desktop
+
+    btn.onclick = ()=> switchTab(id);
+    btn.ondblclick = ()=> openTabCloseModal(id); // desktop
 
     wrap.appendChild(btn);
     tabBar.appendChild(wrap);
@@ -3940,11 +3945,12 @@ function renderTabs(activeId){
 function updateActiveTab(id){
   id = String(id);
   document.querySelectorAll('#tab-bar .tab-wrap').forEach(wrap => {
-    const btn = wrap.querySelector('button');
-    if(!btn) return;
     const isActive = wrap.dataset.tabId === id;
-    btn.classList.toggle('is-link',  isActive);
-    btn.classList.toggle('is-light', !isActive);
+    const btn = wrap.querySelector('button');
+    if(btn){
+      btn.classList.toggle('is-link',  isActive);
+      btn.classList.toggle('is-light', !isActive);
+    }
   });
 }
 
@@ -4164,7 +4170,8 @@ function deleteTab(id){
     stopCountdown(true);
   }
 
-  renderTabs();
+  renderTabs(currentTabId);
+  updateActiveTab(currentTabId || '');
   refreshUIForTabs();
   renderTimeline();
   updateInfoStrip();
@@ -5075,7 +5082,10 @@ function setTimeModeUTC(enable, fromInit=false){
   twSyncAll();
   updateAllCalculations();
 
-  if(ctotEl2 && timerCtot2) timerCtot2.textContent = ctotEl2.value || '--:--';
+  // Resync timer-ctot
+  const _ctot = document.getElementById('CTOT');
+  const _timerCtot = document.getElementById('timer-ctot');
+  if(_ctot && _timerCtot) _timerCtot.textContent = _ctot.value || '--:--';
 
   // 🔁 refresh flight list AK si ouverte
   if(document.getElementById('akPopover')?.style.display !== 'none'){
