@@ -3879,7 +3879,8 @@ function attachAutoSave(){
 }
 
 /* Tabs */
-function renderTabs(){
+function renderTabs(activeId){
+  if(activeId === undefined) activeId = currentTabId;
   const tabBar = document.getElementById('tab-bar');
   if(!tabBar) return;
 
@@ -3899,26 +3900,22 @@ function renderTabs(){
     const nvol = (data.NVol || '').toUpperCase();
     const to   = (data.To   || '').toUpperCase();
 
-    // ✅ Priorité : depFF > arrFF > Cie+NVol
     const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
     const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
     const volRef = depFF || arrFF || `${cie}${nvol}`.trim();
 
-    let label =
-      volRef || to
-        ? (to ? `${volRef} | ${to}`.trim() : volRef)
-        : 'VOL';
+    let label = volRef || to
+      ? (to ? `${volRef} | ${to}`.trim() : volRef)
+      : 'VOL';
 
     const wrap = document.createElement('span');
     wrap.className = 'tab-wrap';
 
-    // bouton onglet (switch)
     const btn = document.createElement('button');
-    btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
+    btn.className = `button ${id === activeId ? 'is-link' : 'is-light'}`;
     btn.textContent = label || 'VOL';
-    btn.type = 'button';
-    btn.onclick = () => switchTab(id);
-    btn.ondblclick = () => openTabCloseModal(id);
+    btn.onclick = ()=> switchTab(id);
+    btn.ondblclick = ()=> openTabCloseModal(id);
 
     wrap.appendChild(btn);
     tabBar.appendChild(wrap);
@@ -4024,7 +4021,7 @@ function switchTab(id){
   loadTabData(id);
   window.bnReloadTab?.();
 
-  renderTabs();       // un seul appel, avec le bon currentTabId → onglet en bleu
+  renderTabs(id);     // passer l'id explicitement — indépendant de currentTabId
   refreshUIForTabs();
   renderTimeline();
 }
