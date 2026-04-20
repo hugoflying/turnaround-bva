@@ -2128,6 +2128,9 @@ body.readonly-mode #readonlyOverlay {
   </div>
 
   <div class="action-bar">
+    <button class="button action-btn action-btn--validate" id="validate" onclick="validateForm()">
+      <span class="action-btn-icon">✅</span><span class="action-btn-label">Valider</span>
+    </button>
     
     <button class="button action-btn action-btn--clear" id="clearFields" onclick="openClearFieldsModal()">
       <span class="action-btn-icon">🧹</span><span class="action-btn-label">Effacer</span>
@@ -6228,6 +6231,161 @@ function updateDelayCodesVisibility(){
   }
 }
   
+/* validateForm — génère et ouvre un email récapitulatif */
+function validateForm() {
+  const val = id => (document.getElementById(id)?.value || '');
+  const v   = id => val(id).trim();
+
+  const dateRaw = val('Date');
+  const [yyyy, mm, dd] = (dateRaw || '').split('-');
+  const dateTitre = (yyyy && mm && dd) ? `${dd}-${mm}-${yyyy}` : '';
+
+  const cie       = v('Cie');
+  const vol       = v('NVol');
+  const from      = v('From');
+  const to        = v('To');
+  const immat     = v('Immat');
+  const typeAvion = v('TypeAvion');
+
+  // Bloquer si pas d'AOBT (sauf vol ARR pur : TO = BVA ou LFOB)
+  const aobt     = v('AOBT');
+  const isBVADep = ['BVA','LFOB'].includes((to || '').toUpperCase().trim());
+  if(!aobt && !isBVADep){
+    showPopup('⚠️ AOBT manquant — impossible de valider', '#ef4444', 2500);
+    return;
+  }
+
+  const titre = `[TIMING] ${dateTitre} / ${cie}${vol} ${from}-${to} / ${immat}`;
+
+  const hhmm = val => {
+    if(!val) return '';
+    if(val.includes('T') || (val.endsWith('Z') && val.length > 10)){
+      try{
+        const d = new Date(val);
+        if(!isNaN(d.getTime())){
+          const h = isUTC ? d.getUTCHours()   : d.getHours();
+          const m = isUTC ? d.getUTCMinutes() : d.getMinutes();
+          return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        }
+      }catch(e){}
+    }
+    return val;
+  };
+  const t  = id => hhmm(v(id));
+  const r  = (label, value) => value ? `${label} : ${value}\n` : '';
+  const s  = () => `\n- - - - - - - - - - - - - - - - - - - -\n\n`;
+  const br = () => '\n';
+
+  let body = '';
+
+  // INFO VOL
+  body += r('DATE',      dateTitre);
+  body += r('N° DE VOL', `${cie}${vol}`);
+  body += r('FROM',      from);
+  body += r('TO',        to);
+  body += r('IMMAT',     immat);
+  body += r('TYPE',      typeAvion);
+  body += r('CALLSIGN',  v('Callsign'));
+  body += r('PARKING',   v('Parking'));
+  body += r('MODE',      isUTC ? 'UTC' : 'LOCAL');
+
+  // HORAIRES
+  body += s();
+  body += r('SIBT', t('SIBT') || '--:--');
+  body += r('AIBT', t('AIBT') || '--:--');
+  body += r('SOBT', t('SOBT') || '--:--');
+  body += r('AOBT', t('AOBT') || '--:--');
+  if(t('EOBT')) body += r('EOBT', t('EOBT'));
+  if(t('CTOT')) body += r('CTOT', t('CTOT'));
+
+  // TIMINGS
+  body += s();
+  if(t('ArrPNT'))            body += r('ARRIVEE PNT', t('ArrPNT'));
+  if(t('ArrPNC'))            body += r('ARRIVEE PNC', t('ArrPNC'));
+  body += br();
+  if(t('PremierDebarque'))   body += r('PREMIER DEBARQUE (L1)', t('PremierDebarque'));
+  if(t('PremierDebarqueL2')) body += r('PREMIER DEBARQUE (L2)', t('PremierDebarqueL2'));
+  if(t('DernierDebarque'))   body += r('DERNIER DEBARQUE',      t('DernierDebarque'));
+  body += br();
+  if(t('ArriveeLiftArr') || t('DepartLiftArr'))
+    body += r('LIFT ARR', `${t('ArriveeLiftArr')||'--:--'} → ${t('DepartLiftArr')||'--:--'}`);
+  body += br();
+  if(t('AvionPremierEmbarque')) body += r('PREMIER EMBARQUE', t('AvionPremierEmbarque'));
+  if(t('AvionDernierEmbarque')) body += r('DERNIER EMBARQUE', t('AvionDernierEmbarque'));
+  body += br();
+  if(t('ArriveeLift') || t('DepartLift'))
+    body += r('LIFT DEP', `${t('ArriveeLift')||'--:--'} → ${t('DepartLift')||'--:--'}`);
+  if(t('ArriveeFuel') || t('DepartFuel'))
+    body += r('AVITAIR', `${t('ArriveeFuel')||'--:--'} → ${t('DepartFuel')||'--:--'}`);
+  body += br();
+  if(t('RemiseLID'))            body += r('REMISE LID',       t('RemiseLID'));
+  if(t('FermeturePorteAvion'))  body += r('FERMETURE PORTE',  t('FermeturePorteAvion'));
+  if(t('ConnexionAgentCasque')) body += r('CONNEXION CASQUE', t('ConnexionAgentCasque'));
+
+  // INAD / SI
+  const hasInad = t('ArriveeINAD') || v('ArrSI');
+  if(hasInad){
+    body += s();
+    if(t('ArriveeINAD')) body += r('INAD / NAYAK', t('ArriveeINAD'));
+    if(v('ArrSI'))       body += r('SI', v('ArrSI'));
+  }
+
+  // LOAD FINAL
+  const hasFinal = v('FinalTOB') || v('FinalADULT') || v('FinalMALE') || v('FinalBAGS');
+  if(hasFinal){
+    body += s();
+    body += '[ LOAD FINAL ]\n\n';
+    if(v('FinalTOB')) body += r('TOB', v('FinalTOB'));
+    const paxDetails = [
+      v('FinalADULT')  && `ADULT ${v('FinalADULT')}`,
+      v('FinalMALE')   && `M ${v('FinalMALE')}`,
+      v('FinalFEMALE') && `F ${v('FinalFEMALE')}`,
+      v('FinalCHILD')  && `CH ${v('FinalCHILD')}`,
+      v('FinalINFANT') && `INF ${v('FinalINFANT')}`,
+    ].filter(Boolean).join('  ');
+    if(paxDetails) body += paxDetails + '\n';
+    body += br();
+    if(v('FinalBAGS'))  body += r('BAGS',  v('FinalBAGS'));
+    if(v('FinalGB'))    body += r('GB',    v('FinalGB') + ' pcs');
+    if(v('FinalPOIDS')) body += r('POIDS', v('FinalPOIDS') + ' kg');
+    body += br();
+    ['FinalOA','FinalOB','FinalOC','FinalOD'].forEach(id => {
+      if(v(id)) body += r(id.replace('Final',''), v(id));
+    });
+    body += br();
+    const isW4W6 = (cie === 'W4' || cie === 'W6');
+    [['FinalH1', isW4W6?'CP1':'H1'],['FinalH2', isW4W6?'CP2':'H2'],
+     ['FinalH3', isW4W6?'CP3':'H3'],['FinalH4', isW4W6?'CP4':'H4']].forEach(([id,lbl]) => {
+      if(v(id)) body += r(lbl, v(id));
+    });
+    body += br();
+    if(v('CommChiffresPorte'))    body += r('COMM. CHIFFRES PORTE',    v('CommChiffresPorte'));
+    if(v('CommChargementPiste'))  body += r('COMM. CHARGEMENT PISTE',  v('CommChargementPiste'));
+    if(v('FinalSI'))              body += r('SI', v('FinalSI'));
+  }
+
+  // RETARDS
+  const hasDL = v('DLcode1') || v('DLcode2') || v('DLcode3');
+  if(hasDL){
+    body += s();
+    body += '[ RETARDS ]\n\n';
+    if(v('DLcode1')) body += `DL ${v('DLcode1')}  /  ${v('DLduree1')||'?'} min\n`;
+    if(v('DLcode2')) body += `DL ${v('DLcode2')}  /  ${v('DLduree2')||'?'} min\n`;
+    if(v('DLcode3')) body += `DL ${v('DLcode3')}  /  ${v('DLduree3')||'?'} min\n`;
+  }
+
+  // BLOC NOTE
+  const faitsTxt = v('FaitsSaillants');
+  if(faitsTxt){
+    body += s();
+    body += '[ BLOC NOTE ]\n\n';
+    body += faitsTxt + '\n';
+  }
+
+  window.location.href =
+    `mailto:?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
+}
+
 function openFuelMenu(){
   const b = document.getElementById('fuelBackdrop');
   const m = document.getElementById('fuelMenu');
