@@ -5843,7 +5843,9 @@ function renderTimeline(){
 
   rows.forEach((d, i) => {
     const color   = getColor(d);
-    const hasTarget = hasTargets && aibt !== null && FRRK_TARGETS[d.label] !== undefined;
+    const tDefCheck   = FRRK_TARGETS[d.label];
+    const refOk       = tDefCheck && (tDefCheck.ref === 'EOBT' ? window._eobtRawMins != null : aibt !== null);
+    const hasTarget   = hasTargets && !!tDefCheck && refOk;
     const targetDef    = hasTarget ? FRRK_TARGETS[d.label] : null;
     const displayLabel = targetDef?.label || DEFAULT_LABELS[d.label] || d.label;
 
