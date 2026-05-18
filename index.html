@@ -5700,8 +5700,15 @@ function renderTimeline(){
       const dLabel = tDef?.label || DEFAULT_LABELS[label] || label;
       if(complete) return { ...complete, status:'complete', displayLabel: dLabel };
 
-      // Action commencée (start seulement) ?
+      // Point events : start === end → toujours 'complete' quand rempli
       const fields = ACTION_FIELDS[label];
+      if(POINT_EVENTS.has(label) && fields){
+        const startV = parseHHMM(document.getElementById(fields.start)?.value || '');
+        if(startV !== null)
+          return { label, a:startV, b:startV, cls:'tl--std', color:barColors[label]||null, status:'complete', displayLabel: dLabel };
+      }
+
+      // Action commencée (start seulement) ?
       if(fields){
         const startV = parseHHMM(document.getElementById(fields.start)?.value || '');
         // Cabin release W4/W6 : ne pas afficher en in-progress (trop ambigu)
@@ -5713,13 +5720,6 @@ function renderTimeline(){
       // Pas de données → montrer la cible vide
       if(FRRK_TARGETS[label] !== undefined)
         return { label, a:null, b:null, cls:'tl--std', color:barColors[label]||null, status:'not-started' };
-
-      // Point event sans cible mais avec valeur saisie
-      if(POINT_EVENTS.has(label) && fields){
-        const startV = parseHHMM(document.getElementById(fields.start)?.value || '');
-        if(startV !== null)
-          return { label, a:startV, b:startV, cls:'tl--std', color:null, status:'complete', displayLabel: dLabel };
-      }
 
       return null;
   }).filter(r => r !== null && r.status !== 'not-started');
