@@ -6420,6 +6420,108 @@ function confirmAssistances(){
     if(inp) _assistancesData['assist_' + type] = inp.value || '0';
   });
   closeAssistancesModal();
+  openRzaModal(_validateCallback);
+}
+
+// ── RZA + Résumé ──────────────────────────────────────────────
+let _rzaData = {};
+
+function openRzaModal(callback){
+  _validateCallback = callback;
+
+  // Champ RZA
+  const inp = document.getElementById('rzaInitialesInput');
+  if(inp) inp.value = _rzaData.initiales || '';
+
+  // Récupération des timings clés
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const aibtVal  = v('AIBT');
+  const eobtVal  = (document.getElementById('timer-eobt')?.textContent || '').replace('--:--','').trim();
+  const aobtVal  = v('AOBT');
+  const parseHM  = s => { const [h,m]=(s||'').split(':').map(Number); return (isNaN(h)||isNaN(m)) ? null : h*60+m; };
+  const fmt      = m => m == null ? '--:--' : `${String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0')}:${String(((m%1440)+1440)%1440%60).padStart(2,'0')}`;
+  const fmtDur   = m => m == null ? '—' : `${Math.floor(Math.abs(m)/60)}h${String(Math.abs(m)%60).padStart(2,'0')}`;
+
+  const aibtM = parseHM(aibtVal), aobtM = parseHM(aobtVal);
+  let tat = null, ret = null;
+  if(aibtM != null && aobtM != null){
+    tat = aobtM - aibtM; if(tat < 0) tat += 1440;
+    const sobtM = parseHM(v('SOBT'));
+    if(sobtM != null){ ret = aobtM - sobtM; if(ret < 0) ret += 1440; if(ret > 720) ret -= 1440; }
+  }
+
+  // Remplissage du résumé
+  const rows = [
+    ['AIBT', aibtVal || '—'],
+    ['EOBT', eobtVal || '—'],
+    ['AOBT', aobtVal || '—'],
+    ['Turnaround', tat != null ? fmtDur(tat) : '—'],
+    ['Retard total', ret != null ? (ret > 0 ? `+${fmtDur(ret)}` : fmtDur(ret)) : '—'],
+  ];
+  const table = document.getElementById('rzaSummaryTable');
+  if(table){
+    table.innerHTML = rows.map(([k,vv]) =>
+      `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--field-border);font-size:.88rem;">
+        <span style="color:var(--muted);font-weight:600;">${k}</span>
+        <span style="font-weight:800;color:var(--text);">${vv}</span>
+      </div>`
+    ).join('');
+  }
+
+  // Détection d'incohérences
+  const warnings = [];
+  if(aibtM != null && aobtM != null){
+    if(tat < 5) warnings.push('⚠️ AOBT très proche ou avant AIBT');
+  }
+
+  // Durées d'actions anormales
+  const actionPairs = [
+    ['Débarquement', 'PremierDebarque', 'DernierDebarque'],
+    ['Cabin tidy/cleaning', 'DernierDebarque', 'AvionPremierEmbarque'],
+    ['Embarquement', 'AvionPremierEmbarque', 'AvionDernierEmbarque'],
+    ['Avitair', 'ArriveeFuel', 'DepartFuel'],
+    ['Lift arr', 'ArriveeLiftArr', 'DepartLiftArr'],
+    ['Lift dep', 'ArriveeLift', 'DepartLift'],
+  ];
+  actionPairs.forEach(([name, startId, endId]) => {
+    const s = parseHM(v(startId)), e = parseHM(v(endId));
+    if(s == null || e == null) return;
+    let dur = e - s; if(dur < 0) dur += 1440;
+    if(dur < 0) warnings.push(`⚠️ ${name} : fin avant début`);
+    else if(dur < 5) warnings.push(`⚠️ ${name} : durée anormalement courte (${dur}min)`);
+    else if(dur > 120) warnings.push(`⚠️ ${name} : durée anormalement longue (${fmtDur(dur)})`);
+  });
+
+  const warnEl = document.getElementById('rzaWarnings');
+  if(warnEl){
+    if(warnings.length){
+      warnEl.style.display = 'block';
+      warnEl.innerHTML = warnings.map(w =>
+        `<div style="padding:5px 8px;background:color-mix(in srgb,#f59e0b 12%,transparent);border-left:3px solid #f59e0b;border-radius:4px;font-size:.82rem;font-weight:600;color:var(--text);">${w}</div>`
+      ).join('');
+    } else {
+      warnEl.style.display = 'none';
+      warnEl.innerHTML = '';
+    }
+  }
+
+  document.getElementById('rzaModal').style.display = 'flex';
+}
+
+function closeRzaModal(){
+  document.getElementById('rzaModal').style.display = 'none';
+}
+
+function confirmRza(){
+  const inp = document.getElementById('rzaInitialesInput');
+  const val = (inp?.value || '').toUpperCase().trim();
+  if(val.length < 2){
+    inp?.focus();
+    inp?.style && (inp.style.borderColor = '#dc2626');
+    return;
+  }
+  _rzaData.initiales = val;
+  closeRzaModal();
   if(_validateCallback) _validateCallback();
 }
 
@@ -6448,7 +6550,7 @@ function doValidate() {
   const to       = val("To");
   const immat    = val("Immat");
   const typeAvion= val("TypeAvion");
-  const rza      = '';
+  const rza      = _rzaData.initiales || '';
 
   const titre = `[TIMING] ${dateTitre} / ${cie}${vol} ${from}-${to} / ${immat} / ${rza}`;
 
@@ -7584,4 +7686,35 @@ function _lightboxKey(e){ if(e.key === 'Escape') closeLightbox(); }
 </div>
 
 </body>
-</html>
+</html><!-- ══════════════ MODAL RZA + RÉSUMÉ ══════════════ -->
+<div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:var(--card); border-radius:14px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column; gap:0;">
+    <div style="padding:18px 20px 12px; border-bottom:1px solid var(--field-border); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:900; font-size:1rem; color:var(--text);">Récapitulatif</span>
+      <button onclick="closeRzaModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);">✕</button>
+    </div>
+
+    <!-- Résumé timings -->
+    <div style="padding:14px 20px 8px;">
+      <div id="rzaSummaryTable"></div>
+    </div>
+
+    <!-- Alertes -->
+    <div id="rzaWarnings" style="display:none; padding:0 20px 10px; display:flex; flex-direction:column; gap:5px;"></div>
+
+    <!-- RZA -->
+    <div style="padding:12px 20px; border-top:1px solid var(--field-border);">
+      <label style="font-size:.8rem; font-weight:700; color:var(--muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em;">Initiales RZA</label>
+      <input id="rzaInitialesInput" type="text" maxlength="3" placeholder="ex: ABC"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,''); this.style.borderColor=''"
+        style="width:100%; padding:10px 12px; border:1.5px solid var(--field-border); border-radius:8px; background:var(--field); color:var(--text); font-size:1.1rem; font-weight:800; letter-spacing:.1em; text-align:center; text-transform:uppercase;">
+    </div>
+
+    <div style="padding:12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--field-border);">
+      <button onclick="closeRzaModal()" style="padding:9px 18px; border-radius:8px; border:1px solid var(--field-border); background:transparent; color:var(--text); font-weight:700; cursor:pointer;">Annuler</button>
+      <button onclick="confirmRza()" style="padding:9px 20px; border-radius:8px; border:none; background:#16a34a; color:#fff; font-weight:800; cursor:pointer;">Valider →</button>
+    </div>
+  </div>
+</div>
+
+</body>
