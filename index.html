@@ -1176,79 +1176,201 @@ html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 }
 html.dark #ldmModal { border-color: rgba(255,255,255,.10); }
 
+/* Header simplifié - plus de titre redondant */
 .ldm-header {
   position: sticky;
   top: 0;
   z-index: 3;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   background: var(--card);
-  border-bottom: 1px solid rgba(0,0,0,.08);
+  border-bottom: 1px solid var(--field-border);
 }
-html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.10); }
+html.dark .ldm-header { border-bottom-color: rgba(255,255,255,.08); }
+.ldm-title { display: none; } /* Supprimé - info portée par les onglets */
 
-.ldm-title              { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
-.ldm-title strong       { font-weight: 900; font-size: 1.1rem; }
-#ldmHint                { font-weight: 900; border-radius: 999px; }
-
-/* Onglets ARR / PREVI / FINAL / FUEL */
+/* Onglets pill */
 .lm-seg {
   display: inline-flex;
-  flex-shrink: 0;
+  flex: 1;
   gap: 3px;
-  background: #e5e5e5;
   background: color-mix(in srgb, var(--card) 86%, #000 14%);
   padding: 4px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
-html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.lm-seg .button              { border-radius: 999px; font-weight: 900; height: 34px; font-size: .82rem; padding: 0 10px; }
-.lm-seg .button.is-active    { background: #2563eb; color: #fff; border-color: transparent; }
-
-.ldm-body { padding: 14px; overflow: auto; }
-
-/* Carte section */
-.ldm-card {
-  border-radius: 16px;
-  background: #f4f4f4;
-  background: color-mix(in srgb, var(--card) 92%, #000 8%);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
-  overflow: hidden;
-  margin-bottom: 14px;
+html.dark .lm-seg { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); background: color-mix(in srgb, var(--card) 82%, #fff 18%); }
+.lm-seg .button {
+  border-radius: 999px; font-weight: 900; height: 32px;
+  font-size: .8rem; padding: 0; flex: 1;
+  background: transparent; border: none; color: var(--muted);
+  transition: background .15s, color .15s;
 }
-html.dark .ldm-card { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.lm-seg .button.is-active { background: var(--text); color: var(--card); }
+#ldmTabFuel.is-active     { background: #facc15; color: #000; }
 
-/* Header de section */
-.ldm-card-hdr {
+.ldm-body {
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Cards sans header interne ── */
+.ldm-card {
+  background: var(--card);
+}
+.ldm-card-hdr { display: none; } /* Supprimé - titre déjà dans les onglets */
+
+/* ── Body de section ── */
+.ldm-grid {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ldm-grid .field { margin: 0; }
+.ldm-span-2 { width: 100%; }
+
+/* ── Grille 4 colonnes stat blocks ── */
+.ld-row-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.ld-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+.ld-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+/* ── Stat block ── */
+.ld-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 4px 4px;
+  background: var(--field);
+  border: 1.5px solid var(--field-border);
+  border-radius: 8px;
+  gap: 2px;
+  transition: border-color .15s;
+}
+.ld-stat:focus-within {
+  border-color: #2563eb;
+  background: color-mix(in srgb, #2563eb 5%, var(--field));
+}
+.ld-stat:has(.is-danger) {
+  border-color: #ef4444 !important;
+  background: color-mix(in srgb, #ef4444 6%, var(--field));
+}
+.ld-stat:has(.is-danger) .ld-stat-label {
+  color: #ef4444;
+}
+.ld-stat-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ld-stat input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text);
+  padding: 0;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+.ld-stat input:focus { outline: none; }
+.ld-stat input[readonly] { color: var(--muted); cursor: default; }
+
+/* ── Bande TOB ── */
+.ld-tob {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: color-mix(in srgb, var(--card) 85%, #3b82f6 15%);
-  border-bottom: 1px solid rgba(0,0,0,.06);
+  padding: 7px 12px;
+  background: color-mix(in srgb, #2563eb 7%, var(--card));
+  border: 1.5px solid color-mix(in srgb, #2563eb 18%, transparent);
+  border-radius: 8px;
 }
-html.dark .ldm-card-hdr {
-  background: color-mix(in srgb, var(--card) 80%, #60a5fa 20%);
-  border-bottom-color: rgba(255,255,255,.08);
+.ld-tob-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #2563eb;
+  white-space: nowrap;
+}
+.ld-tob input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text);
+  padding: 0;
+}
+.ld-tob input:focus { outline: none; }
+
+/* ── Séparateur de groupe ── */
+.ld-divider {
+  height: 1px;
+  background: var(--field-border);
+  margin: 2px 0;
 }
 
-.ldm-card-title { font-weight: 900; font-size: 1rem; letter-spacing: .06em; }
-.ldm-card-sub   { color: var(--muted); font-weight: 800; font-size: .85rem; margin-left: auto; }
-
-/* Grille champs */
-.ldm-grid {
-  padding: 14px 16px 16px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 14px;
+/* ── Textarea SI ── */
+.ldm-ta {
+  font-size: .85rem;
+  min-height: 52px;
+  resize: vertical;
 }
-.ldm-grid .field { margin: 0; }
-.ldm-span-2 { grid-column: span 2; }
 
+/* ── Champs comm (readonly) ── */
+.ld-comm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ld-comm-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ld-comm input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--field-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--field) 60%, var(--card));
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .88rem;
+  text-align: center;
+}
+
+/* ── Ancien ldm-in ── */
+.ldm-in { font-weight: 800; }
 .ldm-row-4 {
   grid-column: span 2;
   display: grid;
@@ -1738,173 +1860,63 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
     <!-- ===== LOAD ARR ===== -->
     <section class="ldm-card ldm-arr" id="ldmArr">
-      <div class="ldm-card-hdr">
-        <div class="ldm-card-title">LOAD</div>
-        <div class="ldm-card-sub">ARR</div>
-      </div>
-
       <div class="ldm-grid">
-
-        <!-- ✅ 4 colonnes : PAX / +INF / BAGS / POIDS -->
-        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-          <div class="field" style="margin:0;">
-            <label class="label">PAX</label>
-            <input class="input ldm-in" id="ArrPAX_MAIN"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this)">
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="label">+ INF</label>
-            <input class="input ldm-in" id="ArrPAX_INF"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this)">
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="label">BAGS</label>
-            <input class="input ldm-in" id="ArrBAGS"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('arr')">
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="label">POIDS</label>
-            <input class="input ldm-in" id="ArrPOIDS"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="5" oninput="digitsOnly(this)">
-          </div>
+        <div class="ld-row-4">
+          <div class="ld-stat"><span class="ld-stat-label">PAX</span><input class="ldm-in" id="ArrPAX_MAIN" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">+ INF</span><input class="ldm-in" id="ArrPAX_INF" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">BAGS</span><input class="ldm-in" id="ArrBAGS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('arr')"></div>
+          <div class="ld-stat"><span class="ld-stat-label">POIDS</span><input class="ldm-in" id="ArrPOIDS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" oninput="digitsOnly(this)"></div>
         </div>
-
-        <div class="field ldm-span-2">
+        <div class="field" style="margin:0;">
           <label class="label">SI</label>
           <textarea class="textarea si-uppercase ldm-ta" id="ArrSI"></textarea>
         </div>
-
       </div>
     </section>
 
     <!-- ===== LOAD PREVI ===== -->
     <section class="ldm-card ldm-previ" id="ldmPrevi" style="display:none;">
-      <div class="ldm-card-hdr">
-        <div class="ldm-card-title">LOAD</div>
-        <div class="ldm-card-sub">PREVI</div>
-      </div>
-
       <div class="ldm-grid">
 
-        <!-- ✅ PREVI – FR / RK : 4 colonnes + ligne LOAD -->
-        <div class="ldm-span-2" id="previFRRK">
-
-          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-            <div class="field" style="margin:0;">
-              <label class="label">PAX</label>
-              <input class="input ldm-in" id="PreviPAX_MAIN"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="4" oninput="digitsOnly(this); updatePreviTOB_FRRK()">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">+ INF</label>
-              <input class="input ldm-in" id="PreviPAX_INF"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB_FRRK()">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">BAGS</label>
-              <input class="input ldm-in" id="PreviBAGS"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('previ')">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">POIDS</label>
-              <input class="input ldm-in" id="PreviPOIDS"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="5" oninput="digitsOnly(this)">
-            </div>
+        <!-- PREVI FR/RK -->
+        <div id="previFRRK">
+          <div class="ld-row-3">
+            <div class="ld-stat"><span class="ld-stat-label">PAX</span><input class="ldm-in" id="PreviPAX_MAIN" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updatePreviTOB_FRRK()"></div>
+            <div class="ld-stat"><span class="ld-stat-label">+ INF</span><input class="ldm-in" id="PreviPAX_INF" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updatePreviTOB_FRRK()"></div>
+            <div class="ld-stat"><span class="ld-stat-label">BAGS</span><input class="ldm-in" id="PreviBAGS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('previ')"></div>
           </div>
-
-          <!-- ✅ ligne LOAD (FR/RK) -->
-          <div style="margin-top:10px;">
-            <div class="field" style="margin:0;">
-              <label class="label">TOB</label>
-              <input class="input ldm-in" id="PreviTOB_FRRK" type="text" readonly>
-            </div>
+          <div class="ld-tob" style="margin-top:6px;">
+            <span class="ld-tob-label">TOB</span>
+            <input id="PreviTOB_FRRK" type="text" readonly>
           </div>
-
         </div>
 
-        <!-- PREVI – AUTRES CIE -->
-        <div class="ldm-span-2" id="previOTHER" style="display:none;">
-
-          <!-- MALE / FEMALE / CHILD / INFANT -->
-          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-            <div class="field" style="margin:0;">
-              <label class="label">MALE</label>
-              <input class="input ldm-in" id="PreviMALE"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">FEMALE</label>
-              <input class="input ldm-in" id="PreviFEMALE"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">CHILD</label>
-              <input class="input ldm-in" id="PreviCHILD"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">INFANT</label>
-              <input class="input ldm-in" id="PreviINFANT"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="3" oninput="digitsOnly(this); updatePreviTOB()">
-            </div>
+        <!-- PREVI AUTRES CIE -->
+        <div id="previOTHER" style="display:none;">
+          <div class="ld-row-4">
+            <div class="ld-stat"><span class="ld-stat-label">MALE</span><input class="ldm-in" id="PreviMALE" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updatePreviTOB()"></div>
+            <div class="ld-stat"><span class="ld-stat-label">FEMALE</span><input class="ldm-in" id="PreviFEMALE" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updatePreviTOB()"></div>
+            <div class="ld-stat"><span class="ld-stat-label">CHILD</span><input class="ldm-in" id="PreviCHILD" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updatePreviTOB()"></div>
+            <div class="ld-stat"><span class="ld-stat-label">INFANT</span><input class="ldm-in" id="PreviINFANT" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updatePreviTOB()"></div>
           </div>
-
-          <!-- TOB -->
-          <div style="margin-top:10px;">
-            <div class="field" style="margin:0;">
-              <label class="label">TOB</label>
-              <input class="input ldm-in" id="PreviTOB" type="text" readonly>
-            </div>
+          <div class="ld-tob" style="margin-top:6px;">
+            <span class="ld-tob-label">TOB</span>
+            <input id="PreviTOB" type="text" readonly>
           </div>
-
-          <!-- BAGS / POIDS -->
-          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;">
-            <div class="field" style="margin:0;">
-              <label class="label">BAGS</label>
-              <input class="input ldm-in" id="PreviBAGS_OTHER"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="4" oninput="digitsOnly(this)">
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="label">POIDS</label>
-              <input class="input ldm-in" id="PreviPOIDS_OTHER"
-                     type="text" inputmode="numeric" pattern="[0-9]*"
-                     maxlength="5" oninput="digitsOnly(this)">
-            </div>
+          <div class="ld-row-2" style="margin-top:6px;">
+            <div class="ld-stat"><span class="ld-stat-label">BAGS</span><input class="ldm-in" id="PreviBAGS_OTHER" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this)"></div>
+            <div class="ld-stat"><span class="ld-stat-label">POIDS</span><input class="ldm-in" id="PreviPOIDS_OTHER" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" oninput="digitsOnly(this)"></div>
           </div>
-
         </div>
 
-        <!-- SI PREVI -->
-        <div class="field ldm-span-2">
+        <div class="field" style="margin:0;">
           <label class="label">SI</label>
           <textarea class="textarea si-uppercase ldm-ta" id="PreviSI"></textarea>
         </div>
 
-        <!-- POUSSETTES -->
-        <div class="field">
-          <label class="label">POUSSETTES PORTE</label>
-          <input class="input ldm-in" id="PreviPoussettesPorte"
-                 type="text" inputmode="numeric" pattern="[0-9]*"
-                 maxlength="3" oninput="digitsOnly(this)">
-        </div>
-        <div class="field">
-          <label class="label">POUSSETTES CBS</label>
-          <input class="input ldm-in" id="PreviPoussettesCBS"
-                 type="text" inputmode="numeric" pattern="[0-9]*"
-                 maxlength="3" oninput="digitsOnly(this)">
+        <div class="ld-row-2">
+          <div class="ld-stat"><span class="ld-stat-label">POUSSETTES PORTE</span><input class="ldm-in" id="PreviPoussettesPorte" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">POUSSETTES CBS</span><input class="ldm-in" id="PreviPoussettesCBS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this)"></div>
         </div>
 
       </div>
@@ -1912,184 +1924,92 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
     <!-- ===== LOAD FINAL ===== -->
     <section class="ldm-card ldm-final" id="ldmFinal" style="display:none;">
-      <div class="ldm-card-hdr">
-        <div class="ldm-card-title">LOAD FINAL</div>
-        <div class="ldm-card-sub">FINAL</div>
-      </div>
       <div class="ldm-grid">
 
-        <div class="field">
-          <label class="label">MALE</label>
-          <input class="input ldm-in" id="FinalMALE"
-                 type="text" inputmode="numeric" pattern="[0-9]*"
-                 maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
+        <!-- PAX : FR/RK = ADULT CHILD INFANT / autres = MALE FEMALE CHILD INFANT -->
+        <div id="finalPaxRow" style="display:flex; gap:6px;">
+          <div class="ld-stat" id="finalStatMALE" style="flex:1;"><span class="ld-stat-label">MALE</span><input class="ldm-in" id="FinalMALE" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()"></div>
+          <div class="ld-stat" id="finalStatFEMALE" style="flex:1;"><span class="ld-stat-label">FEMALE</span><input class="ldm-in" id="FinalFEMALE" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()"></div>
+          <div class="ld-stat" id="finalStatADULT" style="flex:1; display:none;"><span class="ld-stat-label">ADULT</span><input class="ldm-in" id="FinalADULT" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()"></div>
+          <div class="ld-stat" style="flex:1;"><span class="ld-stat-label">CHILD</span><input class="ldm-in" id="FinalCHILD" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
+          <div class="ld-stat" style="flex:1;"><span class="ld-stat-label">INFANT</span><input class="ldm-in" id="FinalINFANT" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
         </div>
 
-        <div class="field">
-          <label class="label">FEMALE</label>
-          <input class="input ldm-in" id="FinalFEMALE"
-                 type="text" inputmode="numeric" pattern="[0-9]*"
-                 maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
+        <!-- TOB + LID Guide -->
+        <div class="ld-tob" style="position:relative; justify-content:center;">
+          <span class="ld-tob-label" style="position:absolute; left:12px;">TOB</span>
+          <input id="FinalTOB" type="text" readonly style="text-align:center; flex:none; width:auto; min-width:0;">
+          <button id="lidGuideBtn" class="button is-link is-light is-small" type="button" onclick="toggleFinalImage()" style="position:absolute; right:8px; font-size:.7rem; font-weight:800; border-radius:6px; white-space:nowrap; display:none;">LID GUIDE ▸</button>
+        </div>
+        <div id="finalImageBox" style="display:none;">
+          <img id="finalImage"
+               src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/lid-completion-guide.jpg"
+               style="max-width:100%; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.22); cursor:zoom-in;"
+               onclick="openLightbox(this.src)">
         </div>
 
-        <!-- Ligne 1 : ADULT / CHILD / INFANT -->
-        <div class="ldm-span-2"
-             style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;">
-          <div class="field" style="margin:0;">
-            <label class="label">ADULT</label>
-            <input class="input ldm-in" id="FinalADULT"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); syncAdultGenderLocks(); updateFinalTOB()">
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="label">CHILD</label>
-            <input class="input ldm-in" id="FinalCHILD"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="label">INFANT</label>
-            <input class="input ldm-in" id="FinalINFANT"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
-          </div>
+        <div class="ld-divider"></div>
+
+        <!-- Offload OA–OD -->
+        <div id="finalZonesRow" class="ld-row-4">
+          <div class="ld-stat"><span class="ld-stat-label">OA</span><input class="ldm-in" id="FinalOA" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
+          <div class="ld-stat"><span class="ld-stat-label">OB</span><input class="ldm-in" id="FinalOB" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
+          <div class="ld-stat"><span class="ld-stat-label">OC</span><input class="ldm-in" id="FinalOC" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
+          <div class="ld-stat"><span class="ld-stat-label">OD</span><input class="ldm-in" id="FinalOD" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" oninput="digitsOnly(this); updateFinalTOB()"></div>
         </div>
 
-        <!-- Ligne 2 : TOB -->
-        <div class="ldm-span-2"
-             style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;">
-          <div class="field" style="margin:0;">
-            <label class="label">TOB</label>
-            <input class="input ldm-in has-text-weight-bold" id="FinalTOB" readonly>
-          </div>
+        <div class="ld-divider"></div>
+
+        <!-- Bags / Poids -->
+        <div class="ld-row-4" id="bagsPoidsBgRow">
+          <div class="ld-stat"><span class="ld-stat-label">BAGS</span><input class="ldm-in" id="FinalBAGS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded(); updatePoidsCorrige()"></div>
+          <div class="ld-stat"><span class="ld-stat-label">POIDS</span><input class="ldm-in" id="FinalPOIDS" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; } updatePoidsCorrige()"></div>
+          <div class="ld-stat"><span class="ld-stat-label">GB</span><input class="ldm-in" id="FinalGB" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateFinalWeightIfNeeded(); updatePoidsCorrige()"></div>
+          <div class="ld-stat"><span class="ld-stat-label"><span class="poids-corr-short">POIDS CORR.</span><span class="poids-corr-full" style="display:none">POIDS CORRIGÉ</span></span><input class="ldm-in" id="FinalPoidsCorrige" type="text" readonly style="color:var(--muted);cursor:default;"></div>
         </div>
 
-        <div class="ldm-row-4">
-          <div class="field">
-            <label class="label">OA</label>
-            <input class="input ldm-in" id="FinalOA"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+        <!-- H bags (CP) -->
+        <div class="ld-row-4" id="hBagsRow">
+          <div class="ld-stat">
+            <span class="ld-stat-label">H1</span>
+            <input class="ldm-in" id="FinalH1" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
+            <div id="FinalH1w" style="font-size:.68rem;font-weight:900;color:var(--muted);display:none;"></div>
           </div>
-          <div class="field">
-            <label class="label">OB</label>
-            <input class="input ldm-in" id="FinalOB"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          <div class="ld-stat">
+            <span class="ld-stat-label">H2</span>
+            <input class="ldm-in" id="FinalH2" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
+            <div id="FinalH2w" style="font-size:.68rem;font-weight:900;color:var(--muted);display:none;"></div>
           </div>
-          <div class="field">
-            <label class="label">OC</label>
-            <input class="input ldm-in" id="FinalOC"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          <div class="ld-stat">
+            <span class="ld-stat-label">H3</span>
+            <input class="ldm-in" id="FinalH3" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
+            <div id="FinalH3w" style="font-size:.68rem;font-weight:900;color:var(--muted);display:none;"></div>
           </div>
-          <div class="field">
-            <label class="label">OD</label>
-            <input class="input ldm-in" id="FinalOD"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="3" oninput="digitsOnly(this); updateFinalTOB()">
+          <div class="ld-stat">
+            <span class="ld-stat-label">H4</span>
+            <input class="ldm-in" id="FinalH4" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
+            <div id="FinalH4w" style="font-size:.68rem;font-weight:900;color:var(--muted);display:none;"></div>
           </div>
         </div>
 
-        <!-- Ligne 3 : BAGS POIDS GB POIDS CORRIGÉ -->
-        <div class="ldm-row-4" id="bagsPoidsBgRow" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
-          <div class="field">
-            <label class="label">BAGS</label>
-            <input class="input ldm-in" id="FinalBAGS"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4"
-                   oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded(); updatePoidsCorrige()">
-          </div>
-          <div class="field">
-            <label class="label">POIDS</label>
-            <input class="input ldm-in" id="FinalPOIDS"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; } updatePoidsCorrige()">
-          </div>
-          <div class="field">
-            <label class="label">GB</label>
-            <input class="input ldm-in" id="FinalGB"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4"
-                   oninput="digitsOnly(this); updateFinalWeightIfNeeded(); updatePoidsCorrige()">
-          </div>
-          <div class="field">
-            <label class="label" style="white-space:nowrap;"><span class="poids-corr-short">POIDS CORR.</span><span class="poids-corr-full">POIDS CORRIGÉ</span></label>
-            <input class="input ldm-in" id="FinalPoidsCorrige"
-                   type="text" readonly
-                   style="background:var(--bg-alt,#f4f6fb);color:var(--muted);font-weight:900;cursor:default;">
-          </div>
-        </div>
+        <div class="ld-divider"></div>
 
-        <div class="ldm-row-4" id="hBagsRow">
-          <div class="field">
-            <label class="label">H1</label>
-            <input class="input ldm-in" id="FinalH1"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
-            <div id="FinalH1w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
-          </div>
-          <div class="field">
-            <label class="label">H2</label>
-            <input class="input ldm-in" id="FinalH2"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
-            <div id="FinalH2w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
-          </div>
-          <div class="field">
-            <label class="label">H3</label>
-            <input class="input ldm-in" id="FinalH3"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
-            <div id="FinalH3w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
-          </div>
-          <div class="field">
-            <label class="label">H4</label>
-            <input class="input ldm-in" id="FinalH4"
-                   type="text" inputmode="numeric" pattern="[0-9]*"
-                   maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateHWeights(); updateCommChargementPiste()">
-            <div id="FinalH4w" class="has-text-centered" style="font-size:.72rem;font-weight:900;color:var(--muted);margin-top:3px;display:none;"></div>
-          </div>
-        </div>
-
-        <div class="field ldm-span-2">
+        <!-- SI -->
+        <div class="field" style="margin:0;">
           <label class="label">SI</label>
           <textarea class="textarea si-uppercase ldm-ta" id="FinalSI"></textarea>
         </div>
 
-        <div class="field ldm-span-2" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-          <div>
-            <label class="label">Communication chiffres porte</label>
-            <input class="input ldm-in" id="CommChiffresPorte" type="text" readonly
-                   placeholder="Auto — HH:MM"
-                   title="Mis à jour automatiquement à chaque calcul TOB">
+        <!-- Communications -->
+        <div class="ld-row-2">
+          <div class="ld-comm">
+            <span class="ld-comm-label">Comm. chiffres porte</span>
+            <input id="CommChiffresPorte" type="text" readonly placeholder="Auto — HH:MM" title="Mis à jour automatiquement à chaque calcul TOB">
           </div>
-          <div>
-            <label class="label">Communication chargement piste</label>
-            <input class="input ldm-in" id="CommChargementPiste" type="text" readonly
-                   placeholder="Auto — HH:MM"
-                   title="Mis à jour automatiquement quand H1/H2/H3/H4 (CP1–CP4) changent">
+          <div class="ld-comm">
+            <span class="ld-comm-label">Comm. chargement piste</span>
+            <input id="CommChargementPiste" type="text" readonly placeholder="Auto — HH:MM">
           </div>
-        </div>
-
-        <!-- BOUTON IMAGE -->
-        <div class="ldm-span-2 has-text-centered" style="margin-top:10px;">
-
-          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-
-            <button class="button is-link is-light" type="button" onclick="toggleFinalImage()">
-              LID COMPLETION GUIDE (RYR)
-            </button>
-
-          </div>
-
-          <div id="finalImageBox" style="display:none; margin-top:12px;">
-            <img id="finalImage"
-                 src="https://pub-c7a84a2cfc4d46d3b0562e0e646eff71.r2.dev/lid-completion-guide.jpg"
-                 style="max-width:100%; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:zoom-in;"
-                 onclick="openLightbox(this.src)">
-          </div>
-
         </div>
 
       </div>
@@ -2097,40 +2017,12 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
     <!-- ===== FUEL ===== -->
     <section class="ldm-card ldm-fuel" id="ldmFuel" style="display:none;">
-      <div class="ldm-card-hdr">
-        <div class="ldm-card-title">FUEL</div>
-        <div class="ldm-card-sub">INPUT</div>
-      </div>
-
       <div class="ldm-grid">
-        <div class="ldm-span-2" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-          <div class="field" style="margin:0;">
-            <label class="label">BLOCK</label>
-            <input id="BlockFuel" class="input ldm-in" type="text"
-                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
-                   oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">TAXI</label>
-            <input id="TaxiFuel" class="input ldm-in" type="text"
-                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
-                   oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">TRIP</label>
-            <input id="TripFuel" class="input ldm-in" type="text"
-                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
-                   oninput="digitsOnly(this)">
-          </div>
-
-          <div class="field" style="margin:0;">
-            <label class="label">UPLIFT</label>
-            <input id="FuelUplift" class="input ldm-in" type="text"
-                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
-                   oninput="digitsOnly(this)">
-          </div>
+        <div class="ld-row-4">
+          <div class="ld-stat"><span class="ld-stat-label">BLOCK</span><input class="ldm-in" id="BlockFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">TAXI</span><input class="ldm-in" id="TaxiFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">TRIP</span><input class="ldm-in" id="TripFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label">UPLIFT</span><input class="ldm-in" id="FuelUplift" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
         </div>
       </div>
     </section>
