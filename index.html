@@ -1965,7 +1965,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
           <div class="ld-stat"><span class="ld-stat-label">BAGS</span><input class="ldm-in" id="FinalBAGS" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateHBagsValidity('final'); updateFinalWeightIfNeeded(); updatePoidsCorrige()"></div>
           <div class="ld-stat"><span class="ld-stat-label">POIDS</span><input class="ldm-in" id="FinalPOIDS" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this); const cie=(document.getElementById('Cie')?.value||'').toUpperCase(); if(cie==='W4'||cie==='W6'||cie==='H4'){ this.dataset.baseWeight=this.value; } updatePoidsCorrige()"></div>
           <div class="ld-stat"><span class="ld-stat-label">GB</span><input class="ldm-in" id="FinalGB" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="digitsOnly(this); updateFinalWeightIfNeeded(); updatePoidsCorrige()"></div>
-          <div class="ld-stat"><span class="ld-stat-label"><span class="poids-corr-short">POIDS CORR.</span><span class="poids-corr-full" style="display:none">POIDS CORRIGÉ</span></span><input class="ldm-in" id="FinalPoidsCorrige" type="text" readonly style="color:var(--muted);cursor:default;"></div>
+          <div class="ld-stat"><span class="ld-stat-label"><span class="poids-corr-short">POIDS CORR.</span><span class="poids-corr-full">POIDS CORRIGÉ</span></span><input class="ldm-in" id="FinalPoidsCorrige" type="text" readonly style="color:var(--muted);cursor:default;"></div>
         </div>
 
         <!-- H bags (CP) -->
