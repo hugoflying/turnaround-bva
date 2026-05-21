@@ -1,3 +1,5 @@
+async function refreshAKTab(tabId){ return; }
+
 /* Collapse */
 function toggleCardBody(headerEl){
   const card = headerEl.closest('.card');
@@ -130,6 +132,200 @@ let manualSOBT=false;
 let currentTabId=null;
 let saveTimer=null;
 
+let settingFromAK = false;
+
+/* ===== AK managed fields helpers ===== */
+function isEmptyVal(el){
+  return !el || ((el.value || '').trim() === '');
+}
+
+function setValAK(id, v){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  settingFromAK = true;
+  el.value = (typeof v === 'string') ? (v ?? '').toUpperCase() : (v ?? '');
+  el.dataset.ak = '1';
+  el.dispatchEvent(new Event('input',  { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  settingFromAK = false;
+
+  // Sync affichage CTOT
+  if(id === 'CTOT'){
+    const d = document.getElementById('timer-ctot');
+    if(d) d.textContent = el.value || '--:--';
+  }
+}
+
+function setTimeFromISOAK(id, iso){
+  if(!iso) return;
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return;
+
+  const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+  const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+
+  setValAK(id, `${hh}:${mm}`);
+}
+
+function setTimeFromISOIfEmptyOrAK(id, iso){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(isEmptyVal(el) || el.dataset.ak === '1'){
+    setTimeFromISOAK(id, iso);
+  }
+}
+
+function siLines(txt){
+  return (txt || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function normLine(s){
+  return (s || '').trim().toUpperCase();
+}
+
+// clé simple : avant 1er espace ou "+"
+function siKey(line){
+  const up = normLine(line);
+  return up.split(/\s|\+/)[0] || up;
+}
+
+function getTabData(){
+  if(!currentTabId) return {};
+  try{ return JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}'); }
+  catch(e){ return {}; }
+}
+
+function setTabData(data){
+  if(!currentTabId) return;
+  localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+}
+
+/**
+ * Merge SI depuis AK sans écraser les ajouts manuels.
+ * Cas spécial: si tu as prolongé la ligne AK ("1R/19C + 1234"),
+ * et que AK devient "1R/19C + 1TEST/85C", alors on veut:
+ * "1R/19C + 1TEST/85C + 1234" (une seule ligne)
+ */
+function mergeSIFromAK(fieldId, newAkText){
+  const el = document.getElementById(fieldId);
+  if(!el) return;
+
+  const data = getTabData();
+  data.akSI = data.akSI || {};
+
+  const oldAkText = data.akSI[fieldId] || '';
+  const existing  = el.value || '';
+
+  const newAkLines = siLines(newAkText);
+  const oldAkLines = siLines(oldAkText);
+  const existLines = siLines(existing);
+
+  const oldNormSet = new Set(oldAkLines.map(normLine));
+  const newNormSet = new Set(newAkLines.map(normLine));
+
+  // map old base par key
+  const oldByKey = new Map();
+  oldAkLines.forEach(l => oldByKey.set(siKey(l), l));
+
+  // index des lignes AK nouvelles par key (pour pouvoir remplacer)
+  const newIndexByKey = new Map();
+  newAkLines.forEach((l, idx) => {
+    const k = siKey(l);
+    if(!newIndexByKey.has(k)) newIndexByKey.set(k, idx);
+  });
+
+  // résultat = copie des lignes AK
+  const finalLines = [...newAkLines];
+
+  // lignes manuelles séparées (qui ne sont pas du prolongement)
+  const manualOut = [];
+
+  for(const line of existLines){
+    const n = normLine(line);
+
+    // ancienne ligne AK pure -> on la drop (remplacée par newAk)
+    if(oldNormSet.has(n)) continue;
+
+    // tentative de "prolongement" d'une ancienne ligne AK
+    const k = siKey(line);
+    const oldBase = oldByKey.get(k);
+
+    if(oldBase && newIndexByKey.has(k)){
+      const oldBaseNorm = normLine(oldBase);
+      const lineNorm = normLine(line);
+
+      if(lineNorm.startsWith(oldBaseNorm)){
+        const idx = newIndexByKey.get(k);
+        const newBase = finalLines[idx];
+
+        const suffix = line.slice(oldBase.length).trim(); // ce que tu as ajouté
+        const mergedLine = suffix ? `${newBase} ${suffix}` : `${newBase}`;
+
+        // remplace la ligne AK par la version enrichie
+        finalLines[idx] = mergedLine;
+
+        // met à jour le set de doublons (au cas où)
+        newNormSet.add(normLine(mergedLine));
+
+        continue; // IMPORTANT: on n'ajoute pas en manuelOut
+      }
+    }
+
+    // vraie ligne manuelle séparée -> on garde si pas doublon avec AK
+    if(!newNormSet.has(n)) manualOut.push(line);
+  }
+
+  const merged = [...finalLines, ...manualOut].join('\n').trim();
+
+  settingFromAK = true;
+  el.value = merged;
+  el.dispatchEvent(new Event('input',  { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  settingFromAK = false;
+
+  // mémorise la dernière version AK pour le prochain refresh
+  data.akSI[fieldId] = (newAkText || '').trim();
+  setTabData(data);
+}
+
+function setIfEmptyOrAK(id, v){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  // si champ vide OU déjà piloté AK -> on écrase
+  if(isEmptyVal(el) || el.dataset.ak === '1'){
+    setValAK(id, (v ?? ''));
+  }
+}
+
+/* Si l'utilisateur modifie un champ manuellement -> il n'est plus piloté AK */
+document.addEventListener('input', (e)=>{
+  const t = e.target;
+  if(!t || !t.dataset) return;
+  if(settingFromAK) return;
+  if(t.dataset.ak === '1') delete t.dataset.ak;
+}, true);
+
+/* Timeline */
+let timelineZoom = 1;
+const TL_ZOOM_MIN = 0.5;
+const TL_ZOOM_MAX = 8;
+const TL_ZOOM_STEP = 0.25;
+window._timelineCurrentRange = null;
+
+/* EOBT brut + EOBT affiché */
+window._eobtRawMins = null;
+window._eobtAdjMins = null;
+
+/* DL */
+let lastDLChanged = 1;
+
+/* digits only */
+function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g,''); }
 
 /* ===== H1–H4 vs BAGS (ARR / EXP / FINAL) ===== */
 function updateFinalTHOB(){
@@ -156,19 +352,20 @@ function updateFinalTHOB(){
 }
 
 function updateHWeights(){
-  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const to   = (document.getElementById('To')?.value  || '').toUpperCase().trim();
   const show = (cie === 'FR' || cie === 'RK');
+  const mult = (to === 'AMM') ? 15 : 13;
+
   ['FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id => {
     const inp = document.getElementById(id);
     const lbl = document.getElementById(id + 'w');
     if(!inp) return;
-
-    // poids (FR/RK uniquement)
     if(lbl){
       lbl.style.display = show ? '' : 'none';
       if(show){
         const bags = parseInt(inp.value, 10);
-        lbl.textContent = isNaN(bags) || bags === 0 ? '' : (bags * 13) + ' kg';
+        lbl.textContent = isNaN(bags) || bags === 0 ? '' : `${bags * mult} kg`;
       }
     }
   });
@@ -528,290 +725,58 @@ function updateFinalPlaceholdersFRRK(){
 function updateFinalLoadLayout(){
   const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
-
   const isFRRK = (cie === 'FR' || cie === 'RK');
-
-  // ✅ CP si : autres compagnies (comme avant) OU FR/RK + A320
-  const useCP = (!isFRRK) || (isFRRK && type === 'A320');
-
-  const fieldOf = (id)=>{
-    const el = document.getElementById(id);
-    return el ? (el.closest('.ld-stat') || el.closest('.field')) : null;
-  };
-  const showField = (id, show)=>{
-    const f = fieldOf(id);
-    if(f) f.style.display = show ? '' : 'none';
-  };
-  const setLabel = (id, txt)=>{
-    const f = fieldOf(id);
-    const lab = f ? f.querySelector('label.label') : null;
-    if(lab) lab.textContent = txt;
-  };
-
-  // --- champs (FINAL) ---
-  const maleF   = fieldOf('FinalMALE');
-  const femaleF = fieldOf('FinalFEMALE');
-  const adultF  = fieldOf('FinalADULT');
-  const childF  = fieldOf('FinalCHILD');
-  const infantF = fieldOf('FinalINFANT');
-  const tobF    = fieldOf('FinalTOB');
-
-  const oaF = fieldOf('FinalOA');
-  const obF = fieldOf('FinalOB');
-  const ocF = fieldOf('FinalOC');
-  const odF = fieldOf('FinalOD');
-
-  const bagsF      = fieldOf('FinalBAGS');
-  const poidsF     = fieldOf('FinalPOIDS');
-  const gbF        = fieldOf('FinalGB');
-  const poidsCorF  = fieldOf('FinalPoidsCorrige');
-
-  if(!maleF || !femaleF) return;
-  const finalGrid = maleF.closest('.ldm-grid');
-  if(!finalGrid) return;
-
-  // conteneur d'origine ADULT/CHILD/INFANT/TOB (à capturer UNE fois)
-  const paxGridNow = tobF ? tobF.closest('.ldm-span-2') : null;
-
-  // --- cache layout initial (1 seule fois) ---
-  window._finalLayoutCache = window._finalLayoutCache || null;
-
-  const snap = (node)=>({
-    node,
-    parent: node ? node.parentNode : null,
-    next: node ? node.nextSibling : null
-  });
-
-  if(!window._finalLayoutCache){
-    window._finalLayoutCache = {
-      male:   snap(maleF),
-      female: snap(femaleF),
-      adult:  adultF ? snap(adultF) : null,
-      child:  childF ? snap(childF) : null,
-      infant: infantF ? snap(infantF) : null,
-      tob:    tobF ? snap(tobF) : null,
-      oa:     oaF ? snap(oaF) : null,
-      ob:     obF ? snap(obF) : null,
-      oc:     ocF ? snap(ocF) : null,
-      od:     odF ? snap(odF) : null,
-      bags:   bagsF ? snap(bagsF) : null,
-      poids:  poidsF ? snap(poidsF) : null,
-      gb:     gbF ? snap(gbF) : null,
-      paxGrid: paxGridNow ? snap(paxGridNow) : null
-    };
-  }
-
-  const cache = window._finalLayoutCache;
-  const paxGridOrig = cache?.paxGrid?.node || paxGridNow;
-
-  const putBack = (s)=>{
-    if(!s?.node || !s?.parent) return;
-    if(s.next && s.next.parentNode === s.parent) s.parent.insertBefore(s.node, s.next);
-    else s.parent.appendChild(s.node);
-  };
-
-  const removeCustom = ()=>{
-    finalGrid.querySelectorAll(
-      '.ldm-final-frrk-pax, .ldm-final-frrk-tob, .ldm-final-frrk-zones, .ldm-final-frrk-bags,' +
-      '.ldm-final-other-paxline, .ldm-final-other-tobline, .ldm-final-other-zonesline, .ldm-final-other-bagsline'
-    ).forEach(n => n.remove());
-  };
-
-  const restore = ()=>{
-    removeCustom();
-
-    putBack(cache.male);
-    putBack(cache.female);
-    if(cache.adult)  putBack(cache.adult);
-    if(cache.child)  putBack(cache.child);
-    if(cache.infant) putBack(cache.infant);
-    if(cache.tob)    putBack(cache.tob);
-    if(cache.oa)     putBack(cache.oa);
-    if(cache.ob)     putBack(cache.ob);
-    if(cache.oc)     putBack(cache.oc);
-    if(cache.od)     putBack(cache.od);
-    if(cache.bags)   putBack(cache.bags);
-    if(cache.poids)  putBack(cache.poids);
-    if(cache.gb)     putBack(cache.gb);
-    if(cache.paxGrid) putBack(cache.paxGrid);
-
-    if(paxGridOrig) paxGridOrig.style.display = '';
-
-    // Remettre les conteneurs statiques visibles
-    const bpb = document.getElementById('bagsPoidsBgRow');
-    if(bpb) bpb.style.display = '';
-    const hbr = document.getElementById('hBagsRow');
-    if(hbr) hbr.style.display = '';
-  };
-
-  const makeRow4 = (className)=>{
-    const d = document.createElement('div');
-    d.className = className;
-    d.style.gridColumn = 'span 2';
-    d.style.display = 'grid';
-    d.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-    d.style.gap = '12px';
-    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
-    return d;
-  };
-
-  const makeRow3 = (className)=>{
-    const d = document.createElement('div');
-    d.className = className;
-    d.style.gridColumn = 'span 2';
-    d.style.display = 'grid';
-    d.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-    d.style.gap = '12px';
-    d.querySelectorAll && setTimeout(()=>d.querySelectorAll('.field').forEach(f=>f.style.margin='0'),0);
-    return d;
-  };
-
-  const makeRowFull = (className)=>{
-    const d = document.createElement('div');
-    d.className = className;
-    d.style.gridColumn = 'span 2';
-    return d;
-  };
-
   const isW4W6 = (cie === 'W4' || cie === 'W6');
   const hasOD_W4W6 = isW4W6 && (type === 'A321' || type === 'A21N' || type === 'A21NY');
   const hideCP2_W4W6 = isW4W6 && (type === 'A20N' || type === 'A320');
 
-  // ===== règles visibilité =====
-  showField('FinalMALE',   !isFRRK);   // autres CIE : MALE remplace ADULT
-  showField('FinalFEMALE', !isFRRK);
-  showField('FinalADULT',  isFRRK);    // FR/RK uniquement
-  showField('FinalOD',     (!isFRRK && !isW4W6) || hasOD_W4W6);
-
-  // Masquer CP2 pour W4/W6 A20N et A320
-  showField('FinalH2', !hideCP2_W4W6);
-
-  setLabel('FinalOA', isFRRK ? 'FWD' : 'OA');
-  setLabel('FinalOB', isFRRK ? 'MID' : 'OB');
-  setLabel('FinalOC', isFRRK ? 'AFT' : 'OC');
-
-  // ✅ labels H1..H4 => CP1..CP4 si useCP ou W4/W6
-  const useCPLabel = useCP || isW4W6;
-  setLabel('FinalH1', useCPLabel ? 'CP1' : 'H1');
-  setLabel('FinalH2', useCPLabel ? 'CP2' : 'H2');
-  setLabel('FinalH3', useCPLabel ? 'CP3' : 'H3');
-  setLabel('FinalH4', useCPLabel ? 'CP4' : 'H4');
-
-  // ===== layout =====
-  restore();
+  // ── Visibilité PAX ──────────────────────────────────────────
+  const hide = (id) => { const el = document.getElementById(id); if(el){ const s = el.closest('.ld-stat') || el.closest('.field'); if(s) s.style.display = 'none'; } };
+  const show = (id, flex) => { const el = document.getElementById(id); if(el){ const s = el.closest('.ld-stat') || el.closest('.field'); if(s) s.style.display = flex ? 'flex' : ''; } };
 
   if(isFRRK){
-    // --- FR/RK : ADULT / CHILD / INFANT ---
-    if(adultF && childF && infantF){
-      const paxRow = makeRow3('ldm-final-frrk-pax');
-      paxRow.appendChild(adultF);
-      paxRow.appendChild(childF);
-      paxRow.appendChild(infantF);
-
-      const tobRow = makeRowFull('ldm-final-frrk-tob');
-      if(tobF) tobRow.appendChild(tobF);
-
-      const zonesRow = makeRow3('ldm-final-frrk-zones');
-      if(oaF) zonesRow.appendChild(oaF);
-      if(obF) zonesRow.appendChild(obF);
-      if(ocF) zonesRow.appendChild(ocF);
-
-      const bagsRow = makeRow3('ldm-final-frrk-bags');
-      if(bagsF)     bagsRow.appendChild(bagsF);
-      if(poidsF)    bagsRow.appendChild(poidsF);
-      if(gbF)       bagsRow.appendChild(gbF);
-      if(poidsCorF) bagsRow.appendChild(poidsCorF);
-      bagsRow.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-      bagsRow.style.marginBottom = '0';
-
-      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
-      finalGrid.insertBefore(zonesRow, bagsRow);
-      finalGrid.insertBefore(tobRow, zonesRow);
-      finalGrid.insertBefore(paxRow, tobRow);
-
-      const bpb = document.getElementById('bagsPoidsBgRow');
-      if(bpb) bpb.style.display = 'none';
-    }
-
-  }else if(isW4W6){
-    // --- W4/W6 : MALE / FEMALE / CHILD / INFANT ---
-    if(maleF && femaleF && childF && infantF){
-      const paxRow = makeRow4('ldm-final-frrk-pax');
-      paxRow.appendChild(maleF);
-      paxRow.appendChild(femaleF);
-      paxRow.appendChild(childF);
-      paxRow.appendChild(infantF);
-
-      const tobRow = makeRowFull('ldm-final-frrk-tob');
-      if(tobF) tobRow.appendChild(tobF);
-
-      const zonesRow = hasOD_W4W6 ? makeRow4('ldm-final-frrk-zones') : makeRow3('ldm-final-frrk-zones');
-      if(oaF) zonesRow.appendChild(oaF);
-      if(obF) zonesRow.appendChild(obF);
-      if(ocF) zonesRow.appendChild(ocF);
-      if(hasOD_W4W6 && odF) zonesRow.appendChild(odF);
-
-      const bagsRow = makeRow3('ldm-final-frrk-bags');
-      if(bagsF)     bagsRow.appendChild(bagsF);
-      if(poidsF)    bagsRow.appendChild(poidsF);
-      if(gbF)       bagsRow.appendChild(gbF);
-      if(poidsCorF) bagsRow.appendChild(poidsCorF);
-      bagsRow.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-      bagsRow.style.marginBottom = '0';
-
-      finalGrid.insertBefore(bagsRow, finalGrid.firstChild);
-      finalGrid.insertBefore(zonesRow, bagsRow);
-      finalGrid.insertBefore(tobRow, zonesRow);
-      finalGrid.insertBefore(paxRow, tobRow);
-
-      if(paxGridOrig) paxGridOrig.style.display = 'none';
-      const bpb = document.getElementById('bagsPoidsBgRow');
-      if(bpb) bpb.style.display = 'none';
-    }
-
-  }else{
-    // --- AUTRES CIE (non FR/RK, non W4/W6) ---
-    if(maleF && femaleF && childF && infantF){
-      const paxLine = makeRow4('ldm-final-other-paxline');
-      paxLine.appendChild(maleF);
-      paxLine.appendChild(femaleF);
-      paxLine.appendChild(childF);
-      paxLine.appendChild(infantF);
-
-      const tobLine = makeRowFull('ldm-final-other-tobline');
-      if(tobF) tobLine.appendChild(tobF);
-
-      const zonesLine = makeRow4('ldm-final-other-zonesline');
-      if(oaF) zonesLine.appendChild(oaF);
-      if(obF) zonesLine.appendChild(obF);
-      if(ocF) zonesLine.appendChild(ocF);
-      if(odF) zonesLine.appendChild(odF);
-
-      const bagsLine = makeRow3('ldm-final-other-bagsline');
-      if(bagsF)     bagsLine.appendChild(bagsF);
-      if(poidsF)    bagsLine.appendChild(poidsF);
-      if(gbF)       bagsLine.appendChild(gbF);
-      if(poidsCorF) bagsLine.appendChild(poidsCorF);
-      bagsLine.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-
-      // ✅ ordre voulu : PAX -> TOB -> ZONES -> BAGS
-      const first = finalGrid.firstChild;
-      finalGrid.insertBefore(bagsLine, first);
-      finalGrid.insertBefore(zonesLine, bagsLine);
-      finalGrid.insertBefore(tobLine, zonesLine);
-      finalGrid.insertBefore(paxLine, tobLine);
-
-      if(paxGridOrig) paxGridOrig.style.display = 'none';
-
-      // Masquer bagsPoidsBgRow vidé, repositionner hBagsRow juste après bagsLine
-      const bpb = document.getElementById('bagsPoidsBgRow');
-      if(bpb) bpb.style.display = 'none';
-      const hbr = document.getElementById('hBagsRow');
-      if(hbr) bagsLine.after(hbr);
-    }
+    hide('FinalMALE'); hide('FinalFEMALE');
+    show('FinalADULT', true);
+    show('FinalCHILD', true); show('FinalINFANT', true);
+  } else {
+    hide('FinalADULT');
+    show('FinalMALE', true); show('FinalFEMALE', true);
+    show('FinalCHILD', true); show('FinalINFANT', true);
   }
 
-  // ✅ placeholders après labels/layout (pour coller au type avion)
+  // ── OD + colonnes zones ──────────────────────────────────────
+  const odVisible = (!isFRRK && !isW4W6) || hasOD_W4W6;
+  if(odVisible) show('FinalOD'); else hide('FinalOD');
+  const zonesRow = document.getElementById('finalZonesRow');
+  if(zonesRow) zonesRow.style.gridTemplateColumns = odVisible ? 'repeat(4,1fr)' : 'repeat(3,1fr)';
+
+  // ── H2 (CP2) ────────────────────────────────────────────────
+  if(hideCP2_W4W6) hide('FinalH2'); else show('FinalH2');
+
+  // ── Labels OA/OB/OC → FWD/MID/AFT pour FR/RK ───────────────
+  const setLbl = (id, txt) => {
+    const el = document.getElementById(id);
+    const s = el ? (el.closest('.ld-stat') || el.closest('.field')) : null;
+    if(s){ const lbl = s.querySelector('.ld-stat-label, label'); if(lbl) lbl.textContent = txt; }
+  };
+  setLbl('FinalOA', isFRRK ? 'FWD' : 'OA');
+  setLbl('FinalOB', isFRRK ? 'MID' : 'OB');
+  setLbl('FinalOC', isFRRK ? 'AFT' : 'OC');
+
+  // ── Labels H1..H4 → CP1..CP4 ────────────────────────────────
+  const useCPLabel = (!isFRRK) || (isFRRK && type === 'A320') || isW4W6;
+  setLbl('FinalH1', useCPLabel ? 'CP1' : 'H1');
+  setLbl('FinalH2', useCPLabel ? 'CP2' : 'H2');
+  setLbl('FinalH3', useCPLabel ? 'CP3' : 'H3');
+  setLbl('FinalH4', useCPLabel ? 'CP4' : 'H4');
+
+  // ── LID Guide : FR/RK uniquement ────────────────────────────
+  const lidBtn = document.getElementById('lidGuideBtn');
+  if(lidBtn) lidBtn.style.display = isFRRK ? '' : 'none';
+
+  // ── Nettoyage cache obsolète ─────────────────────────────────
+  window._finalLayoutCache = null;
+
   updateFinalPlaceholdersFRRK();
   revalidateDangerFields();
 }
@@ -867,6 +832,9 @@ function updatePreviTOB(){
     const x = parseInt(v || '0', 10);
     return Number.isFinite(x) ? x : 0;
   };
+  const hasAny = ['PreviMALE','PreviFEMALE','PreviCHILD','PreviINFANT']
+    .some(id => (document.getElementById(id)?.value || '').trim() !== '');
+
   const male   = n('PreviMALE');
   const female = n('PreviFEMALE');
   const child  = n('PreviCHILD');
@@ -874,7 +842,7 @@ function updatePreviTOB(){
 
   const main = male + female + child;
   const el = document.getElementById('PreviTOB');
-  if(el) el.value = `${main} + ${infant}`;
+  if(el) el.value = hasAny ? `${main} + ${infant}` : '';
 }
 
 /* ===== COUNTDOWN (CD) ===== */
@@ -1043,7 +1011,8 @@ function ensureCountdownRunning(){
 /* Timeline zoom */
 function timelineZoomIn(){ timelineSetZoom(timelineZoom + TL_ZOOM_STEP); }
 function timelineZoomOut(){ timelineSetZoom(timelineZoom - TL_ZOOM_STEP); }
-function timelineZoomReset(){ timelineSetZoom(1); }function timelineSetZoom(z){
+function timelineZoomReset(){ timelineSetZoom(1); }
+function timelineSetZoom(z){
   const scroller = document.getElementById('timelineScroll');
   const canvas   = document.getElementById('timelineCanvas');
   if(!scroller || !canvas) return;
@@ -1327,6 +1296,7 @@ function refreshUIForTabs(){
 
   if(!hasTab){
     currentTabId = null;
+    closeAKPicker();
     stopCountdown(true);
   }
 }
@@ -1524,7 +1494,7 @@ function updateInfoStrip(){
     el.textContent = (txt && String(txt).trim()) ? String(txt).trim() : def;
   };
 
-  // ----- vols ARR/DEP + BC -----
+  // ----- vols ARR/DEP + BC depuis akMeta (prioritaire) -----
   let arrFF = '';
   let depFF = '';
   let bcMeta = '';
@@ -1534,14 +1504,23 @@ function updateInfoStrip(){
   try{
     if(currentTabId){
       data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+      arrFF  = (data?.akMeta?.arrFF || '').toUpperCase().trim();
+      depFF  = (data?.akMeta?.depFF || '').toUpperCase().trim();
+      bcMeta = (data?.akMeta?.bc    || '').toUpperCase().trim();
     }
   }catch(e){}
 
   // fallback manuel : DEP = CIE+N°
+  // ⚠️ sauf si on est sur un FLOW=ARR et que TO=BVA (pas de départ programmé)
   if(!depFF){
-    const cie  = v('Cie');
-    const nvol = v('NVol');
-    if(cie || nvol) depFF = `${cie}${nvol}`.trim();
+    const toNow = (v('To') || '').toUpperCase().trim();
+    const flowMeta = (data?.akMeta?.flow || '').toUpperCase().trim();
+
+    if(!(flowMeta === 'ARR' && toNow === 'BVA')){
+      const cie  = v('Cie');
+      const nvol = v('NVol');
+      if(cie || nvol) depFF = `${cie}${nvol}`.trim();
+    }
   }
 
   set('kvArrVol', arrFF || '—', '—');
@@ -1553,6 +1532,7 @@ function updateInfoStrip(){
   set('kvImmat', v('Immat') || '------', '------');
   set('kvType',  v('TypeAvion') || '----', '----');
 
+  // Salle arrivée : plus de champ BorderControl -> on prend akMeta.bc
   set('kvBC', bcMeta || '--', '--');
 
   set('kvPark', v('Parking') || '--', '--');
@@ -1598,7 +1578,10 @@ function renderTabs(){
     <button class="button is-success is-light" type="button" onclick="createNewTab()">
       +
     </button>
-
+    <button class="button is-link is-light" type="button"
+            onclick="openAKPicker();">
+      + Liste vols
+    </button>
   `;
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -1612,7 +1595,9 @@ function renderTabs(){
     const to   = (data.To   || '').toUpperCase();
 
     // ✅ Priorité : depFF > arrFF > Cie+NVol
-    const volRef = `${cie}${nvol}`.trim();
+    const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
+    const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
+    const volRef = depFF || arrFF || `${cie}${nvol}`.trim();
 
     let label =
       volRef || to
@@ -1629,7 +1614,29 @@ function renderTabs(){
     btn.onclick = ()=> switchTab(id);
     btn.ondblclick = ()=> openTabCloseModal(id);
 
+    // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
+    const r = document.createElement('button');
+    r.className = 'button is-light tab-refresh';
+    r.type = 'button';
+    r.title = 'Rafraîchir depuis AK';
+    r.innerHTML = '↻';
+    r.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      r.classList.add('is-loading');
+      try { await refreshAKTab(id); }
+      finally { r.classList.remove('is-loading'); }
+    };
+
+    if (!data.akMeta) {
+      r.disabled = true;
+      r.title = "Pas de vol AK associé";
+      r.style.opacity = '0.45';
+      r.style.cursor = 'not-allowed';
+    }
+
     wrap.appendChild(btn);
+    wrap.appendChild(r);
     tabBar.appendChild(wrap);
   });
 
@@ -1639,7 +1646,8 @@ function renderTabs(){
 function getTabFlightKey(tabId){
   try{
     const d = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
-      if(meta?.id) return `AK_${meta.id}`;
+    const meta = d?.akMeta;
+    if(meta?.id) return `AK_${meta.id}`;
     const date = (d.Date||'').replaceAll('-','');
     const immat = (d.Immat||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     const from = (d.From||'').toUpperCase();
@@ -1722,7 +1730,8 @@ function openTabCloseModal(id){
   const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
   const cie  = (data.Cie||'').toUpperCase();
   const nvol = (data.NVol||'').toUpperCase();
-  const label = (cie+nvol) || 'ce vol';
+  const depFF = (data?.akMeta?.depFF||'').toUpperCase().trim();
+  const label = depFF || (cie+nvol) || 'ce vol';
   document.getElementById('tabCloseModalTitle').textContent = label ? `Fermer ${label} ?` : 'Fermer ce vol ?';
   document.getElementById('tabCloseModal').style.display = 'flex';
 }
@@ -1828,7 +1837,7 @@ function clearFormFields(){
 function saveCurrentTabData(){
   if(!currentTabId) return;
 
-  // ✅ on part des données existantes
+  // ✅ on part des données existantes pour ne pas perdre akMeta
   let data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
 
   document.querySelectorAll('input, select, textarea').forEach(el=>{
@@ -2113,7 +2122,7 @@ function updateLIDVisibility(){
     if(dot) remiseLabel.appendChild(dot);
     if(isFRRK){
       remiseLabel.removeAttribute('style');
-      remiseLabel.append('Remise '); // CSS uppercase → REMISE
+      remiseLabel.append('Remise ');
       const span = document.createElement('span');
       span.style.cssText = 'text-transform:none';
       span.textContent = 'eLID/LID';
@@ -2807,10 +2816,6 @@ function showPopup(message, color = "#2563eb", duration = 2000) {
 
 /* Timeline helpers */
 let showTimeLabels = true;
-let timelineZoom         = 1;
-const TL_ZOOM_MIN        = 0.5;
-const TL_ZOOM_MAX        = 8;
-const TL_ZOOM_STEP       = 0.25;
 let timelineUserScrolled = false;
 
 function parseHHMM(str){
@@ -3016,7 +3021,6 @@ function renderTimeline(){
                          (document.getElementById('ArrPNC')?.value||'').trim() );
   const BASE = (isFRRK && crewChange) ? 10 : 0;
 
-  // Targets FR/RK (EOBT-relatif)
   const TARGETS_FRRK_BASE = {
     'Débarquement':        { ref:'EOBT', from:-25, to:-15, fromField:null,              toOffset:null, label:null              },
     'Cabin release':       { ref:'EOBT', from:-15, to:-12, fromField:'DernierDebarque', toOffset:3,    label:'Cabin tidy'      },
@@ -3029,7 +3033,6 @@ function renderTimeline(){
     'ArrPNC':              { ref:'EOBT', from:-45, to:-45, fromField:null,              toOffset:null, label:'Arrivée PNC'     },
   };
 
-  // From=BVA : embarquement décalé (pas de débarquement, avion vide)
   const TARGETS_FRRK = fromBVA ? {
     ...TARGETS_FRRK_BASE,
     'Embarquement': { ref:'EOBT', from:-35, to:-15, fromField:null, toOffset:null, label:null },
@@ -3252,7 +3255,6 @@ function renderTimeline(){
   canvas.appendChild(axisRow);
 
   // 3. Barres d'actions
-  // nowM en minutes locales — les champs de saisie sont toujours en heure locale
   const nowD   = new Date();
   const nowM   = isUTC ? nowD.getUTCHours()*60 + nowD.getUTCMinutes()
                        : nowD.getHours()*60    + nowD.getMinutes();
@@ -3294,8 +3296,8 @@ function renderTimeline(){
     const track = document.createElement('div');
     track.className = 'tl-row-track';
 
-    // ── 1. Barre cible en pointillé (pas pour les events ponctuels) ─
-    if(hasTarget && d.a !== null && !POINT_EVENTS.has(d.label)){
+    // ── 1. Barre cible en pointillé (toujours si cible définie, même sans données) ─
+    if(hasTarget && targetFrom !== null && !POINT_EVENTS.has(d.label)){
       // Début de la cible : targetFrom (AIBT+offset)
       const targetL = toPx(targetStartExt);
       const targetW = Math.max(4, toPx(deadlineExt) - targetL);
@@ -3313,6 +3315,25 @@ function renderTimeline(){
         `opacity:${deadlinePassed ? '0.6' : '0.4'}`,
       ].join(';');
       track.appendChild(tBar);
+    }
+
+    // ── 1b. Cercle cible gris pour events ponctuels sans données ─
+    if(hasTarget && d.a === null && POINT_EVENTS.has(d.label) && targetTo !== null){
+      const cx  = toPx(toExtended(targetTo, min, max));
+      const cy  = ROW_H / 2;
+      const R   = 10;
+      const dot = document.createElement('div');
+      dot.style.cssText = [
+        `position:absolute`,
+        `left:${cx - R}px`, `top:${cy - R}px`,
+        `width:${R*2}px`, `height:${R*2}px`,
+        `border-radius:50%`,
+        `border:2px dashed #94a3b8`,
+        `background:transparent`,
+        `box-sizing:border-box`,
+        `opacity:0.5`,
+      ].join(';');
+      track.appendChild(dot);
     }
 
     // ── 2. Barre de progression / réelle (ou cercle pour event ponctuel) ─
@@ -3598,6 +3619,393 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape') closeSettingsMenu();
 });
 
+// ===== Airport Keeper (AK) — désactivé dans cette version =====
+function openAKPicker(){  }
+function closeAKPicker(){
+  const b = document.getElementById('akBackdrop');
+  const p = document.getElementById('akPopover');
+  if(p) p.style.display = 'none';
+  if(b) b.style.display = 'none';
+  document.body.classList.remove('ak-open');
+}
+async function fetchAK(){ return []; }
+
+
+// ===== Temps + linking (immat) =====
+function arrTimeMs(f){
+  return Date.parse(f?.aibt || f?.eibt || f?.sibt || f?.aldt || f?.eldt || f?.afat || f?.efat || '') || null;
+}
+
+// DEP : si pas d'AOBT, on privilégie EOBT/POBT/CTOT (réaliste) plutôt que SOBT (souvent "ancien plan")
+function depTimeMs(f){
+  return Date.parse(
+    f?.aobt || f?.eobt || f?.pobt || f?.ctot || f?.etot || f?.sobt || ''
+  ) || null;
+}
+
+// ===== Linking : priorité linkedId, sinon reg+temps =====
+// Helper: clé YYYY-MM-DD selon mode UTC/Locale
+function dayKeyFromMs(ms){
+  if(ms == null) return null;
+  const d = new Date(ms);
+
+  // isUTC est déjà dans ton code (toggle)
+  if(window.isUTC){
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2,'0');
+    const da = String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  }else{
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const da = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  }
+}
+
+function sameOpDay(msA, msB){
+  const a = dayKeyFromMs(msA);
+  const b = dayKeyFromMs(msB);
+  return !!a && !!b && a === b;
+}
+
+// ===== Linking : ARR -> DEP (uniquement même jour) =====
+function findLinkedDepForArr(arr){
+  if(!arr) return null;
+
+  const arrT = arrTimeMs(arr);
+  if(arrT == null) return null;
+
+  // 1) linkedId direct + garde-fou date
+  const lid = (arr?.linkedId || '').trim();
+  if(lid){
+    const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
+    if(dep){
+      const depT = depTimeMs(dep);
+      if(depT != null && sameOpDay(arrT, depT)) return dep;
+      return null; // ❌ autre jour => pas lié
+    }
+  }
+
+  // 2) fallback reg + premier DEP après ARR, mais même jour
+  const reg = (arr?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const deps = window._akCache?.dep || [];
+  let best = null;
+  let bestT = Infinity;
+
+  for(const d of deps){
+    const r = (d?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = depTimeMs(d);
+    if(t == null) continue;
+
+    if(t < arrT) continue;                 // après l'arrivée
+    if(!sameOpDay(arrT, t)) continue;      // ✅ même jour obligatoire
+
+    if(t < bestT){ best = d; bestT = t; }
+  }
+
+  return best;
+}
+
+// ===== Linking : DEP -> ARR (uniquement même jour) =====
+function findLinkedArrForDep(dep){
+  if(!dep) return null;
+
+  const depT = depTimeMs(dep);
+  if(depT == null) return null;
+
+  // 1) linkedId direct + garde-fou date
+  const lid = (dep?.linkedId || '').trim();
+  if(lid){
+    const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
+    if(arr){
+      const arrT = arrTimeMs(arr);
+      if(arrT != null && sameOpDay(arrT, depT)) return arr;
+      return null; // ❌ autre jour => pas lié
+    }
+  }
+
+  // 2) fallback reg + dernier ARR avant DEP, mais même jour
+  const reg = (dep?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const arrs = window._akCache?.arr || [];
+  let best = null;
+  let bestT = -Infinity;
+
+  for(const a of arrs){
+    const r = (a?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = arrTimeMs(a);
+    if(t == null) continue;
+
+    if(t > depT) continue;                 // avant le départ
+    if(!sameOpDay(t, depT)) continue;      // ✅ même jour obligatoire
+
+    if(t > bestT){ best = a; bestT = t; }
+  }
+
+  return best;
+}
+
+function depAobtTooOld(dep, minutes = 15){
+  const aobt = dep?.aobt;
+  if(!aobt) return false;
+  const t = Date.parse(aobt);
+  if(!t) return false;
+  return (Date.now() - t) > minutes*60*1000;
+}
+
+function depAtotTooOld(dep, minutes = 15){
+  // ATOT = info Keeper uniquement (non affichée)
+  const iso = dep?.atot || dep?.aobt; // fallback sécurité
+  if(!iso) return false;
+
+  const t = Date.parse(iso);
+  if(!t) return false;
+
+  return (Date.now() - t) > minutes * 60 * 1000;
+}
+
+// ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
+async function loadAKFlights(){ return; }
+
+async function refreshAKTab(tabId){
+  const data = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
+  const meta = data.akMeta;
+  if(!meta){
+    showPopup("Pas de données AK à rafraîchir", "#ef4444", 1600);
+    return;
+  }
+
+  const now = new Date();
+  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
+  const linkFrom = new Date(startDay.getTime() - 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+  const linkTo   = new Date(endDay.getTime()   + 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  try{
+    const [arrAll, depAll] = await Promise.all([
+      fetchAK('ARR', linkFrom, linkTo),
+      fetchAK('DEP', linkFrom, linkTo),
+    ]);
+
+    window._akCache = { arr: arrAll, dep: depAll };
+
+    const flow = meta.flow || 'DEP';
+    const list = flow === 'DEP' ? depAll : arrAll;
+    const match = findBestAKMatch(list, meta, flow);
+
+    if(!match){
+      showPopup("Vol AK introuvable", "#ef4444", 1800);
+      return;
+    }
+
+    if(currentTabId !== tabId) switchTab(tabId);
+
+    applyAKFlight(match, flow, { refresh: true });
+    saveCurrentTabData();
+
+    showPopup("AK rafraîchi", "#16a34a", 1400);
+
+  }catch(e){
+    showPopup(`Erreur AK (${String(e.message || e)})`, "#ef4444", 2000);
+  }
+}
+
+function applyAKFlight(f, flow, opts = {}){
+  _doApplyAKFlight(f, flow, opts);
+}
+
+function _doApplyAKFlight(f, flow, opts = {}){
+  const isRefresh = !!opts.refresh;
+
+  // Créer un nouvel onglet seulement si c'est une nouvelle sélection
+  if(!isRefresh){
+    createNewTab();
+  }
+
+  try{
+    /* ===== champs communs ===== */
+    setValAK('Immat', (f.reg || ''));
+
+    const stand = (f.pkg || '').toString().replace(/^P/i,'').trim();
+    if(stand) setValAK('Parking', stand);
+
+    const ac = (f.acTypeIcao || f.acTypeIata || '').toUpperCase().trim();
+    if(ac) setValAK('TypeAvion', ac);
+
+    const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    // ✅ Callsign brut AK
+    if(f.callsign) setValAK('Callsign', f.callsign);
+    if(ff){
+      const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
+      if(m){
+        const cie  = m[1];
+        const nvol = m[2];
+        // Cie est maintenant un input texte libre — on injecte directement
+        setValAK('Cie', cie);
+        setValAK('NVol', nvol);
+      }else{
+        setValAK('NVol', ff);
+      }
+    }
+
+    /* ================= DEP ================= */
+    let prevArrUsed = null;
+    let nextDepUsed = null;
+
+    if(flow === 'DEP'){
+      setValAK('To', (f.adesIata || '') || 'BVA');
+
+      setTimeFromISOAK('SOBT', f.sobt || f.eobt);
+      setTimeFromISOAK('AOBT', f.aobt);
+      // CTOT : mis à jour depuis AK, et effacé si AK n'en a plus
+      if(f.ctot){
+        setTimeFromISOAK('CTOT', f.ctot);
+      } else {
+        const ctotEl = document.getElementById('CTOT');
+        if(ctotEl && ctotEl.dataset.ak === '1'){
+          setValAK('CTOT', '');
+        }
+      }
+
+      const siDep = akBuildSI(f, true, { includeDL:false });
+      mergeSIFromAK('PreviSI', siDep);
+      mergeSIFromAK('FinalSI', siDep);
+
+      const prevArr = findLinkedArrForDep(f); // (déjà filtré "même jour" chez toi)
+      if(prevArr){
+        prevArrUsed = prevArr;
+
+        setValAK('From', (prevArr.adepIata || '') || 'BVA');
+        setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+        setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
+
+        if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
+
+        const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+        if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
+          setIfEmptyOrAK('ArrPOIDS', String(prevArr.bags));
+        }
+
+        const siArr = akBuildSI(prevArr, false, { includeDL:false });
+        mergeSIFromAK('ArrSI', siArr);
+      }else{
+        setValAK('From', 'BVA');
+      }
+
+    /* ================= ARR ================= */
+    }else{
+      // provenance (From)
+      setValAK('From', (f.adepIata || '') || 'BVA');
+
+      // ✅ par défaut: avion reste à BVA (nuit / pas de rota)
+      setValAK('To', 'BVA');
+
+      setTimeFromISOAK('SIBT', f.sibt || f.eibt);
+      setTimeFromISOAK('AIBT', f.aibt);
+
+      if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
+
+      const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+      if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
+        setIfEmptyOrAK('ArrPOIDS', String(f.bags));
+      }
+
+      const siArr = akBuildSI(f, false, { includeDL:false });
+      mergeSIFromAK('ArrSI', siArr);
+
+      const nextDep = findLinkedDepForArr(f); // (déjà filtré "même jour" chez toi)
+      if(nextDep){
+        nextDepUsed = nextDep;
+
+        setValAK('To', (nextDep.adesIata || '') || 'BVA');
+
+        setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+        setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
+        if(nextDep.ctot){
+          setTimeFromISOAK('CTOT', nextDep.ctot);
+        } else {
+          const ctotEl = document.getElementById('CTOT');
+          if(ctotEl && ctotEl.dataset.ak === '1'){
+            setValAK('CTOT', '');
+          }
+        }
+
+        const siDep = akBuildSI(nextDep, true, { includeDL:false });
+        mergeSIFromAK('PreviSI', siDep);
+        mergeSIFromAK('FinalSI', siDep);
+      }
+    }
+
+    /* ===== BANDEAU ESSENTIEL (akMeta arrFF/depFF) ===== */
+    let arrFF = '';
+    let depFF = '';
+    let bcForStrip = '';
+
+    if(flow === 'ARR'){
+      // ✅ le vol ARR sélectionné DOIT être affiché avant la flèche
+      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+      bcForStrip = (f.borderControl || '').toUpperCase().trim();
+
+      if(nextDepUsed){
+        depFF = (nextDepUsed.fullFlightNumber || nextDepUsed.callsign || '').toUpperCase().trim();
+      }
+    }else{
+      // DEP sélectionné après la flèche
+      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+
+      if(prevArrUsed){
+        arrFF = (prevArrUsed.fullFlightNumber || prevArrUsed.callsign || '').toUpperCase().trim();
+        bcForStrip = (prevArrUsed.borderControl || '').toUpperCase().trim();
+      }
+    }
+
+    // ID du vol lié résolu par les fonctions de linking (plus fiable que f.linkedId)
+    const resolvedLinkedId = flow === 'DEP'
+      ? (prevArrUsed?.id || f.linkedId || '')
+      : (nextDepUsed?.id || f.linkedId || '');
+
+    storeAKMetaForTab({
+      flow,
+      id: f.id,
+      linkedId: resolvedLinkedId,
+      reg: f.reg || '',
+      ff: (f.fullFlightNumber || f.callsign || ''),
+      timeISO: (flow === 'DEP')
+        ? (f.sobt || f.eobt || f.aobt || f.atot || '')
+        : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
+      pkg: f.pkg || '',
+      arrFF,
+      depFF,
+      bc: bcForStrip
+    });
+
+    updateAllCalculations();
+    updateTabLabelInstant();
+  }catch(e){
+    showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
+  }finally{
+    // ✅ fermeture auto du picker après sélection (sauf refresh)
+    if(!isRefresh){
+      closeAKPicker();
+      const flowSel = document.getElementById('akFlow');
+      if(flowSel) flowSel.value = 'DEP';
+      showPopup("Vol importé", "#16a34a", 1600);
+      // Basculer sur l'onglet DÉPART si FROM=BVA, sinon ARRIVÉE
+      if(typeof switchTimingPanel === 'function'){
+        const fromVal = (document.getElementById('From')?.value || '').toUpperCase().trim();
+        switchTimingPanel(fromVal === 'BVA' ? 'dep' : 'arr');
+        if(fromVal === 'BVA') autoOpenCrewIfBVA();
+      }
+    }
+  }}
 
 function toggleFABs(show){
   const loadFab = document.getElementById('loadFab');
@@ -4194,6 +4602,7 @@ function closeAllPopups(){
   closeSettingsMenu?.();
 
   // AK
+  closeAKPicker?.();
 
 }
 
@@ -4648,6 +5057,8 @@ function toggleInfoVolEdit(){
   icon.textContent = open ? '✅' : '✏️';
 }
 
+async function footerRefreshAK(){ return; }
+
 
 /* ===== TIME WRAP gestures ===== */
 (function(){
@@ -4946,6 +5357,7 @@ self.addEventListener('fetch', e => {
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
 
+/* ─── Refresh AK unique 5 min après premier embarqué ─────────────────────── */
 
 function openLightbox(src){
   const ov = document.getElementById('lightboxOverlay');
@@ -4978,6 +5390,7 @@ window.addEventListener('load', function(){
   function syncOverflow(){
     wrap.style.overflowY = wrap.scrollHeight > wrap.clientHeight + 1 ? 'auto' : 'hidden';
   }
+  // Mise à jour à chaque changement de taille ou de contenu
   new ResizeObserver(syncOverflow).observe(wrap);
   new MutationObserver(syncOverflow).observe(wrap, { childList:true, subtree:true });
   syncOverflow();
