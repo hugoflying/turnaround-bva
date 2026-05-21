@@ -3006,7 +3006,8 @@ function renderTimeline(){
   const cie        = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const isFRRK     = cie === 'FR' || cie === 'RK';
   const isW4W6     = cie === 'W4' || cie === 'W6';
-  const hasTargets = isFRRK || isW4W6;
+  // Cibles affichées dès que EOBT+AIBT sont renseignés, pour toutes les compagnies
+  const hasTargets = true;
 
   const from        = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const fromBVA     = from === 'BVA';
@@ -3128,8 +3129,8 @@ function renderTimeline(){
         }
       }
 
-      // Pas de données → montrer la cible vide
-      if(FRRK_TARGETS[label] !== undefined)
+      // Pas de données → montrer la cible vide (toujours pour les 5 lignes clés)
+      if(FRRK_TARGETS[label] !== undefined || ALWAYS_SHOW.has(label))
         return { label, a:null, b:null, cls:'tl--std', color:barColors[label]||null, status:'not-started', displayLabel: dLabel };
 
       return null;
