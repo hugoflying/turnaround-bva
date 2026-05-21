@@ -80,8 +80,12 @@ html.dark {
 }
 
 /* ===== 3. BASE ===== */
+/* iOS Safari fix : html+body bloqués, seul app-wrap scrolle.
+   Header et footer sont vraiment fixes, rien d'autre ne scrolle. */
 html, body {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
   margin: 0;
   background: var(--bg);
   color: var(--text);
@@ -111,11 +115,23 @@ html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
 /* ===== 5. MAIN WRAPPER ===== */
 .app-wrap {
   display: none;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: calc(var(--fixed-header-h) + 14px) 14px calc(var(--fixed-footer-h) + 18px);
+  position: fixed;
+  top: var(--fixed-header-h);
+  bottom: var(--fixed-footer-h);
+  left: 0; right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 14px;
 }
 body.has-tab .app-wrap { display: block; }
+
+/* Centrage du contenu */
+.app-wrap > * {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 /* ===== 6. TOPBAR ===== */
 .topbar-inner {
@@ -506,43 +522,6 @@ html.dark .kv-card {
   background: color-mix(in srgb, #3b82f6 70%, #22c55e 30%);
 }
 .toggle input:checked + .track .thumb { transform: translateX(18px); }
-
-/* ===== 17. AK POPOVER ===== */
-#akPopover {
-  position: fixed;
-  inset: calc(var(--fixed-header-h) + 12px) 12px 12px 12px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  border-radius: 16px;
-  z-index: 4700;
-  padding: 12px;
-  border: 1px solid rgba(0,0,0,.08);
-  display: none;
-  overflow: auto;
-  flex-direction: column;
-}
-html.dark #akPopover { border-color: rgba(255,255,255,.10); }
-
-body.ak-open #loadFab,
-body.ak-open #settingsFab { display: none; }
-
-#akBackdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  z-index: 4600;
-  display: none;
-}
-#akPopover .ak-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--card);
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,.08);
-}
-html.dark #akPopover .ak-header { border-bottom-color: rgba(255,255,255,.10); }
-#akList { flex: 1 1 auto; overflow-y: auto; }
 
 /* ===== 18. TIMELINE ===== */
 /* ===== TIMELINE GANTT ===== */
@@ -1065,7 +1044,6 @@ html.dark .settings-item {
   background: var(--bg);
   border-top: 1px solid rgba(0,0,0,.08);
   overflow: visible;
-  /* iOS : force le footer à rester fixe même lors du scroll */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   will-change: transform;
@@ -1074,15 +1052,6 @@ html.dark .settings-item {
 }
 html.dark .fixed-footer { border-top-color: rgba(255,255,255,.08); }
 
-/* Remplit la safe-area iOS sans gonfler la hauteur visible du footer */
-.fixed-footer::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0;
-  bottom: calc(-1 * env(safe-area-inset-bottom));
-  height: env(safe-area-inset-bottom);
-  background: var(--bg);
-}
 .fixed-footer-inner {
   max-width: 1120px;
   margin: 0 auto;
@@ -1590,37 +1559,6 @@ html.dark .tw-color-is-bordeaux { border-color: #ef4444; color: #ef4444; }
   flex-shrink: 0;
 }
 
-/* ===== 30. AK LIST ===== */
-.ak-pair-row {
-  display: flex;
-  border: 1px solid rgba(0,0,0,.10);
-  border-radius: var(--radius);
-  background: var(--card);
-  margin-bottom: 10px;
-  overflow: hidden;
-  box-shadow: var(--shadow2);
-}
-html.dark .ak-pair-row { border-color: rgba(255,255,255,.10); }
-
-/* Teinte de fond différente ARR (gauche) vs DEP (droite) */
-.ak-half-arr { background: rgba(219,234,254,.25); }   /* bleu très léger */
-.ak-half-dep { background: rgba(220,252,231,.25); }   /* vert très léger */
-html.dark .ak-half-arr { background: rgba(30,58,138,.15); }
-html.dark .ak-half-dep { background: rgba(20,83,45,.15); }
-
-.ak-half         { flex: 1; padding: 10px 10px 10px 14px; min-width: 0; }
-.ak-half-done    { opacity: .5; }
-.ak-half-empty   { flex: 1; background: rgba(0,0,0,.02); min-height: 60px; }
-html.dark .ak-half-empty { background: rgba(255,255,255,.02); }
-.ak-pair-divider { width: 1px; flex-shrink: 0; background: rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: .9rem; color: var(--muted); }
-html.dark .ak-pair-divider { background: rgba(255,255,255,.10); }
-.ak-half-top     { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 2px; }
-.ak-flow-badge   { font-size: .62rem; font-weight: 900; padding: 1px 6px; border-radius: 6px; }
-.ak-iata         { font-weight: 900; font-size: .95rem; }
-.ak-half-sub     { font-size: .78rem; font-weight: 700; color: var(--muted); line-height: 1.3; }
-.ak-tsuffix      { font-size: .7em; opacity: .7; font-weight: 600; }
-.ak-use-btn      { margin-top: 6px; }
-
 /* ===== 31. DARK MODE — BOUTONS SPÉCIAUX ===== */
 html.dark #btn-recherche-bag,
 html.dark #btn-inad,
@@ -1760,6 +1698,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   /* FAB */
   #loadFab,
   #settingsFab { width: 42px; height: 42px; font-size: .85rem; }
+  /* Réajuste l'écart entre les 2 boutons pour la taille réduite (42px au lieu de 52px) */
+  #loadFab { bottom: calc(var(--fixed-footer-h) + 62px); }
 
   /* Horaires — 1 colonne */
   .horaires-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1780,11 +1720,6 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   html .ldm-ta { min-height: 86px; }
   .ldm-header  { padding: 8px 10px; gap: 6px; }
   .lm-seg .button { height: 30px; font-size: .74rem; padding: 0 8px; }
-
-  /* AK list */
-  .ak-half        { padding: 7px; }
-  .ak-iata        { font-size: .82rem; }
-  .ak-flow-badge  { font-size: .55rem; padding: 1px 4px; }
   .ak-half-sub    { font-size: .68rem; }
   .ak-use-btn     { font-size: .72rem; height: 26px; padding: 0 8px; margin-top: 4px; }
   .ak-half-top    { gap: 3px; }
@@ -1827,6 +1762,7 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     background:#1e293b; border-radius:16px; padding:40px 32px;
     width:min(360px,90vw); text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.5);">
     <div style="font-size:2rem; margin-bottom:8px;">📊</div>
+
     <div style="color:#f1f5f9; font-size:1.2rem; font-weight:600; margin-bottom:4px;">Suivi Performance</div>
     <div style="color:#94a3b8; font-size:.85rem; margin-bottom:24px;">Accès restreint</div>
     <input id="pwInput" type="password"
@@ -1844,10 +1780,9 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   </div>
 </div>
 <script>
-(function(){
-  const KEY  = "pv_auth";
-  const HASH = "c42cd2853e562db228c3e730dcf0bea1"; // MD5 de "bva2026"
-  function md5(s){
+var _PV_KEY  = "pv_auth";
+var _PV_HASH = "c42cd2853e562db228c3e730dcf0bea1";
+function _pwMd5(s){
     function safeAdd(x,y){var l=(x&0xffff)+(y&0xffff);return(((x>>16)+(y>>16)+(l>>16))<<16)|(l&0xffff);}
     function bitRotateLeft(n,c){return(n<<c)|(n>>>(32-c));}
     function md5cmn(q,a,b,x,s,t){return safeAdd(bitRotateLeft(safeAdd(safeAdd(a,q),safeAdd(x,t)),s),b);}
@@ -1885,23 +1820,23 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     }
     return [a2,b2,c2,d2].map(n=>('0000000'+(n>>>0).toString(16)).slice(-8).match(/../g).reverse().join('')).join('');
   }
-  function checkPW(){
-    const v=document.getElementById("pwInput").value;
-    if(md5(v)===HASH){
-      sessionStorage.setItem(KEY,"1");
-      document.getElementById("pwScreen").style.display="none";
-    } else {
-      document.getElementById("pwError").textContent="Mot de passe incorrect.";
-      document.getElementById("pwInput").value="";
-      document.getElementById("pwInput").focus();
-    }
-  }
-  window.checkPW=checkPW;
-  if(sessionStorage.getItem(KEY)==="1"){
+function checkPW(){
+  const v=document.getElementById("pwInput").value;
+  if(_pwMd5(v)===_PV_HASH){
+    sessionStorage.setItem(_PV_KEY,"1");
     document.getElementById("pwScreen").style.display="none";
+  } else {
+    document.getElementById("pwError").textContent="Mot de passe incorrect.";
+    document.getElementById("pwInput").value="";
+    document.getElementById("pwInput").focus();
   }
-})();
+}
+if(sessionStorage.getItem(_PV_KEY)==="1"){
+  document.getElementById("pwScreen").style.display="none";
+}
 </script>
+
+
 
 <!-- ===== LDM (FULLSCREEN) ===== -->
 
@@ -2555,23 +2490,6 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 
 
 <!-- ===== Airport Keeper Picker ===== -->
-<div id="akBackdrop" onclick="closeAKPicker()"></div>
-
-<div id="akPopover">
-  <div class="ak-header" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
-    <button class="button is-small is-link" type="button" onclick="loadAKFlights()">
-      Rafraîchir
-    </button>
-    <span class="tag is-light" id="akStatus">—</span>
-    <button class="button is-small is-light" type="button"
-            style="margin-left:auto"
-            onclick="closeAKPicker()">
-      Fermer
-    </button>
-  </div>
-
-  <div id="akList"></div>
-</div>
 
 <!-- ===== SETTINGS MENU (bottom gear) ===== -->
 <div id="settingsBackdrop" onclick="closeSettingsMenu()"></div>
@@ -2685,7 +2603,24 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
       <button onclick="confirmPrestations()" style="padding:9px 20px; border-radius:8px; border:none; background:#16a34a; color:#fff; font-weight:800; cursor:pointer;">Valider →</button>
     </div>
   </div>
-</div><!-- ══════════════ MODAL RZA + RÉSUMÉ ══════════════ -->
+</div><!-- ══════════════ MODAL ASSISTANCES ══════════════ -->
+<div id="assistancesModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:var(--card); border-radius:14px; width:100%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column;">
+    <div style="padding:18px 20px 12px; border-bottom:1px solid var(--field-border); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:900; font-size:1rem; color:var(--text);">Assistances PMR</span>
+      <button onclick="closeAssistancesModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);">✕</button>
+    </div>
+    <div id="assistancesBody" style="padding:16px 20px; display:flex; flex-direction:column; gap:8px;"></div>
+    <div style="padding:12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--field-border);">
+      <button onclick="closeAssistancesModal()" style="padding:9px 18px; border-radius:8px; border:1px solid var(--field-border); background:transparent; color:var(--text); font-weight:700; cursor:pointer;">Annuler</button>
+      <button onclick="confirmAssistances()" style="padding:9px 20px; border-radius:8px; border:none; background:#16a34a; color:#fff; font-weight:800; cursor:pointer;">Valider →</button>
+    </div>
+  </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
 <div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
   <div style="background:var(--card); border-radius:14px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column; gap:0;">
     <div style="padding:18px 20px 12px; border-bottom:1px solid var(--field-border); display:flex; justify-content:space-between; align-items:center;">
@@ -2715,21 +2650,3 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
     </div>
   </div>
 </div>
-
-<script src="./app.js"></script>
-</body>
-<div id="assistancesModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
-  <div style="background:var(--card); border-radius:14px; width:100%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,.4); display:flex; flex-direction:column;">
-    <div style="padding:18px 20px 12px; border-bottom:1px solid var(--field-border); display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-weight:900; font-size:1rem; color:var(--text);">Assistances PMR</span>
-      <button onclick="closeAssistancesModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);">✕</button>
-    </div>
-    <div id="assistancesBody" style="padding:16px 20px; display:flex; flex-direction:column; gap:8px;"></div>
-    <div style="padding:12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--field-border);">
-      <button onclick="closeAssistancesModal()" style="padding:9px 18px; border-radius:8px; border:1px solid var(--field-border); background:transparent; color:var(--text); font-weight:700; cursor:pointer;">Annuler</button>
-      <button onclick="confirmAssistances()" style="padding:9px 20px; border-radius:8px; border:none; background:#16a34a; color:#fff; font-weight:800; cursor:pointer;">Valider →</button>
-    </div>
-  </div>
-</div>
-
-</html>
