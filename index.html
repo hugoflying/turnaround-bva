@@ -1835,6 +1835,10 @@ if(sessionStorage.getItem(_PV_KEY)==="1"){
   document.getElementById("pwScreen").style.display="none";
 }
 </script>
+<script>
+/* Disponible immédiatement, avant le chargement de app.js */
+function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
+</script>
 
 
 
