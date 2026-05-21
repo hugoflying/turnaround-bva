@@ -536,7 +536,7 @@ function updateFinalLoadLayout(){
 
   const fieldOf = (id)=>{
     const el = document.getElementById(id);
-    return el ? el.closest('.field') : null;
+    return el ? (el.closest('.ld-stat') || el.closest('.field')) : null;
   };
   const showField = (id, show)=>{
     const f = fieldOf(id);
@@ -3098,9 +3098,12 @@ function renderTimeline(){
   const ORDER = ['Débarquement','Cabin release','Avitair','Lift (Arr)','Embarquement','Lift (Dep)',
                  'ArrPNT','ArrPNC','RemiseLID','FermeturePorteAvion','ConnexionCasque','ArriveeINAD','ArriveeNayak'];
 
+  // Ces 5 lignes s'affichent toujours avec leurs cibles, même sans données saisies
+  const ALWAYS_SHOW = new Set(['Débarquement','Cabin release','Embarquement','RemiseLID','FermeturePorteAvion']);
+
   let rows;
   if(hasTargets && aibt !== null){
-    // FR/RK : inclure actions en cours et non démarrées
+    // FR/RK / W4/W6 : inclure actions en cours et non démarrées
     rows = ORDER.map(label => {
       // Action complète déjà dans durations ?
       const complete = durations.find(d => d.label === label);
@@ -3127,25 +3130,30 @@ function renderTimeline(){
 
       // Pas de données → montrer la cible vide
       if(FRRK_TARGETS[label] !== undefined)
-        return { label, a:null, b:null, cls:'tl--std', color:barColors[label]||null, status:'not-started' };
+        return { label, a:null, b:null, cls:'tl--std', color:barColors[label]||null, status:'not-started', displayLabel: dLabel };
 
       return null;
-  }).filter(r => r !== null && r.status !== 'not-started');
+    // Toujours garder les 5 lignes clés même sans données
+    }).filter(r => r !== null && (r.status !== 'not-started' || ALWAYS_SHOW.has(r.label)));
   } else {
-    // Compagnies sans targets : inclure quand même les point events s'ils ont des données
+    // Compagnies sans targets : 5 lignes clés toujours présentes + point events si remplis
     rows = ORDER.map(label => {
+      const dLabel = DEFAULT_LABELS[label] || label;
       const complete = durations.find(d => d.label === label);
-      if(complete) return { ...complete, status:'complete', displayLabel: DEFAULT_LABELS[label] || label };
+      if(complete) return { ...complete, status:'complete', displayLabel: dLabel };
       if(POINT_EVENTS.has(label)){
         const fields = ACTION_FIELDS[label];
         if(fields){
           const startV = parseHHMM(document.getElementById(fields.start)?.value || '');
           if(startV !== null)
-            return { label, a:startV, b:startV, cls:'tl--std', color:null, status:'complete', displayLabel: DEFAULT_LABELS[label] || label };
+            return { label, a:startV, b:startV, cls:'tl--std', color:null, status:'complete', displayLabel: dLabel };
         }
       }
+      // Toujours afficher les 5 lignes clés même sans données ni cibles
+      if(ALWAYS_SHOW.has(label))
+        return { label, a:null, b:null, cls:'tl--std', color:barColors[label]||null, status:'not-started', displayLabel: dLabel };
       return null;
-    }).filter(r => r !== null && r.status !== 'not-started');
+    }).filter(r => r !== null);
   }
 
   // ── Hauteur totale (min 140px même sans actions) ──────────────
