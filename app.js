@@ -4937,7 +4937,6 @@ self.addEventListener('fetch', e => {
     .catch(() => {/* SW optionnel, pas bloquant */});
 }
 
-</script>
 
 function openLightbox(src){
   const ov = document.getElementById('lightboxOverlay');
