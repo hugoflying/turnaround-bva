@@ -1,5 +1,3 @@
-async function refreshAKTab(tabId){ return; }
-
 /* Collapse */
 function toggleCardBody(headerEl){
   const card = headerEl.closest('.card');
@@ -3619,17 +3617,16 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape') closeSettingsMenu();
 });
 
-// ===== Airport Keeper (AK) — désactivé dans cette version =====
-function openAKPicker(){  }
+// ===== Airport Keeper (AK) — désactivé =====
+function openAKPicker(){}
 function closeAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
-  if(p) p.style.display = 'none';
-  if(b) b.style.display = 'none';
+  if(p) p.style.display='none';
+  if(b) b.style.display='none';
   document.body.classList.remove('ak-open');
 }
 async function fetchAK(){ return []; }
-
 
 // ===== Temps + linking (immat) =====
 function arrTimeMs(f){
@@ -3775,48 +3772,292 @@ function depAtotTooOld(dep, minutes = 15){
 // ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
 async function loadAKFlights(){ return; }
 
-async function refreshAKTab(tabId){
-  const data = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
-  const meta = data.akMeta;
-  if(!meta){
-    showPopup("Pas de données AK à rafraîchir", "#ef4444", 1600);
-    return;
+
+/* =========================
+   BADGES RETARD (référence app.js)
+   ========================= */
+
+const EIBT_CORRECTION_MIN = -4;
+
+function addMinutesToIso(iso, minutes){
+  const t = Date.parse(iso || "");
+  if(!Number.isFinite(t)) return "";
+  return new Date(t + minutes * 60000).toISOString();
+}
+
+function delayMinFrom(plannedIso, actualIso){
+  const p = Date.parse(plannedIso || "");
+  const a = Date.parse(actualIso || "");
+  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
+  return Math.round((a - p) / 60000);
+}
+
+function actualDepIso(f){
+  return f?.aobt || f?.eobt || "";
+}
+
+function actualArrIso(f){
+  if(f?.aibt) return f.aibt;
+
+  if(f?.eibt){
+    return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
   }
 
-  const now = new Date();
-  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
-  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
-  const linkFrom = new Date(startDay.getTime() - 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const linkTo   = new Date(endDay.getTime()   + 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+  return "";
+}
 
-  try{
-    const [arrAll, depAll] = await Promise.all([
-      fetchAK('ARR', linkFrom, linkTo),
-      fetchAK('DEP', linkFrom, linkTo),
-    ]);
+function getDelayBadgeHtml(mins){
+  if(mins == null) return "";
 
-    window._akCache = { arr: arrAll, dep: depAll };
+  let label = "";
+  let className = "";
+  let extraStyle = "font-weight:900; margin-left:0;";
 
-    const flow = meta.flow || 'DEP';
-    const list = flow === 'DEP' ? depAll : arrAll;
-    const match = findBestAKMatch(list, meta, flow);
+  if(mins >= 15){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-danger";
+  }
+  else if(mins >= 5){
+    label = `RETARDÉ +${mins}`;
+    className = "tag is-warning";
+  }
+  else if(mins <= -10){
+    label = `EN AVANCE ${mins}`;
+    className = "tag is-info";
+  }
+  else{
+    label = "À L’HEURE";
+    className = "tag is-success";
+  }
 
-    if(!match){
-      showPopup("Vol AK introuvable", "#ef4444", 1800);
-      return;
+  return `<span class="${className}" style="${extraStyle}">${label}</span>`;
+}
+
+
+// ===== Couleur bandeau retard (identique au dashboard) =====
+function delayBarColor(mins){
+  if(mins == null) return null;
+  if(mins <= -11)  return '#3b82f6'; // bleu — en avance (<= -11min)
+  if(mins <= 5)    return '#16a34a'; // vert — à l'heure (-10 à +5min)
+  if(mins < 15)    return '#f97316'; // orange — retard < 15min
+  return             '#ef4444';     // rouge — retard >= 15min
+}
+
+// ===== Rendu liste : ARR = provenance, DEP = destination =====
+
+function renderAKList(pairs){
+  const list = document.getElementById('akList');
+  if(!list) return;
+  _renderAKListWithRza(pairs, list, {});
+}
+
+function _renderAKListWithRza(pairs, list, akIdToRza){
+
+  // ── Cache global : stocke chaque objet vol par son id ──────────────────────
+  // Évite d'inliner le JSON (parfois très volumineux) dans les attributs onclick,
+  // ce qui causait des échecs silencieux sur les vols DEP avec routeIcao long.
+  window._akFlightById = window._akFlightById || {};
+  pairs.forEach(p => {
+    if(p.arr && p.arr.id) window._akFlightById[String(p.arr.id)] = p.arr;
+    if(p.dep && p.dep.id) window._akFlightById[String(p.dep.id)] = p.dep;
+  });
+
+  function getStatus(f, flow){
+    let s = (f?.status||f?.milestone||'').toString().toUpperCase();
+    if(s==='SCHEDULED')  return 'PRÉVU';
+    if(s==='CANCELLED')  return 'ANNULÉ';
+    if(s==='SUSPENDED')  return 'SUSPENDU';
+    if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
+    else{
+      if(s==='TERMINATED') return 'ARRIVÉ';
+      if(s==='IN_FLIGHT') return 'EN VOL';
+      const nd = findLinkedDepForArr(f);
+      if(nd){ const ds=(nd.status||nd.milestone||'').toString().toUpperCase(); if(ds==='IN_FLIGHT'||!!nd.atot) return 'DÉCOLLÉ'; }
+    }
+    return s||'';
+  }
+
+  function half(f, flow){
+    if(!f) return '<div class="ak-half ak-half-empty"></div>';
+    const ff    = (f.fullFlightNumber||f.callsign||'').trim();
+    const reg   = (f.reg||'').trim();
+    const stand = (f.pkg||'').toString().replace(/^P/i,'');
+    const {time:t, suffix:tSuffix} = pickBestTimeForList(f, flow);
+    const status = getStatus(f, flow);
+    const iata  = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
+    const dly      = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const barColor = delayBarColor(dly);
+    const done     = (flow==='ARR'&&status==='ARRIVÉ')||(flow==='DEP'&&status==='DÉCOLLÉ');
+    const bgBadge  = flow==='ARR' ? '#dbeafe' : '#dcfce7';
+    const txtBadge = flow==='ARR' ? '#1d4ed8' : '#15803d';
+    const suf      = tSuffix ? ' <span style="font-size:.7em;opacity:.65;font-weight:600;">('+tSuffix+')</span>' : '';
+    const timeStr  = t ? escapeHtml(t)+suf : '—';
+    const rzaHtml = '';
+
+    // Heure estimée
+    let estimatedStr = '';
+    if(tSuffix === 'S'){
+      const toHHMM = (iso)=>{
+        const d = iso ? new Date(iso) : null;
+        if(!d || isNaN(d.getTime())) return '';
+        const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+        const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+        return `${hh}:${mm}`;
+      };
+      const est = flow==='DEP' ? toHHMM(f.eobt||f.etot||'') : toHHMM(f.eibt||f.eldt||'');
+      if(est && est !== t && barColor !== '#16a34a'){
+        estimatedStr = ' <span style="font-weight:900;color:'+barColor+';">→ '+escapeHtml(est)+'<span style="font-size:.7em;opacity:.8;"> (E)</span></span>';
+      }
     }
 
-    if(currentTabId !== tabId) switchTab(tabId);
+    const opacity  = done ? 'opacity:.55;' : '';
+    const barSide  = flow==='ARR' ? 'left:0;' : 'right:0;';
+    const barHtml  = barColor
+      ? '<div style="position:absolute;top:0;bottom:0;width:5px;'+barSide+'background:'+barColor+';border-radius:0;"></div>'
+      : '';
+    const halfClass = flow==='ARR' ? 'ak-half ak-half-arr' : 'ak-half ak-half-dep';
+    const halfPad   = (flow==='ARR' && barColor) ? 'padding-left:11px;' : '';
 
-    applyAKFlight(match, flow, { refresh: true });
-    saveCurrentTabData();
+    // ── onclick : on passe uniquement l'ID et le flow ──────────────────────
+    const safeId = escapeHtml(String(f.id || f._id || ''));
+    const onclick = 'onclick="_akClickFlight(\'' + safeId + '\',\'' + flow + '\')"';
 
-    showPopup("AK rafraîchi", "#16a34a", 1400);
-
-  }catch(e){
-    showPopup(`Erreur AK (${String(e.message || e)})`, "#ef4444", 2000);
+    return '<div class="'+halfClass+'" style="position:relative;cursor:pointer;'+opacity+halfPad+'" '+onclick+'>'
+      + barHtml
+      + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">'
+      + '<span style="font-size:.62rem;font-weight:900;background:'+bgBadge+';color:'+txtBadge+';padding:1px 6px;border-radius:6px;">'+flow+'</span>'
+      + '<span style="font-weight:900;font-size:.95rem;">'+escapeHtml(iata||'---')+'</span>'
+      + rzaHtml
+      + '</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;font-weight:700;">'+escapeHtml(ff||'—')+' · Pkg '+escapeHtml(stand||'—')+' · '+escapeHtml(reg||'—')+'</div>'
+      + '<div style="color:var(--muted);font-size:.75rem;font-weight:700;">'+timeStr+estimatedStr+'</div>'
+      + (status ? '<div style="color:var(--muted);font-size:.72rem;font-weight:800;margin-top:2px;">'+escapeHtml(status)+'</div>' : '')
+      + '</div>';
   }
+
+  if(!pairs.length){ list.innerHTML = '<p class="has-text-grey">Aucun vol.</p>'; return; }
+
+  list.innerHTML = pairs.map(function(p){
+    return '<div class="ak-pair-row">'
+      + half(p.arr,'ARR')
+      + '<div class="ak-pair-divider">' + (p.arr && p.dep ? '🔗' : '⛓️\u200d💥') + '</div>'
+      + half(p.dep,'DEP')
+      + '</div>';
+  }).join('');
 }
+
+// ── Gestionnaire de clic AK — lookup par ID dans le cache ──────────────────
+function _akClickFlight(id, flow){
+  const f = window._akFlightById && window._akFlightById[id];
+  if(!f){
+    console.warn('[AK] Vol introuvable dans le cache, id=', id);
+    return;
+  }
+  applyAKFlight(f, flow);
+}
+  
+// ===== Import : règles BVA =====
+function akBuildSI(f, allowDL = true, opts = {}){
+  const includeDL = opts.includeDL !== undefined ? !!opts.includeDL : true;
+
+  const parts = [];
+
+  const rmk = (f?.remarks || '').trim();
+  if(rmk) parts.push(rmk);
+
+  // DL AK : uniquement si autorisé ET includeDL=true
+  if(allowDL && includeDL){
+    const tb = f?.dlCodes?.typeb;
+    if(Array.isArray(tb) && tb.length){
+      parts.push(`DL: ${tb.map(x => `${x.code} +${x.delay}`).join(' / ')}`);
+    }
+  }
+
+  return parts.join('\n').trim();
+}
+
+function storeAKMetaForTab(meta){
+  if(!currentTabId) return;
+
+  const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+
+  data.akMeta = {
+    flow: meta.flow || null,
+
+    // ✅ clé la plus fiable
+    id: String(meta.id || ''),
+    linkedId: String(meta.linkedId || ''),
+
+    // ✅ fallback
+    reg:  (meta.reg  || '').toUpperCase().trim(),
+    ff:   (meta.ff   || '').toUpperCase().trim(),     // fullFlightNumber du vol sélectionné
+    timeISO: (meta.timeISO || ''),                    // SOBT (DEP) ou SIBT (ARR)
+
+    // ton bandeau
+    arrFF:(meta.arrFF|| '').toUpperCase().trim(),
+    depFF:(meta.depFF|| '').toUpperCase().trim(),
+    pkg:  (meta.pkg  || '') + '',
+    bc:   (meta.bc   || '').toUpperCase().trim(),
+
+    ts: Date.now()
+  };
+
+  localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+}
+
+function parseIsoMs(iso){
+  const t = Date.parse(iso || '');
+  return Number.isFinite(t) ? t : null;
+}
+
+function findBestAKMatch(list, meta, flow){
+  if(!Array.isArray(list) || !meta) return null;
+
+  // ✅ 1) match direct par ID (zéro ambiguïté)
+  if(meta.id){
+    const byId = list.find(f => String(f?.id) === String(meta.id));
+    if(byId) return byId;
+  }
+
+  // ✅ 2) fallback reg + ff + timeISO
+  const wantReg = (meta.reg || '').toUpperCase().trim();
+  if(!wantReg) return null;
+
+  const wantFF = (meta.ff || '').toUpperCase().trim();
+  const wantT  = parseIsoMs(meta.timeISO);
+
+  let best = null;
+  let bestScore = Infinity;
+
+  for(const f of list){
+    const reg = ((f?.reg || '') + '').toUpperCase().trim();
+    if(reg !== wantReg) continue;
+
+    const ff = ((f?.fullFlightNumber || f?.callsign || '') + '').toUpperCase().trim();
+    if(wantFF && ff && wantFF !== ff) continue;
+
+    const candT = parseIsoMs(
+      flow === 'DEP'
+        ? (f?.sobt || f?.eobt || f?.aobt || f?.atot || null)
+        : (f?.sibt || f?.eibt || f?.aibt || f?.aldt || null)
+    );
+
+    let score = 999999999;
+    if(wantT != null && candT != null) score = Math.abs(candT - wantT);
+    else score = 60 * 60 * 1000;
+
+    if(score < bestScore){
+      best = f;
+      bestScore = score;
+    }
+  }
+
+  if(best && wantT != null && bestScore > 12 * 60 * 60 * 1000) return null;
+  return best;
+}
+
+async function refreshAKTab(tabId){ return; }
+
 
 function applyAKFlight(f, flow, opts = {}){
   _doApplyAKFlight(f, flow, opts);
