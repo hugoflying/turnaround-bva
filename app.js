@@ -317,30 +317,6 @@ window._timelineCurrentRange = null;
 
 /* EOBT brut + EOBT affiché */
 window._eobtRawMins = null;
-window._eibtRawMins = null;
-
-function getProjectedEOBTFromEIBT(){
-  if(window._eibtRawMins == null) return null;
-  const cie  = (document.getElementById('Cie')?.value||'').toUpperCase();
-  const sibt = parseHHMM(document.getElementById('SIBT')?.value||'');
-  const sobt = parseHHMM(document.getElementById('SOBT')?.value||'');
-  if(sobt == null) return null;
-  const EIBT = window._eibtRawMins;
-  let eobt;
-  if(cie==='FR'||cie==='RK'){
-    const crewChange = document.getElementById('CrewChange')?.checked || false;
-    const turn = crewChange ? 35 : 25;
-    eobt = Math.max(sobt, EIBT + turn);
-  } else if(cie==='W4'||cie==='W6'){
-    const type = (document.getElementById('TypeAvion')?.value||'').toUpperCase();
-    const turn = (type.includes('321')||type.includes('21N')) ? 35 : 30;
-    eobt = Math.max(sobt, EIBT + turn);
-  } else {
-    if(sibt == null) return null;
-    eobt = EIBT + (sobt - sibt);
-  }
-  return ((eobt % 1440) + 1440) % 1440;
-}
 window._eobtAdjMins = null;
 
 /* DL */
@@ -2561,44 +2537,22 @@ function updateDlTotalBadge(){
   const sobt = parseHHMM(sobtTxt);
   const aibt = parseHHMM(aibtTxt);
 
+  const hasDelay = aobt != null && sobt != null;
   const hasTurn  = aobt != null && aibt != null;
 
-  // Calcul du retard départ selon disponibilité des données
-  let depDelay = null;
-  if(aobt != null && sobt != null){
-    // Réel : AOBT − SOBT
-    let d = aobt - sobt;
-    if(d < -720) d += 1440;
-    if(d >  720) d -= 1440;
-    depDelay = d;
-  } else if(window._eobtRawMins != null && sobt != null){
-    // Projeté depuis AIBT : EOBT calculé − SOBT
-    let d = window._eobtRawMins - sobt;
-    if(d < -720) d += 1440;
-    if(d >  720) d -= 1440;
-    depDelay = d;
-  } else {
-    // Projeté depuis EIBT AK : EOBT_eibt − SOBT
-    const proj = getProjectedEOBTFromEIBT();
-    if(proj != null && sobt != null){
-      let d = proj - sobt;
-      if(d < -720) d += 1440;
-      if(d >  720) d -= 1440;
-      depDelay = d;
-    }
-  }
-
-  const hasDelay = depDelay != null;
   row.style.display = (hasDelay || hasTurn) ? 'flex' : 'none';
 
-  // — Pastille retard départ —
+  // — Pastille retard AOBT − SOBT —
   if(hasDelay){
-    if(depDelay <= 0){
+    let diff = aobt - sobt;
+    if(diff < -720) diff += 1440;
+    if(diff >  720) diff -= 1440;
+    if(diff <= 0){
       badge.classList.add('no-delay');
       valEl.textContent = '0 min';
     } else {
       badge.classList.remove('no-delay');
-      valEl.textContent = `+${depDelay} min`;
+      valEl.textContent = `+${diff} min`;
     }
     badge.style.display = 'flex';
   } else {
@@ -3663,53 +3617,16 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape') closeSettingsMenu();
 });
 
-// ===== Airport Keeper (AK) =====
-const AK_BASE    = "/api/ak";
-// AK_TOKEN géré côté serveur (Cloudflare Pages Function)
-const AK_AIRPORT = "LFOB";
-
-// Ouvrir/Fermer
-function openAKPicker(){
-  const b = document.getElementById('akBackdrop');
-  const p = document.getElementById('akPopover');
-  const flowSel = document.getElementById('akFlow');
-
-  if(flowSel) flowSel.value = 'DEP';
-
-  document.body.classList.add('ak-open');   // ✅ AJOUT
-
-  if(b) b.style.display = '';
-  if(p) p.style.display = 'flex';
-  loadAKFlights();
-}
-
+// ===== Airport Keeper (AK) — désactivé =====
+function openAKPicker(){}
 function closeAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
-
-  if(p) p.style.display = 'none';
-  if(b) b.style.display = 'none';
-
-  document.body.classList.remove('ak-open'); // ✅ AJOUT
-
-  // Arrêter le poll
+  if(p) p.style.display='none';
+  if(b) b.style.display='none';
+  document.body.classList.remove('ak-open');
 }
-
-async function fetchAK(flow, from, to) {
-  const url =
-    `${AK_BASE}?airport=${encodeURIComponent(AK_AIRPORT)}` +
-    `&flow=${encodeURIComponent(flow)}` +
-    `&from=${encodeURIComponent(from)}` +
-    `&to=${encodeURIComponent(to)}`;
-
-  const res = await fetch(url, {
-    headers: { 'Accept': 'application/json' }
-  });
-  if (!res.ok) throw new Error(`AK error ${res.status}`);
-
-  const data = await res.json();
-  return Array.isArray(data) ? data : (Array.isArray(data?.flights) ? data.flights : []);
-}
+async function fetchAK(){ return []; }
 
 // ===== Temps + linking (immat) =====
 function arrTimeMs(f){
@@ -3853,53 +3770,8 @@ function depAtotTooOld(dep, minutes = 15){
 }
 
 // ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
-async function loadAKFlights(){
-  const st   = document.getElementById('akStatus');
-  const list = document.getElementById('akList');
-  if(st) st.textContent = 'Chargement…';
-  if(list) list.innerHTML = '';
+async function loadAKFlights(){ return; }
 
-  const now = new Date();
-  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
-  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
-  const linkFrom = new Date(startDay.getTime() - 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
-  const linkTo   = new Date(endDay.getTime()   + 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
-
-  try{
-    const [arrAll, depAll] = await Promise.all([fetchAK('ARR',linkFrom,linkTo), fetchAK('DEP',linkFrom,linkTo)]);
-    window._akCache = { arr: arrAll, dep: depAll };
-
-    const inToday = (f, fl) => {
-      const t = Date.parse(fl==='DEP' ? (f.sobt||f.eobt||f.aobt||f.atot||'') : (f.sibt||f.eibt||f.aibt||''));
-      return t && t >= startDay.getTime() && t <= endDay.getTime();
-    };
-
-    let arrFlights = arrAll.filter(f => inToday(f,'ARR'));
-    let depFlights = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
-    arrFlights = arrFlights.filter(arr => { const nd=findLinkedDepForArr(arr); return !nd || !depAtotTooOld(nd,15); });
-
-    const usedDep = new Set(), pairs = [];
-    for(const arr of arrFlights){
-      const dep = findLinkedDepForArr(arr);
-      if(dep && !usedDep.has(dep.id)){ pairs.push({arr,dep}); usedDep.add(dep.id); }
-      else { pairs.push({arr, dep:null}); }
-    }
-    for(const dep of depFlights){ if(!usedDep.has(dep.id)) pairs.push({arr:null,dep}); }
-
-    pairs.sort((a,b)=>{
-      const ta = a.arr ? arrTimeMs(a.arr) : (a.dep ? depTimeMs(a.dep) : null);
-      const tb = b.arr ? arrTimeMs(b.arr) : (b.dep ? depTimeMs(b.dep) : null);
-      if(ta==null&&tb==null) return 0; if(ta==null) return 1; if(tb==null) return -1;
-      return ta-tb;
-    });
-
-    if(st) st.textContent = pairs.length + ' vol(s)';
-    renderAKList(pairs);
-
-  }catch(e){
-    if(st) st.textContent = `Erreur (${String(e.message || e)})`;
-  }
-}
 
 /* =========================
    BADGES RETARD (référence app.js)
@@ -4184,48 +4056,8 @@ function findBestAKMatch(list, meta, flow){
   return best;
 }
 
-async function refreshAKTab(tabId){
-  const data = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
-  const meta = data.akMeta;
-  if(!meta){
-    showPopup("Pas de données AK à rafraîchir", "#ef4444", 1600);
-    return;
-  }
+async function refreshAKTab(tabId){ return; }
 
-  const now = new Date();
-  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
-  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
-  const linkFrom = new Date(startDay.getTime() - 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-  const linkTo   = new Date(endDay.getTime()   + 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
-
-  try{
-    const [arrAll, depAll] = await Promise.all([
-      fetchAK('ARR', linkFrom, linkTo),
-      fetchAK('DEP', linkFrom, linkTo),
-    ]);
-
-    window._akCache = { arr: arrAll, dep: depAll };
-
-    const flow = meta.flow || 'DEP';
-    const list = flow === 'DEP' ? depAll : arrAll;
-    const match = findBestAKMatch(list, meta, flow);
-
-    if(!match){
-      showPopup("Vol AK introuvable", "#ef4444", 1800);
-      return;
-    }
-
-    if(currentTabId !== tabId) switchTab(tabId);
-
-    applyAKFlight(match, flow, { refresh: true });
-    saveCurrentTabData();
-
-    showPopup("AK rafraîchi", "#16a34a", 1400);
-
-  }catch(e){
-    showPopup(`Erreur AK (${String(e.message || e)})`, "#ef4444", 2000);
-  }
-}
 
 function applyAKFlight(f, flow, opts = {}){
   _doApplyAKFlight(f, flow, opts);
@@ -4295,9 +4127,6 @@ function _doApplyAKFlight(f, flow, opts = {}){
         setValAK('From', (prevArr.adepIata || '') || 'BVA');
         setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
         setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
-        // Stocker EIBT pour badge départ projeté
-        if(prevArr?.eibt){ const _d=new Date(prevArr.eibt); window._eibtRawMins=_d.getHours()*60+_d.getMinutes(); }
-        else { window._eibtRawMins=null; }
 
         if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
 
@@ -4322,9 +4151,6 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
       setTimeFromISOAK('SIBT', f.sibt || f.eibt);
       setTimeFromISOAK('AIBT', f.aibt);
-      // Stocker EIBT pour badge départ projeté
-      if(f.eibt){ const _d=new Date(f.eibt); window._eibtRawMins=_d.getHours()*60+_d.getMinutes(); }
-      else { window._eibtRawMins=null; }
 
       if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
 
@@ -5472,23 +5298,8 @@ function toggleInfoVolEdit(){
   icon.textContent = open ? '✅' : '✏️';
 }
 
-async function footerRefreshAK(){
-  const btn = document.getElementById('footerRefreshBtn');
-  if(!currentTabId) return;
-  const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
-  if(!data.akMeta){
-    btn.style.animation = 'none';
-    btn.textContent = '✕';
-    setTimeout(()=>{ btn.textContent = '↻'; }, 800);
-    return;
-  }
-  btn.classList.add('is-loading');
-  try{
-    await refreshAKTab(currentTabId);
-  }finally{
-    btn.classList.remove('is-loading');
-  }
-}
+async function footerRefreshAK(){ return; }
+
 
 /* ===== TIME WRAP gestures ===== */
 (function(){
