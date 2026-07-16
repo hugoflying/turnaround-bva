@@ -536,6 +536,13 @@ function applyAircraftConfig(){
     typeEl.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
+  // Immat Wizz A320-186 connue → pré-sélectionner la version cabine 186
+  if((cfg.airline === 'W4' || cfg.airline === 'W6') && cfg.acType === 'A320'
+     && /186/.test(cfg.config || '')){
+    setA320Ver('186');
+    updateInfoStrip();  // rafraîchit le badge
+  }
+
   // Appliquer zones et holds en placeholder
   if(cfg.zones){
     setPH('FinalOA', cfg.zones.OA || '');
@@ -616,9 +623,16 @@ function updateFinalPlaceholdersFRRK(){
       return;
     }
     if(type === 'A320'){
-      setPH('FinalOA', '66 (1-11)');
-      setPH('FinalOB', '60 (12-21)');
-      setPH('FinalOC', '54 (22-30)');
+      // Version cabine choisie par l'agent (défaut 180) — voir badge ⚠ dans le bandeau
+      if(getA320Ver() === '186'){
+        setPH('FinalOA', '60 (1-10)');
+        setPH('FinalOB', '66 (11-21)');
+        setPH('FinalOC', '60 (22-31)');
+      } else {
+        setPH('FinalOA', '66 (1-11)');
+        setPH('FinalOB', '60 (12-21)');
+        setPH('FinalOC', '54 (22-30)');
+      }
       setPH('FinalH1', '3402 kg');   // CP1
       // CP2 masqué pour A320
       setPH('FinalH3', '2426 kg');   // CP3
@@ -659,6 +673,68 @@ function updateFinalPlaceholdersFRRK(){
       return;
     }
     return;
+  }
+}
+
+/* ===== Version cabine A320 W4/W6 (180 par défaut / 186) — par onglet ===== */
+function getA320Ver(){
+  try{
+    if(!currentTabId) return '180';
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    return data.A320Ver === '186' ? '186' : '180';
+  }catch(e){ return '180'; }
+}
+function setA320Ver(v){
+  if(!currentTabId) return;
+  try{
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    data.A320Ver = (v === '186') ? '186' : '180';
+    localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+  }catch(e){}
+}
+function toggleA320Ver(){
+  const cur = getA320Ver();
+  setA320Ver(cur === '186' ? '180' : '186');
+  updateFinalPlaceholdersFRRK();  // met à jour les zones OA/OB/OC
+  updateInfoStrip();              // rafraîchit le badge
+}
+
+/* Badge ⚠ 180/186 à côté du type avion dans le bandeau (uniquement W4/W6 + A320) */
+function renderA320VerBadge(){
+  const kv = document.getElementById('kvType');
+  if(!kv) return;
+  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
+  const applies = (cie === 'W4' || cie === 'W6') && type === 'A320';
+
+  let badge = document.getElementById('kvTypeVerBadge');
+
+  if(!applies){
+    if(badge) badge.style.display = 'none';
+    return;
+  }
+
+  if(!badge){
+    badge = document.createElement('span');
+    badge.id = 'kvTypeVerBadge';
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;user-select:none;line-height:1.4;vertical-align:middle;';
+    badge.title = 'Version cabine A320 — cliquer pour basculer 180 / 186';
+    badge.addEventListener('click', toggleA320Ver);
+    kv.insertAdjacentElement('afterend', badge);
+  }
+
+  const ver = getA320Ver();
+  badge.style.display = 'inline-flex';
+  if(ver === '186'){
+    badge.textContent = '⚠ 186';
+    badge.style.background = '#dbeafe';   // bleu clair — version confirmée
+    badge.style.color      = '#1e40af';
+    badge.style.border      = '1px solid #93c5fd';
+  } else {
+    badge.textContent = '⚠ 180';
+    badge.style.background = '#fef3c7';   // orange clair — défaut, à vérifier
+    badge.style.color      = '#92400e';
+    badge.style.border      = '1px solid #fcd34d';
   }
 }
 
@@ -1472,6 +1548,9 @@ function updateInfoStrip(){
   set('kvImmat', v('Immat') || '------', '------');
   set('kvType',  v('TypeAvion') || '----', '----');
 
+  // Badge version cabine A320 (W4/W6) à côté du type
+  renderA320VerBadge();
+
   // Salle arrivée : plus de champ BorderControl -> on prend akMeta.bc
   set('kvBC', bcMeta || '--', '--');
 
@@ -1847,6 +1926,8 @@ function loadTabData(id){
   updateAllCalculations();
   updateHeaderOffset();
   updateInfoStrip();
+  updateFinalLoadLayout();
+  updateFinalPlaceholdersFRRK();
 
   // ✅ Restaurer l'onglet de timing (Arrivée / Départ)
   if(data.timingPanel) {
@@ -2362,10 +2443,12 @@ function updateEOBT() {
 let dlTouched1 = false;
 let dlTouched2 = false;
 let dlTouched3 = false;
+let dlRecency  = [];   // ordre d'édition des DL durée (le + récent en dernier)
 
 // Si tu veux reset propre (ex: changement de vol/tab), tu peux l'appeler
 function resetDLTouches(){
   dlTouched1 = dlTouched2 = dlTouched3 = false;
+  dlRecency = [];
 }
 
 /* DL CODES */
@@ -2415,8 +2498,10 @@ function updateDLCode() {
     if(had93){
       c1.value = '';
       d1.value = '';
+      dlTouched1 = false;
       dlTouched2 = false;
       dlTouched3 = false;
+      dlRecency = [];
     }
   }
 }
@@ -2424,22 +2509,18 @@ function updateDLCode() {
 /* DL redistribution */
 function dldChanged(index){
   lastDLChanged = index;
-  const el  = document.getElementById('DLduree' + index);
-  const raw = (el?.value ?? '').trim();
-  const isEmpty = (raw === '');
-  const val = parseInt(raw || '') || 0;
 
-  // DL1 (souvent le 93) : vidé ou 0 → on relâche tout et on repart du défaut.
-  // DL2 / DL3 : toute interaction (valeur, "0" ou champ vidé) rend ce champ "maître"
-  //   → sa valeur (0 si vidé) est respectée, l'autre absorbe le reliquat.
-  if(index === 1){
-    if(isEmpty || val === 0){ dlTouched1 = false; dlTouched2 = false; dlTouched3 = false; }
-    else { dlTouched1 = true; }
-  } else if(index === 2){
-    dlTouched2 = true;
-  } else if(index === 3){
-    dlTouched3 = true;
-  }
+  // Récence : on place le champ édité en tête de priorité
+  dlRecency = dlRecency.filter(i => i !== index);
+  dlRecency.push(index);
+
+  // Toute interaction (valeur, "0" ou champ vidé) rend ce champ "maître".
+  //   - AVEC 93/93A : seuls DL2/DL3 sont en vases communicants (DL1 = le 93).
+  //   - SANS 93/93A : les 3 DL durée sont en vases communicants.
+  if(index === 1)      dlTouched1 = true;
+  else if(index === 2) dlTouched2 = true;
+  else if(index === 3) dlTouched3 = true;
+
   redistributeDL();
 }
 
@@ -2555,13 +2636,37 @@ function redistributeDL(){
     [d2, d3] = splitRemain(Math.max(0, total - d1));
 
   } else {
-    // ── SANS 93/93A : DL1 piloté par l'agent, puis DL2 ↔ DL3 ──────────────
+    // ── SANS 93/93A : vases communicants sur les 3 (DL1 ↔ DL2 ↔ DL3) ─────
     if(!dlTouched1 && !dlTouched2 && !dlTouched3){
       // Rien touché → tout en DL1
       d1 = total; d2 = 0; d3 = 0;
     } else {
-      d1 = clamp(parseInt(f1.value)||0, 0, total);
-      [d2, d3] = splitRemain(Math.max(0, total - d1));
+      const touched = [];
+      if(dlTouched1) touched.push(1);
+      if(dlTouched2) touched.push(2);
+      if(dlTouched3) touched.push(3);
+
+      // Champs touchés triés du plus récent au plus ancien
+      const byRecency = touched.slice().sort((a,b)=> dlRecency.indexOf(b) - dlRecency.indexOf(a));
+      const untouched = [1,2,3].filter(i => !touched.includes(i));
+
+      // L'absorbeur (servi en dernier) = 1er champ non touché (plus petit index),
+      // sinon le champ touché le plus ancien.
+      const priority = untouched.length ? byRecency.concat([untouched[0]]) : byRecency;
+
+      const fmap = { 1:f1, 2:f2, 3:f3 };
+      const res  = { 1:0, 2:0, 3:0 };
+      let budget = total;
+      for(let k=0; k<priority.length; k++){
+        const idx = priority[k];
+        if(k === priority.length - 1){
+          res[idx] = budget;                 // dernier = absorbe le reliquat
+        } else {
+          const t = clamp(parseInt(fmap[idx].value)||0, 0, budget);
+          res[idx] = t; budget -= t;
+        }
+      }
+      d1 = res[1]; d2 = res[2]; d3 = res[3];
     }
   }
 
