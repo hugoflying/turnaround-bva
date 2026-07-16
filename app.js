@@ -3007,9 +3007,9 @@ function renderTimeline(){
   const BASE = (isFRRK && crewChange) ? 10 : 0;
 
   const TARGETS_FRRK_BASE = {
-    'Débarquement':        { ref:'EOBT', from:-25, to:-15, fromField:null,              toOffset:null, label:null              },
-    'Cabin release':       { ref:'EOBT', from:-15, to:-12, fromField:'DernierDebarque', toOffset:3,    label:'Cabin tidy'      },
-    'Embarquement':        { ref:'EOBT', from:-15, to: -5, fromField:null,              toOffset:null, label:null              },
+    'Débarquement':        { ref:'EOBT', fromRef:'AIBT', from:  2, to:-13, fromField:null,              toOffset:null, label:null              },
+    'Cabin release':       { ref:'EOBT', from:-13, to:-10, fromField:'DernierDebarque', toOffset:3,    label:'Cabin tidy'      },
+    'Embarquement':        { ref:'EOBT', from:-13, to: -5, fromField:null,              toOffset:null, label:null              },
     'Avitair':             { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
     'Lift (Dep)':          { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
     'RemiseLID':           { ref:'EOBT', from: -8, to: -8, fromField:null,              toOffset:null, label:'Remise eLID/LID' },
@@ -3248,25 +3248,33 @@ function renderTimeline(){
   rows.forEach((d, i) => {
     const color   = getColor(d);
     const tDefCheck   = FRRK_TARGETS[d.label];
-    const refOk       = tDefCheck && (tDefCheck.ref === 'EOBT' ? window._eobtRawMins != null : aibt !== null);
+    // Une action peut avoir une référence différente pour le début (fromRef) et la fin (toRef).
+    // On exige que toutes les références réellement utilisées soient disponibles.
+    const _refAvail   = (r)=> (r === 'AIBT') ? (aibt !== null) : (window._eobtRawMins != null);
+    const refOk       = !!tDefCheck
+                        && _refAvail(tDefCheck.fromRef || tDefCheck.ref)
+                        && _refAvail(tDefCheck.toRef   || tDefCheck.ref);
     const hasTarget   = hasTargets && !!tDefCheck && refOk;
     const targetDef    = hasTarget ? FRRK_TARGETS[d.label] : null;
     const displayLabel = targetDef?.label || DEFAULT_LABELS[d.label] || d.label;
 
-    // Référence temporelle : AIBT (FR/RK) ou EOBT brut sans CTOT (W4/W6)
-    const eobt    = window._eobtRawMins ?? null;
-    const refTime = hasTarget ? ((targetDef.ref === 'EOBT') ? eobt : aibt) : null;
+    // Référence temporelle : EOBT brut (sans CTOT) ou AIBT selon l'action.
+    // Le début et la fin peuvent avoir une référence différente (fromRef / toRef).
+    const eobt        = window._eobtRawMins ?? null;
+    const _resolveRef = (r)=> (r === 'AIBT') ? aibt : eobt;
+    const refFromTime = hasTarget ? _resolveRef(targetDef.fromRef || targetDef.ref) : null;
+    const refToTime   = hasTarget ? _resolveRef(targetDef.toRef   || targetDef.ref) : null;
 
     const fromFieldT = hasTarget && targetDef.fromField
       ? parseHHMM(document.getElementById(targetDef.fromField)?.value || '')
       : null;
-    const targetFrom = hasTarget && refTime !== null
-      ? (fromFieldT !== null ? fromFieldT : refTime + targetDef.from)
+    const targetFrom = hasTarget && refFromTime !== null
+      ? (fromFieldT !== null ? fromFieldT : refFromTime + targetDef.from)
       : null;
-    const targetTo = hasTarget && refTime !== null
+    const targetTo = hasTarget && refToTime !== null
       ? (targetDef.toOffset !== null && fromFieldT !== null
           ? fromFieldT + targetDef.toOffset
-          : refTime + targetDef.to)
+          : refToTime + targetDef.to)
       : null;
 
     const deadlineExt    = hasTarget ? toExtended(targetTo,   min, max) : null;
