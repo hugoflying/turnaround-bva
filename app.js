@@ -57,75 +57,6 @@ function updateHeaderOffset(){
 /* Vars */
 let isUTC=false;
 
-/* =====================================================================
-   UTC REFACTOR — conversion à la frontière WebSocket uniquement
-   DOM/localStorage : HH:MM
-   WebSocket/DO     : ISO 8601 UTC (ex: 2026-03-16T14:30:00Z)
-   ===================================================================== */
-
-/** Champs horaires qui transitent en ISO UTC sur le wire */
-const UTC_TIME_FIELDS = new Set([
-  'SIBT','AIBT','SOBT','AOBT','CTOT',
-  'PremierDebarque','PremierDebarqueL2','DernierDebarque',
-  'ArrPNT','ArrPNC',
-  'ArriveeFuel','DepartFuel',
-  'ArriveeLiftArr','DepartLiftArr',
-  'ArriveeLift','DepartLift',
-  'AvionPremierEmbarque','AvionDernierEmbarque',
-  'FermeturePorteAvion','RemiseLID',
-  'ConnexionAgentCasque','ArriveeINAD'
-]);
-
-/** HH:MM + date vol + mode → ISO UTC */
-function hhmmToISO(hhmm, dateStr, utcMode) {
-  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return '';
-  if (!dateStr || dateStr.length < 10) return hhmm; // pas de date → fallback brut
-  try {
-    if (utcMode) {
-      return dateStr + 'T' + hhmm + ':00Z';
-    } else {
-      const d = new Date(dateStr + 'T' + hhmm + ':00');
-      if (isNaN(d.getTime())) return hhmm;
-      return d.toISOString().slice(0, 19) + 'Z';
-    }
-  } catch(e) { return hhmm; }
-}
-
-/** ISO UTC → HH:MM selon le mode de cet appareil */
-function isoToHHMM(value, utcMode) {
-  if (!value) return '';
-  if (/^\d{2}:\d{2}$/.test(String(value))) return value; // HH:MM legacy
-  try {
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
-    const h = utcMode ? d.getUTCHours() : d.getHours();
-    const m = utcMode ? d.getUTCMinutes() : d.getMinutes();
-    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-  } catch(e) { return value; }
-}
-
-/** Convertit un patch HH:MM → ISO pour stockage */
-function outboundPatch(patch) {
-  const dateStr = document.getElementById('Date')?.value || '';
-  const result  = { ...patch };
-  for (const [id, val] of Object.entries(result)) {
-    if (UTC_TIME_FIELDS.has(id) && val && /^\d{2}:\d{2}$/.test(val)) {
-      result[id] = hhmmToISO(val, dateStr, isUTC);
-    }
-  }
-  return result;
-}
-
-/** Convertit un patch ISO → HH:MM à l'affichage */
-function inboundPatch(patch) {
-  const result = { ...patch };
-  for (const [id, val] of Object.entries(result)) {
-    if (UTC_TIME_FIELDS.has(id) && val) {
-      result[id] = isoToHHMM(val, isUTC);
-    }
-  }
-  return result;
-}
 let manualSOBT=false;
 let currentTabId=null;
 let saveTimer=null;
@@ -4296,7 +4227,7 @@ const PRESTATIONS_DEF = [
   { id:'eauPotable',   label:'Eau potable',            type:'yn' },
   { id:'vidange',      label:'Vidange toilettes',      type:'yn' },
   { id:'menageAssist', label:'Ménage Assist\'Air',     type:'yn' },
-  { id:'menageAtalian',label:'Ménage Atalian',         type:'choice', choices:['N','Tidy','Full'] },
+  { id:'menageGSF',label:'Ménage GSF',             type:'choice', choices:['N','Tidy','Full'] },
   { id:'collecte',     label:'Collecte ordures',       type:'yn', default:'Y' },
   { id:'echelle',      label:'Échelle supplémentaire', type:'yn' },
   { id:'degivrage',    label:'Dégivrage',              type:'yn' },
@@ -4765,7 +4696,7 @@ function doValidate() {
   // ── PRESTATIONS ───────────────────────────────────────────────────────────
   const prestLabels = {
     asu:'ASU', rza:'Flux RZA', eauPotable:'Eau potable', vidange:'Vidange toilettes',
-    menageAssist:'Ménage Assist\'Air', menageAtalian:'Ménage Atalian',
+    menageAssist:'Ménage Assist\'Air', menageGSF:'Ménage GSF',
     collecte:'Collecte ordures', echelle:'Échelle supp.', degivrage:'Dégivrage',
     toiletKit:'Toilet Kit', pushPull:'Push-pull',
   };
@@ -5032,11 +4963,10 @@ function toggleSettings(){
     try{
       const data = JSON.stringify(_strokes);
       localStorage.setItem(_historyKey, data);
-      // Sync WebSocket — forcer via twSync directement
+      // Rafraîchit l'affichage du champ (twSync = mise à jour locale, pas de réseau)
       const el = document.getElementById('BlocNote');
       if(el){
         el.value = data;
-        // twSync est défini globalement
         if(typeof twSync === 'function') twSync('BlocNote');
       }
     }catch(e){}
