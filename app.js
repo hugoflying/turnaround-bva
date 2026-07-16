@@ -1576,10 +1576,6 @@ function renderTabs(){
     <button class="button is-success is-light" type="button" onclick="createNewTab()">
       +
     </button>
-    <button class="button is-link is-light" type="button"
-            onclick="openAKPicker();">
-      + Liste vols
-    </button>
   `;
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -2486,18 +2482,23 @@ function updateDLCode() {
 /* DL redistribution */
 function dldChanged(index){
   lastDLChanged = index;
-  const fieldId = 'DLduree' + index;
-  const val = parseInt(document.getElementById(fieldId)?.value || '') || 0;
+  const el  = document.getElementById('DLduree' + index);
+  const raw = (el?.value ?? '').trim();
+  const isEmpty = (raw === '');
+  const val = parseInt(raw || '') || 0;
 
-  if(val === 0){
-    // Effacement → reset le touched pour redistribuer vers le haut
-    if(index === 1){ dlTouched1 = false; dlTouched2 = false; dlTouched3 = false; }
-    if(index === 2){ dlTouched2 = false; dlTouched3 = false; }
-    if(index === 3){ dlTouched3 = false; }
-  } else {
-    if(index === 1) dlTouched1 = true;
-    if(index === 2) dlTouched2 = true;
-    if(index === 3) dlTouched3 = true;
+  // On distingue "champ VIDÉ" (chaîne vide) d'une valeur "0" saisie volontairement.
+  //  - vidé  → on relâche pour laisser le reliquat remonter (retour au défaut)
+  //  - "0"   → choix volontaire, on garde le champ actif (vases communicants DL2/DL3)
+  if(index === 1){
+    if(isEmpty || val === 0){ dlTouched1 = false; dlTouched2 = false; dlTouched3 = false; }
+    else { dlTouched1 = true; }
+  } else if(index === 2){
+    if(isEmpty){ dlTouched2 = false; dlTouched3 = false; }
+    else { dlTouched2 = true; }
+  } else if(index === 3){
+    if(isEmpty){ dlTouched3 = false; }
+    else { dlTouched3 = true; }
   }
   redistributeDL();
 }
@@ -2589,50 +2590,37 @@ function redistributeDL(){
 
   let d1=0, d2=0, d3=0;
 
+  // Vases communicants DL2 ↔ DL3 : le champ qu'on vient d'éditer est "maître"
+  // (borné au reste disponible), l'autre absorbe automatiquement le reliquat.
+  // → modifier DL2 ajuste DL3, modifier DL3 ajuste DL2, et inversement.
+  const splitRemain = (remain)=>{
+    if(!dlTouched2 && !dlTouched3){
+      // Rien de touché → tout le reste en DL2
+      return [remain, 0];
+    }
+    if(lastDLChanged === 3 && dlTouched3){
+      // On vient de modifier DL3 → DL3 maître, DL2 absorbe le reliquat
+      const x3 = clamp(parseInt(f3.value)||0, 0, remain);
+      return [remain - x3, x3];
+    }
+    // Sinon (DL2 modifié en dernier, ou recalcul auto) → DL2 maître, DL3 absorbe
+    const x2 = clamp(parseInt(f2.value)||0, 0, remain);
+    return [x2, remain - x2];
+  };
+
   if(has93){
     // ── AVEC 93/93A en DL1 ──────────────────────────────────────────────
     d1 = clamp(parseInt(f1.value)||0, 0, total);
-    const remain = Math.max(0, total - d1);
-
-    if(!dlTouched2 && !dlTouched3){
-      // Rien de touché → tout le reste en DL2
-      d2 = remain; d3 = 0;
-    } else if(dlTouched2 && !dlTouched3){
-      // Agent a saisi DL2 → DL3 prend le reste
-      d2 = clamp(parseInt(f2.value)||0, 0, remain);
-      d3 = remain - d2;
-    } else if(!dlTouched2 && dlTouched3){
-      // Agent a saisi DL3 → DL2 prend le reste
-      d3 = clamp(parseInt(f3.value)||0, 0, remain);
-      d2 = remain - d3;
-    } else {
-      // Les deux touchés → on respecte les deux, DL3 s'ajuste
-      d2 = clamp(parseInt(f2.value)||0, 0, remain);
-      d3 = clamp(parseInt(f3.value)||0, 0, remain - d2);
-    }
+    [d2, d3] = splitRemain(Math.max(0, total - d1));
 
   } else {
-    // ── SANS 93/93A : cascade DL1 → DL2 → DL3 ──────────────────────────
+    // ── SANS 93/93A : DL1 piloté par l'agent, puis DL2 ↔ DL3 ──────────────
     if(!dlTouched1 && !dlTouched2 && !dlTouched3){
       // Rien touché → tout en DL1
       d1 = total; d2 = 0; d3 = 0;
-    } else if(dlTouched1 && !dlTouched2 && !dlTouched3){
-      // Agent pilote DL1 → reste en DL2
-      d1 = clamp(parseInt(f1.value)||0, 0, total);
-      d2 = total - d1; d3 = 0;
-    } else if(dlTouched1 && dlTouched2 && !dlTouched3){
-      // Agent pilote DL1 et DL2 → reste en DL3
-      d1 = clamp(parseInt(f1.value)||0, 0, total);
-      d2 = clamp(parseInt(f2.value)||0, 0, total - d1);
-      d3 = total - d1 - d2;
-    } else if(dlTouched1 && dlTouched2 && dlTouched3){
-      // Tout touché → respecter DL1+DL2, DL3 s'ajuste
-      d1 = clamp(parseInt(f1.value)||0, 0, total);
-      d2 = clamp(parseInt(f2.value)||0, 0, total - d1);
-      d3 = clamp(parseInt(f3.value)||0, 0, total - d1 - d2);
     } else {
-      // Cas atypiques → tout en DL1
-      d1 = total; d2 = 0; d3 = 0;
+      d1 = clamp(parseInt(f1.value)||0, 0, total);
+      [d2, d3] = splitRemain(Math.max(0, total - d1));
     }
   }
 
