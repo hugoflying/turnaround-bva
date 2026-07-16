@@ -308,6 +308,17 @@ document.addEventListener('input', (e)=>{
   if(t.dataset.ak === '1') delete t.dataset.ak;
 }, true);
 
+// Auto-ouverture du panneau Crew (FR/RK + BVA au départ ou turnaround ≥ 35 min).
+// Écouteur délégué car AOBT/AIBT sont injectés dynamiquement.
+['input','change'].forEach(ev=>{
+  document.addEventListener(ev, (e)=>{
+    const id = e.target?.id;
+    if(id === 'Cie' || id === 'From' || id === 'AIBT' || id === 'AOBT'){
+      autoOpenCrewIfNeeded();
+    }
+  }, true);
+});
+
 /* Timeline */
 let timelineZoom = 1;
 const TL_ZOOM_MIN = 0.5;
@@ -5259,7 +5270,7 @@ function updateDLCodeInputMode(){
   });
 }
 
-function autoOpenCrewIfBVA(){
+function openCrewPanel(){
   const el  = document.getElementById('panel-crew');
   const btn = document.getElementById('btn-crew');
   if(!el) return;
@@ -5269,6 +5280,33 @@ function autoOpenCrewIfBVA(){
     if(btn){ btn.classList.add('is-info', 'is-selected'); }
   }
 }
+
+// Ouvre d'office le panneau Crew pour FR/RK quand :
+//   - départ de BVA (From = BVA), OU
+//   - turnaround AOBT − AIBT ≥ 35 min
+function autoOpenCrewIfNeeded(){
+  const cie    = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+  if(!isFRRK) return;
+
+  const from    = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const fromBVA = (from === 'BVA');
+
+  const aibt = parseHHMM(document.getElementById('AIBT')?.value || '');
+  const aobt = parseHHMM(document.getElementById('AOBT')?.value || '');
+  let turn = null;
+  if(aibt != null && aobt != null){
+    turn = aobt - aibt;
+    if(turn < -720) turn += 1440;   // gère le passage minuit
+    if(turn >  720) turn -= 1440;
+  }
+  const longTurn = (turn != null && turn >= 35);
+
+  if(fromBVA || longTurn) openCrewPanel();
+}
+
+// Compat : ancien nom conservé pour les points d'appel existants
+function autoOpenCrewIfBVA(){ autoOpenCrewIfNeeded(); }
 
 function toggleDepExtra(panel){
   const el = document.getElementById('panel-' + panel)
