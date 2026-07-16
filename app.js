@@ -2487,18 +2487,16 @@ function dldChanged(index){
   const isEmpty = (raw === '');
   const val = parseInt(raw || '') || 0;
 
-  // On distingue "champ VIDÉ" (chaîne vide) d'une valeur "0" saisie volontairement.
-  //  - vidé  → on relâche pour laisser le reliquat remonter (retour au défaut)
-  //  - "0"   → choix volontaire, on garde le champ actif (vases communicants DL2/DL3)
+  // DL1 (souvent le 93) : vidé ou 0 → on relâche tout et on repart du défaut.
+  // DL2 / DL3 : toute interaction (valeur, "0" ou champ vidé) rend ce champ "maître"
+  //   → sa valeur (0 si vidé) est respectée, l'autre absorbe le reliquat.
   if(index === 1){
     if(isEmpty || val === 0){ dlTouched1 = false; dlTouched2 = false; dlTouched3 = false; }
     else { dlTouched1 = true; }
   } else if(index === 2){
-    if(isEmpty){ dlTouched2 = false; dlTouched3 = false; }
-    else { dlTouched2 = true; }
+    dlTouched2 = true;
   } else if(index === 3){
-    if(isEmpty){ dlTouched3 = false; }
-    else { dlTouched3 = true; }
+    dlTouched3 = true;
   }
   redistributeDL();
 }
@@ -2594,16 +2592,17 @@ function redistributeDL(){
   // (borné au reste disponible), l'autre absorbe automatiquement le reliquat.
   // → modifier DL2 ajuste DL3, modifier DL3 ajuste DL2, et inversement.
   const splitRemain = (remain)=>{
-    if(!dlTouched2 && !dlTouched3){
-      // Rien de touché → tout le reste en DL2
+    const anyTouched = dlTouched2 || dlTouched3;
+    if(!anyTouched){
+      // Rien de touché → tout le reste en DL2 (défaut)
       return [remain, 0];
     }
-    if(lastDLChanged === 3 && dlTouched3){
-      // On vient de modifier DL3 → DL3 maître, DL2 absorbe le reliquat
+    if(lastDLChanged === 3){
+      // DL3 dernier édité (valeur, 0 ou vidé) → DL3 maître, DL2 absorbe
       const x3 = clamp(parseInt(f3.value)||0, 0, remain);
       return [remain - x3, x3];
     }
-    // Sinon (DL2 modifié en dernier, ou recalcul auto) → DL2 maître, DL3 absorbe
+    // DL2 dernier édité (ou recalcul auto) → DL2 maître, DL3 absorbe
     const x2 = clamp(parseInt(f2.value)||0, 0, remain);
     return [x2, remain - x2];
   };
