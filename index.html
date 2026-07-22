@@ -1748,6 +1748,23 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
 }
 
 
+
+/* ===== iOS PWA — zone de securite basse (home indicator) =====
+   Sur iPhone X et suivants installes en PWA, iOS reserve une bande en bas
+   de l'ecran pour la barre d'accueil. Sans cette regle, le fond du footer
+   ne couvre pas cette zone -> bande claire visible sous le footer.
+   Le JS mesure la hauteur reelle du footer (--fixed-footer-h) : .app-wrap
+   et les boutons flottants se recalent donc automatiquement.
+   Sur un appareil sans encoche, env(...) vaut 0px -> aucun changement. */
+.fixed-footer {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Filet de securite : empeche tout fond clair d'apparaitre derriere le footer */
+html, body {
+  background: var(--bg);
+}
+
 </style>
 </head>
 
