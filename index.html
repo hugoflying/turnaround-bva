@@ -1757,7 +1757,8 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
    et les boutons flottants se recalent donc automatiquement.
    Sur un appareil sans encoche, env(...) vaut 0px -> aucun changement. */
 .fixed-footer {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Footer colle au bas de l'ecran : aucune marge ajoutee sur iPhone. */
+  padding-bottom: 0;
 }
 
 /* Filet de securite : empeche tout fond clair d'apparaitre derriere le footer */
@@ -2122,12 +2123,12 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       </div>
       <div class="kv-card">
         <div class="kv-left">
-          <div class="kv-title">Immat / Type</div>
+          <div class="kv-title">Immat · Type</div>
           <div class="kv-value"><span id="kvImmat">------</span> · <span id="kvType">--</span></div>
         </div>
         <div class="kv-left" style="text-align:right;">
-          <div class="kv-title">Parking</div>
-          <div class="kv-value"><span id="kvPark">--</span></div>
+          <div class="kv-title">Parking · Salle Arr.</div>
+          <div class="kv-value"><span id="kvPark">--</span> · <span id="kvBC">--</span></div>
         </div>
       </div>
     </div>
