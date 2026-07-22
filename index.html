@@ -1761,19 +1761,6 @@ html.dark #btn-gpu.is-info { background: #2563eb; color: #fff; border-color: #25
   padding-bottom: 0;
 }
 
-/* Le fond du footer se prolonge sous l'ecran : si iOS laisse une zone
-   sous le footer (barre d'accueil), elle est peinte de la meme couleur
-   au lieu d'apparaitre en blanc. Invisible partout ailleurs. */
-.fixed-footer::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 140px;
-  background: var(--bg);
-  pointer-events: none;
-}
 
 /* Filet de securite : empeche tout fond clair d'apparaitre derriere le footer */
 html, body {
