@@ -1251,6 +1251,7 @@ function ldmSwitch(mode){
   if(sPrevi) sPrevi.style.display = (mode === 'previ') ? '' : 'none';
   if(sFinal) sFinal.style.display = (mode === 'final') ? '' : 'none';
   if(sFuel)  sFuel.style.display  = (mode === 'fuel')  ? '' : 'none';
+  if(mode === 'fuel') updateFuelAcHeader();
 
   if(tArr)   tArr.classList.toggle('is-active', mode === 'arr');
   if(tPrevi) tPrevi.classList.toggle('is-active', mode === 'previ');
@@ -2676,7 +2677,10 @@ function updateDlTotalBadge(){
       valEl.textContent = '0 min';
     } else {
       badge.classList.remove('no-delay');
-      valEl.textContent = `+${diff} min`;
+      // Au dela de 60 min on ajoute la duree en heures : "+83 min (1h23)"
+      valEl.textContent = (diff > 60)
+        ? `+${diff} min (${fmtMinToHM(diff)})`
+        : `+${diff} min`;
     }
     badge.style.display = 'flex';
   } else {
@@ -2688,7 +2692,10 @@ function updateDlTotalBadge(){
     let diff = aobt - aibt;
     if(diff < -720) diff += 1440;
     if(diff >  720) diff -= 1440;
-    turnEl.textContent = `${Math.abs(diff)} min`;
+    const absTurn = Math.abs(diff);
+    turnEl.textContent = (absTurn > 60)
+      ? `${absTurn} min (${fmtMinToHM(absTurn)})`
+      : `${absTurn} min`;
     turn.style.display = 'flex';
   } else {
     turn.style.display = 'none';
@@ -3010,7 +3017,18 @@ function computeTimelineWindow(allTimes){
   const EOBT = parseHHMM((document.getElementById('timer-eobt')?.textContent || '').replace('--:--',''));
   const CTOT = parseHHMM(document.getElementById('CTOT')?.value || '');
 
-  const starts = [H40, SIBT, AIBT].filter(v => v != null);
+  // Des que l'AIBT est connu, le turnaround commence reellement la : on ignore
+  // SIBT et H40 (derives du SOBT programme) qui rendent la fenetre enorme
+  // sur un vol tres retarde. Avant l'arrivee, on garde l'ancien comportement.
+  let starts = (AIBT != null) ? [AIBT] : [H40, SIBT].filter(v => v != null);
+
+  // Filet de securite : aucun evenement saisi ne doit sortir de la fenetre
+  const evTimes = (allTimes || []).filter(v => v != null);
+  if(starts.length && evTimes.length){
+    const evMin = Math.min(...evTimes);
+    if(evMin < Math.min(...starts)) starts = starts.concat([evMin]);
+  }
+
   const ends = [SOBT, AOBT, EOBT, CTOT, ...(allTimes || [])].filter(v => v != null);
 
   if(starts.length && ends.length){
@@ -3192,7 +3210,7 @@ function renderTimeline(){
   //   Paper LID -> EOBT - 8, libelle "Remise LID"
   const elidMode  = isFRRK && (typeof isELID === 'function') && isELID();
   const lidOffset = elidMode ? -5 : -8;
-  const lidLabel  = elidMode ? 'Remise eLID' : 'Remise LID';
+  const lidLabel  = elidMode ? 'ENVOI eLID' : 'Remise LID';
 
   const TARGETS_FRRK_BASE = {
     'Débarquement':        { ref:'EOBT', fromRef:'AIBT', from:  2, to:-13, fromField:null,              toOffset:null, label:null              },
@@ -4993,6 +5011,28 @@ function doValidate() {
     `mailto:?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
 }
    
+/* Rappel immat + type en haut de l'onglet FUEL (evite de fermer la fenetre) */
+function updateFuelAcHeader(){
+  const sec = document.getElementById('ldmFuel');
+  if(!sec) return;
+
+  let hd = document.getElementById('fuelAcHeader');
+  if(!hd){
+    hd = document.createElement('div');
+    hd.id = 'fuelAcHeader';
+    hd.style.cssText = 'display:flex; align-items:center; justify-content:center; gap:8px;'
+      + 'margin:0 0 10px; padding:6px 10px; border-radius:9px;'
+      + 'background:var(--field-bg, rgba(127,127,127,.08));'
+      + 'border:1px solid var(--field-border, rgba(127,127,127,.25));'
+      + 'font-weight:800; font-size:13px; letter-spacing:.3px;';
+    sec.insertAdjacentElement('afterbegin', hd);
+  }
+
+  const immat = (document.getElementById('Immat')?.value || '').toUpperCase().trim() || '------';
+  const type  = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim() || '----';
+  hd.textContent = `${immat} \u00b7 ${type}`;
+}
+
 /* ===== FUEL ===== */
 function openFuelMenu(){
   const b = document.getElementById('fuelBackdrop');
