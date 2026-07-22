@@ -778,6 +778,8 @@ function switchLidMode(m){
   updateFinalLoadLayout();
   updateFinalTOB();
   renderLidModeToggle();
+  // La cible "Remise LID" de la timeline depend du mode -> on la redessine
+  if(typeof renderTimeline === 'function') renderTimeline();
 }
 
 /* Sélecteur eLID / Paper LID au-dessus de la ligne PAX (FR/RK uniquement) */
@@ -3185,13 +3187,20 @@ function renderTimeline(){
                          (document.getElementById('ArrPNC')?.value||'').trim() );
   const BASE = (isFRRK && crewChange) ? 10 : 0;
 
+  // Remise LID (FR/RK) : depend du toggle eLID / Paper LID du LOAD FINAL
+  //   eLID      -> EOBT - 5, libelle "Remise eLID"
+  //   Paper LID -> EOBT - 8, libelle "Remise LID"
+  const elidMode  = isFRRK && (typeof isELID === 'function') && isELID();
+  const lidOffset = elidMode ? -5 : -8;
+  const lidLabel  = elidMode ? 'Remise eLID' : 'Remise LID';
+
   const TARGETS_FRRK_BASE = {
     'Débarquement':        { ref:'EOBT', fromRef:'AIBT', from:  2, to:-13, fromField:null,              toOffset:null, label:null              },
     'Cabin release':       { ref:'EOBT', from:-13, to:-10, fromField:'DernierDebarque', toOffset:3,    label:'Cabin tidy'      },
     'Embarquement':        { ref:'EOBT', from:-13, to: -5, fromField:null,              toOffset:null, label:null              },
     'Avitair':             { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
     'Lift (Dep)':          { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
-    'RemiseLID':           { ref:'EOBT', from: -8, to: -8, fromField:null,              toOffset:null, label:'Remise eLID/LID' },
+    'RemiseLID':           { ref:'EOBT', from: lidOffset, to: lidOffset, fromField:null,              toOffset:null, label: lidLabel },
     'FermeturePorteAvion': { ref:'EOBT', from: -5, to: -5, fromField:null,              toOffset:null, label:'Fermeture porte' },
     'ArrPNT':              { ref:'EOBT', from:-45, to:-45, fromField:null,              toOffset:null, label:'Arrivée PNT'     },
     'ArrPNC':              { ref:'EOBT', from:-45, to:-45, fromField:null,              toOffset:null, label:'Arrivée PNC'     },
@@ -3200,13 +3209,13 @@ function renderTimeline(){
   const TARGETS_FRRK = fromBVA ? {
     ...TARGETS_FRRK_BASE,
     'Embarquement': { ref:'EOBT', from:-35, to:-15, fromField:null, toOffset:null, label:null },
-    'RemiseLID':    { ref:'EOBT', from: -8, to: -8, fromField:null, toOffset:null, label:'Remise eLID/LID' },
+    'RemiseLID':    { ref:'EOBT', from: lidOffset, to: lidOffset, fromField:null, toOffset:null, label: lidLabel },
   } : TARGETS_FRRK_BASE;
 
   // Label par défaut pour toutes les autres compagnies
   const DEFAULT_LABELS = {
     'Lift (Dep)':          'Lift (Dep)',
-    'RemiseLID':           isFRRK ? 'Remise eLID/LID' : 'Remise LDS/LDF',
+    'RemiseLID':           isFRRK ? lidLabel : 'Remise LDS/LDF',
     'FermeturePorteAvion': 'Fermeture porte',
     'ConnexionCasque':     'Connexion casque',
     'ArriveeINAD':         'Arrivée INAD',
