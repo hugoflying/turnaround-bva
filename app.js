@@ -738,6 +738,89 @@ function renderA320VerBadge(){
   }
 }
 
+/* ===== Mode LID FR/RK : 'ELID' (défaut, ADULT+CHILD groupés) / 'LID' (séparés) ===== */
+function getLidMode(){
+  try{
+    if(!currentTabId) return 'ELID';
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    return data.LidMode === 'LID' ? 'LID' : 'ELID';   // eLID par défaut
+  }catch(e){ return 'ELID'; }
+}
+function setLidMode(m){
+  if(!currentTabId) return;
+  try{
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    data.LidMode = (m === 'LID') ? 'LID' : 'ELID';
+    localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+  }catch(e){}
+}
+function isELID(){ return getLidMode() === 'ELID'; }
+
+function switchLidMode(m){
+  const prev = getLidMode();
+  if(prev === m) return;
+  setLidMode(m);
+
+  const adultEl = document.getElementById('FinalADULT');
+  const childEl = document.getElementById('FinalCHILD');
+
+  if(m === 'ELID'){
+    // Passage en eLID : on regroupe ADULT + CHILD dans le champ unique
+    const a = parseInt(adultEl?.value || '', 10);
+    const c = parseInt(childEl?.value || '', 10);
+    if(adultEl && (Number.isFinite(a) || Number.isFinite(c))){
+      adultEl.value = String((Number.isFinite(a)?a:0) + (Number.isFinite(c)?c:0));
+    }
+    if(childEl) childEl.value = '';   // le CHILD n'existe plus séparément
+  }
+  // Passage en Paper LID : on laisse la valeur dans ADULT, l'agent ventile lui-même
+
+  updateFinalLoadLayout();
+  updateFinalTOB();
+  renderLidModeToggle();
+}
+
+/* Sélecteur eLID / Paper LID au-dessus de la ligne PAX (FR/RK uniquement) */
+function renderLidModeToggle(){
+  const row = document.getElementById('finalPaxRow');
+  if(!row) return;
+
+  const cie    = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+
+  let bar = document.getElementById('lidModeBar');
+
+  if(!isFRRK){
+    if(bar) bar.style.display = 'none';
+    return;
+  }
+
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'lidModeBar';
+    bar.style.cssText = 'display:flex; gap:4px; align-items:center; justify-content:flex-end; margin-bottom:5px;';
+    bar.innerHTML = `
+      <span style="font-size:10px; font-weight:800; opacity:.6; margin-right:2px;">SAISIE</span>
+      <button type="button" id="lidModeELID" style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer; border:1px solid transparent;">eLID</button>
+      <button type="button" id="lidModeLID"  style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer; border:1px solid transparent;">Paper LID</button>
+    `;
+    row.insertAdjacentElement('beforebegin', bar);
+    bar.querySelector('#lidModeELID').addEventListener('click', ()=> switchLidMode('ELID'));
+    bar.querySelector('#lidModeLID').addEventListener('click',  ()=> switchLidMode('LID'));
+  }
+
+  bar.style.display = 'flex';
+
+  const on  = 'background:#dbeafe; color:#1e40af; border:1px solid #93c5fd;';
+  const off = 'background:transparent; color:#6b7280; border:1px solid #d1d5db;';
+  const elid = isELID();
+  const bE = bar.querySelector('#lidModeELID');
+  const bL = bar.querySelector('#lidModeLID');
+  const base = 'font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer;';
+  if(bE) bE.style.cssText = base + (elid ? on : off);
+  if(bL) bL.style.cssText = base + (elid ? off : on);
+}
+
 function updateFinalLoadLayout(){
   const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
@@ -753,7 +836,9 @@ function updateFinalLoadLayout(){
   if(isFRRK){
     hide('FinalMALE'); hide('FinalFEMALE');
     show('FinalADULT', true);
-    show('FinalCHILD', true); show('FinalINFANT', true);
+    // eLID : ADULT + CHILD regroupés dans un seul champ → on masque CHILD
+    if(isELID()) hide('FinalCHILD'); else show('FinalCHILD', true);
+    show('FinalINFANT', true);
   } else {
     hide('FinalADULT');
     show('FinalMALE', true); show('FinalFEMALE', true);
@@ -786,9 +871,17 @@ function updateFinalLoadLayout(){
   setLbl('FinalH3', useCPLabel ? 'CP3' : 'H3');
   setLbl('FinalH4', useCPLabel ? 'CP4' : 'H4');
 
+  // ── Label ADULT : "ADULT+CHILD" en eLID (FR/RK) ─────────────
+  if(isFRRK) setLbl('FinalADULT', isELID() ? 'ADULT+CHILD' : 'ADULT');
+  else       setLbl('FinalADULT', 'ADULT');
+  setLbl('FinalCHILD', 'CHILD');
+
   // ── LID Guide : FR/RK uniquement ────────────────────────────
   const lidBtn = document.getElementById('lidGuideBtn');
   if(lidBtn) lidBtn.style.display = isFRRK ? '' : 'none';
+
+  // ── Sélecteur eLID / Paper LID (FR/RK) ─────────────────────
+  renderLidModeToggle();
 
   // ── Nettoyage cache obsolète ─────────────────────────────────
   window._finalLayoutCache = null;
@@ -1243,10 +1336,15 @@ function updateFinalTOB(){
     return Number.isFinite(x) ? x : null;
   };
 
+  const cie    = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRK = (cie === 'FR' || cie === 'RK');
+  // En eLID (FR/RK), le champ ADULT contient déjà ADULT+CHILD → on n'ajoute pas CHILD
+  const grouped = isFRRK && isELID();
+
   const male   = n('FinalMALE');
   const female = n('FinalFEMALE');
   const adult  = n('FinalADULT');
-  const child  = n('FinalCHILD')  ?? 0;
+  const child  = grouped ? 0 : (n('FinalCHILD') ?? 0);
   const infant = n('FinalINFANT') ?? 0;
 
   let adultsMain = null;
@@ -2504,6 +2602,8 @@ function updateDLCode() {
       dlRecency = [];
     }
   }
+
+  updateDLHourHints();
 }
 
 /* DL redistribution */
@@ -2595,7 +2695,7 @@ function updateDlTotalBadge(){
 
 function redistributeDL(){
   const total = totalDelayMinutes();
-  if(total == null){ clearDLBorders(); return; }
+  if(total == null){ clearDLBorders(); updateDLHourHints(); return; }
 
   const c1 = document.getElementById('DLcode1');
   const c2 = document.getElementById('DLcode2');
@@ -2677,6 +2777,8 @@ function redistributeDL(){
   const sum = d1 + d2 + d3;
   if(sum !== total) markLastFilledDLError();
   else clearDLBorders();
+
+  updateDLHourHints();
 }
 
 function markLastFilledDLError(){
@@ -2696,6 +2798,36 @@ function clearDLBorders(){
   ['DLduree1','DLduree2','DLduree3'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.classList.remove('dl-error');
+  });
+}
+
+/* ===== Affichage de la durée en heures sur les DL (ex: 575 → 9h35) ===== */
+function fmtMinToHM(mins){
+  const m = Math.max(0, parseInt(mins,10) || 0);
+  return Math.floor(m/60) + 'h' + String(m % 60).padStart(2,'0');
+}
+
+// Ajoute "(9h35)" au libellé du champ dès que la durée dépasse 60 min
+function updateDLHourHints(){
+  [1,2,3].forEach(i=>{
+    const el = document.getElementById('DLduree' + i);
+    if(!el) return;
+    const field = el.closest('.field') || el.parentElement?.parentElement;
+    const lbl   = field ? field.querySelector('label.label, .label, .ld-stat-label') : null;
+    if(!lbl) return;
+
+    // Mémorise le libellé d'origine une seule fois
+    if(!lbl.dataset.baseLabel) lbl.dataset.baseLabel = (lbl.textContent || '').trim();
+    const base = lbl.dataset.baseLabel;
+
+    const v = parseInt(el.value, 10) || 0;
+    if(v > 60){
+      // "DL Durée 1 (min)" → "DL Durée 1 (9h35)" (on évite le double parenthésage)
+      const stem = base.replace(/\s*\(min\)\s*$/i, '');
+      lbl.textContent = `${stem} (${fmtMinToHM(v)})`;
+    } else {
+      lbl.textContent = base;
+    }
   });
 }
 
@@ -4793,9 +4925,16 @@ function doValidate() {
   if(hasDL){
     body += s();
     body += '[ RETARDS ]\n\n';
-    if(v('DLcode1')) body += `DL ${v('DLcode1')}  /  ${v('DLduree1')||'?'} min\n`;
-    if(v('DLcode2')) body += `DL ${v('DLcode2')}  /  ${v('DLduree2')||'?'} min\n`;
-    if(v('DLcode3')) body += `DL ${v('DLcode3')}  /  ${v('DLduree3')||'?'} min\n`;
+    // "575 min (9h35)" dès que la durée dépasse 60 min
+    const dlDur = (id)=>{
+      const raw = v(id);
+      if(!raw) return '?';
+      const m = parseInt(raw, 10);
+      return (Number.isFinite(m) && m > 60) ? `${raw} min (${fmtMinToHM(m)})` : `${raw} min`;
+    };
+    if(v('DLcode1')) body += `DL ${v('DLcode1')}  /  ${dlDur('DLduree1')}\n`;
+    if(v('DLcode2')) body += `DL ${v('DLcode2')}  /  ${dlDur('DLduree2')}\n`;
+    if(v('DLcode3')) body += `DL ${v('DLcode3')}  /  ${dlDur('DLduree3')}\n`;
   }
 
   // ── PRESTATIONS ───────────────────────────────────────────────────────────
