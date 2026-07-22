@@ -3210,7 +3210,7 @@ function renderTimeline(){
   //   Paper LID -> EOBT - 8, libelle "Remise LID"
   const elidMode  = isFRRK && (typeof isELID === 'function') && isELID();
   const lidOffset = elidMode ? -5 : -8;
-  const lidLabel  = elidMode ? 'ENVOI eLID' : 'Remise LID';
+  const lidLabel  = elidMode ? 'Envoi eLID' : 'Remise LID';
 
   const TARGETS_FRRK_BASE = {
     'Débarquement':        { ref:'EOBT', fromRef:'AIBT', from:  2, to:-13, fromField:null,              toOffset:null, label:null              },
