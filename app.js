@@ -2242,11 +2242,20 @@ function updateLIDVisibility(){
     remiseLabel.textContent = '';
     if(dot) remiseLabel.appendChild(dot);
     if(isFRRK){
-      // Suit le toggle du LOAD FINAL : eLID -> "Envoi eLID" / Paper LID -> "Remise LID"
-      // text-transform:none pour garder la casse exacte (pas de passage en majuscules)
-      remiseLabel.style.cssText = 'text-transform:none';
+      // Suit le toggle du LOAD FINAL. Le panneau met tout en majuscules :
+      //   eLID      -> "ENVOI eLID"  (seul "eLID" garde sa casse)
+      //   Paper LID -> "REMISE LID"
+      remiseLabel.removeAttribute('style');
       const useElid = (typeof isELID === 'function') && isELID();
-      remiseLabel.append(useElid ? 'Envoi eLID' : 'Remise LID');
+      if(useElid){
+        remiseLabel.append('Envoi ');
+        const span = document.createElement('span');
+        span.style.cssText = 'text-transform:none';
+        span.textContent = 'eLID';
+        remiseLabel.append(span);
+      } else {
+        remiseLabel.append('Remise LID');
+      }
     } else {
       remiseLabel.removeAttribute('style');
       remiseLabel.append('Remise LDS/LDF');
