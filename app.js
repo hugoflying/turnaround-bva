@@ -778,7 +778,10 @@ function switchLidMode(m){
   updateFinalLoadLayout();
   updateFinalTOB();
   renderLidModeToggle();
-  // La cible "Remise LID" de la timeline depend du mode -> on la redessine
+  // Le libelle "Envoi eLID / Remise LID" depend du mode :
+  //  - dans le panneau Timing / Depart
+  if(typeof updateLIDVisibility === 'function') updateLIDVisibility();
+  //  - et sur la timeline
   if(typeof renderTimeline === 'function') renderTimeline();
 }
 
@@ -2239,12 +2242,11 @@ function updateLIDVisibility(){
     remiseLabel.textContent = '';
     if(dot) remiseLabel.appendChild(dot);
     if(isFRRK){
-      remiseLabel.removeAttribute('style');
-      remiseLabel.append('Remise ');
-      const span = document.createElement('span');
-      span.style.cssText = 'text-transform:none';
-      span.textContent = 'eLID/LID';
-      remiseLabel.append(span);
+      // Suit le toggle du LOAD FINAL : eLID -> "Envoi eLID" / Paper LID -> "Remise LID"
+      // text-transform:none pour garder la casse exacte (pas de passage en majuscules)
+      remiseLabel.style.cssText = 'text-transform:none';
+      const useElid = (typeof isELID === 'function') && isELID();
+      remiseLabel.append(useElid ? 'Envoi eLID' : 'Remise LID');
     } else {
       remiseLabel.removeAttribute('style');
       remiseLabel.append('Remise LDS/LDF');
