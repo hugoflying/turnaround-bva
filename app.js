@@ -1976,6 +1976,11 @@ function saveCurrentTabData(){
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
+  // Prestations (menage, ASU, cargo...) : stockees dans une variable globale,
+  // on les rattache a l'onglet pour qu'elles survivent au changement d'onglet
+  // et au rechargement de la page.
+  data.prestations = _prestationsData || {};
+
   // État du modal LOAD (ouvert/fermé + onglet actif)
   const ldmModal = document.getElementById('ldmModal');
   data.ldmOpen = ldmModal && ldmModal.style.display !== 'none' ? '1' : '0';
@@ -1989,10 +1994,19 @@ function saveCurrentTabData(){
 function loadTabData(id){
   currentTabId = String(id);
 
+  // Prestations : variable globale -> on repart de zero, sinon celles de
+  // l'onglet precedent resteraient visibles sur ce vol.
+  _prestationsData = {};
+
   const raw = localStorage.getItem('tab-'+currentTabId);
   if(!raw) return;
 
   const data = JSON.parse(raw);
+
+  // Restaurer les prestations propres a CET onglet
+  if(data.prestations && typeof data.prestations === 'object'){
+    _prestationsData = data.prestations;
+  }
     for(const k in data){
       // ✅ toggles globaux : jamais restaurés depuis l’onglet
       if(k === 'utcToggle' || k === 'darkToggle') continue;
@@ -3134,9 +3148,13 @@ function collectTimelineData(){
   }
 
   const cabinPair = getPairWindow('DernierDebarque','AvionPremierEmbarque');
+  const fromTL    = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const toTL      = (document.getElementById('To')?.value   || '').toUpperCase().trim();
+  const bvaCase   = fromTL === 'BVA' || toTL === 'BVA';   // pas de Cabin tidy si BVA départ/arrivée
   const showCabinRelease =
     !!cabinPair &&
     !hasArrCrew &&
+    !bvaCase &&
     (turnMin != null && turnMin <= 35);
 
   const rows = [
@@ -3216,6 +3234,10 @@ function renderTimeline(){
 
   const from        = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const fromBVA     = from === 'BVA';
+  const toDest      = (document.getElementById('To')?.value || '').toUpperCase().trim();
+  const toBVA       = toDest === 'BVA';
+  // Pas de Cabin tidy quand BVA est au départ (From) OU à l'arrivée (To)
+  const hideCabinTidy = fromBVA || toBVA;
 
   const crewChange = !!( (document.getElementById('ArrPNT')?.value||'').trim() ||
                          (document.getElementById('ArrPNC')?.value||'').trim() );
@@ -3242,7 +3264,7 @@ function renderTimeline(){
 
   const TARGETS_FRRK = fromBVA ? {
     ...TARGETS_FRRK_BASE,
-    'Embarquement': { ref:'EOBT', from:-35, to:-15, fromField:null, toOffset:null, label:null },
+    'Embarquement': { ref:'EOBT', from:-35, to:-5, fromField:null, toOffset:null, label:null },
     'RemiseLID':    { ref:'EOBT', from: lidOffset, to: lidOffset, fromField:null, toOffset:null, label: lidLabel },
   } : TARGETS_FRRK_BASE;
 
@@ -3307,10 +3329,14 @@ function renderTimeline(){
   const POINT_EVENTS = new Set(['FermeturePorteAvion','RemiseLID','ConnexionCasque','ArriveeINAD','ArriveeNayak','ArrPNT','ArrPNC']);
 
   const ORDER = ['Débarquement','Cabin release','Avitair','Lift (Arr)','Embarquement','Lift (Dep)',
-                 'ArrPNT','ArrPNC','RemiseLID','FermeturePorteAvion','ConnexionCasque','ArriveeINAD','ArriveeNayak'];
+                 'ArrPNT','ArrPNC','RemiseLID','FermeturePorteAvion','ConnexionCasque','ArriveeINAD','ArriveeNayak']
+                 .filter(l => !(hideCabinTidy && l === 'Cabin release'));
 
   // Ces 5 lignes s'affichent toujours avec leurs cibles, même sans données saisies
-  const ALWAYS_SHOW = new Set(['Débarquement','Cabin release','Embarquement','RemiseLID','FermeturePorteAvion']);
+  const ALWAYS_SHOW = new Set(
+    ['Débarquement','Cabin release','Embarquement','RemiseLID','FermeturePorteAvion']
+      .filter(l => !(hideCabinTidy && l === 'Cabin release'))
+  );
 
   let rows;
   if(hasTargets && aibt !== null){
@@ -4655,6 +4681,9 @@ function confirmPrestations(){
     }
   });
   closePrestationsModal();
+  // Ecrire tout de suite dans l'onglet (sinon perdu si l'app se ferme avant
+  // le prochain evenement de sauvegarde)
+  if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
   openAssistancesModal(_validateCallback);
 }
 
