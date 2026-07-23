@@ -2641,7 +2641,9 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   </div>
 </div>
 
-<script src="./app.js"></script>
+<!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
+     les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
+<script src="./app.js?v=20260723"></script>
 </body>
 </html>
 <div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
