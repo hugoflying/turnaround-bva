@@ -1801,8 +1801,13 @@ function findSiblingTabs(tabId){
 // Etat purement visuel : ne se propage pas d'un onglet a l'autre
 const DUP_UI_KEYS = new Set(['ldmOpen','ldmMode','timingPanel','infovolOpen']);
 
+// Permet de suspendre la synchro pendant la creation d'un onglet jumeau
+// (sinon le nouvel onglet, encore vide, ecraserait le vol d'origine).
+let _syncSuspended = false;
+
 // Recopie les donnees de l'onglet source vers ses jumeaux
 function syncSiblingTabs(tabId, data){
+  if(_syncSuspended) return;
   const siblings = findSiblingTabs(tabId);
   if(!siblings.length) return;
   for(const sib of siblings){
@@ -1814,6 +1819,20 @@ function syncSiblingTabs(tabId, data){
     }
     try{ localStorage.setItem('tab-'+sib, JSON.stringify(target)); }catch(_){ }
   }
+}
+
+// Recopie les donnees d'un onglet existant vers le nouvel onglet jumeau :
+// c'est l'onglet DEJA rempli qui fait foi, jamais le nouveau (vide).
+function seedTabFromSibling(newTabId, sourceTabId){
+  if(!newTabId || !sourceTabId) return;
+  let src = {}, dst = {};
+  try{ src = JSON.parse(localStorage.getItem('tab-'+sourceTabId) || '{}'); }catch(_){ }
+  try{ dst = JSON.parse(localStorage.getItem('tab-'+newTabId)   || '{}'); }catch(_){ }
+  for(const k in src){
+    if(DUP_UI_KEYS.has(k)) continue;   // chaque onglet garde son propre affichage
+    dst[k] = src[k];
+  }
+  try{ localStorage.setItem('tab-'+newTabId, JSON.stringify(dst)); }catch(_){ }
 }
 
 /* ---- Modal "vol deja ouvert" ---- */
