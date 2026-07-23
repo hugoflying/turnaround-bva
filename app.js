@@ -1764,6 +1764,82 @@ function renderTabs(){
   updateHeaderOffset();
 }
 
+/* ===== VOLS EN DOUBLE : detection + synchronisation locale =====
+   Tout se passe dans le localStorage de l'appareil : aucun serveur.
+   Deux onglets qui pointent le meme vol (meme cle) sont "jumeaux" :
+   ce qui est saisi sur l'un est recopie sur l'autre a chaque sauvegarde. */
+
+// Cle d'un vol Airport Keeper, au meme format que getTabFlightKey()
+function akFlightKey(f){
+  const id = String(f?.id || '').trim();
+  return id ? ('AK_' + id) : null;
+}
+
+// Cherche un onglet deja ouvert portant la meme cle de vol
+function findTabByFlightKey(key, excludeTabId){
+  if(!key) return null;
+  let tabs = [];
+  try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(_){ }
+  if(!Array.isArray(tabs)) return null;
+  for(const t of tabs){
+    if(excludeTabId && String(t) === String(excludeTabId)) continue;
+    if(getTabFlightKey(t) === key) return String(t);
+  }
+  return null;
+}
+
+// Tous les jumeaux de l'onglet courant (hors lui-meme)
+function findSiblingTabs(tabId){
+  const key = getTabFlightKey(tabId);
+  if(!key) return [];
+  let tabs = [];
+  try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(_){ }
+  if(!Array.isArray(tabs)) return [];
+  return tabs.map(String).filter(t => t !== String(tabId) && getTabFlightKey(t) === key);
+}
+
+// Etat purement visuel : ne se propage pas d'un onglet a l'autre
+const DUP_UI_KEYS = new Set(['ldmOpen','ldmMode','timingPanel','infovolOpen']);
+
+// Recopie les donnees de l'onglet source vers ses jumeaux
+function syncSiblingTabs(tabId, data){
+  const siblings = findSiblingTabs(tabId);
+  if(!siblings.length) return;
+  for(const sib of siblings){
+    let target = {};
+    try{ target = JSON.parse(localStorage.getItem('tab-'+sib) || '{}'); }catch(_){ }
+    for(const k in data){
+      if(DUP_UI_KEYS.has(k)) continue;   // l'onglet garde son propre affichage
+      target[k] = data[k];
+    }
+    try{ localStorage.setItem('tab-'+sib, JSON.stringify(target)); }catch(_){ }
+  }
+}
+
+/* ---- Modal "vol deja ouvert" ---- */
+let _dupFlightCallback = null;
+
+function openDupFlightModal(onConfirm){
+  _dupFlightCallback = onConfirm || null;
+  const m = document.getElementById('dupFlightModal');
+  if(!m){ if(_dupFlightCallback){ const cb=_dupFlightCallback; _dupFlightCallback=null; cb(); } return; }
+  m.style.display = 'flex';
+}
+
+function confirmDupFlight(){
+  const m = document.getElementById('dupFlightModal');
+  if(m) m.style.display = 'none';
+  const cb = _dupFlightCallback;
+  _dupFlightCallback = null;
+  if(cb) cb();
+}
+
+function cancelDupFlight(){
+  const m = document.getElementById('dupFlightModal');
+  if(m) m.style.display = 'none';
+  _dupFlightCallback = null;
+}
+
 function getTabFlightKey(tabId){
   try{
     const d = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
@@ -1988,6 +2064,11 @@ function saveCurrentTabData(){
 
   localStorage.setItem('tab-'+currentTabId,JSON.stringify(data));
   localStorage.setItem('lastTabId',currentTabId);
+
+  // Si ce vol est ouvert dans plusieurs onglets, on repercute la saisie
+  // sur les jumeaux (100% local, aucun serveur).
+  try{ syncSiblingTabs(currentTabId, data); }catch(_){ }
+
   renderTabs();
 }
 
