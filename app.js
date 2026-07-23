@@ -3151,9 +3151,13 @@ function collectTimelineData(){
   const fromTL    = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const toTL      = (document.getElementById('To')?.value   || '').toUpperCase().trim();
   const bvaCase   = fromTL === 'BVA' || toTL === 'BVA';   // pas de Cabin tidy si BVA départ/arrivée
+  // FR/RK : un changement d'equipage ne masque plus le Cabin tidy, il porte
+  // seulement sa duree max de 3 a 10 min (voir cabinMaxMin dans renderTimeline).
+  const cieTL    = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const isFRRKTL = (cieTL === 'FR' || cieTL === 'RK');
   const showCabinRelease =
     !!cabinPair &&
-    !hasArrCrew &&
+    (isFRRKTL || !hasArrCrew) &&
     !bvaCase &&
     (turnMin != null && turnMin <= 35);
 
@@ -3241,7 +3245,9 @@ function renderTimeline(){
 
   const crewChange = !!( (document.getElementById('ArrPNT')?.value||'').trim() ||
                          (document.getElementById('ArrPNC')?.value||'').trim() );
-  const BASE = (isFRRK && crewChange) ? 10 : 0;
+  // Cabin tidy FR/RK : 3 min max entre dernier debarque et premier embarque,
+  // porte a 10 min quand il y a un changement d'equipage (Arr PNT / Arr PNC).
+  const cabinMaxMin = (isFRRK && crewChange) ? 10 : 3;
 
   // Remise LID (FR/RK) : depend du toggle eLID / Paper LID du LOAD FINAL
   //   eLID      -> EOBT - 5, libelle "Remise eLID"
@@ -3252,7 +3258,7 @@ function renderTimeline(){
 
   const TARGETS_FRRK_BASE = {
     'Débarquement':        { ref:'EOBT', fromRef:'AIBT', from:  2, to:-13, fromField:null,              toOffset:null, label:null              },
-    'Cabin release':       { ref:'EOBT', from:-13, to:-10, fromField:'DernierDebarque', toOffset:3,    label:'Cabin tidy'      },
+    'Cabin release':       { ref:'EOBT', from:-13, to:-10, fromField:'DernierDebarque', toOffset:cabinMaxMin, label:'Cabin tidy'      },
     'Embarquement':        { ref:'EOBT', from:-13, to: -5, fromField:null,              toOffset:null, label:null              },
     'Avitair':             { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
     'Lift (Dep)':          { ref:'EOBT', from:-25, to: -5, fromField:null,              toOffset:null, label:null              },
