@@ -2440,6 +2440,33 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 </div>
 
 <!-- Modal confirmation TOUT FERMER -->
+<!-- ══════════════ MODAL VOL DEJA OUVERT ══════════════ -->
+<div id="dupFlightModal" style="display:none; position:fixed; inset:0; z-index:6500; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
+  <div class="card" style="width:min(360px, 100%);">
+    <header class="card-header">
+      <p class="card-header-title">Vol deja ouvert</p>
+    </header>
+    <div class="card-content" style="padding:1rem;">
+      <p style="margin-bottom:12px; line-height:1.45;">
+        Ce vol est deja ouvert dans un autre onglet.<br>
+        Souhaitez-vous quand meme l'ajouter&nbsp;?
+      </p>
+      <p style="margin-bottom:14px; font-size:.82rem; color:var(--muted); line-height:1.4;">
+        Les deux onglets resteront synchronises&nbsp;: toute saisie sur l'un
+        sera reportee sur l'autre.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="button is-info is-fullwidth" type="button" onclick="confirmDupFlight()" style="font-weight:800;">
+          Oui, ajouter quand meme
+        </button>
+        <button class="button is-light is-fullwidth" type="button" onclick="cancelDupFlight()" style="margin-top:4px;">
+          Non
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="closeAllModal" style="display:none; position:fixed; inset:0; z-index:6400; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:14px;">
   <div class="card" style="width:min(340px, 100%);">
     <header class="card-header">
