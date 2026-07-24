@@ -840,6 +840,16 @@ function freezeCountdown(){
    (CD gere deja sa propre mise en evidence via .cd-over). */
 const CHIP_TIME_IDS = ['timer-h40','timer-h15','timer-h8','timer-lds','timer-eobt'];
 
+/* Minuteur dedie aux pastilles : le compte a rebours ne tourne que si toutes
+   les heures de base sont saisies ET que l'AOBT est vide. Les couleurs, elles,
+   doivent suivre l'heure courante en permanence -> intervalle independant. */
+let chipColorTimer = null;
+function startChipColorTimer(){
+  if(chipColorTimer) return;
+  updateChipColors();
+  chipColorTimer = setInterval(updateChipColors, 10000);   // 10 s suffit (seuils a la minute)
+}
+
 function updateChipColors(){
   const now = new Date();
   const nowMin = now.getHours()*60 + now.getMinutes();
@@ -1413,6 +1423,10 @@ function initForm(){
   });
   if(typeof twSyncAll === "function") setTimeout(twSyncAll, 50);
   setTimeout(applyAircraftConfig, 80);
+
+  // Couleurs des pastilles : rafraichissement continu, independant du
+  // compte a rebours (qui, lui, ne tourne pas dans toutes les situations).
+  startChipColorTimer();
 }
 
 function updateInfoStrip(){
