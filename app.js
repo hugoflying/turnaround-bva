@@ -4403,6 +4403,19 @@ function toggleLDM(mode=null){
 (function(){
   let _bnReady = false;
   let _tool = 'pen';      // 'pen' | 'eraser-stroke'
+  // Epaisseur du stylet par defaut : proportionnee a la taille d'ecran.
+  // Le canvas est plus large sur tablette, un trait plus epais garde donc
+  // le meme rendu visuel. Seuil aligne sur le point de rupture CSS (600px).
+  const BN_SIZE_PHONE  = 3;    // < 600px
+  const BN_SIZE_TABLET = 4;    // >= 600px
+  function bnDefaultSize(){
+    try{
+      return window.matchMedia('(min-width: 600px)').matches
+        ? BN_SIZE_TABLET : BN_SIZE_PHONE;
+    }catch(_){
+      return (window.innerWidth >= 600) ? BN_SIZE_TABLET : BN_SIZE_PHONE;
+    }
+  }
   let _strokes = [];      // [{tool, color, size, pts:[{x,y}]}]
   let _current = null;
   let _drawing = false;
@@ -4445,13 +4458,17 @@ function toggleLDM(mode=null){
     new ResizeObserver(()=>requestAnimationFrame(resize)).observe(c);
     resize();
 
-    // Etiquette d'epaisseur : toujours refletee depuis la valeur reelle du
-    // curseur (sinon on peut lire "3px" tout en dessinant a une autre taille
-    // si le navigateur a restaure une ancienne valeur).
-    (function syncSizeLabel(){
+    // Epaisseur du stylet : on applique la valeur par defaut UNIQUEMENT tant
+    // que l'agent n'a pas touche au curseur (data-user-set pose par l'oninput).
+    // S'il a choisi 8px, la valeur est conservee en basculant clavier <-> stylet.
+    // L'etiquette, elle, est toujours resynchronisee sur la valeur reelle.
+    (function applyDefaultPenSize(){
       const sl  = document.getElementById('bnSize');
       const lbl = document.getElementById('bnSizeLbl');
-      if(sl && lbl) lbl.textContent = sl.value + 'px';
+      if(sl && sl.dataset.userSet !== '1'){
+        sl.value = String(bnDefaultSize());
+      }
+      if(lbl) lbl.textContent = (sl ? sl.value : bnDefaultSize()) + 'px';
     })();
 
     // Charger depuis storage
@@ -4482,7 +4499,7 @@ function toggleLDM(mode=null){
       _current = { tool:'eraser-stroke', pts:[pt] };
     } else {
       const color = document.getElementById('bnColor')?.value || '#1e3a8a';
-      const size  = parseInt(document.getElementById('bnSize')?.value || '3', 10);
+      const size  = parseInt(document.getElementById('bnSize')?.value || '', 10) || bnDefaultSize();
       _current = { tool:'pen', color, size, pts:[pt] };
     }
   }
