@@ -4445,6 +4445,15 @@ function toggleLDM(mode=null){
     new ResizeObserver(()=>requestAnimationFrame(resize)).observe(c);
     resize();
 
+    // Etiquette d'epaisseur : toujours refletee depuis la valeur reelle du
+    // curseur (sinon on peut lire "3px" tout en dessinant a une autre taille
+    // si le navigateur a restaure une ancienne valeur).
+    (function syncSizeLabel(){
+      const sl  = document.getElementById('bnSize');
+      const lbl = document.getElementById('bnSizeLbl');
+      if(sl && lbl) lbl.textContent = sl.value + 'px';
+    })();
+
     // Charger depuis storage
     _historyKey = 'bnCanvas_' + (currentTabId||'default');
     bnLoad();
@@ -4583,8 +4592,8 @@ function toggleLDM(mode=null){
 
   window.bnSetTool = function(tool){
     _tool = tool;
-    document.getElementById('bnPen')?.classList.toggle('is-link',   tool==='pen');
-    document.getElementById('bnPen')?.classList.toggle('is-light',  tool!=='pen');
+    // Le mode (Stylet / Clavier) est porte par le segmented control : on ne
+    // style plus #bnPen ici, seule la gomme reflete l'outil actif.
     document.getElementById('bnEraserStroke')?.classList.toggle('is-warning', tool==='eraser-stroke');
     document.getElementById('bnEraserStroke')?.classList.toggle('is-light',   tool!=='eraser-stroke');
   };
@@ -4603,18 +4612,15 @@ function toggleLDM(mode=null){
   window.bnSwitchMode = function(mode){
     const drawDiv = document.getElementById('bnDrawMode');
     const textDiv = document.getElementById('bnTextMode');
-    const drawBtn = document.getElementById('bnPen');
-    const textBtn = document.getElementById('bnModeTextBtn');
     if(!drawDiv || !textDiv) return;
     const isDraw = mode === 'draw';
     drawDiv.style.display = isDraw ? '' : 'none';
     textDiv.style.display = isDraw ? 'none' : '';
     const drawTools = document.getElementById('bnDrawTools');
     if(drawTools) drawTools.style.display = isDraw ? 'flex' : 'none';
-    drawBtn.classList.toggle('is-link',  isDraw);
-    drawBtn.classList.toggle('is-light', !isDraw);
-    textBtn.classList.toggle('is-link',  !isDraw);
-    textBtn.classList.toggle('is-light', isDraw);
+    // Segmented control : l'etat actif se porte sur le <li> (classe is-active)
+    document.getElementById('bnPenLi')?.classList.toggle('is-active',  isDraw);
+    document.getElementById('bnTextLi')?.classList.toggle('is-active', !isDraw);
     if(isDraw){
       setTimeout(()=>{
         const c = document.getElementById('bnCanvas');
