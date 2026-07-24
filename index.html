@@ -1778,15 +1778,17 @@ html, body {
 .timer-chip .v.chip-soon { background: #f59e0b !important; color: #fff !important; }
 .timer-chip .v.chip-late { background: #ef4444 !important; color: #fff !important; }
 
-/* Tablette (600-899px) : Crew / Recherche bag / INAD / Nayak sur UNE ligne */
+/* Tablette (600-899px) : Crew / Recherche bag / INAD / Nayak sur UNE ligne.
+   Meme rendu que sur telephone : largeur au contenu, pas d'etirement. */
 @media (min-width: 600px) and (max-width: 899px) {
   .dep-extra-btn,
   #btn-crew, #btn-recherche-bag, #btn-inad, #btn-gpu {
     width: auto !important;
     min-width: 0 !important;
-    flex: 1 1 0 !important;
-    font-size: .8rem !important;
-    padding: 0 8px !important;
+    flex: 0 0 auto !important;
+    font-size: .78rem !important;
+    height: 32px !important;
+    padding: 0 10px !important;
     white-space: nowrap;
   }
 }
@@ -2694,7 +2696,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./app.js?v=20260724c"></script>
+<script src="./app.js?v=20260724d"></script>
 </body>
 </html>
 <div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
