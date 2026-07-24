@@ -123,6 +123,9 @@ html.dark .fixed-header { border-bottom-color: rgba(255,255,255,.08); }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: 14px;
+  /* Reserve la hauteur des boutons flottants (bagage + reglages) pour que
+     le dernier champ puisse toujours defiler au-dessus d'eux. */
+  padding-bottom: 96px;
 }
 body.has-tab .app-wrap { display: block; }
 
@@ -1767,6 +1770,27 @@ html, body {
   background: var(--bg);
 }
 
+
+/* ===== ETAT DES PASTILLES HORAIRES =====
+   vert = a venir, orange = echeance dans 5 min, rouge = depassee.
+   Applique a HLE, H-15, eLID/LID, LDS et EOBT. CTOT et CD non concernes. */
+.timer-chip .v.chip-ok   { background: #16a34a !important; color: #fff !important; }
+.timer-chip .v.chip-soon { background: #f59e0b !important; color: #fff !important; }
+.timer-chip .v.chip-late { background: #ef4444 !important; color: #fff !important; }
+
+/* Tablette (600-899px) : Crew / Recherche bag / INAD / Nayak sur UNE ligne */
+@media (min-width: 600px) and (max-width: 899px) {
+  .dep-extra-btn,
+  #btn-crew, #btn-recherche-bag, #btn-inad, #btn-gpu {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+    font-size: .8rem !important;
+    padding: 0 8px !important;
+    white-space: nowrap;
+  }
+}
+
 </style>
 </head>
 
@@ -2670,7 +2694,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./app.js?v=20260724"></script>
+<script src="./app.js?v=20260724b"></script>
 </body>
 </html>
 <div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
