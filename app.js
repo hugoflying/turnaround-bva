@@ -834,7 +834,39 @@ function freezeCountdown(){
   if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
 }
 
+/* ===== Etat visuel des pastilles horaires =====
+   vert = a venir | orange = dans 5 min ou moins | rouge = depassee.
+   Concerne HLE, H-15, eLID/LID, LDS et EOBT. CTOT et CD sont exclus
+   (CD gere deja sa propre mise en evidence via .cd-over). */
+const CHIP_TIME_IDS = ['timer-h40','timer-h15','timer-h8','timer-lds','timer-eobt'];
+
+function updateChipColors(){
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  CHIP_TIME_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    el.classList.remove('chip-ok','chip-soon','chip-late');
+
+    const txt = (el.textContent || '').trim();
+    const m = /^(\d{1,2}):(\d{2})$/.exec(txt);
+    if(!m) return;                       // "--:--" : on laisse la couleur par defaut
+
+    const target = parseInt(m[1],10)*60 + parseInt(m[2],10);
+    let diff = target - nowMin;          // minutes restantes
+    if(diff < -720) diff += 1440;        // echeance passee minuit
+    if(diff >  720) diff -= 1440;
+
+    if(diff < 0)       el.classList.add('chip-late');
+    else if(diff <= 5) el.classList.add('chip-soon');
+    else               el.classList.add('chip-ok');
+  });
+}
+
 function updateCountdownOnce(){
+  updateChipColors();   // rafraichit vert/orange/rouge chaque seconde
   const el = document.getElementById('timer-cd');
   if(!el) return;
 
@@ -2222,6 +2254,9 @@ function updateAllCalculations() {
 
   // Réapplique le rouge sur les champs en dépassement
   setTimeout(revalidateDangerFields, 0);
+
+  // Couleur des pastilles horaires (vert / orange / rouge)
+  updateChipColors();
 }
 
 /* Bandeaux de retard sur AIBT et AOBT */
