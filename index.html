@@ -2414,25 +2414,31 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
     </header>
     <div class="card-content" style="padding:10px 12px;">
 
-      <!-- Toolbar : tout sur une ligne -->
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-        <button id="bnPen" class="button is-small is-light" type="button" onclick="bnSwitchMode('draw'); bnSetTool('pen');" title="Dessin">✏️ Stylet</button>
-        <button id="bnModeTextBtn" class="button is-small is-link" type="button" onclick="bnSwitchMode('text')" title="Clavier">⌨️ Clavier</button>
+      <!-- Ligne 1 : bascule Stylet / Clavier (meme segmented control que Arrivee/Depart) -->
+      <div class="tabs is-toggle is-toggle-rounded is-centered" style="margin-bottom:8px;">
+        <ul>
+          <li id="bnPenLi"><a id="bnPen" onclick="bnSwitchMode('draw'); bnSetTool('pen');" title="Dessin"><span>✏️ Stylet</span></a></li>
+          <li id="bnTextLi"><a id="bnModeTextBtn" onclick="bnSwitchMode('text')" title="Clavier"><span>⌨️ Clavier</span></a></li>
+        </ul>
+      </div>
 
-        <!-- Outils dessin (cachés en mode clavier) -->
-        <div id="bnDrawTools" style="display:none; align-items:center; gap:6px; flex:1;">
-          <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme</button>
-          <input id="bnSize" type="range" min="1" max="12" value="3"
-                 style="width:70px; cursor:pointer;"
-                 oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
-                 title="Épaisseur">
-          <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:26px;">3px</span>
-          <input id="bnColor" type="color" value="#1e3a8a"
-                 style="width:30px;height:30px;border:none;border-radius:8px;cursor:pointer;padding:2px;"
-                 title="Couleur">
-        </div>
-
-        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button" onclick="bnClear()" title="Tout effacer">🗑 Effacer</button>
+      <!-- Ligne 2 : gomme, epaisseur, couleur, corbeille -->
+      <div id="bnDrawTools" style="display:none; align-items:center; gap:8px; margin-bottom:10px;">
+        <button id="bnEraserStroke" class="button is-small is-light" type="button" onclick="bnSetTool('eraser-stroke')" title="Gomme trait">⬜ Gomme</button>
+        <!-- autocomplete=off : sinon le navigateur restaure l'ancienne valeur au
+             rechargement alors que l'etiquette affiche encore "3px" -->
+        <input id="bnSize" type="range" min="1" max="12" value="3" autocomplete="off"
+               style="flex:1; min-width:60px; cursor:pointer;"
+               oninput="document.getElementById('bnSizeLbl').textContent=this.value+'px'"
+               title="Épaisseur">
+        <span id="bnSizeLbl" style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:26px;">3px</span>
+        <input id="bnColor" type="color" value="#1e3a8a"
+               style="width:30px;height:30px;border:none;border-radius:8px;cursor:pointer;padding:2px;flex:0 0 auto;"
+               title="Couleur">
+        <!-- Corbeille : icone seule pour tenir sur la ligne -->
+        <button id="bnEraserAll" class="button is-small is-danger is-light" type="button"
+                onclick="bnClear()" title="Tout effacer"
+                style="flex:0 0 auto; padding:0 10px; font-size:1rem;">🗑</button>
       </div>
 
       <!-- Mode dessin -->
@@ -2700,7 +2706,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./app.js?v=20260724e"></script>
+<script src="./app.js?v=20260724g"></script>
 </body>
 </html>
 <div id="rzaModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px;">
