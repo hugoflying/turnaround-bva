@@ -1773,6 +1773,8 @@ function deleteTab(id, deleteRemote = false){
   tabs.splice(idx, 1);
   localStorage.setItem('flightTabs', JSON.stringify(tabs));
   localStorage.removeItem('tab-' + id);
+  // Purge du dessin de l'onglet (ancien stockage separe)
+  try{ localStorage.removeItem('bnCanvas_' + id); }catch(_){ }
   if(tabs.length > 0){
     const nextId = tabs[Math.max(0, idx - 1)];
     currentTabId = nextId;
@@ -4511,7 +4513,9 @@ function toggleLDM(mode=null){
     if(!_historyKey) return;
     try{
       const data = JSON.stringify(_strokes);
-      localStorage.setItem(_historyKey, data);
+      // Source unique : le champ BlocNote, sauvegarde avec l'onglet.
+      // (Avant, le dessin etait stocke ici ET dans tab-<id> : taille doublee,
+      //  et les cles bnCanvas_<id> survivaient a la fermeture de l'onglet.)
       // Rafraîchit l'affichage du champ (twSync = mise à jour locale, pas de réseau)
       const el = document.getElementById('BlocNote');
       if(el){
@@ -4524,11 +4528,20 @@ function toggleLDM(mode=null){
   function bnLoad(){
     _historyKey = 'bnCanvas_' + (currentTabId||'default');
     try{
-      const raw = localStorage.getItem(_historyKey);
-      const elRaw = document.getElementById('BlocNote')?.value || '';
-      const source = raw || elRaw;
-      if(source) _strokes = JSON.parse(source);
-      else        _strokes = [];
+      // Le champ BlocNote fait foi (il suit l'onglet et se synchronise).
+      let source = document.getElementById('BlocNote')?.value || '';
+      if(!source){
+        // Migration : dessin cree par une ancienne version
+        const legacy = localStorage.getItem(_historyKey);
+        if(legacy){
+          source = legacy;
+          const el = document.getElementById('BlocNote');
+          if(el) el.value = legacy;
+        }
+      }
+      // L'ancienne cle n'a plus lieu d'etre : on libere l'espace
+      try{ localStorage.removeItem(_historyKey); }catch(_){ }
+      _strokes = source ? JSON.parse(source) : [];
     }catch(e){ _strokes=[]; }
     setTimeout(bnRedraw, 50);
   }
@@ -4546,7 +4559,9 @@ function toggleLDM(mode=null){
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if(!Array.isArray(parsed)) return;
       _strokes = parsed;
-      if(_historyKey) localStorage.setItem(_historyKey, JSON.stringify(_strokes));
+      // Source unique : le champ BlocNote (sauvegarde avec l'onglet)
+      const el = document.getElementById('BlocNote');
+      if(el) el.value = JSON.stringify(_strokes);
       bnRedraw();
     }catch(e){}
   };
@@ -5122,9 +5137,12 @@ function openLightbox(src){
 }
 function closeLightbox(){
   document.getElementById('lightboxOverlay').style.display = 'none';
-  // Réinterdire le zoom sur l'UI
+  // On restaure EXACTEMENT le viewport de la page (cf. index.html).
+  // Surtout ne pas remettre user-scalable=no : iOS rejette alors toute la
+  // chaine viewport, viewport-fit=cover devient inactif et une bande
+  // apparait sous le footer en PWA installee.
   document.querySelector('meta[name="viewport"]').setAttribute('content',
-    'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no');
+    'width=device-width, initial-scale=1, viewport-fit=cover');
   document.removeEventListener('keydown', _lightboxKey);
 }
 function _lightboxKey(e){ if(e.key === 'Escape') closeLightbox(); }
