@@ -64,15 +64,74 @@ let saveTimer=null;
 let settingFromAK = false;
 
 /* ===== AK managed fields helpers ===== */
+function isEmptyVal(el){
+  return !el || ((el.value || '').trim() === '');
+}
 
+function setValAK(id, v){
+  const el = document.getElementById(id);
+  if(!el) return;
 
+  settingFromAK = true;
+  el.value = (typeof v === 'string') ? (v ?? '').toUpperCase() : (v ?? '');
+  el.dataset.ak = '1';
+  el.dispatchEvent(new Event('input',  { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  settingFromAK = false;
 
+  // Sync affichage CTOT
+  if(id === 'CTOT'){
+    const d = document.getElementById('timer-ctot');
+    if(d) d.textContent = el.value || '--:--';
+  }
+}
 
+function setTimeFromISOAK(id, iso){
+  if(!iso) return;
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return;
 
+  const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+  const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+
+  setValAK(id, `${hh}:${mm}`);
+}
+
+function setTimeFromISOIfEmptyOrAK(id, iso){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(isEmptyVal(el) || el.dataset.ak === '1'){
+    setTimeFromISOAK(id, iso);
+  }
+}
+
+function siLines(txt){
+  return (txt || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function normLine(s){
+  return (s || '').trim().toUpperCase();
+}
 
 // clé simple : avant 1er espace ou "+"
+function siKey(line){
+  const up = normLine(line);
+  return up.split(/\s|\+/)[0] || up;
+}
 
+function getTabData(){
+  if(!currentTabId) return {};
+  try{ return JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}'); }
+  catch(e){ return {}; }
+}
 
+function setTabData(data){
+  if(!currentTabId) return;
+  localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+}
 
 /**
  * Merge SI depuis AK sans écraser les ajouts manuels.
@@ -80,7 +139,97 @@ let settingFromAK = false;
  * et que AK devient "1R/19C + 1TEST/85C", alors on veut:
  * "1R/19C + 1TEST/85C + 1234" (une seule ligne)
  */
+function mergeSIFromAK(fieldId, newAkText){
+  const el = document.getElementById(fieldId);
+  if(!el) return;
 
+  const data = getTabData();
+  data.akSI = data.akSI || {};
+
+  const oldAkText = data.akSI[fieldId] || '';
+  const existing  = el.value || '';
+
+  const newAkLines = siLines(newAkText);
+  const oldAkLines = siLines(oldAkText);
+  const existLines = siLines(existing);
+
+  const oldNormSet = new Set(oldAkLines.map(normLine));
+  const newNormSet = new Set(newAkLines.map(normLine));
+
+  // map old base par key
+  const oldByKey = new Map();
+  oldAkLines.forEach(l => oldByKey.set(siKey(l), l));
+
+  // index des lignes AK nouvelles par key (pour pouvoir remplacer)
+  const newIndexByKey = new Map();
+  newAkLines.forEach((l, idx) => {
+    const k = siKey(l);
+    if(!newIndexByKey.has(k)) newIndexByKey.set(k, idx);
+  });
+
+  // résultat = copie des lignes AK
+  const finalLines = [...newAkLines];
+
+  // lignes manuelles séparées (qui ne sont pas du prolongement)
+  const manualOut = [];
+
+  for(const line of existLines){
+    const n = normLine(line);
+
+    // ancienne ligne AK pure -> on la drop (remplacée par newAk)
+    if(oldNormSet.has(n)) continue;
+
+    // tentative de "prolongement" d'une ancienne ligne AK
+    const k = siKey(line);
+    const oldBase = oldByKey.get(k);
+
+    if(oldBase && newIndexByKey.has(k)){
+      const oldBaseNorm = normLine(oldBase);
+      const lineNorm = normLine(line);
+
+      if(lineNorm.startsWith(oldBaseNorm)){
+        const idx = newIndexByKey.get(k);
+        const newBase = finalLines[idx];
+
+        const suffix = line.slice(oldBase.length).trim(); // ce que tu as ajouté
+        const mergedLine = suffix ? `${newBase} ${suffix}` : `${newBase}`;
+
+        // remplace la ligne AK par la version enrichie
+        finalLines[idx] = mergedLine;
+
+        // met à jour le set de doublons (au cas où)
+        newNormSet.add(normLine(mergedLine));
+
+        continue; // IMPORTANT: on n'ajoute pas en manuelOut
+      }
+    }
+
+    // vraie ligne manuelle séparée -> on garde si pas doublon avec AK
+    if(!newNormSet.has(n)) manualOut.push(line);
+  }
+
+  const merged = [...finalLines, ...manualOut].join('\n').trim();
+
+  settingFromAK = true;
+  el.value = merged;
+  el.dispatchEvent(new Event('input',  { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  settingFromAK = false;
+
+  // mémorise la dernière version AK pour le prochain refresh
+  data.akSI[fieldId] = (newAkText || '').trim();
+  setTabData(data);
+}
+
+function setIfEmptyOrAK(id, v){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  // si champ vide OU déjà piloté AK -> on écrase
+  if(isEmptyVal(el) || el.dataset.ak === '1'){
+    setValAK(id, (v ?? ''));
+  }
+}
 
 /* Si l'utilisateur modifie un champ manuellement -> il n'est plus piloté AK */
 document.addEventListener('input', (e)=>{
@@ -95,7 +244,7 @@ document.addEventListener('input', (e)=>{
 ['input','change'].forEach(ev=>{
   document.addEventListener(ev, (e)=>{
     const id = e.target?.id;
-    if(id === 'Cie' || id === 'From' || id === 'AIBT' || id === 'AOBT'){
+    if(id === 'Cie' || id === 'From' || id === 'To' || id === 'AIBT' || id === 'AOBT'){
       autoOpenCrewIfNeeded();
     }
   }, true);
@@ -104,7 +253,7 @@ document.addEventListener('input', (e)=>{
 /* Timeline */
 let timelineZoom = 1;
 const TL_ZOOM_MIN = 0.5;
-const TL_ZOOM_MAX = 8;
+const TL_ZOOM_MAX = 4;
 const TL_ZOOM_STEP = 0.25;
 window._timelineCurrentRange = null;
 
@@ -142,24 +291,38 @@ function updateFinalTHOB(){
   thobEl.dispatchEvent(new Event('change', {bubbles:true}));
 }
 
-function updateHWeights(){
-  const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
-  const to   = (document.getElementById('To')?.value  || '').toUpperCase().trim();
-  const show = (cie === 'FR' || cie === 'RK');
-  const mult = (to === 'AMM') ? 15 : 13;
+/* Poids par soute :
+   FR/RK = 13 kg par bagage, toujours (Hugo, v2.50)
+   autres = poids moyen du FINAL (POIDS / BAGS), affiché « ≈ » */
+function holdBagKg(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const to  = (document.getElementById('To')?.value  || '').toUpperCase().trim();
+  // v2.50 (Hugo) : FR/RK, un bagage = toujours 13 kg ; autres compagnies = poids moyen POIDS / BAGS
+  if(cie === 'FR' || cie === 'RK') return { kg: 13, approx:false };
+  const poids = parseInt(document.getElementById('FinalPOIDS')?.value, 10);
+  const bags  = parseInt(document.getElementById('FinalBAGS')?.value, 10);
+  if(poids > 0 && bags > 0) return { kg: poids / bags, approx:true };
+  return null;
+}
 
+function updateHWeights(){
+  const k = holdBagKg();
   ['FinalH1','FinalH2','FinalH3','FinalH4'].forEach(id => {
     const inp = document.getElementById(id);
     const lbl = document.getElementById(id + 'w');
-    if(!inp) return;
-    if(lbl){
-      lbl.style.display = show ? '' : 'none';
-      if(show){
-        const bags = parseInt(inp.value, 10);
-        lbl.textContent = isNaN(bags) || bags === 0 ? '' : `${bags * mult} kg`;
-      }
-    }
+    if(!inp || !lbl) return;
+    const bags = parseInt(inp.value, 10);
+    const show = !!k && !isNaN(bags) && bags > 0;
+    lbl.style.display = show ? '' : 'none';
+    lbl.textContent = show ? `${k.approx ? '≈ ' : ''}${Math.round(bags * k.kg)} kg` : '';
   });
+  // Poids moyen d'un bagage affiché sous BAGS (hors FR/RK, qui comptent 13 kg)
+  const avg = document.getElementById('FinalBagAvg');
+  if(avg){
+    const on = !!k && k.approx;
+    avg.style.display = on ? '' : 'none';
+    avg.textContent = on ? 'moy. ' + k.kg.toFixed(1).replace('.', ',') + ' kg' : '';
+  }
 }
 
 function updateCrewThobVisibility(){
@@ -243,13 +406,21 @@ function updateFinalWeightIfNeeded(){
   updatePoidsCorrige();
 }
 
-/* ===== POIDS CORRIGÉ = POIDS + GB*13 (si GB > 0, sinon = POIDS) ===== */
+/* ===== Poids d'un GB : 13 kg, sauf Volotea vers BIA ou AJA = 11 kg ===== */
+function gbKg(){
+  const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const to  = (document.getElementById('To')?.value  || '').toUpperCase().trim();
+  return (cie === 'V7' && (to === 'BIA' || to === 'AJA')) ? 11 : 13;
+}
+
+/* ===== POIDS CORRIGÉ = POIDS + GB × poids GB (si GB > 0, sinon = POIDS) ===== */
 function updatePoidsCorrige(){
   const poids = parseInt(document.getElementById('FinalPOIDS')?.value) || 0;
   const gb    = parseInt(document.getElementById('FinalGB')?.value)    || 0;
   const el    = document.getElementById('FinalPoidsCorrige');
   if(!el) return;
-  el.value = gb > 0 ? poids + (gb * 13) : (poids || '');
+  el.value = gb > 0 ? poids + (gb * gbKg()) : (poids || '');
+  updateHWeights();
 }
 
 /* ===== POIDS auto FR / RK : ARR + EXP ===== */
@@ -369,6 +540,12 @@ function applyAircraftConfig(){
   const immat = (document.getElementById('Immat')?.value || '').trim();
   const cfg = getAcConfig(immat);
   const setPH = (id, txt) => { const el = document.getElementById(id); if(el) el.placeholder = txt || ''; };
+
+  // v2.39 (Hugo) : immat non listée en Y186 = Y180
+  if(immat && !(cfg && /186/.test(cfg.config || '')) && getA320Ver() === '186'){
+    setA320Ver('180');
+    updateInfoStrip();
+  }
 
   if(!cfg){
     updateFinalPlaceholdersFRRK();
@@ -545,43 +722,30 @@ function toggleA320Ver(){
   updateInfoStrip();              // rafraîchit le badge
 }
 
-/* Badge ⚠ 180/186 à côté du type avion dans le bandeau (uniquement W4/W6 + A320) */
+/* v2.39 : ligne « Configuration cabine » Y180 / Y186 dans la carte Vol (W4/W6 + A320) */
+function setA320VerUI(v){
+  setA320Ver(v);
+  updateFinalPlaceholdersFRRK();  // met à jour les zones OA/OB/OC
+  updateInfoStrip();
+}
 function renderA320VerBadge(){
-  const kv = document.getElementById('kvType');
-  if(!kv) return;
+  const row = document.getElementById('ivCabRow');
+  if(!row) return;
   const cie  = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const type = (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
   const applies = (cie === 'W4' || cie === 'W6') && type === 'A320';
-
-  let badge = document.getElementById('kvTypeVerBadge');
-
-  if(!applies){
-    if(badge) badge.style.display = 'none';
-    return;
-  }
-
-  if(!badge){
-    badge = document.createElement('span');
-    badge.id = 'kvTypeVerBadge';
-    badge.style.cssText = 'display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;user-select:none;line-height:1.4;vertical-align:middle;';
-    badge.title = 'Version cabine A320 — cliquer pour basculer 180 / 186';
-    badge.addEventListener('click', toggleA320Ver);
-    kv.insertAdjacentElement('afterend', badge);
-  }
-
+  row.hidden = !applies;
+  if(!applies) return;
   const ver = getA320Ver();
-  badge.style.display = 'inline-flex';
-  if(ver === '186'){
-    badge.textContent = '⚠ 186';
-    badge.style.background = '#dbeafe';   // bleu clair — version confirmée
-    badge.style.color      = '#1e40af';
-    badge.style.border      = '1px solid #93c5fd';
-  } else {
-    badge.textContent = '⚠ 180';
-    badge.style.background = '#fef3c7';   // orange clair — défaut, à vérifier
-    badge.style.color      = '#92400e';
-    badge.style.border      = '1px solid #fcd34d';
-  }
+  const immat = (document.getElementById('Immat')?.value || '').trim().toUpperCase();
+  const cfg = getAcConfig(immat);
+  const known186 = !!(cfg && /186/.test(cfg.config || ''));
+  let why;
+  if(!immat) why = 'Immat non saisie';
+  else if(known186) why = ver === '186' ? 'Connue en Y186 pour ' + immat : 'Changé à la main (' + immat + ' est connue en Y186)';
+  else why = ver === '180' ? 'Immat non listée en Y186' : 'Changé à la main';
+  row.querySelector('.cab-why').textContent = why;
+  row.querySelectorAll('[data-ver]').forEach(b => b.classList.toggle('is-on', b.dataset.ver === ver));
 }
 
 /* ===== Mode LID FR/RK : 'ELID' (défaut, ADULT+CHILD groupés) / 'LID' (séparés) ===== */
@@ -651,27 +815,20 @@ function renderLidModeToggle(){
   if(!bar){
     bar = document.createElement('div');
     bar.id = 'lidModeBar';
-    bar.style.cssText = 'display:flex; gap:4px; align-items:center; justify-content:flex-end; margin-bottom:5px;';
-    bar.innerHTML = `
-      <span style="font-size:10px; font-weight:800; opacity:.6; margin-right:2px;">SAISIE</span>
-      <button type="button" id="lidModeELID" style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer; border:1px solid transparent;">eLID</button>
-      <button type="button" id="lidModeLID"  style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer; border:1px solid transparent;">Paper LID</button>
-    `;
-    row.insertAdjacentElement('beforebegin', bar);
+    bar.className = 'lid-sw';
+    bar.innerHTML = `<button type="button" id="lidModeELID">eLID</button><button type="button" id="lidModeLID">Paper LID</button>`;
+    // v2.23 : le sélecteur est dans le bandeau TOB
+    const slot = document.getElementById('ldHeroLid');
+    if(slot) slot.appendChild(bar); else row.insertAdjacentElement('beforebegin', bar);
     bar.querySelector('#lidModeELID').addEventListener('click', ()=> switchLidMode('ELID'));
     bar.querySelector('#lidModeLID').addEventListener('click',  ()=> switchLidMode('LID'));
   }
 
   bar.style.display = 'flex';
 
-  const on  = 'background:#dbeafe; color:#1e40af; border:1px solid #93c5fd;';
-  const off = 'background:transparent; color:#6b7280; border:1px solid #d1d5db;';
   const elid = isELID();
-  const bE = bar.querySelector('#lidModeELID');
-  const bL = bar.querySelector('#lidModeLID');
-  const base = 'font-size:10px; font-weight:800; padding:2px 8px; border-radius:7px; cursor:pointer;';
-  if(bE) bE.style.cssText = base + (elid ? on : off);
-  if(bL) bL.style.cssText = base + (elid ? off : on);
+  bar.querySelector('#lidModeELID')?.classList.toggle('on', elid);
+  bar.querySelector('#lidModeLID')?.classList.toggle('on', !elid);
 }
 
 function updateFinalLoadLayout(){
@@ -850,6 +1007,152 @@ function startChipColorTimer(){
   chipColorTimer = setInterval(updateChipColors, 10000);   // 10 s suffit (seuils a la minute)
 }
 
+/* ===== Popup regulation CTOT =====
+   Au clic sur la pastille CTOT : affiche la cause du creneau (regulation AK). */
+function showCtotRegulation(){
+  const ctot = (document.getElementById('CTOT')?.value || '').trim();
+  const modal = document.getElementById('ctotRegModal');
+  const body  = document.getElementById('ctotRegBody');
+  const hEl   = document.getElementById('ctotRegHeure');
+  if(!modal || !body) return;
+
+  // v2.45 (Hugo : C) : frise EOBT / push estimé / fenêtre de décollage, régulation, slots reçus
+  const tzSuf = isUTC ? 'Z' : 'LT';
+  const editHtml = '<div class="ct-edit">'
+    + '<input id="ctotManualInput" class="input num" type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="' + escapeHtml(ctot) + '" aria-label="CTOT (' + tzSuf + ')">'
+    + '<button type="button" class="btn btn-primary" onclick="applyManualCtot()">Appliquer</button>'
+    + (ctot ? '<button type="button" class="btn ct-del" onclick="clearManualCtot()">Suppr.</button>' : '')
+    + '</div>';
+
+  if(!ctot){
+    body.innerHTML = '<p class="ct-none">Aucun CTOT actif sur ce vol. Tu peux en saisir un à la main.</p>' + editHtml;
+    if(hEl) hEl.textContent = '';
+    modal.style.display = 'flex';
+    return;
+  }
+  if(hEl) hEl.innerHTML = escapeHtml(ctot) + ' <small>' + tzSuf + '</small>';
+
+  let reg = null, ctotHistory = [];
+  try{
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    reg = data?.akMeta?.regulation || null;
+    if(Array.isArray(data?.akMeta?.ctotHistory)) ctotHistory = data.akMeta.ctotHistory;
+  }catch(_){ }
+
+  const fm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
+  const C = parseHHMM(ctot);
+  const rel = m => (m == null) ? null : ((((m - C) % 1440) + 2160) % 1440) - 720;   // minutes relatives au CTOT
+  const eobtR = rel(window._eobtRawMins ?? null);
+  // Push estimé = CTOT − 15, mais jamais avant l'EOBT (slot trop proche : on pousse à l'EOBT)
+  const pushR = (eobtR != null) ? Math.max(-15, eobtR) : -15, wFrom = -5, wTo = 10;
+  const lo = Math.min(pushR, eobtR ?? pushR, wFrom) - 6, hi = Math.max(wTo, eobtR ?? wTo) + 6;
+  const X = r => ((r - lo) / (hi - lo) * 100).toFixed(1) + '%';
+  // Libellés sur deux rangées (haut / bas) sans chevauchement ; même minute = une seule étiquette
+  // Largeur estimée d'une étiquette, en % de la frise (texte du libellé ou de l'heure)
+  const wOf = lbl => Math.max(16, lbl.length * 2.6 + 6);
+  const mks = [];
+  const place = (r, lbl, cls, pref, optional) => {
+    const x = (r - lo) / (hi - lo) * 100;
+    const same = mks.find(m => m.r === r);
+    if(same){ same.lbl += ' · ' + lbl; return; }
+    const free = row => !mks.some(m => m.row === row && Math.abs(m.x - x) < (wOf(m.lbl) + wOf(lbl)) / 2);
+    let row = free(pref) ? pref : (free(1 - pref) ? 1 - pref : -1);
+    if(row < 0 && !optional) row = pref;
+    mks.push({ r, x, lbl, cls, row });                          // row −1 : trait seul, sans étiquette
+  };
+  place(0, 'CTOT', 'ctot', 0);
+  if(eobtR != null) place(eobtR, 'EOBT', 'eobt', 0);
+  place(pushR, 'PUSH EST.', 'push', 1);
+  place(wFrom, 'DÉCOL. −5', 'win', 1, true);
+  place(wTo, '+10', 'win', 1, true);
+  const frise = '<div class="ct-track">'
+    + '<div class="ct-axis"></div>'
+    + ((eobtR != null && pushR > eobtR) ? '<div class="ct-gap" style="left:' + X(eobtR) + ';width:calc(' + X(pushR) + ' - ' + X(eobtR) + ')"></div>' : '')
+    + '<div class="ct-win" style="left:' + X(wFrom) + ';width:calc(' + X(wTo) + ' - ' + X(wFrom) + ')"></div>'
+    + mks.map(m => '<div class="ct-mk ' + m.cls + (m.row === 1 ? ' lo' : '') + (m.row < 0 ? ' bare' : '') + '" style="left:' + m.x.toFixed(1) + '%"><span>' + m.lbl + '</span><b class="num">' + fm(C + m.r) + '</b><i></i></div>').join('')
+    + '</div>'
+    + '<div class="ct-cap num">Décollage entre <b>' + fm(C + wFrom) + '</b> et <b>' + fm(C + wTo) + '</b></div>';
+
+  const dly = (eobtR != null) ? pushR - eobtR : null;
+  const dlyHtml = (dly == null) ? ''
+    : '<div class="ct-band ' + (dly > 0 ? 'late' : 'ok') + '"><span>Retard estimé</span><b class="num">' + (dly > 0 ? '+' + dly + ' min' : 'Aucun') + '</b></div>';
+  const pushHtml = '<div class="ct-band push"><span>Push estimé' + (pushR > -15 ? ' · à l\'EOBT' : '') + '</span><b class="num">' + fm(C + pushR) + '</b></div>';
+
+  let regHtml;
+  if(reg){
+    const descTxt = (reg.description || '').trim(), remarkTxt = (reg.remark || '').trim();
+    const box = (lbl, txt) => '<div class="ct-box"><small>' + lbl + '</small>' + escapeHtml(txt) + '</div>';
+    regHtml = '<div class="ct-reg">' + (reg.regul ? '<b>' + escapeHtml(reg.regul) + '</b>' : '')
+      + (reg.reason ? '<span class="ct-tag am">' + escapeHtml(reg.reason) + '</span>' : '')
+      + (reg.cause ? '<span class="ct-tag">' + escapeHtml(reg.cause) + '</span>' : '') + '</div>'
+      + (descTxt ? box('Description', descTxt) : '')
+      + (remarkTxt ? box('Remarque', remarkTxt) : '');
+  } else {
+    regHtml = '<p class="ct-none">Aucune information de régulation transmise par Airport Keeper.</p>';
+  }
+
+  const fmtMs = ms => { const d = new Date(ms); if(isNaN(d.getTime())) return ''; return String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0') + ':' + String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0'); };
+  const histHtml = (ctotHistory && ctotHistory.length >= 2)
+    ? '<div><div class="ct-k">Slots reçus</div><div class="ct-chain num">'
+      + ctotHistory.map((h, i) => {
+          const t = h.iso ? fmtMs(h.iso) : (h.hhmm || '');
+          const on = i === ctotHistory.length - 1;
+          return '<span class="' + (on ? 'on' : '') + '" title="vu ' + escapeHtml(fmtMs(h.seenAt)) + '">' + escapeHtml(t) + (h.manual ? ' <small>man</small>' : '') + '</span>';
+        }).join('<i>→</i>')
+      + '</div></div>'
+    : '';
+
+  body.innerHTML = frise + dlyHtml + pushHtml + regHtml + histHtml + editHtml;
+  modal.style.display = 'flex';
+}
+
+function applyManualCtot(){
+  const inp = document.getElementById('ctotManualInput');
+  if(!inp) return;
+  const m = /^(\d{1,2}):?(\d{2})$/.exec((inp.value || '').trim());
+  if(!m){ inp.style.borderColor = '#ef4444'; return; }
+  const hh = parseInt(m[1],10), mm = parseInt(m[2],10);
+  if(hh > 23 || mm > 59){ inp.style.borderColor = '#ef4444'; return; }
+  const val = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  const ctotEl = document.getElementById('CTOT');
+  if(ctotEl) ctotEl.value = val;
+  const timerCtot = document.getElementById('timer-ctot');
+  if(timerCtot) timerCtot.textContent = val;
+
+  // Enregistrer la modif dans l'historique CTOT, marquee (man)
+  try{
+    const refDay = (typeof cdRefDayMs === 'function') ? cdRefDayMs() : null;
+    const iso = (refDay != null) ? new Date(refDay + hh*3600000 + mm*60000).toISOString() : '';
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    if(!data.akMeta) data.akMeta = {};
+    const hist = Array.isArray(data.akMeta.ctotHistory) ? data.akMeta.ctotHistory : [];
+    const last = hist.length ? hist[hist.length-1] : null;
+    if(!last || last.hhmm !== val){
+      hist.push({ iso: iso, hhmm: val, seenAt: Date.now(), manual: true });
+      data.akMeta.ctotHistory = hist;
+      localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+    }
+  }catch(_){}
+
+  if(typeof updateChipColors === 'function') updateChipColors();
+  if(typeof updateAllCalculations === 'function') updateAllCalculations();
+  if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
+  const modal = document.getElementById('ctotRegModal');
+  if(modal) modal.style.display = 'none';
+}
+
+function clearManualCtot(){
+  const ctotEl = document.getElementById('CTOT');
+  if(ctotEl) ctotEl.value = '';
+  const timerCtot = document.getElementById('timer-ctot');
+  if(timerCtot) timerCtot.textContent = '--:--';
+  if(typeof updateChipColors === 'function') updateChipColors();
+  if(typeof updateAllCalculations === 'function') updateAllCalculations();
+  if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
+  const modal = document.getElementById('ctotRegModal');
+  if(modal) modal.style.display = 'none';
+}
+
 function updateChipColors(){
   // getNowMinutes() renvoie l'heure courante DANS LE MEME REFERENTIEL que les
   // pastilles (local ou UTC selon isUTC). Utiliser new Date().getHours() ici
@@ -878,15 +1181,33 @@ function updateChipColors(){
 }
 
 /* Debut de journee (minuit) du vol courant, en ms absolus, pour dater les
-   echeances du compte a rebours. Source : champ Date (yyyy-mm-dd), rempli
-   automatiquement a la date du jour. Retourne null si absent -> comportement
-   24h conserve. */
+   echeances du compte a rebours.
+   Source prioritaire : le champ Date (yyyy-mm-dd), present et rempli dans les
+   deux apps (auto = date du jour, ou valeur importee). A defaut, on lit
+   akMeta.timeISO (COMPANION / Airport Keeper). Retourne null si rien de fiable
+   -> le compte a rebours retombe sur l'ancien comportement 24h. */
 function cdRefDayMs(){
+  // 1) champ Date visible
   const dv = (document.getElementById('Date')?.value || '').trim();
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dv);
-  if(!m) return null;
-  const y = +m[1], mo = +m[2]-1, da = +m[3];
-  return isUTC ? Date.UTC(y, mo, da) : new Date(y, mo, da).getTime();
+  if(m){
+    const y = +m[1], mo = +m[2]-1, da = +m[3];
+    return isUTC ? Date.UTC(y, mo, da) : new Date(y, mo, da).getTime();
+  }
+
+  // 2) fallback : SOBT/SIBT complet importe d'AK
+  let iso = '';
+  try{
+    const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    iso = data?.akMeta?.timeISO || '';
+  }catch(_){ }
+  if(!iso) return null;
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return null;
+  if(isUTC){
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  }
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
 /* ===== MTT — Minimum Turnaround Time (en minutes) =====
@@ -985,17 +1306,22 @@ function updateCountdownOnce(){
   // ===== CAS NORMAL : live avec NOW (décompte puis +) =====
   const now = getNowMinutes();
 
-  // Si la date du vol est connue (champ Date), on calcule l'ecart reel en tenant
-  // compte du JOUR : un vol d'hier soir ne "revient" plus comme un vol a venir.
+  // Date de reference du vol (SOBT/SIBT complet importe d'AK). Si on la connait,
+  // on calcule l'ecart en tenant compte du JOUR : sinon un vol d'hier soir
+  // "reviendrait" ce matin comme un vol a venir (fenetre de 24h seulement).
   let remainingSeconds = null;
   const refDayMs = cdRefDayMs();
   if(refDayMs != null){
-    const sobtRefMs = refDayMs + SOBT * 60000;   // ancre "jour du vol"
+    // Horodatage absolu de l'echeance = jour de reference (minuit du SOBT) +
+    // targetMin. Si l'echeance passe minuit (EOBT du lendemain), targetMin est
+    // petit alors que le vol est le soir : on la reporte au jour suivant si
+    // elle tombe plus de 12h AVANT le SOBT de reference.
+    const sobtRefMs = refDayMs + SOBT * 60000;   // SOBT = ancre "jour du vol"
     let targetMs = refDayMs + targetMin * 60000;
-    // Echeance qui passe minuit (EOBT du lendemain) : on la reporte au J+1
     if(targetMs < sobtRefMs - 12*3600000) targetMs += 86400000;
     remainingSeconds = Math.round((targetMs - Date.now()) / 1000);
   } else {
+    // Pas de date connue (vol saisi a la main) : ancien comportement sur 24h
     let diffMin = targetMin - now.mins;
     if(diffMin < -720) diffMin += 1440;
     if(diffMin > 720) diffMin -= 1440;
@@ -1418,6 +1744,9 @@ function initForm(){
       e.preventDefault();
     });
 
+    ['wheel','mousedown','touchstart','keydown'].forEach(ev=>{
+      scroller.addEventListener(ev, ()=>{ window._tlLastTouch = Date.now(); }, {passive:true});
+    });
     ['wheel','mousedown','touchstart','keydown','scroll'].forEach(ev=>{
       scroller.addEventListener(ev, ()=>{ timelineUserScrolled = true; }, {passive:true});
     });
@@ -1515,6 +1844,12 @@ function updateInfoStrip(){
 
   set('kvArrVol', arrFF || '—', '—');
   set('kvDepVol', depFF || '—', '—');
+  // v2.58 : vol créé à la main sans n° d'arrivée → on n'affiche que le n° de départ (et inversement)
+  const fnoEl = document.getElementById('kvArrVol')?.parentElement;
+  if(fnoEl){
+    fnoEl.classList.toggle('no-arr', !arrFF && !!depFF);
+    fnoEl.classList.toggle('no-dep', !depFF && !!arrFF);
+  }
 
   set('kvFrom', v('From') || '---', '---');
   set('kvTo',   v('To')   || '---', '---');
@@ -1525,8 +1860,13 @@ function updateInfoStrip(){
   // Badge version cabine A320 (W4/W6) à côté du type
   renderA320VerBadge();
 
-  // Salle arrivée : plus de champ BorderControl -> on prend akMeta.bc
+  // PAF (police aux frontieres) : plus de champ BorderControl -> on prend akMeta.bc
+  // PAF : on n'affiche le "· valeur" que si elle est connue
   set('kvBC', bcMeta || '--', '--');
+  const bcWrap  = document.getElementById('kvBCWrap');
+  const bcTitle = document.getElementById('kvParkTitle');
+  if(bcWrap)  bcWrap.style.display = bcMeta ? '' : 'none';
+  if(bcTitle) bcTitle.textContent  = 'Parking';
 
   set('kvPark', v('Parking') || '--', '--');
 }
@@ -1563,57 +1903,71 @@ function attachAutoSave(){
 }
 
 /* Tabs */
-/* Bouton "Vols" (TURNAROUND) : ajoute un vol manuel via appui long (500 ms)
-   ou double-clic. Pas d'action au simple clic : il n'y a pas de liste AK. */
+/* Bouton "Vols" : clic = liste Airport Keeper,
+   double-clic ou appui long (500 ms) = nouveau vol hors Keeper.
+   Les deux gestes coexistent : double-clic au clavier/souris, appui long au doigt. */
 function wireVolsButton(){
   const btn = document.getElementById('volsBtn');
   if(!btn) return;
 
   let pressTimer = null;
-  let longFired  = false;
+  let longFired  = false;   // un appui long ne doit pas declencher aussi le clic
+  let clickTimer = null;
 
   const openManual = ()=>{
     longFired = true;
+    clearTimeout(clickTimer); clickTimer = null;
     if(typeof createNewTab === 'function') createNewTab();
   };
 
-  // Double-clic (souris / clavier)
+  // --- souris / clavier ---
+  btn.addEventListener('click', ()=>{
+    if(longFired){ longFired = false; return; }
+    // On attend un eventuel second clic avant d'ouvrir la liste
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(()=>{
+      clickTimer = null;
+      if(typeof openAKPicker === 'function') openAKPicker();
+    }, 260);
+  });
+
   btn.addEventListener('dblclick', (e)=>{
     e.preventDefault();
+    clearTimeout(clickTimer); clickTimer = null;
     if(typeof createNewTab === 'function') createNewTab();
   });
 
-  // Appui long (tactile)
-  const startPress = ()=>{ longFired = false; clearTimeout(pressTimer); pressTimer = setTimeout(openManual, 500); };
+  // --- tactile : appui long ---
+  const startPress = ()=>{
+    longFired = false;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(openManual, 500);
+  };
   const cancelPress = ()=>{ clearTimeout(pressTimer); pressTimer = null; };
+
   btn.addEventListener('touchstart', startPress, { passive:true });
   btn.addEventListener('touchend',   cancelPress);
   btn.addEventListener('touchmove',  cancelPress, { passive:true });
   btn.addEventListener('touchcancel',cancelPress);
-  btn.addEventListener('contextmenu', e=> e.preventDefault());
 
-  // Indice visuel si l'utilisateur fait juste un clic simple
-  btn.addEventListener('click', ()=>{
-    if(longFired){ longFired = false; return; }
-    if(typeof showPopup === 'function'){
-      showPopup('Appui long ou double-clic pour ajouter un vol', '#334155', 1800);
-    }
-  });
+  // Empeche le menu contextuel pendant l'appui long
+  btn.addEventListener('contextmenu', e=> e.preventDefault());
 }
 
 function renderTabs(){
   const tabBar = document.getElementById('tab-bar');
   if(!tabBar) return;
 
-  // Bouton unique "VOL" : pas de liste AK ici -> seul l'appui long (ou le
-  // double-clic) ajoute un vol manuel. Un simple clic ne fait rien (evite les
-  // creations accidentelles).
-  tabBar.innerHTML = `
-    <button class="button is-link is-light" type="button" id="volsBtn"
-            title="Appui long ou double-clic : ajouter un vol">
-      Vols
-    </button>
-  `;
+  // Un seul bouton : clic = liste Airport Keeper,
+  // double-clic ou appui long = creation d'un vol hors AK.
+  // Bouton Vols : placé avant la bande défilante des onglets (jamais recouvert)
+  document.getElementById('volsBtn')?.remove();
+  tabBar.innerHTML = '';
+  tabBar.insertAdjacentHTML('beforebegin', `
+    <button class="vols-btn" type="button" id="volsBtn" aria-label="Ajouter un vol"
+            title="Clic : liste des vols — Double-clic ou appui long : vol hors Keeper">
+      <svg class="ico"><use href="#i-plus"/></svg><span class="vb-t">Vols</span>
+    </button>`);
   wireVolsButton();
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
@@ -1624,31 +1978,71 @@ function renderTabs(){
 
     const cie  = (data.Cie  || '').toUpperCase();
     const nvol = (data.NVol || '').toUpperCase();
-    const to   = (data.To   || '').toUpperCase();
+    const to   = (data.To   || '').toUpperCase().trim();
+    const from = (data.From || '').toUpperCase().trim();
 
-    // ✅ Priorité : depFF > arrFF > Cie+NVol
+    // Libellé : n° du départ | destination,
+    // ou n° de l'arrivée | provenance s'il n'y a pas de départ lié,
+    // à défaut (vol manuel) Cie+N° | destination.
     const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
     const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
-    const volRef = depFF || arrFF || `${cie}${nvol}`.trim();
+    const manual = `${cie}${nvol}`.trim();
+    let volRef, place;
+    if(depFF)      { volRef = depFF;  place = to;   }
+    else if(arrFF) { volRef = arrFF;  place = from; }
+    else           { volRef = manual; place = to;   }
 
     let label =
-      volRef || to
-        ? (to ? `${volRef} | ${to}`.trim() : volRef)
+      volRef || place
+        ? (place ? `${volRef} | ${place}`.trim() : volRef)
         : 'VOL';
 
     const wrap = document.createElement('span');
-    wrap.className = 'tab-wrap';
+    wrap.className = 'tab-wrap flt' + (id === currentTabId ? ' is-on' : '');
 
     // bouton onglet (switch)
     const btn = document.createElement('button');
-    btn.className = `button ${id === currentTabId ? 'is-link' : 'is-light'}`;
-    btn.textContent = label || 'VOL';
+    btn.className = 'flt-go';
+    btn.type = 'button';
+    // B3 : rond compagnie entouré de l'anneau d'avancement, puis n° et escale
+    const cieCode = (cie || volRef.slice(0,2) || '').slice(0,2);
+    const num = volRef ? (cieCode && volRef.startsWith(cieCode) ? volRef.slice(cieCode.length) : volRef) : '';
+    btn.innerHTML = (volRef || place)
+      ? `<span class="flt-cie"><b>${escapeHtml(cieCode || '–')}</b></span><span class="flt-n">${escapeHtml(num)}</span>${place ? `<span class="flt-d">${escapeHtml(place)}</span>` : ''}`
+      : `<span class="flt-cie"><b>–</b></span><span class="flt-n">VOL</span>`;
+    btn.setAttribute('aria-label', label || 'VOL');
+    wrap.dataset.tab = id;
     btn.onclick = ()=> switchTab(id);
     btn.ondblclick = ()=> openTabCloseModal(id);
 
+    // Bouton refresh ↻ — toujours affiché, grisé si pas de AK
+    const r = document.createElement('button');
+    r.className = 'tab-refresh';
+    r.type = 'button';
+    r.title = 'Rafraîchir depuis AK';
+    r.setAttribute('aria-label', 'Rafraîchir depuis AK');
+    r.innerHTML = '<svg class="ico"><use href="#i-refresh"/></svg>';
+    r.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      r.classList.add('is-loading');
+      try { await refreshAKTab(id); }
+      finally { r.classList.remove('is-loading'); }
+    };
+
+    if (!data.akMeta) {
+      r.disabled = true;
+      r.title = "Pas de vol AK associé";
+    }
+
     wrap.appendChild(btn);
+    wrap.appendChild(r);
     tabBar.appendChild(wrap);
   });
+
+  // Garder l'onglet actif visible dans la bande défilante
+  const on = tabBar.querySelector('.flt.is-on');
+  if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'nearest' });
 
   updateHeaderOffset();
 }
@@ -1662,6 +2056,41 @@ function renderTabs(){
 function akFlightKey(f){
   const id = String(f?.id || '').trim();
   return id ? ('AK_' + id) : null;
+}
+
+// Cle de ROTATION : identique pour l'arrivee et le depart d'un meme avion.
+// Construite a partir de la paire {id, linkedId} triee, donc independante
+// du troncon (ARR ou DEP) qu'on regarde.
+function akRotKeyFrom(id, linkedId){
+  id = String(id || '').trim();
+  linkedId = String(linkedId || '').trim();
+  if(!id) return null;
+  if(linkedId){
+    const p = [id, linkedId].sort();
+    return 'AKROT_' + p[0] + '_' + p[1];
+  }
+  return 'AK_' + id;   // pas de jumeau connu -> cle simple
+}
+
+// Cle de rotation d'un vol AK au moment de l'ouverture : on resout le
+// troncon oppose (meme logique que _doApplyAKFlight : linkedId puis
+// fallback immat + meme jour operationnel) pour obtenir la meme cle
+// que celle stockee dans akMeta.
+function akRotKey(f, flow){
+  const selfId = String(f?.id || '').trim();
+  if(!selfId) return null;
+  // Meme priorite que resolvedLinkedId dans _doApplyAKFlight :
+  // le troncon resolu (linkedId valide meme-jour OU immat+meme-jour) d'abord,
+  // puis f.linkedId brut en dernier recours.
+  let otherId = '';
+  try{
+    const other = (String(flow).toUpperCase() === 'ARR')
+      ? findLinkedDepForArr(f)
+      : findLinkedArrForDep(f);
+    if(other && other.id) otherId = String(other.id).trim();
+  }catch(_){}
+  if(!otherId) otherId = String(f?.linkedId || '').trim();
+  return akRotKeyFrom(selfId, otherId);
 }
 
 // Cherche un onglet deja ouvert portant la meme cle de vol
@@ -1752,7 +2181,7 @@ function getTabFlightKey(tabId){
   try{
     const d = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
     const meta = d?.akMeta;
-    if(meta?.id) return `AK_${meta.id}`;
+    if(meta?.id) return akRotKeyFrom(meta.id, meta.linkedId);
     const date = (d.Date||'').replaceAll('-','');
     const immat = (d.Immat||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     const from = (d.From||'').toUpperCase();
@@ -1786,7 +2215,7 @@ function createNewTab(){
   // snapshot initial
   const data = {};
   document.querySelectorAll('input, select, textarea').forEach(el=>{
-    if(el.id === 'utcToggle' || el.id === 'darkToggle') return;
+    if(!el.id || el.id === 'utcToggle' || el.id === 'darkToggle') return;
     data[el.id] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : (el.value || '');
   });
   data.infovolOpen = '0';
@@ -2089,7 +2518,7 @@ function generateTimingFields(){
         <div class="control">
           <div class="time-wrap" data-id="${id}">
             <input type="time" id="${id}" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('${id}')">
-            <div class="input tw-display" id="tw-disp-${id}">--:--</div>
+            <div class="tw-display" id="tw-disp-${id}">--:--</div>
             <div class="tw-zone tw-zone-left"  data-action="minus">−1</div>
             <div class="tw-zone tw-zone-center" data-action="now"></div>
             <div class="tw-zone tw-zone-right" data-action="plus">+1</div>
@@ -2106,72 +2535,56 @@ function generateTimingFields(){
     <div class="card mb-4">
       <div class="card-content">
         <div class="grid-auto">
-          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (L1)')}</div>
-          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (L2)')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarque','1er débarqué (AV)')}</div>
+          <div class="span-6">${fieldHTML('PremierDebarqueL2','1er débarqué (AR)')}</div>
           <div class="span-6">${fieldHTML('ArriveeFuel','Arrivée Avitair',true,false,'is-warning')}</div>
           <div class="span-6">${fieldHTML('DernierDebarque','Dernier débarqué')}</div>
           <div class="span-6">${fieldHTML('ArriveeLiftArr','Arrivée lift',false,false,'is-success')}</div>
           <div class="span-6">${fieldHTML('DepartLiftArr','Départ lift',false,false,'is-success')}</div>
         </div>
       </div>
-    </div>`;
+    </div>
+
+    <div id="evZoneArr">
+    <div id="panel-tapis" class="card mb-3 ev-panel" data-ev="tapis" style="display:none;">
+      <div class="ev-h"><i style="background:#0d9488"></i><b>Tapis bagages</b><button type="button" class="ev-x" onclick="toggleDepExtra('tapis')" aria-label="Masquer Tapis bagages">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('MiseEnPlaceTapis','Mise en place tapis',false,false,'is-success')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-dechargement" class="card mb-3 ev-panel" data-ev="dechargement" style="display:none;">
+      <div class="ev-h"><i style="background:#15803d"></i><b>Déchargement bagages</b><button type="button" class="ev-x" onclick="toggleDepExtra('dechargement')" aria-label="Masquer Déchargement bagages">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutDechargementBagages','Début déchargement',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('FinDechargementBagages','Fin déchargement',false,false,'is-success')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-repositionnement" class="card mb-3 ev-panel" data-ev="repositionnement" style="display:none;">
+      <div class="ev-h"><i style="background:#3273dc"></i><b>Repositionnement avion</b><button type="button" class="ev-x" onclick="toggleDepExtra('repositionnement')" aria-label="Masquer Repositionnement avion">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutRepositionnement','Début repositionnement',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('FinRepositionnement','Fin repositionnement',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+    </div>
+    <button type="button" class="ev-add" id="evAddBtnArr" onclick="uiEvOpen('arr')"><span>+</span> Ajouter un événement</button>
+`;
 
   /* ===== DÉPART ===== */
   const depNoHeader = `
-    <div class="buttons mb-4" style="justify-content:center;gap:.5rem;">
+    <div class="dep-extra-legacy" hidden>
       <button class="button is-rounded is-light dep-extra-btn" id="btn-crew" type="button" onclick="toggleDepExtra('crew')" style="font-weight:700;">Crew</button>
       <button class="button is-rounded is-light dep-extra-btn" id="btn-recherche-bag" type="button" onclick="toggleDepExtra('recherche-bag')" style="font-weight:700;">Recherche bag</button>
       <button class="button is-rounded is-light dep-extra-btn" id="btn-inad" type="button" onclick="toggleDepExtra('inad')" style="font-weight:700;">INAD</button>
       <button class="button is-rounded is-light dep-extra-btn" id="btn-gpu" type="button" onclick="toggleDepExtra('gpu')" style="font-weight:700;">Nayak</button>
-    </div>
-
-    <!-- Panneau Crew -->
-    <div id="panel-crew" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
-          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panneau Recherche bag -->
-    <div id="panel-recherche-bag" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-4">
-            <div class="field">
-              <label class="label"><span class="tw-dot" style="background:#ec4899;"></span>Nombre de bags</label>
-              <div class="control">
-                <input class="input" type="number" id="RechercheBagNombre" min="0" placeholder="0" style="text-align:center;" oninput="twSync('RechercheBagNombre')">
-              </div>
-            </div>
-          </div>
-          <div class="span-4">${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-pink')}</div>
-          <div class="span-4">${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-pink')}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panneau INAD -->
-    <div id="panel-inad" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-red')}</div>
-          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-red')}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panneau GPU -->
-    <div id="panel-gpu" class="card mb-3" style="display:none;">
-      <div class="card-content">
-        <div class="grid-auto">
-          <div class="span-4">${fieldHTML('AppelNayak','Appel Nayak',false,false,'is-jaune')}</div>
-          <div class="span-4">${fieldHTML('ArriveeNayak','Arrivée Nayak',false,false,'is-jaune')}</div>
-          <div class="span-4">${fieldHTML('DepartNayak','Départ Nayak',false,false,'is-jaune')}</div>
-        </div>
-      </div>
     </div>
 
     <div class="card">
@@ -2184,16 +2597,171 @@ function generateTimingFields(){
           <div class="span-6">${fieldHTML('DepartFuel','Départ Avitair',false,false,'is-warning')}</div>
           <div class="span-6">${fieldHTML('RemiseLID', 'Remise LDS/LDF')}</div>
           <div class="span-6">${fieldHTML('FermeturePorteAvion','Fermeture porte avion',false,false,'is-bordeaux')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="evZone">
+    <div id="panel-chargement" class="card mb-3 ev-panel" data-ev="chargement" style="display:none;">
+      <div class="ev-h"><i style="background:#15803d"></i><b>Chargement bagages</b><button type="button" class="ev-x" onclick="toggleDepExtra('chargement')" aria-label="Masquer Chargement bagages">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutChargementBagages','Début chargement',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('FinChargementBagages','Fin chargement',false,false,'is-success')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-casque" class="card mb-3 ev-panel" data-ev="casque" style="display:none;">
+      <div class="ev-h"><i style="background:#7c3aed"></i><b>Connexion casque</b><button type="button" class="ev-x" onclick="toggleDepExtra('casque')" aria-label="Masquer Connexion casque">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
           <div class="span-6">${fieldHTML('ConnexionAgentCasque','Connexion casque',false,false,'is-purple')}</div>
         </div>
       </div>
-    </div>`;
+    </div>
+
+    <div id="panel-push" class="card mb-3 ev-panel" data-ev="push" style="display:none;">
+      <div class="ev-h"><i style="background:#3273dc"></i><b>Push</b><button type="button" class="ev-x" onclick="toggleDepExtra('push')" aria-label="Masquer Push">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ConnexionPush','Connexion push',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('ChangementPush','Changement de push',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-soutes" class="card mb-3 ev-panel" data-ev="soutes" style="display:none;">
+      <div class="ev-h"><i style="background:#7f1d1d"></i><b>Portes de soute</b><button type="button" class="ev-x" onclick="toggleDepExtra('soutes')" aria-label="Masquer Portes de soute">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('FermetureSouteAV','Fermeture soute AV',false,false,'is-bordeaux')}</div>
+          <div class="span-6">${fieldHTML('FermetureSouteAR','Fermeture soute AR',false,false,'is-bordeaux')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-echelles" class="card mb-3 ev-panel" data-ev="echelles" style="display:none;">
+      <div class="ev-h"><i style="background:#636363"></i><b>Retrait échelles</b><button type="button" class="ev-x" onclick="toggleDepExtra('echelles')" aria-label="Masquer Retrait échelles">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('RetraitEchelleAV','Retrait échelle AV',false,false,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('RetraitEchelleAR','Retrait échelle AR',false,false,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-reouverture" class="card mb-3 ev-panel" data-ev="reouverture" style="display:none;">
+      <div class="ev-h"><i style="background:#D7263D"></i><b>Réouverture porte</b><button type="button" class="ev-x" onclick="toggleDepExtra('reouverture')" aria-label="Masquer Réouverture porte">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ReouverturePorteAvion','Réouverture porte avion',false,false,'is-bordeaux')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-comptage" class="card mb-3 ev-panel" data-ev="comptage" style="display:none;">
+      <div class="ev-h"><i style="background:#15803d"></i><b>Comptage bagages</b><button type="button" class="ev-x" onclick="toggleDepExtra('comptage')" aria-label="Masquer Comptage bagages">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutComptageBagages','Début comptage',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('FinComptageBagages','Fin comptage',false,false,'is-success')}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Panneau Crew -->
+    <div id="panel-crew" class="card mb-3 ev-panel" data-ev="crew" style="display:none;">
+      <div class="ev-h"><i style="background:#334155"></i><b>Crew</b><button type="button" class="ev-x" onclick="toggleDepExtra('crew')" aria-label="Masquer Crew">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('ArrPNT','Arrivée PNT',false,true,'is-dark')}</div>
+          <div class="span-6">${fieldHTML('ArrPNC','Arrivée PNC',false,true,'is-dark')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau Recherche bag -->
+    <div id="panel-recherche-bag" class="card mb-3 ev-panel" data-ev="recherche-bag" style="display:none;">
+      <div class="ev-h"><i style="background:#ec4899"></i><b>Recherche bag</b><button type="button" class="ev-x" onclick="toggleDepExtra('recherche-bag')" aria-label="Masquer Recherche bag">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          ${fieldHTML('RechercheBagDebut','Début de recherche',false,false,'is-pink')}
+          ${fieldHTML('RechercheBagFin','Fin de recherche',false,false,'is-pink')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau INAD -->
+    <div id="panel-inad" class="card mb-3 ev-panel" data-ev="inad" style="display:none;">
+      <div class="ev-h"><i style="background:#D7263D"></i><b>INAD</b><button type="button" class="ev-x" onclick="toggleDepExtra('inad')" aria-label="Masquer INAD">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('AnnonceINAD','Annonce INAD',false,true,'is-red')}</div>
+          <div class="span-6">${fieldHTML('ArriveeINAD','Arrivée INAD',false,true,'is-red')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau GPU -->
+    <div id="panel-gpu" class="card mb-3 ev-panel" data-ev="gpu" style="display:none;">
+      <div class="ev-h"><i style="background:#FFAD00"></i><b>Nayak</b><button type="button" class="ev-x" onclick="toggleDepExtra('gpu')" aria-label="Masquer Nayak">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-4">${fieldHTML('AppelNayak','Appel Nayak',false,false,'is-jaune')}</div>
+          <div class="span-4">${fieldHTML('ArriveeNayak','Arrivée Nayak',false,false,'is-jaune')}</div>
+          <div class="span-4">${fieldHTML('DepartNayak','Départ Nayak',false,false,'is-jaune')}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- v2.36 : événements d'escale, affichés côté Arrivée ou Départ selon l'endroit où on les ajoute (champ EvCote) -->
+    <div id="panel-cleaning" class="card mb-3 ev-panel" data-ev="cleaning" style="display:none;">
+      <div class="ev-h"><i style="background:#0891b2"></i><b>Cleaning cabine</b><button type="button" class="ev-x" onclick="toggleDepExtra('cleaning')" aria-label="Masquer Cleaning cabine">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutCleaningCabine','Début cleaning cabine',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('FinCleaningCabine','Fin cleaning cabine',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+    <div id="panel-vidange" class="card mb-3 ev-panel" data-ev="vidange" style="display:none;">
+      <div class="ev-h"><i style="background:#78716c"></i><b>Vidange toilettes</b><button type="button" class="ev-x" onclick="toggleDepExtra('vidange')" aria-label="Masquer Vidange toilettes">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutVidangeToilettes','Début vidange toilettes',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('FinVidangeToilettes','Fin vidange toilettes',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+    <div id="panel-eau" class="card mb-3 ev-panel" data-ev="eau" style="display:none;">
+      <div class="ev-h"><i style="background:#2563eb"></i><b>Eau potable</b><button type="button" class="ev-x" onclick="toggleDepExtra('eau')" aria-label="Masquer Eau potable">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutEauPotable','Début eau potable',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('FinEauPotable','Fin eau potable',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+    <div id="panel-degivrage" class="card mb-3 ev-panel" data-ev="degivrage" style="display:none;">
+      <div class="ev-h"><i style="background:#0ea5e9"></i><b>Dégivrage</b><button type="button" class="ev-x" onclick="toggleDepExtra('degivrage')" aria-label="Masquer Dégivrage">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('DebutDegivrage','Début dégivrage',false,false,'is-link')}</div>
+          <div class="span-6">${fieldHTML('FinDegivrage','Fin dégivrage',false,false,'is-link')}</div>
+        </div>
+      </div>
+    </div>
+    <input id="EvCote" type="hidden">
+    </div>
+    <button type="button" class="ev-add" id="evAddBtn" onclick="uiEvOpen('dep')"><span>+</span> Ajouter un événement</button>
+`;
 
   const toggle = `
     <div class="tabs is-toggle is-toggle-rounded is-centered mb-4">
       <ul>
         <li id="seg-arr-li"><a onclick="switchTimingPanel('arr')"><span>Arrivée</span></a></li>
         <li id="seg-dep-li"><a onclick="switchTimingPanel('dep')"><span>Départ</span></a></li>
+        <li id="seg-tl-li"><a onclick="switchTimingPanel('tl')"><span>Timeline</span></a></li>
       </ul>
     </div>`;
 
@@ -2214,13 +2782,22 @@ function switchTimingPanel(mode){
   const depPanel=document.getElementById('panel-dep');
   const liArr=document.getElementById('seg-arr-li');
   const liDep=document.getElementById('seg-dep-li');
+  const liTl =document.getElementById('seg-tl-li');
+  const tlCard=document.getElementById('timelineCard');
 
   if(arrPanel) arrPanel.style.display = (mode==='arr') ? '' : 'none';
   if(depPanel) depPanel.style.display = (mode==='dep') ? '' : 'none';
+  if(tlCard)   tlCard.style.display   = (mode==='tl')  ? '' : 'none';
 
   if(liArr) liArr.classList.toggle('is-active', mode==='arr');
-  if(liDep) liDep.classList.toggle('is-active', mode!=='arr');
+  if(liDep) liDep.classList.toggle('is-active', mode==='dep');
+  if(liTl)  liTl.classList.toggle('is-active',  mode==='tl');
 
+  if(mode === 'tl'){
+    // La timeline mesure sa largeur : on la dessine une fois visible.
+    requestAnimationFrame(()=>{ try{ renderTimeline(); }catch(e){} });
+    return;   // l'onglet mémorisé reste Arrivée / Départ
+  }
   localStorage.setItem('timingPanel', mode);
 }
 
@@ -2306,7 +2883,9 @@ function checkAutoSwitchToDep(){
     const dd  = (document.getElementById('DernierDebarque')?.value  || '').trim();
     const al  = (document.getElementById('ArriveeLiftArr')?.value   || '').trim();
     const dl  = (document.getElementById('DepartLiftArr')?.value    || '').trim();
-    if(dd && !(al && !dl)) switchTimingPanel('dep');
+    // Seulement depuis Arrivée : ne pas arracher l'utilisateur de la Timeline
+    const onArr = document.getElementById('panel-arr')?.style.display !== 'none';
+    if(dd && !(al && !dl) && onArr) switchTimingPanel('dep');
   }, 3000);
 }
 
@@ -2602,13 +3181,13 @@ function updateDLCode() {
   // si incomplet : on ne force rien
   if(sobt == null || aobt == null || tobt == null) return;
 
-  // total retard
-  let total = aobt - sobt;
-  if(total < 0) total += 1440;
+  // total retard : diff signé (gère minuit) ; départ en avance = pas de retard
+  const total = totalDelayMinutes() || 0;
 
-  // 93/93A = EOBT - SOBT (borné)
+  // 93/93A = EOBT - SOBT (borné au retard réel)
   let fixed = tobt - sobt;
-  if(fixed < 0) fixed += 1440;
+  if(fixed < -720) fixed += 1440;
+  if(fixed >  720) fixed -= 1440;
   fixed = Math.max(0, Math.min(fixed, total));
 
   const v1 = (c1.value || '').toUpperCase().trim();
@@ -2730,6 +3309,69 @@ function updateDlTotalBadge(){
   } else {
     turn.style.display = 'none';
   }
+
+  updateRetardPanelState();
+}
+
+/* Onglet Retard : sans retard au départ (AOBT <= SOBT), les codes sont
+   masqués ; DL1 rempli automatiquement en 93/93A est marqué AUTO. */
+function updateRetardPanelState(){
+  const panel = document.querySelector('.panel-retard');
+  const hint  = document.getElementById('dlNoDelayHint');
+  const noDelay = totalDelayMinutes() === 0;   // null = SOBT ou AOBT manquant
+  if(panel) panel.classList.toggle('no-delay', noDelay);
+  if(hint)  hint.hidden = !noDelay;
+
+  const c1 = (document.getElementById('DLcode1')?.value || '').toUpperCase().trim();
+  const row1 = document.getElementById('dlRow1');
+  if(row1) row1.classList.toggle('dl-auto', c1 === '93' || c1 === '93A');
+
+  // Une erreur de validation affichée disparaît dès qu'elle est corrigée
+  const box = document.getElementById('validateError');
+  if(box && !box.hidden) showValidateError(checkValidateRules());
+  if(window.syncDelayUI) window.syncDelayUI();
+}
+
+/* Règles de validation du vol :
+   - AOBT obligatoire (sauf destination BVA, comme avant) ;
+   - si AOBT > SOBT : chaque durée a son code, chaque code sa durée,
+     et le total des durées est égal au retard. */
+function checkValidateRules(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  const isBVADest = val('To').toUpperCase() === 'BVA';
+  if(!val('AOBT') && !isBVADest){
+    return { popup: '⚠️ AOBT manquant — impossible de valider',
+             html: 'AOBT manquant : il se saisit dans l\'onglet Vol. <a href="#" onclick="uiTab(\'vol\'); return false;">Aller à Vol</a>' };
+  }
+
+  const total = totalDelayMinutes();
+  if(!total) return null;   // pas de retard (ou SOBT inconnu) : rien d'obligatoire
+
+  let sum = 0;
+  for(const i of [1,2,3]){
+    const code = val('DLcode' + i);
+    const dur  = parseInt(val('DLduree' + i), 10) || 0;
+    if(dur > 0 && !code) return { popup: `⚠️ Code retard ${i} manquant`, html: `Code retard manquant pour la durée ${i} (${dur} min).` };
+    if(code && dur <= 0) return { popup: `⚠️ Durée ${i} manquante`, html: `Durée manquante pour le code retard ${escapeHtml(code)}.` };
+    sum += dur;
+  }
+  if(sum === 0){
+    return { popup: `⚠️ Retard de ${total} min : codes retard obligatoires`,
+             html: `Retard de <b>${total} min</b> au départ : saisir au moins un code retard et sa durée.` };
+  }
+  if(sum !== total){
+    return { popup: '⚠️ Total des codes retard ≠ retard',
+             html: `Le total des durées (<b>${sum} min</b>) doit être égal au retard (<b>${total} min</b>).` };
+  }
+  return null;
+}
+
+function showValidateError(err){
+  const box = document.getElementById('validateError');
+  const txt = document.getElementById('validateErrorText');
+  if(!box || !txt) return;
+  box.hidden = !err;
+  txt.innerHTML = err ? err.html : '';
 }
 
 function redistributeDL(){
@@ -2964,6 +3606,8 @@ function setTimeModeUTC(enable, fromInit=false){
 
   const tzLabel = document.getElementById('tzLabel');
   if(tzLabel) tzLabel.textContent = enable ? 'UTC' : 'Local';
+  const tzB = document.getElementById('fhTz');
+  if(tzB){ tzB.textContent = enable ? 'UTC' : 'LT'; tzB.classList.toggle('utc', !!enable); tzB.title = enable ? 'Heures en UTC' : 'Heures locales'; }
   localStorage.setItem('modeUTC', enable ? '1' : '0');
 
   // ✅ Convertir les valeurs de temps dans TOUS les onglets en localStorage
@@ -3005,66 +3649,13 @@ function setTimeModeUTC(enable, fromInit=false){
   const timerCtot2 = document.getElementById('timer-ctot');
   if(ctotEl2 && timerCtot2) timerCtot2.textContent = ctotEl2.value || '--:--';
 
-  // Si le popup CTOT est ouvert, le redessiner pour suivre le mode local/UTC
+  // Si le popup regulation CTOT est ouvert, on le redessine pour que l'heure
+  // et l'historique suivent le nouveau mode (local/UTC) sans le refermer.
   const ctotModal = document.getElementById('ctotRegModal');
-  if(ctotModal && ctotModal.style.display === 'flex' && typeof showCtotManual === 'function'){
-    showCtotManual();
+  if(ctotModal && ctotModal.style.display === 'flex' && typeof showCtotRegulation === 'function'){
+    showCtotRegulation();
   }
 
-}
-
-/* CTOT — edition manuelle (pas de regulation AK dans TURNAROUND) */
-function showCtotManual(){
-  const modal = document.getElementById('ctotRegModal');
-  const body  = document.getElementById('ctotRegBody');
-  const hEl   = document.getElementById('ctotRegHeure');
-  if(!modal || !body) return;
-
-  const ctot  = (document.getElementById('CTOT')?.value || '').trim();
-  const tzSuf = isUTC ? 'Z' : 'LT';
-  if(hEl) hEl.textContent = ctot ? (ctot + ' ' + tzSuf) : '';
-
-  body.innerHTML =
-      '<div style="font-weight:800; color:var(--muted); font-size:.8rem; margin-bottom:6px;">Modifier le CTOT (' + tzSuf + ')</div>'
-    + '<div style="display:flex; gap:8px; align-items:center;">'
-    + '<input id="ctotManualInput" type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="' + ctot + '" '
-    + 'style="width:96px; padding:8px 10px; border:1.5px solid var(--field-border); border-radius:8px; background:var(--field); color:var(--text); font-size:1rem; font-weight:800; text-align:center; letter-spacing:.05em;">'
-    + '<button type="button" onclick="applyManualCtot()" style="flex:1; padding:9px 14px; border:none; border-radius:8px; background:#2563eb; color:#fff; font-weight:800; cursor:pointer;">Appliquer</button>'
-    + (ctot ? '<button type="button" onclick="clearManualCtot()" style="padding:9px 14px; border:none; border-radius:8px; background:#ef4444; color:#fff; font-weight:800; cursor:pointer;">Supprimer</button>' : '')
-    + '</div>';
-
-  modal.style.display = 'flex';
-}
-
-function applyManualCtot(){
-  const inp = document.getElementById('ctotManualInput');
-  if(!inp) return;
-  const m = /^(\d{1,2}):?(\d{2})$/.exec((inp.value || '').trim());
-  if(!m){ inp.style.borderColor = '#ef4444'; return; }
-  const hh = parseInt(m[1],10), mm = parseInt(m[2],10);
-  if(hh > 23 || mm > 59){ inp.style.borderColor = '#ef4444'; return; }
-  const val = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
-  const ctotEl = document.getElementById('CTOT');
-  if(ctotEl) ctotEl.value = val;
-  const timerCtot = document.getElementById('timer-ctot');
-  if(timerCtot) timerCtot.textContent = val;
-  if(typeof updateChipColors === 'function') updateChipColors();
-  if(typeof updateAllCalculations === 'function') updateAllCalculations();
-  if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
-  const modal = document.getElementById('ctotRegModal');
-  if(modal) modal.style.display = 'none';
-}
-
-function clearManualCtot(){
-  const ctotEl = document.getElementById('CTOT');
-  if(ctotEl) ctotEl.value = '';
-  const timerCtot = document.getElementById('timer-ctot');
-  if(timerCtot) timerCtot.textContent = '--:--';
-  if(typeof updateChipColors === 'function') updateChipColors();
-  if(typeof updateAllCalculations === 'function') updateAllCalculations();
-  if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
-  const modal = document.getElementById('ctotRegModal');
-  if(modal) modal.style.display = 'none';
 }
 
 /* Popup */
@@ -3120,6 +3711,15 @@ function computeTimelineWindow(allTimes){
   }
 
   const ends = [SOBT, AOBT, EOBT, CTOT, ...(allTimes || [])].filter(v => v != null);
+
+  // Avion au bloc et pas encore parti : la fenetre va jusqu'a maintenant (ligne NOW
+  // visible, barres en cours non coupees), dans la limite de 6 h apres l'arrivee.
+  if(AIBT != null && AOBT == null){
+    const d = new Date();
+    const nowM = (typeof isUTC !== 'undefined' && isUTC) ? d.getUTCHours()*60 + d.getUTCMinutes() : d.getHours()*60 + d.getMinutes();
+    const since = ((nowM - AIBT) % 1440 + 1440) % 1440;
+    if(since <= 360) ends.push(AIBT + since + 3);
+  }
 
   if(starts.length && ends.length){
     let startRef = Math.min(...starts);
@@ -3188,10 +3788,24 @@ function collectTimelineData(){
     ['ArrPNT','Arrivée PNT'],
     ['ArrPNC','Arrivée PNC'],
     ['FermeturePorteAvion','Fermeture porte avion'],
+    ['ReouverturePorteAvion','Réouverture porte'],
+    ['MiseEnPlaceTapis','Tapis bagages'],
+    ['FermetureSouteAV','Fermeture soute AV'],
+    ['FermetureSouteAR','Fermeture soute AR'],
+    ['RetraitEchelleAV','Retrait échelle AV'],
+    ['RetraitEchelleAR','Retrait échelle AR'],
+    ['ConnexionPush','Connexion push'],
+    ['ChangementPush','Changement de push'],
   ];
   singles.forEach(([id,label])=>{
     const t = parseHHMM(document.getElementById(id)?.value || '');
     if(t!=null) fixedPoints.push({label, t, cls:'tl--std'});
+  });
+  // Autres heures d'événements (début seul compris) : elles élargissent la fenêtre
+  ['ConnexionAgentCasque','AnnonceINAD','ArriveeINAD','AppelNayak','ArriveeNayak','DepartNayak','RechercheBagDebut','RechercheBagFin',
+   'DebutDechargementBagages','DebutRepositionnement','DebutChargementBagages','DebutComptageBagages'].forEach(id=>{
+    const t = parseHHMM(document.getElementById(id)?.value || '');
+    if(t!=null) fixedPoints.push({label:id, t, cls:'tl--ev'});
   });
 
   // ===== Cabin release (Dernier débarqué -> Premier embarqué)
@@ -3230,6 +3844,16 @@ function collectTimelineData(){
     {label:'Avitair',      pair:getPairWindow('ArriveeFuel','DepartFuel'), cls:'tl--std', color:'#f59e0b'},
     {label:'Lift (Arr)',   pair:getPairWindow('ArriveeLiftArr','DepartLiftArr'), cls:'tl--std', color:'#a855f7'},
     {label:'Lift (Dep)',   pair:getPairWindow('ArriveeLift','DepartLift'), cls:'tl--std', color:'#16a34a'},
+    {label:'Déchargement', pair:getPairWindow('DebutDechargementBagages','FinDechargementBagages'), cls:'tl--std', color:'#15803d'},
+    {label:'Repositionnement', pair:getPairWindow('DebutRepositionnement','FinRepositionnement'), cls:'tl--std', color:'#3273dc'},
+    {label:'Chargement', pair:getPairWindow('DebutChargementBagages','FinChargementBagages'), cls:'tl--std', color:'#0f766e'},
+    {label:'Comptage bagages', pair:getPairWindow('DebutComptageBagages','FinComptageBagages'), cls:'tl--std', color:'#0d9488'},
+    {label:'Recherche bag', pair:getPairWindow('RechercheBagDebut','RechercheBagFin'), cls:'tl--std', color:'#ec4899'},
+    {label:'Nayak', pair:getPairWindow('ArriveeNayak','DepartNayak'), cls:'tl--std', color:'#FFAD00'},
+    {label:'Cleaning cabine', pair:getPairWindow('DebutCleaningCabine','FinCleaningCabine'), cls:'tl--std', color:'#0891b2'},
+    {label:'Vidange toilettes', pair:getPairWindow('DebutVidangeToilettes','FinVidangeToilettes'), cls:'tl--std', color:'#78716c'},
+    {label:'Eau potable', pair:getPairWindow('DebutEauPotable','FinEauPotable'), cls:'tl--std', color:'#2563eb'},
+    {label:'Dégivrage', pair:getPairWindow('DebutDegivrage','FinDegivrage'), cls:'tl--std', color:'#0ea5e9'},
   ];
 
   const durations = rows
@@ -3259,25 +3883,26 @@ function renderTimeline(){
   const total = Math.max(1, max - min);
 
   // ── Constantes layout ─────────────────────────────────────────
-  const LABEL_W    = 108;
-  const LEFT_PAD   = 24;
-  const MIN_PPM    = 9;
+  const LABEL_W    = 104;
+  const LEFT_PAD   = 10;
   const viewport   = scroller.clientWidth || 360;
-  const minTrackW  = Math.round(total * MIN_PPM);
-  const trackW     = Math.max(Math.round(viewport * timelineZoom), minTrackW);
+  // v2.12 « Gantt épuré » : à 100 % toute l'escale tient dans la largeur, le zoom agrandit
+  // v2.46 (Hugo) : le 100 % affiché correspond à l'ancien 200 % (50 % = toute l'escale dans la largeur)
+  const TL_BASE    = 2;
+  const trackW     = Math.max(120, Math.round((viewport - LEFT_PAD - 12) * timelineZoom * TL_BASE));
   canvas.style.width = (trackW + LEFT_PAD) + 'px';
 
   const PPM        = trackW / total;
-  const AXIS_H     = 42;
-  const ROW_H      = 52;
-  const BAR_H      = 34;
+  let   AXIS_H     = 40;
+  const ROW_H      = 38;
+  const BAR_H      = 12;
   const BAR_PAD    = (ROW_H - BAR_H) / 2;
-  const CONTENT_TOP = AXIS_H;
+  let   CONTENT_TOP = AXIS_H;
 
   const toPx = t => LEFT_PAD + ((toExtended(t, min, max) - min) / total) * trackW;
 
   // ── Tick adaptatif ────────────────────────────────────────────
-  const tickStep = [2,5,10,15,20,30].find(s => s * PPM >= 42) || 30;
+  const tickStep = [5,10,15,20,30,60].find(s => s * PPM >= 46) || 60;
 
   // ── Couleurs ──────────────────────────────────────────────────
   const barColors = {
@@ -3400,8 +4025,44 @@ function renderTimeline(){
 
   const POINT_EVENTS = new Set(['FermeturePorteAvion','RemiseLID','ConnexionCasque','ArriveeINAD','ArriveeNayak','ArrPNT','ArrPNC']);
 
+  // v2.22 : événements ajoutés → une ligne dès qu'une heure est saisie (début seul = barre en cours)
+  const EV_SPANS = [
+    ['Déchargement',     'DebutDechargementBagages', 'FinDechargementBagages'],
+    ['Repositionnement', 'DebutRepositionnement',    'FinRepositionnement'],
+    ['Chargement',       'DebutChargementBagages',   'FinChargementBagages'],
+    ['Comptage bagages', 'DebutComptageBagages',     'FinComptageBagages'],
+    ['Recherche bag',    'RechercheBagDebut',        'RechercheBagFin'],
+    ['Nayak',            'ArriveeNayak',             'DepartNayak'],
+    ['Cleaning cabine',  'DebutCleaningCabine',      'FinCleaningCabine'],
+    ['Vidange toilettes','DebutVidangeToilettes',    'FinVidangeToilettes'],
+    ['Eau potable',      'DebutEauPotable',          'FinEauPotable'],
+    ['Dégivrage',        'DebutDegivrage',           'FinDegivrage'],
+  ];
+  const EV_POINTS = [
+    ['MiseEnPlaceTapis','Tapis bagages'], ['ReouverturePorteAvion','Réouverture porte'],
+    ['FermetureSouteAV','Soute AV fermée'], ['FermetureSouteAR','Soute AR fermée'],
+    ['RetraitEchelleAV','Retrait échelle AV'], ['RetraitEchelleAR','Retrait échelle AR'],
+    ['ConnexionPush','Connexion push'], ['ChangementPush','Changement push'],
+    ['AnnonceINAD','Annonce INAD'], ['AppelNayak','Appel Nayak'],
+  ];
+  EV_POINTS.forEach(([id]) => POINT_EVENTS.add(id));
+  function eventRows(){
+    const out = [];
+    EV_SPANS.forEach(([label, s, e]) => {
+      const done = durations.find(d => d.label === label);
+      if(done){ out.push({ ...done, status:'complete', displayLabel: label }); return; }
+      const a = parseHHMM(document.getElementById(s)?.value || '');
+      if(a !== null) out.push({ label, a, b:null, cls:'tl--std', color:null, status:'in-progress', displayLabel: label });
+    });
+    EV_POINTS.forEach(([id, label]) => {
+      const a = parseHHMM(document.getElementById(id)?.value || '');
+      if(a !== null) out.push({ label:id, a, b:a, cls:'tl--std', color:null, status:'complete', displayLabel: label });
+    });
+    return out.sort((x, y) => toExtended(x.a, min, max) - toExtended(y.a, min, max));
+  }
+
   const ORDER = ['Débarquement','Cabin release','Avitair','Lift (Arr)','Embarquement','Lift (Dep)',
-                 'ArrPNT','ArrPNC','RemiseLID','FermeturePorteAvion','ConnexionCasque','ArriveeINAD','ArriveeNayak']
+                 'ArrPNT','ArrPNC','RemiseLID','FermeturePorteAvion','ConnexionCasque','ArriveeINAD']
                  .filter(l => !(hideCabinTidy && l === 'Cabin release'));
 
   // Ces 5 lignes s'affichent toujours avec leurs cibles, même sans données saisies
@@ -3465,6 +4126,70 @@ function renderTimeline(){
     }).filter(r => r !== null);
   }
 
+  rows = rows.concat(eventRows());
+
+  // v2.44 : repères verticaux (SIBT, AIBT, SOBT, AOBT, EOBT, CTOT, TOBT, NOW) calculés avant le dessin,
+  // pour réserver autant de rangées de puces que nécessaire au-dessus de l'axe
+  const _nowD   = new Date();
+  const _nowExt = toExtended(isUTC ? _nowD.getUTCHours()*60 + _nowD.getUTCMinutes() : _nowD.getHours()*60 + _nowD.getMinutes(), min, max);
+  const rawMarkers = [];
+  const ptOf = l => fixedPoints.find(p => p.label === l);
+  const MK = {
+    SIBT:{ bg:'var(--surface-2)', color:'var(--muted)', lineClass:'tl-sched-line', pr:1 },
+    SOBT:{ bg:'var(--surface-2)', color:'var(--muted)', lineClass:'tl-sched-line', pr:1 },
+    AIBT:{ bg:'var(--ok)',        color:'#fff',         lineClass:'tl-act-line',   pr:2 },
+    AOBT:{ bg:'var(--ok)',        color:'#fff',         lineClass:'tl-act-line',   pr:2 },
+    EOBT:{ bg:'var(--tl-eobt)',   color:'var(--surface)', lineClass:'tl-eobt-line', pr:3 },
+    CTOT:{ bg:'#f59e0b',          color:'#000',         lineClass:'tl-ctot-line',  pr:4 },
+  };
+  ['SIBT','AIBT','SOBT','AOBT','EOBT','CTOT'].forEach(l => {
+    const pt = ptOf(l); if(!pt) return;
+    const e = toExtended(pt.t, min, max);
+    if(e < min || e > max) return;
+    rawMarkers.push({ x: toPx(pt.t), label: l, ...MK[l] });
+  });
+  const ctotP = ptOf('CTOT');
+  if(ctotP){
+    const tobtT = toExtended(ctotP.t - 15, min, max);
+    if(tobtT >= min && tobtT <= max) rawMarkers.push({ x: toPx(tobtT), label:'TOBT', bg:'#fb923c', color:'#fff', lineClass:'tl-tobt-line', pr:3 });
+  }
+  if(_nowExt >= min && _nowExt <= max)
+    rawMarkers.push({ x: LEFT_PAD + ((_nowExt - min)/total)*trackW, label:'NOW', bg:'var(--yellow)', color:'#1b1b1b', lineClass:'tl-now-line', pr:5 });
+  // Repères à la même minute : une seule puce « SOBT · EOBT », la ligne la plus importante gagne
+  const allMarkers = [];
+  rawMarkers.sort((a, b) => a.x - b.x).forEach(m => {
+    const same = allMarkers.find(o => Math.abs(o.x - m.x) < 1 && o.label !== 'NOW' && m.label !== 'NOW');
+    if(!same){ allMarkers.push({ ...m, labels:[m.label] }); return; }
+    same.labels.push(m.label);
+    if(m.pr > same.pr){ Object.assign(same, { bg:m.bg, color:m.color, lineClass:m.lineClass, pr:m.pr }); }
+  });
+  const CHIP_H = 20, CHIP_GAP = 3;
+  const chipRows = [];
+  allMarkers.forEach(m => {
+    m.text = m.labels.join(' · ');
+    const w = m.text.length * 6.2 + 12;
+    // Puce gardée dans le cadre aux deux bords
+    const cx = Math.min(Math.max(m.x, w/2 + 2), trackW + LEFT_PAD - w/2 - 2);
+    if(cx !== m.x) m.cx = cx;
+    m.xStart = cx - w/2; m.xEnd = cx + w/2;
+    // 2 rangées au maximum : sinon la puce se décale à droite dans la rangée la moins chargée
+    const MAX_ROWS = 2;
+    const fits = r => !(chipRows[r] || []).some(o => m.xStart < o.xEnd + CHIP_GAP && m.xEnd + CHIP_GAP > o.xStart);
+    let r = 0;
+    while(r < MAX_ROWS && !fits(r)) r++;
+    if(r === MAX_ROWS){
+      const lastEnd = k => Math.max(...chipRows[k].map(o => o.xEnd));
+      r = lastEnd(0) <= lastEnd(1) ? 0 : 1;
+      const dx = lastEnd(r) + CHIP_GAP - m.xStart;
+      m.xStart += dx; m.xEnd += dx; m.cx = (m.cx ?? m.x) + dx;
+    }
+    (chipRows[r] = chipRows[r] || []).push(m);
+    m.row = r;
+  });
+  const nChipRows = Math.max(1, chipRows.length);
+  AXIS_H = Math.max(40, 18 + nChipRows * (CHIP_H + CHIP_GAP));
+  CONTENT_TOP = AXIS_H;
+
   // ── Hauteur totale (min 140px même sans actions) ──────────────
   const contentH = Math.max(140, CONTENT_TOP + Math.max(rows.length, 1) * ROW_H);
   canvas.style.height   = contentH + 'px';
@@ -3483,12 +4208,12 @@ function renderTimeline(){
   // Labels des actions
   rows.forEach((d, i) => {
     const cell = document.createElement('div');
-    cell.className = 'tl-lc-cell' + (i % 2 ? ' alt' : '');
+    cell.className = 'tl-lc-cell';
     cell.style.height = ROW_H + 'px';
 
     const name = document.createElement('span');
     name.textContent = d.displayLabel || d.label;
-    name.style.cssText = 'font-size:11px; font-weight:700; line-height:1;';
+    name.style.cssText = 'font-size:11.5px; font-weight:700; line-height:1.15; color:var(--fg); white-space:normal;';
     cell.appendChild(name);
 
     // Statut (uniquement si action complète et cible connue)
@@ -3510,8 +4235,8 @@ function renderTimeline(){
           while(ref - endAdj >  720) endAdj += 1440;
           const onTime = endAdj <= deadline;
           const badge = document.createElement('span');
-          badge.textContent = onTime ? '✓ On time' : '✗ Late';
-          badge.style.cssText = `font-size:9px;font-weight:800;letter-spacing:.03em;color:${onTime ? '#16a34a' : '#dc2626'};`;
+          badge.textContent = onTime ? 'À l\'heure' : 'Retard';
+          badge.style.cssText = `font-size:10px;font-weight:700;color:${onTime ? 'var(--ok)' : 'var(--crit)'};`;
           cell.appendChild(badge);
         }
       }
@@ -3532,12 +4257,10 @@ function renderTimeline(){
   // ─────────────────────────────────────────────────────────────
 
   // 1. Grille verticale — trait fin chaque minute, medium à 5min, major au tickStep
-  for(let t = Math.ceil(min); t <= max; t++){
+  for(let t = Math.ceil(min/tickStep)*tickStep; t <= max; t += tickStep){
     const x = toPx(t);
     const line = document.createElement('div');
-    const isMajor  = t % tickStep === 0;
-    const isMedium = !isMajor && t % 5 === 0;
-    line.className = 'tl-vgrid' + (isMajor ? ' major' : isMedium ? ' medium' : '');
+    line.className = 'tl-vgrid';
     line.style.cssText = `left:${x}px; top:${CONTENT_TOP}px; height:${contentH - CONTENT_TOP}px;`;
     canvas.appendChild(line);
   }
@@ -3552,6 +4275,7 @@ function renderTimeline(){
   for(let t = Math.ceil(min/tickStep)*tickStep; t <= Math.floor(max/tickStep)*tickStep; t += tickStep){
     const lbl = document.createElement('div');
     lbl.className = 'tl-axis-label';
+    if(toPx(t) < 16) continue;   // libellé qui serait coupé par le bord gauche
     lbl.style.left = toPx(t) + 'px';
     lbl.textContent = fmtHHMM(t);
     axisTrack.appendChild(lbl);
@@ -3604,7 +4328,6 @@ function renderTimeline(){
     const row = document.createElement('div');
     row.className = 'tl-gantt-row';
     row.style.height = ROW_H + 'px';
-    if(i % 2) row.style.background = 'rgba(0,0,0,.03)';
 
     const track = document.createElement('div');
     track.className = 'tl-row-track';
@@ -3617,15 +4340,10 @@ function renderTimeline(){
       const dashColor = '#94a3b8';
 
       const tBar = document.createElement('div');
+      tBar.className = 'tl-target';
       tBar.style.cssText = [
-        `position:absolute`,
         `left:${targetL}px`, `width:${targetW}px`,
         `height:${BAR_H}px`, `top:${BAR_PAD}px`,
-        `border-radius:8px`,
-        `border:2px dashed ${dashColor}`,
-        `background:color-mix(in srgb, ${dashColor} 5%, transparent)`,
-        `box-sizing:border-box`,
-        `opacity:${deadlinePassed ? '0.6' : '0.4'}`,
       ].join(';');
       track.appendChild(tBar);
     }
@@ -3634,18 +4352,10 @@ function renderTimeline(){
     if(hasTarget && d.a === null && POINT_EVENTS.has(d.label) && targetTo !== null){
       const cx  = toPx(toExtended(targetTo, min, max));
       const cy  = ROW_H / 2;
-      const R   = 10;
+      const R   = 6;
       const dot = document.createElement('div');
-      dot.style.cssText = [
-        `position:absolute`,
-        `left:${cx - R}px`, `top:${cy - R}px`,
-        `width:${R*2}px`, `height:${R*2}px`,
-        `border-radius:50%`,
-        `border:2px dashed #94a3b8`,
-        `background:transparent`,
-        `box-sizing:border-box`,
-        `opacity:0.5`,
-      ].join(';');
+      dot.className = 'tl-pt';
+      dot.style.cssText = `left:${cx - R}px; top:${cy - R}px;`;
       track.appendChild(dot);
     }
 
@@ -3658,62 +4368,66 @@ function renderTimeline(){
         // Cercle vide centré sur l'heure
         const cx = toPx(aExt);
         const cy = ROW_H / 2;
-        const R  = 10;
+        const R  = 6;
         const onTime = hasTarget ? (aExt <= deadlineExt) : true;
-        const circleColor = hasTarget ? (onTime ? '#16a34a' : '#dc2626') : '#64748b';
         const dot = document.createElement('div');
-        dot.style.cssText = [
-          `position:absolute`,
-          `left:${cx - R}px`, `top:${cy - R}px`,
-          `width:${R*2}px`, `height:${R*2}px`,
-          `border-radius:50%`,
-          `border:2.5px solid ${circleColor}`,
-          `background:transparent`,
-          `box-sizing:border-box`,
-        ].join(';');
+        dot.className = 'tl-pt done' + (onTime ? '' : ' late');
+        dot.style.cssText = `left:${cx - R}px; top:${cy - R}px;`;
         track.appendChild(dot);
       } else {
         // Fin : d.b si complété, sinon NOW plafonné à deadline+15min
         let endExt;
+        // Fin non saisie mais l'étape suivante a commencé (ou l'avion est parti) :
+        // l'action est forcément finie, la barre s'arrête là (« ≤ N′ »)
+        const NEXT_STEP = {
+          'Débarquement':  ['AvionPremierEmbarque','AvionDernierEmbarque','FermeturePorteAvion'],
+          'Cabin release': ['AvionDernierEmbarque','FermeturePorteAvion'],
+          'Embarquement':  ['FermeturePorteAvion'],
+        };
+        let capExt = null;
+        if(d.status === 'in-progress'){
+          [...(NEXT_STEP[d.label] || []), 'AOBT'].forEach(id => {
+            const t = parseHHMM(document.getElementById(id)?.value || '');
+            if(t == null) return;
+            const e = toExtended(t, min, max);
+            if(e >= aExt && (capExt == null || e < capExt)) capExt = e;
+          });
+        }
+        const open = capExt != null;
         if(d.status === 'complete'){
           endExt = toExtended(d.b, min, max);
-        } else if(hasTarget && deadlineExt !== null && nowExt > deadlineExt + 15){
-          endExt = deadlineExt + 15; // plafond pour éviter barre infinie
+        } else if(open){
+          endExt = capExt;
         } else {
-          endExt = nowExt;
+          // En cours : jusqu'à maintenant (la fenêtre inclut NOW), plafonné au bord
+          endExt = Math.min(nowExt, max);
         }
 
         const barL = toPx(aExt);
         const barW = Math.max(4, toPx(Math.max(aExt, endExt)) - barL);
 
-        // Couleur : vert si dans les temps, rouge si dépassé
-        let fillColor = color;
-        if(hasTarget){
-          const isLate = endExt > deadlineExt;
-          fillColor = isLate ? '#dc2626' : '#16a34a';
-        }
+        // Bleu = réel, rouge = hors cible, rayé = en cours
+        const isLate = hasTarget && endExt > deadlineExt;
 
         const durMin = d.status === 'complete'
           ? Math.round(Math.abs(d.b - d.a))
+          : open ? Math.round(endExt - aExt)
           : Math.round(Math.abs(nowM - d.a) % 1440);
+        const running = d.status === 'in-progress' && !open;
 
         const bar = document.createElement('div');
-        bar.style.cssText = [
-          `position:absolute`,
-          `left:${barL}px`, `width:${barW}px`, `height:${BAR_H}px`, `top:${BAR_PAD}px`,
-          `border-radius:8px`,
-          `background:color-mix(in srgb, ${fillColor} 28%, transparent)`,
-          `border:1.5px solid color-mix(in srgb, ${fillColor} 60%, transparent)`,
-          `border-left:4px solid ${fillColor}`,
-          `display:flex`, `align-items:center`, `overflow:hidden`,
-          `box-shadow:0 1px 4px color-mix(in srgb, ${fillColor} 15%, transparent)`,
-        ].join(';');
+        bar.className = 'tl-actual' + (isLate ? ' late' : '') + (running ? ' run' : '') + (open ? ' open' : '');
+        bar.style.cssText = `left:${barL}px; width:${barW}px; top:${BAR_PAD + 2}px; height:${BAR_H - 4}px;`;
+        bar.title = (d.displayLabel || d.label) + ' · ' + (running ? `${durMin}′ en cours` : open ? `fin non saisie, ${durMin}′ au plus` : `${durMin}′`);
 
-      if(barW > 28 && showTimeLabels){
+      if(showTimeLabels){
         const bl = document.createElement('span');
-        bl.style.cssText = `font-size:11px;font-weight:700;color:${fillColor};padding-left:7px;white-space:nowrap;`;
-        bl.textContent = d.status === 'in-progress' ? `${durMin}′…` : `${durMin}′`;
-        bar.appendChild(bl);
+        bl.className = 'tl-dur' + (isLate ? ' late' : '');
+        // Pas la place à droite (bord de la timeline) : la durée passe à gauche de la barre
+        const lblX = (barL + barW + 40 > LEFT_PAD + trackW && barL > 40) ? barL - 36 : barL + barW + 4;
+        bl.style.cssText = `left:${lblX}px; top:${BAR_PAD - 1}px;`;
+        bl.textContent = running ? `${durMin}′…` : open ? `≤ ${durMin}′` : `${durMin}′`;
+        track.appendChild(bl);
       }
 
       track.appendChild(bar);
@@ -3735,98 +4449,28 @@ function renderTimeline(){
     canvas.appendChild(empty);
   }
 
-  // 4. Lignes verticales + chips en haut
+  // 4. Lignes verticales + puces en haut (calculées plus haut, v2.44)
   const overlayTop = AXIS_H;
   const overlayH   = contentH - AXIS_H;
-
-  // Collecte tous les marqueurs
-  const allMarkers = [];
-
-  fixedPoints.filter(p => ['SIBT','AIBT','SOBT','AOBT'].includes(p.label)).forEach(p => {
-    allMarkers.push({ x: toPx(p.t), label: p.label, bg: '#64748b', color: '#fff', lineClass: 'tl-marker-line', lineStyle: '' });
-  });
-
-  if(nowExt >= min && nowExt <= max){
-    const x = LEFT_PAD + ((nowExt - min)/total)*trackW;
-    allMarkers.push({ x, label: 'NOW', bg: '#3b82f6', color: '#fff', lineClass: 'tl-now-line', lineStyle: '' });
-  }
-
-  const eobtPt = fixedPoints.find(p => p.label === 'EOBT');
-  if(eobtPt){
-    const isDark = document.documentElement.classList.contains('dark');
-    const ec = isDark ? '#9ca3af' : '#6b7280';
-    allMarkers.push({ x: toPx(eobtPt.t), label: 'EOBT', bg: ec, color: '#fff', lineClass: 'tl-eobt-line', lineStyle: `border-color:${ec};` });
-  }
-
-  const ctotPt = fixedPoints.find(p => p.label === 'CTOT');
-  if(ctotPt){
-    allMarkers.push({ x: toPx(ctotPt.t), label: 'CTOT', bg: '#f59e0b', color: '#000', lineClass: 'tl-ctot-line', lineStyle: '' });
-    // TOBT = CTOT - 15min
-    const tobtT = toExtended(ctotPt.t - 15, min, max);
-    if(tobtT >= min && tobtT <= max){
-      allMarkers.push({ x: toPx(tobtT), label: 'TOBT', bg: '#fb923c', color: '#fff', lineClass: 'tl-tobt-line', lineStyle: '' });
-    }
-  }
-
-  // Lignes verticales
   allMarkers.forEach(m => {
     const line = document.createElement('div');
     line.className = m.lineClass;
-    line.style.cssText = `left:${m.x}px; top:${overlayTop}px; height:${overlayH}px; ${m.lineStyle}`;
+    line.style.cssText = `left:${m.x}px; top:${overlayTop}px; height:${overlayH}px;`;
     canvas.appendChild(line);
   });
-
-  // ── Placement dynamique des chips — anti-collision ────────────
-  const CHIP_H = 22;
-  const CHIP_W = 46;
-
-  // Définit le côté de chaque chip (gauche = avant la ligne, droite = après)
-  const LEFT_CHIPS = new Set(['AIBT','SIBT']);
-  const RIGHT_CHIPS = new Set(['SOBT','AOBT','EOBT','CTOT','NOW']);
-
-  const chipDefs = allMarkers.map(m => {
-    const isLeft = LEFT_CHIPS.has(m.label);
-    return {
-      ...m,
-      isLeft,
-      xStart: isLeft ? m.x - CHIP_W - 4 : m.x + 4,
-      xEnd:   isLeft ? m.x - 4           : m.x + 4 + CHIP_W,
-    };
-  });
-
-  // Trie par x pour un placement gauche→droite
-  chipDefs.sort((a, b) => a.x - b.x);
-
-  const placed = [];
-
-  chipDefs.forEach(chip => {
-    let y = overlayTop + 2;
-    let tries = 0;
-    while(tries < 10){
-      const collision = placed.some(p => {
-        const xOk = chip.xStart < p.xEnd && chip.xEnd > p.xStart;
-        const yOk = y < p.y + CHIP_H + 4 && y + CHIP_H > p.y;
-        return xOk && yOk;
-      });
-      if(!collision) break;
-      y += CHIP_H + 4;
-      tries++;
-    }
-    chip.y = y;
-    placed.push({ xStart: chip.xStart, xEnd: chip.xEnd, y });
-
+  allMarkers.forEach(m => {
     const el = document.createElement('div');
     el.className = 'tl-marker-chip';
-    el.textContent = chip.label;
-    const t = chip.isLeft
-      ? 'transform:translateX(calc(-100% - 4px));'
-      : 'transform:translateX(4px);';
-    el.style.cssText = `left:${chip.x}px; top:${y}px; background:${chip.bg}; color:${chip.color}; ${t} z-index:20;`;
+    el.textContent = m.text;
+    el.style.cssText = `left:${m.cx ?? m.x}px; top:${1 + m.row * (CHIP_H + CHIP_GAP)}px; background:${m.bg}; color:${m.color}; transform:translateX(-50%); z-index:20;`;
     canvas.appendChild(el);
   });
 
   // 5. Auto-scroll
-  if(!timelineUserScrolled){
+  // Option « Suivre Now » : recentre sauf si l'utilisateur a touché la timeline il y a moins de 8 s
+  const followNow = (()=>{ try{ return localStorage.getItem('tlFollowNow') !== '0'; }catch(e){ return true; } })();
+  const userIdle  = (Date.now() - (window._tlLastTouch || 0)) > 8000;
+  if(followNow ? userIdle : !timelineUserScrolled){
     const targetT = (nowExt >= min && nowExt <= max) ? nowExt : (min + max) / 2;
     const targetX = toPx(targetT);
     scroller.scrollLeft = Math.max(0, targetX - viewport / 2);
@@ -3840,7 +4484,39 @@ function renderTimeline(){
 
 
 
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
 
+function pickBestTimeForList(f, flow){
+  const iso = (v)=> v ? new Date(v) : null;
+  const toHHMM = (d)=>{
+    if(!d || isNaN(d.getTime())) return '';
+    const hh = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0');
+    const mm = String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+    return `${hh}:${mm}`;
+  };
+  // Retourne { time, suffix } selon la source
+  if(flow === 'DEP'){
+    if(f.aobt) return { time: toHHMM(iso(f.aobt)), suffix: 'A' };
+    if(f.sobt) return { time: toHHMM(iso(f.sobt)), suffix: 'S' };
+    if(f.eobt) return { time: toHHMM(iso(f.eobt)), suffix: 'E' };
+    if(f.atot) return { time: toHHMM(iso(f.atot)), suffix: 'A' };
+    if(f.etot) return { time: toHHMM(iso(f.etot)), suffix: 'E' };
+    return { time: '', suffix: '' };
+  }
+  if(f.aibt) return { time: toHHMM(iso(f.aibt)), suffix: 'A' };
+  if(f.sibt) return { time: toHHMM(iso(f.sibt)), suffix: 'S' };
+  if(f.eibt) return { time: toHHMM(iso(f.eibt)), suffix: 'E' };
+  if(f.aldt) return { time: toHHMM(iso(f.aldt)), suffix: 'A' };
+  if(f.eldt) return { time: toHHMM(iso(f.eldt)), suffix: 'E' };
+  return { time: '', suffix: '' };
+}
 
   /* ===== SETTINGS MENU ===== */
 function openSettingsMenu(){
@@ -3867,31 +4543,247 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape') closeSettingsMenu();
 });
 
-// ===== Airport Keeper (AK) — désactivé =====
+// ===== Airport Keeper (AK) =====
+const AK_BASE    = "/api/ak";
+// AK_TOKEN géré côté serveur (Cloudflare Pages Function)
+const AK_AIRPORT = "LFOB";
+
+// Ouvrir/Fermer
+function openAKPicker(){
+  // Édition sans Keeper (turnaround-bva) : le « + » crée un vol manuel et ouvre sa fiche
+  if(window.APP_EDITION === 'bva'){
+    createNewTab();
+    if(typeof uiTab === 'function') uiTab('vol');
+    if(typeof toggleInfoVolEdit === 'function') setTimeout(toggleInfoVolEdit, 50);
+    return;
+  }
+  const b = document.getElementById('akBackdrop');
+  const p = document.getElementById('akPopover');
+  const flowSel = document.getElementById('akFlow');
+
+  if(flowSel) flowSel.value = 'DEP';
+
+  document.body.classList.add('ak-open');   // ✅ AJOUT
+  if(typeof updateHeaderOffset === 'function') requestAnimationFrame(updateHeaderOffset);
+
+  if(b) b.style.display = '';
+  if(p) p.style.display = 'flex';
+  loadAKFlights();
+}
+
 function closeAKPicker(){
   const b = document.getElementById('akBackdrop');
   const p = document.getElementById('akPopover');
-  if(p) p.style.display='none';
-  if(b) b.style.display='none';
-  document.body.classList.remove('ak-open');
+
+  if(p) p.style.display = 'none';
+  if(b) b.style.display = 'none';
+
+  document.body.classList.remove('ak-open'); // ✅ AJOUT
+  if(typeof updateHeaderOffset === 'function') requestAnimationFrame(updateHeaderOffset);
+
+  // Arrêter le poll
+}
+
+async function fetchAK(flow, from, to) {
+  // v2.59 : en mode démo, liste AK fictive (ui.js akDemoData)
+  if(window.demoActive && window.demoActive() && window.akDemoData) return window.akDemoData(flow);
+  const url =
+    `${AK_BASE}?airport=${encodeURIComponent(AK_AIRPORT)}` +
+    `&flow=${encodeURIComponent(flow)}` +
+    `&from=${encodeURIComponent(from)}` +
+    `&to=${encodeURIComponent(to)}`;
+
+  const res = await fetch(url, {
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!res.ok) throw new Error(`AK error ${res.status}`);
+
+  const data = await res.json();
+  return Array.isArray(data) ? data : (Array.isArray(data?.flights) ? data.flights : []);
 }
 
 // ===== Temps + linking (immat) =====
+function arrTimeMs(f){
+  return Date.parse(f?.aibt || f?.eibt || f?.sibt || f?.aldt || f?.eldt || f?.afat || f?.efat || '') || null;
+}
 
 // DEP : si pas d'AOBT, on privilégie EOBT/POBT/CTOT (réaliste) plutôt que SOBT (souvent "ancien plan")
+function depTimeMs(f){
+  return Date.parse(
+    f?.aobt || f?.eobt || f?.pobt || f?.ctot || f?.etot || f?.sobt || ''
+  ) || null;
+}
 
 // ===== Linking : priorité linkedId, sinon reg+temps =====
 // Helper: clé YYYY-MM-DD selon mode UTC/Locale
+function dayKeyFromMs(ms){
+  if(ms == null) return null;
+  const d = new Date(ms);
 
+  // isUTC est déjà dans ton code (toggle)
+  if(window.isUTC){
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2,'0');
+    const da = String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  }else{
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const da = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  }
+}
+
+function sameOpDay(msA, msB){
+  const a = dayKeyFromMs(msA);
+  const b = dayKeyFromMs(msB);
+  return !!a && !!b && a === b;
+}
 
 // ===== Linking : ARR -> DEP (uniquement même jour) =====
+function findLinkedDepForArr(arr){
+  if(!arr) return null;
+
+  const arrT = arrTimeMs(arr);
+  if(arrT == null) return null;
+
+  // 1) linkedId direct + garde-fou date
+  const lid = (arr?.linkedId || '').trim();
+  if(lid){
+    const dep = (window._akCache?.dep || []).find(d => String(d?.id) === lid);
+    if(dep){
+      const depT = depTimeMs(dep);
+      if(depT != null && sameOpDay(arrT, depT)) return dep;
+      return null; // ❌ autre jour => pas lié
+    }
+  }
+
+  // 2) fallback reg + premier DEP après ARR, mais même jour
+  const reg = (arr?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const deps = window._akCache?.dep || [];
+  let best = null;
+  let bestT = Infinity;
+
+  for(const d of deps){
+    const r = (d?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = depTimeMs(d);
+    if(t == null) continue;
+
+    if(t < arrT) continue;                 // après l'arrivée
+    if(!sameOpDay(arrT, t)) continue;      // ✅ même jour obligatoire
+
+    if(t < bestT){ best = d; bestT = t; }
+  }
+
+  return best;
+}
 
 // ===== Linking : DEP -> ARR (uniquement même jour) =====
+function findLinkedArrForDep(dep){
+  if(!dep) return null;
+
+  const depT = depTimeMs(dep);
+  if(depT == null) return null;
+
+  // 1) linkedId direct + garde-fou date
+  const lid = (dep?.linkedId || '').trim();
+  if(lid){
+    const arr = (window._akCache?.arr || []).find(a => String(a?.id) === lid);
+    if(arr){
+      const arrT = arrTimeMs(arr);
+      if(arrT != null && sameOpDay(arrT, depT)) return arr;
+      return null; // ❌ autre jour => pas lié
+    }
+  }
+
+  // 2) fallback reg + dernier ARR avant DEP, mais même jour
+  const reg = (dep?.reg || '').toUpperCase().trim();
+  if(!reg) return null;
+
+  const arrs = window._akCache?.arr || [];
+  let best = null;
+  let bestT = -Infinity;
+
+  for(const a of arrs){
+    const r = (a?.reg || '').toUpperCase().trim();
+    if(r !== reg) continue;
+
+    const t = arrTimeMs(a);
+    if(t == null) continue;
+
+    if(t > depT) continue;                 // avant le départ
+    if(!sameOpDay(t, depT)) continue;      // ✅ même jour obligatoire
+
+    if(t > bestT){ best = a; bestT = t; }
+  }
+
+  return best;
+}
 
 
+function depAtotTooOld(dep, minutes = 15){
+  // ATOT = info Keeper uniquement (non affichée)
+  const iso = dep?.atot || dep?.aobt; // fallback sécurité
+  if(!iso) return false;
+
+  const t = Date.parse(iso);
+  if(!t) return false;
+
+  return (Date.now() - t) > minutes * 60 * 1000;
+}
 
 // ===== Chargement liste (vols du jour) - ARR+DEP groupés =====
+async function loadAKFlights(){
+  const st   = document.getElementById('akStatus');
+  const list = document.getElementById('akList');
+  if(st) st.textContent = 'Chargement…';
+  if(list) list.innerHTML = '';
 
+  const now = new Date();
+  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
+  const linkFrom = new Date(startDay.getTime() - 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
+  const linkTo   = new Date(endDay.getTime()   + 12*3600*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
+
+  try{
+    const [arrAll, depAll] = await Promise.all([fetchAK('ARR',linkFrom,linkTo), fetchAK('DEP',linkFrom,linkTo)]);
+    window._akCache = { arr: arrAll, dep: depAll };
+
+    const inToday = (f, fl) => {
+      const t = Date.parse(fl==='DEP' ? (f.sobt||f.eobt||f.aobt||f.atot||'') : (f.sibt||f.eibt||f.aibt||''));
+      return t && t >= startDay.getTime() && t <= endDay.getTime();
+    };
+
+    let arrFlights = arrAll.filter(f => inToday(f,'ARR'));
+    let depFlights = depAll.filter(f => inToday(f,'DEP')).filter(d => !depAtotTooOld(d,15));
+    arrFlights = arrFlights.filter(arr => { const nd=findLinkedDepForArr(arr); return !nd || !depAtotTooOld(nd,15); });
+
+    const usedDep = new Set(), pairs = [];
+    for(const arr of arrFlights){
+      const dep = findLinkedDepForArr(arr);
+      if(dep && !usedDep.has(dep.id)){ pairs.push({arr,dep}); usedDep.add(dep.id); }
+      else { pairs.push({arr, dep:null}); }
+    }
+    for(const dep of depFlights){ if(!usedDep.has(dep.id)) pairs.push({arr:null,dep}); }
+
+    pairs.sort((a,b)=>{
+      const ta = a.arr ? arrTimeMs(a.arr) : (a.dep ? depTimeMs(a.dep) : null);
+      const tb = b.arr ? arrTimeMs(b.arr) : (b.dep ? depTimeMs(b.dep) : null);
+      if(ta==null&&tb==null) return 0; if(ta==null) return 1; if(tb==null) return -1;
+      return ta-tb;
+    });
+
+    if(st) st.textContent = pairs.length + ' vol(s)';
+    renderAKList(pairs);
+
+  }catch(e){
+    if(st) st.textContent = `Erreur (${String(e.message || e)})`;
+  }
+}
 
 /* =========================
    BADGES RETARD (référence app.js)
@@ -3899,29 +4791,593 @@ function closeAKPicker(){
 
 const EIBT_CORRECTION_MIN = -4;
 
+function addMinutesToIso(iso, minutes){
+  const t = Date.parse(iso || "");
+  if(!Number.isFinite(t)) return "";
+  return new Date(t + minutes * 60000).toISOString();
+}
 
+function delayMinFrom(plannedIso, actualIso){
+  const p = Date.parse(plannedIso || "");
+  const a = Date.parse(actualIso || "");
+  if(!Number.isFinite(p) || !Number.isFinite(a)) return null;
+  return Math.round((a - p) / 60000);
+}
 
+function actualDepIso(f){
+  return f?.aobt || f?.eobt || "";
+}
 
+function actualArrIso(f){
+  if(f?.aibt) return f.aibt;
+
+  if(f?.eibt){
+    return addMinutesToIso(f.eibt, EIBT_CORRECTION_MIN);
+  }
+
+  return "";
+}
 
 
 
 // ===== Couleur bandeau retard (identique au dashboard) =====
+function delayBarColor(mins){
+  if(mins == null) return null;
+  if(mins <= -11)  return '#3b82f6'; // bleu — en avance (<= -11min)
+  if(mins <= 5)    return '#16a34a'; // vert — à l'heure (-10 à +5min)
+  if(mins < 15)    return '#f97316'; // orange — retard < 15min
+  return             '#ef4444';     // rouge — retard >= 15min
+}
 
 // ===== Rendu liste : ARR = provenance, DEP = destination =====
 
+function renderAKList(pairs){
+  const list = document.getElementById('akList');
+  if(!list) return;
+  _renderAKListWithRza(pairs, list, {});
+}
 
+function _renderAKListWithRza(pairs, list, akIdToRza){
+
+  // ── Cache global : stocke chaque objet vol par son id ──────────────────────
+  // Évite d'inliner le JSON (parfois très volumineux) dans les attributs onclick,
+  // ce qui causait des échecs silencieux sur les vols DEP avec routeIcao long.
+  window._akFlightById = window._akFlightById || {};
+  pairs.forEach(p => {
+    if(p.arr && p.arr.id) window._akFlightById[String(p.arr.id)] = p.arr;
+    if(p.dep && p.dep.id) window._akFlightById[String(p.dep.id)] = p.dep;
+  });
+
+  function getStatus(f, flow){
+    let s = (f?.status||f?.milestone||'').toString().toUpperCase();
+    if(s==='SCHEDULED')  return 'PRÉVU';
+    if(s==='CANCELLED')  return 'ANNULÉ';
+    if(s==='SUSPENDED')  return 'SUSPENDU';
+    if(flow==='DEP'){ if(s==='IN_FLIGHT') return 'DÉCOLLÉ'; }
+    else{
+      if(s==='TERMINATED') return 'ARRIVÉ';
+      if(s==='IN_FLIGHT') return 'EN VOL';
+      const nd = findLinkedDepForArr(f);
+      if(nd){ const ds=(nd.status||nd.milestone||'').toString().toUpperCase(); if(ds==='IN_FLIGHT'||!!nd.atot) return 'DÉCOLLÉ'; }
+    }
+    return s||'';
+  }
+
+  // Couleur du retard -> classe (mêmes seuils que delayBarColor)
+  function delayClass(mins){
+    const c = delayBarColor(mins);
+    if(c === '#3b82f6') return 'c-early';
+    if(c === '#16a34a') return 'c-ok';
+    if(c === '#f97316') return 'c-warn';
+    if(c === '#ef4444') return 'c-crit';
+    return '';
+  }
+
+  const toHM = iso => {
+    const d = iso ? new Date(iso) : null;
+    if(!d || isNaN(d.getTime())) return '';
+    return String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0') + ':' + String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+  };
+
+  // v2.43 : une moitié de la rotation (arrivée à gauche, départ à droite)
+  function side(f, flow, done){
+    const fl = flow.toLowerCase();
+    if(!f) return '<div class="akc-s akc-' + fl + ' akc-none"><span class="akc-tm">--:--</span><span class="akc-fn">' + (flow==='ARR' ? "Pas d'arrivée liée" : 'Pas de départ lié') + '</span></div>';
+    const ff   = (f.fullFlightNumber||f.callsign||'').trim().toUpperCase();
+    // v2.60 : l'heure en gros est l'horaire programmé (SIBT / SOBT), l'écart réel/estimé reste à côté
+    const sched = toHM(flow==='ARR' ? f.sibt : f.sobt);
+    const best = sched ? null : pickBestTimeForList(f, flow);
+    const t = sched || best.time, sx = sched ? 'S' : best.suffix;
+    const iata = flow==='ARR' ? (f.adepIata||f.adepIcao||'') : (f.adesIata||f.adesIcao||'');
+    const dly  = delayMinFrom(flow==='ARR'?(f.sibt||''):(f.sobt||''), flow==='ARR'?actualArrIso(f):actualDepIso(f));
+    const dCls = delayClass(dly);
+    const delta = (dly != null && dly !== 0) ? '<small class="akc-d ' + dCls + '">' + (dly > 0 ? '+' : '−') + Math.abs(dly) + '</small>' : '';
+    const safeId = escapeHtml(String(f.id || f._id || ''));
+    const lbl = sx === 'A' ? (flow==='ARR' ? 'AIBT' : 'AOBT') : (sx === 'S' ? (flow==='ARR' ? 'SIBT' : 'SOBT') : 'Estimé');
+    return '<button type="button" class="akc-s akc-' + fl + (done ? ' akc-done' : '') + '" onclick="_akClickFlight(\'' + safeId + '\',\'' + flow + '\')" title="' + lbl + '">'
+      + '<span class="akc-tm num">' + escapeHtml(t || '--:--') + delta + '</span>'
+      + '<span class="akc-ap">' + escapeHtml(iata || '---') + '</span>'
+      + '<span class="akc-fn">' + escapeHtml(ff || '—') + '</span>'
+      + '</button>';
+  }
+
+  window._akPairs = pairs;
+  const cieOf = p => (((p.arr||p.dep||{}).fullFlightNumber || (p.arr||p.dep||{}).callsign || '') + '').trim().slice(0,2).toUpperCase();
+
+  // Filtres compagnie + recherche
+  const fbox = document.getElementById('akFilters');
+  const cies = [...new Set(pairs.map(cieOf).filter(Boolean))].sort();
+  const curCie = window._akCie && cies.includes(window._akCie) ? window._akCie : '';
+  const q = ((document.querySelector('.akc-q')||{}).value || '').trim().toUpperCase();
+  if(fbox){
+    const chips = fbox.querySelector('.akc-chips');
+    chips.innerHTML = ['', ...cies].map(c => '<button type="button" class="akc-chip' + (c===curCie ? ' on' : '') + '" onclick="akSetCie(\'' + c + '\')">' + (c || 'Tous') + '</button>').join('')
+      + '<button type="button" class="akc-chip akc-find' + (fbox.classList.contains('searching') ? ' on' : '') + '" onclick="akToggleSearch()" aria-label="Rechercher"><svg class="ico"><use href="#i-search"/></svg></button>';
+  }
+
+  const match = p => {
+    if(curCie && cieOf(p) !== curCie) return false;
+    if(!q) return true;
+    const hay = [p.arr, p.dep].filter(Boolean).map(f => [f.fullFlightNumber, f.callsign, f.reg, f.adepIata, f.adesIata, f.pkg].join(' ')).join(' ').toUpperCase().replace(/-/g,'');
+    return hay.includes(q.replace(/-/g,''));
+  };
+  const shown = pairs.filter(match);
+
+  if(!pairs.length){ list.innerHTML = '<p class="akc-empty">Aucun vol.</p>'; return; }
+  if(!shown.length){ list.innerHTML = '<p class="akc-empty">Aucun vol pour ce filtre.</p>'; return; }
+
+  const groups = { cur:[], next:[], done:[] };
+  shown.forEach(p => {
+    const aSt = p.arr ? getStatus(p.arr,'ARR') : '';
+    const dSt = p.dep ? getStatus(p.dep,'DEP') : '';
+    const ref = p.arr || p.dep;
+    let g = 'next', chip = ['Prévu','g'];
+    if(dSt === 'DÉCOLLÉ' || aSt === 'DÉCOLLÉ'){ g = 'done'; chip = ['Décollé','g']; }
+    else if(aSt === 'ARRIVÉ'){ g = 'cur'; chip = ['Au sol','ok']; }
+    else if(aSt === 'EN VOL'){ chip = ['En vol','w']; }
+    if(aSt === 'ANNULÉ' || dSt === 'ANNULÉ') chip = ['Annulé','c'];
+    else if(aSt === 'SUSPENDU' || dSt === 'SUSPENDU') chip = ['Suspendu','c'];
+    const arrDone = aSt === 'ARRIVÉ' || g === 'done';
+    const depDone = g === 'done';
+    const late = [[p.arr,'ARR',arrDone],[p.dep,'DEP',depDone]].some(([f,fl,dn]) => {
+      if(!f || dn) return false;
+      const d = delayMinFrom(fl==='ARR'?(f.sibt||''):(f.sobt||''), fl==='ARR'?actualArrIso(f):actualDepIso(f));
+      return d != null && d >= 15;
+    });
+    const stand = ((p.arr && p.arr.pkg) || (p.dep && p.dep.pkg) || '').toString().replace(/^P/i,'');
+    const reg  = ((p.dep && p.dep.reg) || (p.arr && p.arr.reg) || '').trim();
+    const type = (ref.acTypeIcao || ref.acTypeIata || (p.dep||{}).acTypeIcao || '').toUpperCase();
+    const cie  = cieOf(p);
+    const linked = !!(p.arr && p.dep);
+    groups[g].push('<div class="akc-row' + (late ? ' late' : '') + '">'
+      + side(p.arr, 'ARR', arrDone)
+      + '<div class="akc-mid' + (linked ? '' : ' broken') + '" title="' + (linked ? 'Rotation liée' : 'Pas de rotation liée') + '"><i></i><span class="num">' + (stand ? 'P' + escapeHtml(stand) : '—') + '</span><i></i></div>'
+      + side(p.dep, 'DEP', depDone)
+      + '<div class="akc-foot">' + (cie ? '<span class="ak-cie">' + escapeHtml(cie) + '</span>' : '')
+      + '<span class="akc-reg">' + escapeHtml([reg, type].filter(Boolean).join(' · ') || '—') + '</span>'
+      + '<span class="akc-st ' + chip[1] + '">' + chip[0] + '</span></div>'
+      + '</div>');
+  });
+  const sec = (t, arr) => arr.length ? '<div class="akc-sec">' + t + '<span>' + arr.length + '</span></div>' + arr.join('') : '';
+  list.innerHTML = sec('En cours', groups.cur) + sec('À venir', groups.next) + sec('Terminés', groups.done);
+}
+
+function akSetCie(c){ window._akCie = c; if(window._akPairs) renderAKList(window._akPairs); }
+function akToggleSearch(){
+  const box = document.getElementById('akFilters'); if(!box) return;
+  const on = box.classList.toggle('searching');
+  const inp = document.querySelector('.akc-q');
+  if(on){ inp.focus(); } else { inp.value = ''; if(window._akPairs) renderAKList(window._akPairs); }
+  const f = box.querySelector('.akc-find'); if(f) f.classList.toggle('on', on);
+}
 
 // ── Gestionnaire de clic AK — lookup par ID dans le cache ──────────────────
+function _akClickFlight(id, flow){
+  const f = window._akFlightById && window._akFlightById[id];
+  if(!f){
+    console.warn('[AK] Vol introuvable dans le cache, id=', id);
+    return;
+  }
+  applyAKFlight(f, flow);
+}
   
 // ===== Import : règles BVA =====
+function akBuildSI(f, allowDL = true, opts = {}){
+  const includeDL = opts.includeDL !== undefined ? !!opts.includeDL : true;
 
+  const parts = [];
 
+  const rmk = (f?.remarks || '').trim();
+  if(rmk) parts.push(rmk);
 
+  // DL AK : uniquement si autorisé ET includeDL=true
+  if(allowDL && includeDL){
+    const tb = f?.dlCodes?.typeb;
+    if(Array.isArray(tb) && tb.length){
+      parts.push(`DL: ${tb.map(x => `${x.code} +${x.delay}`).join(' / ')}`);
+    }
+  }
 
-async function refreshAKTab(tabId){ return; }
+  return parts.join('\n').trim();
+}
 
+function storeAKMetaForTab(meta){
+  if(!currentTabId) return;
 
+  const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
 
+  // ── Historique des CTOT ────────────────────────────────────────────────
+  // On conserve chaque valeur de CTOT vue, avec l'heure de constatation.
+  // Permet de suivre l'evolution du slot (ex: 07:35 -> 07:30 -> 06:00).
+  const prevHist = Array.isArray(data.akMeta?.ctotHistory)
+    ? data.akMeta.ctotHistory : [];
+  let ctotHistory = prevHist;
+  if(meta.ctotIso){
+    const d = new Date(meta.ctotIso);
+    if(!isNaN(d.getTime())){
+      const hhmm = String(isUTC ? d.getUTCHours() : d.getHours()).padStart(2,'0')
+        + ':' + String(isUTC ? d.getUTCMinutes() : d.getMinutes()).padStart(2,'0');
+      const last = prevHist.length ? prevHist[prevHist.length-1] : null;
+      // On n'ajoute que si la valeur a change (evite les doublons a chaque refresh)
+      if(!last || last.iso !== meta.ctotIso){
+        ctotHistory = prevHist.concat([{
+          iso: meta.ctotIso,
+          hhmm: hhmm,
+          seenAt: Date.now()
+        }]);
+      }
+    }
+  }
+
+  data.akMeta = {
+    ctotHistory: ctotHistory,
+
+    flow: meta.flow || null,
+
+    // ✅ clé la plus fiable
+    id: String(meta.id || ''),
+    linkedId: String(meta.linkedId || ''),
+
+    // Regulation CTOT (cause du creneau) : conservee telle quelle depuis AK
+    regulation: meta.regulation || null,
+
+    // ✅ fallback
+    reg:  (meta.reg  || '').toUpperCase().trim(),
+    ff:   (meta.ff   || '').toUpperCase().trim(),     // fullFlightNumber du vol sélectionné
+    timeISO: (meta.timeISO || ''),                    // SOBT (DEP) ou SIBT (ARR)
+
+    // ton bandeau
+    arrFF:(meta.arrFF|| '').toUpperCase().trim(),
+    depFF:(meta.depFF|| '').toUpperCase().trim(),
+    pkg:  (meta.pkg  || '') + '',
+    bc:   (meta.bc   || '').toUpperCase().trim(),
+
+    ts: Date.now()
+  };
+
+  localStorage.setItem('tab-'+currentTabId, JSON.stringify(data));
+}
+
+function parseIsoMs(iso){
+  const t = Date.parse(iso || '');
+  return Number.isFinite(t) ? t : null;
+}
+
+function findBestAKMatch(list, meta, flow){
+  if(!Array.isArray(list) || !meta) return null;
+
+  // ✅ 1) match direct par ID (zéro ambiguïté)
+  if(meta.id){
+    const byId = list.find(f => String(f?.id) === String(meta.id));
+    if(byId) return byId;
+  }
+
+  // ✅ 2) fallback reg + ff + timeISO
+  const wantReg = (meta.reg || '').toUpperCase().trim();
+  if(!wantReg) return null;
+
+  const wantFF = (meta.ff || '').toUpperCase().trim();
+  const wantT  = parseIsoMs(meta.timeISO);
+
+  let best = null;
+  let bestScore = Infinity;
+
+  for(const f of list){
+    const reg = ((f?.reg || '') + '').toUpperCase().trim();
+    if(reg !== wantReg) continue;
+
+    const ff = ((f?.fullFlightNumber || f?.callsign || '') + '').toUpperCase().trim();
+    if(wantFF && ff && wantFF !== ff) continue;
+
+    const candT = parseIsoMs(
+      flow === 'DEP'
+        ? (f?.sobt || f?.eobt || f?.aobt || f?.atot || null)
+        : (f?.sibt || f?.eibt || f?.aibt || f?.aldt || null)
+    );
+
+    let score = 999999999;
+    if(wantT != null && candT != null) score = Math.abs(candT - wantT);
+    else score = 60 * 60 * 1000;
+
+    if(score < bestScore){
+      best = f;
+      bestScore = score;
+    }
+  }
+
+  if(best && wantT != null && bestScore > 12 * 60 * 60 * 1000) return null;
+  return best;
+}
+
+async function refreshAKTab(tabId){
+  const data = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
+  const meta = data.akMeta;
+  if(!meta){
+    showPopup("Pas de données AK à rafraîchir", "#ef4444", 1600);
+    return;
+  }
+
+  const now = new Date();
+  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+  const endDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
+  const linkFrom = new Date(startDay.getTime() - 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+  const linkTo   = new Date(endDay.getTime()   + 12*60*60*1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  try{
+    const [arrAll, depAll] = await Promise.all([
+      fetchAK('ARR', linkFrom, linkTo),
+      fetchAK('DEP', linkFrom, linkTo),
+    ]);
+
+    window._akCache = { arr: arrAll, dep: depAll };
+
+    const flow = meta.flow || 'DEP';
+    const list = flow === 'DEP' ? depAll : arrAll;
+    const match = findBestAKMatch(list, meta, flow);
+
+    if(!match){
+      showPopup("Vol AK introuvable", "#ef4444", 1800);
+      return;
+    }
+
+    if(currentTabId !== tabId) switchTab(tabId);
+
+    applyAKFlight(match, flow, { refresh: true });
+    saveCurrentTabData();
+
+    showPopup("AK rafraîchi", "#16a34a", 1400);
+
+  }catch(e){
+    showPopup(`Erreur AK (${String(e.message || e)})`, "#ef4444", 2000);
+  }
+}
+
+function applyAKFlight(f, flow, opts = {}){
+  // Nouvelle selection : si ce vol est deja ouvert, on demande confirmation
+  if(!opts.refresh){
+    const key = akRotKey(f, flow);
+    const dup = findTabByFlightKey(key, null);
+    if(dup){
+      openDupFlightModal(()=>{
+        // Synchro suspendue : le nouvel onglet est vide, il ne doit surtout
+        // pas ecraser les saisies deja faites sur le vol d'origine.
+        _syncSuspended = true;
+        try{
+          _doApplyAKFlight(f, flow, opts);
+          const newTab = currentTabId;
+          seedTabFromSibling(newTab, dup);   // on recopie l'existant vers le neuf
+          if(typeof loadTabData === 'function') loadTabData(newTab);
+        } finally {
+          _syncSuspended = false;
+        }
+        // Les deux onglets sont maintenant identiques : on peut sauver normalement
+        if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
+      });
+      return;
+    }
+  }
+  _doApplyAKFlight(f, flow, opts);
+}
+
+function _doApplyAKFlight(f, flow, opts = {}){
+  const isRefresh = !!opts.refresh;
+
+  // Créer un nouvel onglet seulement si c'est une nouvelle sélection
+  if(!isRefresh){
+    createNewTab();
+  }
+
+  try{
+    /* ===== champs communs ===== */
+    setValAK('Immat', (f.reg || ''));
+
+    const stand = (f.pkg || '').toString().replace(/^P/i,'').trim();
+    if(stand) setValAK('Parking', stand);
+
+    const ac = (f.acTypeIcao || f.acTypeIata || '').toUpperCase().trim();
+    if(ac) setValAK('TypeAvion', ac);
+
+    const ff = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+    // ✅ Callsign brut AK
+    if(f.callsign) setValAK('Callsign', f.callsign);
+    if(ff){
+      const m = ff.match(/^([A-Z0-9]{2})([0-9]{1,6})$/);
+      if(m){
+        const cie  = m[1];
+        const nvol = m[2];
+        // Cie est maintenant un input texte libre — on injecte directement
+        setValAK('Cie', cie);
+        setValAK('NVol', nvol);
+      }else{
+        setValAK('NVol', ff);
+      }
+    }
+
+    /* ================= DEP ================= */
+    let prevArrUsed = null;
+    let nextDepUsed = null;
+
+    if(flow === 'DEP'){
+      setValAK('To', (f.adesIata || '') || 'BVA');
+
+      setTimeFromISOAK('SOBT', f.sobt || f.eobt);
+      setTimeFromISOAK('AOBT', f.aobt);
+      // CTOT : mis à jour depuis AK, et effacé si AK n'en a plus
+      if(f.ctot){
+        setTimeFromISOAK('CTOT', f.ctot);
+      } else {
+        const ctotEl = document.getElementById('CTOT');
+        if(ctotEl && ctotEl.dataset.ak === '1'){
+          setValAK('CTOT', '');
+        }
+      }
+
+      const siDep = akBuildSI(f, true, { includeDL:false });
+      mergeSIFromAK('PreviSI', siDep);
+      mergeSIFromAK('FinalSI', siDep);
+
+      const prevArr = findLinkedArrForDep(f); // (déjà filtré "même jour" chez toi)
+      if(prevArr){
+        prevArrUsed = prevArr;
+
+        setValAK('From', (prevArr.adepIata || '') || 'BVA');
+        setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+        setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
+
+        if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
+
+        const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+        if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
+          setIfEmptyOrAK('ArrPOIDS', String(prevArr.bags));
+        }
+
+        const siArr = akBuildSI(prevArr, false, { includeDL:false });
+        mergeSIFromAK('ArrSI', siArr);
+      }else{
+        setValAK('From', 'BVA');
+      }
+
+    /* ================= ARR ================= */
+    }else{
+      // provenance (From)
+      setValAK('From', (f.adepIata || '') || 'BVA');
+
+      // ✅ par défaut: avion reste à BVA (nuit / pas de rota)
+      setValAK('To', 'BVA');
+
+      setTimeFromISOAK('SIBT', f.sibt || f.eibt);
+      setTimeFromISOAK('AIBT', f.aibt);
+
+      if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
+
+      const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
+      if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
+        setIfEmptyOrAK('ArrPOIDS', String(f.bags));
+      }
+
+      const siArr = akBuildSI(f, false, { includeDL:false });
+      mergeSIFromAK('ArrSI', siArr);
+
+      const nextDep = findLinkedDepForArr(f); // (déjà filtré "même jour" chez toi)
+      if(nextDep){
+        nextDepUsed = nextDep;
+
+        setValAK('To', (nextDep.adesIata || '') || 'BVA');
+
+        setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+        setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
+        if(nextDep.ctot){
+          setTimeFromISOAK('CTOT', nextDep.ctot);
+        } else {
+          const ctotEl = document.getElementById('CTOT');
+          if(ctotEl && ctotEl.dataset.ak === '1'){
+            setValAK('CTOT', '');
+          }
+        }
+
+        const siDep = akBuildSI(nextDep, true, { includeDL:false });
+        mergeSIFromAK('PreviSI', siDep);
+        mergeSIFromAK('FinalSI', siDep);
+      }
+    }
+
+    /* ===== BANDEAU ESSENTIEL (akMeta arrFF/depFF) ===== */
+    let arrFF = '';
+    let depFF = '';
+    let bcForStrip = '';
+
+    if(flow === 'ARR'){
+      // ✅ le vol ARR sélectionné DOIT être affiché avant la flèche
+      arrFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+      bcForStrip = (f.borderControl || '').toUpperCase().trim();
+
+      if(nextDepUsed){
+        depFF = (nextDepUsed.fullFlightNumber || nextDepUsed.callsign || '').toUpperCase().trim();
+      }
+    }else{
+      // DEP sélectionné après la flèche
+      depFF = (f.fullFlightNumber || f.callsign || '').toUpperCase().trim();
+
+      if(prevArrUsed){
+        arrFF = (prevArrUsed.fullFlightNumber || prevArrUsed.callsign || '').toUpperCase().trim();
+        bcForStrip = (prevArrUsed.borderControl || '').toUpperCase().trim();
+      }
+    }
+
+    // v2.41 : callsigns ATC (ex. RYR2VL) affichés dans le bandeau
+    const csOf = x => ((x && x.callsign) || '').toUpperCase().trim();
+    const arrCS = flow === 'ARR' ? csOf(f) : csOf(prevArrUsed);
+    const depCS = flow === 'DEP' ? csOf(f) : csOf(nextDepUsed);
+    if(arrCS) setValAK('CallsignArr', arrCS);
+    if(depCS) setValAK('CallsignDep', depCS);
+
+    // ID du vol lié résolu par les fonctions de linking (plus fiable que f.linkedId)
+    const resolvedLinkedId = flow === 'DEP'
+      ? (prevArrUsed?.id || f.linkedId || '')
+      : (nextDepUsed?.id || f.linkedId || '');
+
+    // Le CTOT et sa regulation appartiennent au vol DEP :
+    // c'est 'f' si on a selectionne un DEP, sinon le DEP lie a l'ARR.
+    const depForReg = (flow === 'DEP') ? f : (nextDepUsed || null);
+    const regInfo   = (depForReg && depForReg.regulation) ? depForReg.regulation : null;
+    const ctotIso   = (depForReg && depForReg.ctot) ? depForReg.ctot : '';
+
+    storeAKMetaForTab({
+      flow,
+      id: f.id,
+      linkedId: resolvedLinkedId,
+      regulation: regInfo,
+      ctotIso: ctotIso,
+      reg: f.reg || '',
+      ff: (f.fullFlightNumber || f.callsign || ''),
+      timeISO: (flow === 'DEP')
+        ? (f.sobt || f.eobt || f.aobt || f.atot || '')
+        : (f.sibt || f.eibt || f.aibt || f.aldt || ''),
+      pkg: f.pkg || '',
+      arrFF,
+      depFF,
+      bc: bcForStrip
+    });
+
+    updateAllCalculations();
+    updateTabLabelInstant();
+  }catch(e){
+    showPopup(`Erreur import AK (${String(e.message || e)})`, "#ef4444", 2200);
+  }finally{
+    // ✅ fermeture auto du picker après sélection (sauf refresh)
+    if(!isRefresh){
+      closeAKPicker();
+      const flowSel = document.getElementById('akFlow');
+      if(flowSel) flowSel.value = 'DEP';
+      showPopup("Vol importé", "#16a34a", 1600);
+      // Basculer sur l'onglet DÉPART si FROM=BVA, sinon ARRIVÉE
+      if(typeof switchTimingPanel === 'function'){
+        const fromVal = (document.getElementById('From')?.value || '').toUpperCase().trim();
+        switchTimingPanel(fromVal === 'BVA' ? 'dep' : 'arr');
+        if(fromVal === 'BVA') autoOpenCrewIfBVA();
+      }
+    }
+  }}
 
 
 function updateLidGuideVisibility(){
@@ -3959,7 +5415,7 @@ const PRESTATIONS_DEF = [
   { id:'eauPotable',   label:'Eau potable',            type:'yn' },
   { id:'vidange',      label:'Vidange toilettes',      type:'yn' },
   { id:'menageAssist', label:'Ménage Assist\'Air',     type:'yn' },
-  { id:'menageGSF',label:'Ménage GSF',             type:'choice', choices:['N','Tidy','Full'] },
+  { id:'menageGSF',label:'Ménage GSF',         type:'choice', choices:['N','S','DC','DI'] },
   { id:'collecte',     label:'Collecte ordures',       type:'yn', default:'Y' },
   { id:'echelle',      label:'Échelle supplémentaire', type:'yn' },
   { id:'degivrage',    label:'Dégivrage',              type:'yn' },
@@ -4299,14 +5755,19 @@ function confirmRza(){
 }
 
 function validateForm() {
-  const val = id => (document.getElementById(id)?.value || "");
-  const aobt = val('AOBT');
-  const to   = val('To');
-  const isBVADest = (to || '').toUpperCase().trim() === 'BVA';
-  if(!aobt && !isBVADest){
-    showPopup('⚠️ AOBT manquant — impossible de valider', '#ef4444', 2500);
+  const err = checkValidateRules();
+  showValidateError(err);
+  if(err){
+    showPopup(err.popup, '#ef4444', 2500);
     return;
   }
+  // v2.55 : FR/RK (hors CL35) passent d'abord par l'auto-contrôle Ryanair
+  if(typeof acNeeded === 'function' && acNeeded()){
+    acSteps(true);
+    uiAutoCtrlOpen(() => openPrestationsModal(doValidate));
+    return;
+  }
+  if(typeof acSteps === 'function') acSteps(false);
   openPrestationsModal(doValidate);
 }
 
@@ -4379,19 +5840,30 @@ function doValidate() {
   if(t('ArrPNC'))            { body += r('ARRIVEE PNC', t('ArrPNC')); }
 
   body += br();
-  if(t('PremierDebarque'))   { body += r('PREMIER DEBARQUE (L1)', t('PremierDebarque')); }
-  if(t('PremierDebarqueL2')) { body += r('PREMIER DEBARQUE (L2)', t('PremierDebarqueL2')); }
+  if(t('PremierDebarque'))   { body += r('PREMIER DEBARQUE (AV)', t('PremierDebarque')); }
+  if(t('PremierDebarqueL2')) { body += r('PREMIER DEBARQUE (AR)', t('PremierDebarqueL2')); }
   if(t('DernierDebarque'))   { body += r('DERNIER DEBARQUE',      t('DernierDebarque')); }
 
   body += br();
   if(t('ArriveeLiftArr') || t('DepartLiftArr'))
     body += r('LIFT ARR', `${t('ArriveeLiftArr')||'--:--'} → ${t('DepartLiftArr')||'--:--'}`);
+  if(t('MiseEnPlaceTapis')) body += r('TAPIS BAGAGES', t('MiseEnPlaceTapis'));
+  if(t('DebutDechargementBagages') || t('FinDechargementBagages'))
+    body += r('DECHARGEMENT', `${t('DebutDechargementBagages')||'--:--'} → ${t('FinDechargementBagages')||'--:--'}`);
+  if(t('DebutRepositionnement') || t('FinRepositionnement'))
+    body += r('REPOSITIONNEMENT', `${t('DebutRepositionnement')||'--:--'} → ${t('FinRepositionnement')||'--:--'}`);
+  [['CLEANING CABINE','DebutCleaningCabine','FinCleaningCabine'],['VIDANGE TOILETTES','DebutVidangeToilettes','FinVidangeToilettes'],
+   ['EAU POTABLE','DebutEauPotable','FinEauPotable'],['DEGIVRAGE','DebutDegivrage','FinDegivrage']].forEach(([lb,a,b])=>{
+    if(t(a) || t(b)) body += r(lb, `${t(a)||'--:--'} → ${t(b)||'--:--'}`);
+  });
 
   body += br();
   if(t('AvionPremierEmbarque')) { body += r('PREMIER EMBARQUE',  t('AvionPremierEmbarque')); }
   if(t('AvionDernierEmbarque')) { body += r('DERNIER EMBARQUE',  t('AvionDernierEmbarque')); }
 
   body += br();
+  if(t('DebutChargementBagages') || t('FinChargementBagages'))
+    body += r('CHARGEMENT', `${t('DebutChargementBagages')||'--:--'} → ${t('FinChargementBagages')||'--:--'}`);
   if(t('ArriveeLift') || t('DepartLift'))
     body += r('LIFT DEP', `${t('ArriveeLift')||'--:--'} → ${t('DepartLift')||'--:--'}`);
   if(t('ArriveeFuel') || t('DepartFuel'))
@@ -4401,6 +5873,15 @@ function doValidate() {
   if(t('RemiseLID'))            { body += r('REMISE LID',       t('RemiseLID')); }
   if(t('FermeturePorteAvion'))  { body += r('FERMETURE PORTE',  t('FermeturePorteAvion')); }
   if(t('ConnexionAgentCasque')) { body += r('CONNEXION CASQUE', t('ConnexionAgentCasque')); }
+  if(t('ReouverturePorteAvion')) { body += r('REOUVERTURE PORTE', t('ReouverturePorteAvion')); }
+  if(t('FermetureSouteAV'))     { body += r('FERMETURE SOUTE AV', t('FermetureSouteAV')); }
+  if(t('FermetureSouteAR'))     { body += r('FERMETURE SOUTE AR', t('FermetureSouteAR')); }
+  if(t('RetraitEchelleAV'))     { body += r('RETRAIT ECHELLE AV', t('RetraitEchelleAV')); }
+  if(t('RetraitEchelleAR'))     { body += r('RETRAIT ECHELLE AR', t('RetraitEchelleAR')); }
+  if(t('ConnexionPush'))        { body += r('CONNEXION PUSH',     t('ConnexionPush')); }
+  if(t('ChangementPush'))       { body += r('CHANGEMENT PUSH',    t('ChangementPush')); }
+  if(t('DebutComptageBagages') || t('FinComptageBagages'))
+    body += r('COMPTAGE BAGAGES', `${t('DebutComptageBagages')||'--:--'} → ${t('FinComptageBagages')||'--:--'}`);
 
   // ── OPS : INAD / NAYAK ───────────────────────────────────────────────────
   const hasInad = t('ArriveeINAD') || v('ArrSI') || v('PreviSI');
@@ -4506,6 +5987,17 @@ function doValidate() {
     });
   }
 
+  // ── AUTO-CONTRÔLE RYANAIR ─────────────────────────────────────────────────
+  if(typeof acNeeded === 'function' && acNeeded()){
+    const ac = acSummary();
+    body += s();
+    body += '[ AUTO-CONTROLE RYANAIR ]\n\n';
+    body += `VERIFIE : ${ac.done}/${ac.total}\n`;
+    body += r('REMISE LID', ac.lid);
+    body += r('RZA', ac.nom);
+    body += `SIGNATURE : ${ac.signe ? 'OUI' : 'NON'}\n`;
+  }
+
   // ── BLOC NOTE ─────────────────────────────────────────────────────────────
   const faitsTxt = v('FaitsSaillants');
   if(faitsTxt){
@@ -4527,11 +6019,7 @@ function updateFuelAcHeader(){
   if(!hd){
     hd = document.createElement('div');
     hd.id = 'fuelAcHeader';
-    hd.style.cssText = 'display:flex; align-items:center; justify-content:center; gap:8px;'
-      + 'margin:0 0 10px; padding:6px 10px; border-radius:9px;'
-      + 'background:var(--field-bg, rgba(127,127,127,.08));'
-      + 'border:1px solid var(--field-border, rgba(127,127,127,.25));'
-      + 'font-weight:800; font-size:13px; letter-spacing:.3px;';
+    hd.className = 'fuel-ac';
     sec.insertAdjacentElement('afterbegin', hd);
   }
 
@@ -4612,6 +6100,12 @@ function toggleLDM(mode=null){
   let _historyKey = null;
 
   function canvas(){ return document.getElementById('bnCanvas'); }
+  // v2.35 : feuille haute (option A) ; les traits sont en px CSS, donc les
+  // anciens dessins restent en place, la feuille est juste plus grande.
+  function bnCanvasH(w){
+    const area = document.getElementById('appWrap')?.clientHeight || (window.innerHeight || 700) - 300;
+    return Math.round(Math.max(w * 0.45, Math.min(w * 1.6, area - 96)));
+  }
   function ctx(){ const c=canvas(); return c ? c.getContext('2d') : null; }
 
   function bnInit(){
@@ -4632,7 +6126,7 @@ function toggleLDM(mode=null){
       const dpr = window.devicePixelRatio || 1;
       const parent = c.parentElement || c.closest('.card-content');
       const cw  = (parent?.clientWidth || c.offsetWidth || 300);
-      const h   = Math.round(cw * 0.45);
+      const h   = bnCanvasH(cw);
       const pw  = Math.round(cw * dpr);
       const ph  = Math.round(h * dpr);
       if(c.width !== pw || c.height !== ph){
@@ -4834,7 +6328,7 @@ function toggleLDM(mode=null){
         if(!c) return;
         const dpr = window.devicePixelRatio || 1;
         const w   = c.offsetWidth || c.parentElement?.offsetWidth || 300;
-        const h   = Math.round(w * 0.45);
+        const h   = bnCanvasH(w);
         // Forcer les dimensions même si inchangées
         c.width  = Math.round(w * dpr);
         c.height = Math.round(h * dpr);
@@ -4894,6 +6388,10 @@ function confirmClearFields(){
     'ArrPNT','ArrPNC','ArriveeFuel','DepartFuel','ArriveeLiftArr','DepartLiftArr',
     'ArriveeLift','DepartLift','AvionPremierEmbarque','AvionDernierEmbarque',
     'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
+    'ArrPNT','ArrPNC','AnnonceINAD','AppelNayak','ArriveeNayak','DepartNayak','RechercheBagDebut','RechercheBagFin',
+    'MiseEnPlaceTapis','DebutDechargementBagages','FinDechargementBagages','DebutRepositionnement','FinRepositionnement','DebutChargementBagages','FinChargementBagages',
+    'DebutCleaningCabine','FinCleaningCabine','DebutVidangeToilettes','FinVidangeToilettes','DebutEauPotable','FinEauPotable','DebutDegivrage','FinDegivrage','EvCote',
+    'ConnexionPush','ChangementPush','FermetureSouteAV','FermetureSouteAR','RetraitEchelleAV','RetraitEchelleAR','ReouverturePorteAvion','DebutComptageBagages','FinComptageBagages',
     'CommChiffresPorte', 'CommChargementPiste',
     'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
     'PreviPAX_MAIN','PreviPAX_INF','PreviBAGS','PreviPOIDS','PreviSI',
@@ -4903,7 +6401,7 @@ function confirmClearFields(){
     'FinalBAGS','FinalPOIDS','FinalGB','FinalH1','FinalH2','FinalH3','FinalH4','FinalSI',
     'BlockFuel','TripFuel','TaxiFuel','FuelUplift',
     'DLcode1','DLcode2','DLcode3','DLduree1','DLduree2','DLduree3',
-    'FaitsSaillants'
+    'FaitsSaillants','AutoCtrl'
   ];
   try {
     timingIds.forEach(id => {
@@ -5023,7 +6521,16 @@ function openCrewPanel(){
 // Ouvre d'office le panneau Crew pour FR/RK quand :
 //   - départ de BVA (From = BVA), OU
 //   - turnaround AOBT − AIBT ≥ 35 min
+// v2.40 (Hugo) : From = BVA, ou From ≠ To → l'événement Crew s'affiche au Départ (toutes compagnies)
+function crewRouteRule(){
+  const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
+  const to   = (document.getElementById('To')?.value || '').toUpperCase().trim();
+  // To = BVA : vol qui se termine ici, pas de départ → pas de Crew
+  if(to === 'BVA') return false;
+  return from === 'BVA' || (from.length === 3 && to.length === 3 && from !== to);
+}
 function autoOpenCrewIfNeeded(){
+  if(crewRouteRule()){ openCrewPanel(); return; }
   const cie    = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const isFRRK = (cie === 'FR' || cie === 'RK');
   if(!isFRRK) return;
@@ -5062,14 +6569,14 @@ function toggleDepExtra(panel){
   }
 }
 
+// v2.37 : les infos du vol se modifient dans une feuille du bas
 function toggleInfoVolEdit(){
   const edit = document.getElementById('ivEdit');
-  const icon = document.getElementById('ivEditIcon');
   const open = edit.style.display === 'none' || edit.style.display === '';
-  edit.style.display = open ? 'grid' : 'none';
-  icon.textContent = open ? '✅' : '✏️';
+  edit.style.display = open ? 'flex' : 'none';
+  if(open && window.syncIvChips) window.syncIvChips();
+  if(open && window.syncIvRoute) window.syncIvRoute();
 }
-
 
 
 /* ===== TIME WRAP gestures ===== */
@@ -5251,7 +6758,14 @@ function twSync(id){
   const inp = document.getElementById(id);
   const disp = document.getElementById('tw-disp-' + id);
   if(!inp || !disp) return;
-  disp.textContent = inp.value || '--:--';
+  // Heures prévues (SIBT/SOBT) : "--:--" ; heures réelles vides : "Now"
+  const isPlan = disp.classList.contains('tw-sched');
+  disp.textContent = inp.value || (isPlan ? '--:--' : 'Now');
+  const wrap = disp.closest('.time-wrap');
+  if(wrap){
+    wrap.classList.toggle('tw-empty', !inp.value);
+    wrap.classList.toggle('tw-set', !!inp.value && !isPlan);
+  }
 }
 // Sync all tw displays on load and after calculations
 const _origUpdateAll = typeof updateAllCalculations === 'function' ? updateAllCalculations : null;
@@ -5282,7 +6796,16 @@ function updateIVBadges(){
     if(!el) return;
     el.className = '';
     el.textContent = '';
-    // Badges INFO VOL désactivés
+    if(mins == null) return;
+    // Mêmes seuils que les anciennes bandes de couleur des heures réelles :
+    // bleu en avance, vert à l'heure, ambre +1 à +14 min, rouge >= 15 min.
+    let cls, txt;
+    if(mins < 0)        { cls = 'early'; txt = `${mins} min`.replace('-', '−'); }
+    else if(mins === 0) { cls = 'ok';    txt = "À l'heure"; }
+    else if(mins < 15)  { cls = 'warn';  txt = `+${mins} min`; }
+    else                { cls = 'crit';  txt = `+${mins} min`; }
+    el.className = 'delta ' + cls;
+    el.textContent = txt;
   }
 
   const arrEl = document.getElementById('ivBadgeArr');
@@ -5322,7 +6845,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v1';
+const CACHE = 'suivi-perf-v73';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -5407,7 +6930,11 @@ window.addEventListener('load', function(){
   }
   // Mise à jour à chaque changement de taille ou de contenu
   new ResizeObserver(syncOverflow).observe(wrap);
-  new MutationObserver(syncOverflow).observe(wrap, { childList:true, subtree:true });
+  // Changement d'onglet ou de panneau (Arrivée/Départ, Vol/Timing…) : la hauteur du contenu change sans ajout de nœud
+  const resync = () => requestAnimationFrame(syncOverflow);
+  new MutationObserver(resync).observe(wrap, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+  new MutationObserver(resync).observe(document.body, { attributes:true, attributeFilter:['data-panel','class'] });
+  wrap.querySelectorAll('.panel').forEach(p => new ResizeObserver(resync).observe(p));
   syncOverflow();
 });
 

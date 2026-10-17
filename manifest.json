@@ -6,8 +6,8 @@
   "scope": "/turnaround-bva/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f1723",
-  "theme_color": "#0f1723",
+  "background_color": "#F2F4F7",
+  "theme_color": "#0B1E4F",
   "icons": [
     {
       "src": "icon-192.png",

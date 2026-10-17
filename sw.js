@@ -1,17 +1,19 @@
 /* =====================================================
-   Service Worker — Flight Management BVA
+   Service Worker — Suivi Performance
    Stratégie : Network-first + cache offline
    ===================================================== */
 
-const CACHE_NAME = 'turnaround-v1';
+const CACHE_NAME = 'suivi-perf-v1';
 
 /* Fichiers précachés au premier chargement */
 const PRECACHE = [
-  'index.html',
-  'css/bulma.min.css',
-  'icon-192.png',
-  'icon-512.png',
-  'manifest.json',
+  './',
+  './index.html',
+  './icon-192.png',
+  './icon-512.png',
+  './css/app.css',
+  './ui.js',
+  './app.js'
 ];
 
 /* ── Install : précache ── */
@@ -35,15 +37,13 @@ self.addEventListener('activate', event => {
 
 /* ── Fetch : Network-first, fallback cache ── */
 self.addEventListener('fetch', event => {
+  /* On ne gère que GET */
   if (event.request.method !== 'GET') return;
-
-  // Ne pas intercepter les appels API externes (AeroDataBox, R2...)
-  const url = event.request.url;
-  if (url.includes('rapidapi.com') || url.includes('r2.dev')) return;
 
   event.respondWith(
     fetch(event.request)
       .then(response => {
+        /* Met à jour le cache en arrière-plan */
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
