@@ -736,7 +736,7 @@
     ['i-search', '#3D6BE0', 'Liste des vols AK', 'Arrivée et départ sur une ligne, sections En cours / À venir, filtres et recherche.'],
     ['i-globe',  '#2DD4A8', 'Badge LT / UTC', 'Dans le bandeau, à côté du compte à rebours. Un appui pour changer. Callsign AK affiché.'],
     ['i-list',   '#7c3aed', 'Timeline', 'Repères SIBT, AIBT, SOBT, AOBT, CTOT. Zoom plus confortable, traits sous les barres.'],
-    ['i-plus',   '#0891b2', 'Nouveaux événements', 'Cleaning cabine, vidange, eau potable, dégivrage. Menu Infos & Fréquences.'],
+    ['i-plus',   '#0891b2', 'Nouveaux événements', 'Cleaning cabine, vidange, eau potable, dégivrage. Menus Fréquences et Dégivrage.'],
     ['i-pen',    '#1F9D57', 'Notes', 'Bloc ligné au stylet et journal horodaté : SNY, BAGS OK, PMR, Bag manquant…'],
     ['i-bag',    '#D93636', 'Load', 'Poids moyen par bagage et poids des soutes (13 kg pour FR/RK). Config Y180 / Y186.'],
     ['i-delay',  '#E5484D', 'Retard', 'Répartition des codes en barre et « reste à justifier ».'],

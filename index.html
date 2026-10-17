@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261017r77';
+window.APP_VERSION = '20261017r78';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261017r77';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261017r77" />
-<link rel="stylesheet" href="./css/app.css?v=20261017r77" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261017r78" />
+<link rel="stylesheet" href="./css/app.css?v=20261017r78" />
 </head>
 <body>
 
@@ -149,6 +149,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
   <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M15 12.5l3.5-3.5a3.5 3.5 0 0 0-5-5L11 6.5M9 11.5L5.5 15a3.5 3.5 0 0 0 5 5L13 17.5"/><path d="M4 4l3 3M17 17l3 3"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4"/></symbol>
+  <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
 
@@ -731,20 +733,32 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   </div>
 </div>
 
-<!-- v2.36 : infos escale (fréquences et dégivrage) -->
+<!-- v2.65 : menu Fréquences (id historique infoEscaleModal) -->
 <div id="infoEscaleModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
   <div class="sheet-card">
     <div class="sh-head">
-      <h3>Infos &amp; Fréquences</h3>
+      <h3>Fréquences</h3>
       <button class="iconbtn" type="button" aria-label="Fermer" onclick="document.getElementById('infoEscaleModal').style.display='none'"><svg class="ico"><use href="#i-x"/></svg></button>
     </div>
     <div class="sh-body ie">
-      <div class="ie-k">Fréquences</div>
+      <div class="ie-k">LFOB · Beauvais</div>
       <div class="ie-list">
         <div class="ie-row"><span>LFOB_TWR</span><b class="num">121.405</b><small>MHz</small></div>
         <div class="ie-row"><span>LFOB_APP</span><b class="num">123.985</b><small>MHz</small></div>
         <div class="ie-row"><span>LFOB_OPS</span><b class="num">131.540</b><small>MHz</small></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- v2.65 : menu Dégivrage -->
+<div id="degivrageModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
+  <div class="sheet-card">
+    <div class="sh-head">
+      <h3>Dégivrage</h3>
+      <button class="iconbtn" type="button" aria-label="Fermer" onclick="document.getElementById('degivrageModal').style.display='none'"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="sh-body ie">
       <div class="ie-k">Produit dégivrant</div>
       <div class="ie-card">
         <b>ABAX Ecowing AD-2 Type II</b>
@@ -872,7 +886,10 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
     </div>
     <div class="list">
       <button class="li" type="button" id="infoEscaleBtn" onclick="closeSettingsMenu(); document.getElementById('infoEscaleModal').style.display='flex'">
-        <svg class="ico"><use href="#i-info"/></svg><span><b>Infos &amp; Fréquences</b><small>Fréquences LFOB et produit dégivrant</small></span><span></span>
+        <svg class="ico"><use href="#i-radio"/></svg><span><b>Fréquences</b><small>TWR, APP et OPS LFOB</small></span><span></span>
+      </button>
+      <button class="li" type="button" id="degivrageBtn" onclick="closeSettingsMenu(); document.getElementById('degivrageModal').style.display='flex'">
+        <svg class="ico"><use href="#i-snow"/></svg><span><b>Dégivrage</b><small>Produit ABAX et holdover times</small></span><span></span>
       </button>
       <button class="li" type="button" id="demoFlightsBtn" onclick="uiDemoToggle()">
         <svg class="ico"><use href="#i-plane"/></svg><span><b>Mode démo</b><small>Vols fictifs remplis, tes vols sont mis de côté</small></span><span></span>
@@ -960,8 +977,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261017r77"></script>
-<script src="./app.js?v=20261017r77"></script>
-<script src="./ui.js?v=20261017r77"></script>
+<script src="./edition.js?v=20261017r78"></script>
+<script src="./app.js?v=20261017r78"></script>
+<script src="./ui.js?v=20261017r78"></script>
 </body>
 </html>
