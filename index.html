@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261017r78';
+window.APP_VERSION = '20261017r79';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261017r78';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261017r78" />
-<link rel="stylesheet" href="./css/app.css?v=20261017r78" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261017r79" />
+<link rel="stylesheet" href="./css/app.css?v=20261017r79" />
 </head>
 <body>
 
@@ -117,6 +117,12 @@ function _pvRemembered(){
   return false;
 }
 document.body.classList.add(_pvRemembered() ? "pv-authed" : "pv-locked");
+/* v2.66 : déconnexion depuis le menu (les vols restent enregistrés) */
+function pvLogout(){
+  try{ if(typeof saveCurrentTabData==="function") saveCurrentTabData(); }catch(e){}
+  try{ sessionStorage.removeItem(_PV_KEY); localStorage.removeItem(_PV_KEY); }catch(e){}
+  location.reload();
+}
 </script>
 <script>
 /* Disponible immédiatement, avant le chargement de app.js */
@@ -151,6 +157,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4"/></symbol>
   <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></symbol>
   <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7M10.5 12H20M16.5 8.5 20 12l-3.5 3.5"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
 
@@ -906,6 +913,9 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       <button class="li danger" type="button" id="reset" onclick="closeSettingsMenu(); openCloseAllModal()">
         <svg class="ico"><use href="#i-trash"/></svg><span><b>Tout fermer</b><small>Ferme tous les vols ouverts</small></span><span></span>
       </button>
+      <button class="li" type="button" id="logoutBtn" onclick="closeSettingsMenu(); pvLogout()">
+        <svg class="ico"><use href="#i-logout"/></svg><span><b>Déconnexion</b><small>Redemande le code, vols gardés</small></span><span></span>
+      </button>
     </div>
   </div>
 </div>
@@ -977,8 +987,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261017r78"></script>
-<script src="./app.js?v=20261017r78"></script>
-<script src="./ui.js?v=20261017r78"></script>
+<script src="./edition.js?v=20261017r79"></script>
+<script src="./app.js?v=20261017r79"></script>
+<script src="./ui.js?v=20261017r79"></script>
 </body>
 </html>
