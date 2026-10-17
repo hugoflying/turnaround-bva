@@ -729,19 +729,20 @@
 
   /* ===== Nouveautés : popup animé à la première connexion sur la nouvelle version ===== */
   // v2.51 : contenu de la mise à jour du 17 octobre (changer WN_ID pour réafficher le popup une fois)
-  const WN_ID = 'maj-2026-10-17';
-  const WN_VER = 'Version 2.51';
+  const WN_ID = 'maj-2026-10-17b';
+  const WN_VER = 'Version 2.68';
+  const WN_ED = window.APP_EDITION || 'demo';
   const WN_ITEMS = [
-    ['i-clock',  '#F59E0B', 'Fenêtre CTOT', 'Frise EOBT, push estimé et fenêtre de décollage −5 / +10, retard estimé, slots reçus.'],
-    ['i-search', '#3D6BE0', 'Liste des vols AK', 'Arrivée et départ sur une ligne, sections En cours / À venir, filtres et recherche.'],
-    ['i-globe',  '#2DD4A8', 'Badge LT / UTC', 'Dans le bandeau, à côté du compte à rebours. Un appui pour changer. Callsign AK affiché.'],
-    ['i-list',   '#7c3aed', 'Timeline', 'Repères SIBT, AIBT, SOBT, AOBT, CTOT. Zoom plus confortable, traits sous les barres.'],
-    ['i-plus',   '#0891b2', 'Nouveaux événements', 'Cleaning cabine, vidange, eau potable, dégivrage. Menus Fréquences et Dégivrage.'],
-    ['i-pen',    '#1F9D57', 'Notes', 'Bloc ligné au stylet et journal horodaté : SNY, BAGS OK, PMR, Bag manquant…'],
-    ['i-bag',    '#D93636', 'Load', 'Poids moyen par bagage et poids des soutes (13 kg pour FR/RK). Config Y180 / Y186.'],
-    ['i-delay',  '#E5484D', 'Retard', 'Répartition des codes en barre et « reste à justifier ».'],
-    ['i-arrow',  '#0d9488', 'Swipe partout', 'De Récap à Notes en glissant, en passant par Timing et Load.'],
-  ];
+    ['i-snow',   '#0891b2', 'Dégivrage', 'Nouveau menu : produit ABAX Ecowing AD-2 et tableau holdover times selon la température, la concentration et la météo.'],
+    ['i-radio',  '#3D6BE0', 'Fréquences', 'Menu à part : LFOB TWR 121.405, APP 123.985, OPS 131.540.'],
+    ['i-check',  '#1F9D57', 'Auto-contrôle Ryanair', 'Feuille FR/RK (hors CL35) à cocher avant de valider le vol. Remise LID reprise du timing, signature au doigt.'],
+    ['i-plane',  '#0B1E4F', 'Numéro de vol', 'Le préfixe tapé passe dans Cie (plus de FRFR5595). La destination est proposée dans la case To, un appui suffit.'],
+    WN_ED !== 'bva' ? ['i-search', '#7c3aed', 'Liste des vols AK', 'SIBT et SOBT en gros, écart coloré à côté.'] : null,
+    WN_ED === 'demo' ? ['i-plane', '#F59E0B', 'Mode démo', 'Vols fictifs remplis dans les onglets et la liste AK, bandeau DÉMO bien visible.'] : null,
+    ['i-bag',    '#D93636', 'Ménage GSF', 'Choix N, S, DC et DI.'],
+    ['i-logout', '#64748b', 'Connexion', 'Code demandé une fois par journée (3h à 3h). Bouton Déconnexion dans le menu.'],
+    ['i-pen',    '#0d9488', 'Saisie au clavier', 'La case reste visible au-dessus du clavier pendant que tu tapes.'],
+  ].filter(Boolean);
   window.uiWhatsNew = function(){
     let m = document.getElementById('wnModal');
     if(!m){
