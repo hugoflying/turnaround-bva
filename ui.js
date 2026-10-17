@@ -1036,7 +1036,7 @@
     syncTabbar();
     uiWhatsNewMaybe();
     const rp = document.querySelector('.panel-retard'); if(rp) rp.addEventListener('input', ()=>requestAnimationFrame(syncDelayUI)); syncDelayUI();
-    initNoteDock(); initNoteJournal(); initIvChips(); initIvRoute(); demoBoot();
+    initNoteDock(); initNoteJournal(); initIvChips(); initIvRoute(); demoBoot(); hotRender();
     if(typeof window.bnSetTool === 'function'){ const st = window.bnSetTool; window.bnSetTool = function(t){ st(t); syncNoteDock(); }; }
 
     // Le LOAD peut s'ouvrir / se fermer depuis app.js (changement de vol, etc.)
@@ -1051,6 +1051,50 @@
     if(dl) dl.addEventListener('input', ()=>{ try{ updateRetardPanelState(); }catch(e){} });
   }
 
+
+  /* v2.64 · Holdover times ABAX Ecowing AD-2, Type II
+     Source : FAA Holdover Time Guidelines Winter 2025-2026, Table 5 (null = pas de HOT). */
+  const HOT_COLS = [
+    ['Freezing fog, mist, ice crystals',''],['Snow mixed with freezing fog',''],
+    ['Very light snow, snow grains or pellets','g'],['Light snow, snow grains or pellets','y'],['Moderate snow, snow grains or pellets','o'],
+    ['Freezing drizzle',''],['Light freezing rain',''],['Moderate snow mixed with rain',''],['Rain on cold-soaked wing','']
+  ];
+  const HOT = [
+    ['-3 °C et +', {
+      '100/0':['1:20-3:00','0:30-0:55','2:25-2:55','1:15-2:25','0:40-1:15','0:40-1:40','0:30-0:45','0:07-0:07','0:09-1:25'],
+      '75/25':['1:15-1:25','0:20-0:40','1:45-2:10','0:55-1:45','0:25-0:55','0:35-1:05','0:20-0:30','0:03-0:03','0:04-0:50'],
+      '50/50':['0:15-0:30','0:05-0:10','0:35-0:40','0:15-0:35','0:07-0:15','0:09-0:15','0:06-0:09',null,null] }],
+    ['-3 à -8 °C', {
+      '100/0':['0:45-2:30','0:25-0:45','2:00-2:25','1:00-2:00','0:30-1:00','0:25-1:10','0:20-0:30',null,null],
+      '75/25':['0:35-1:55','0:20-0:35','1:40-2:05','0:50-1:40','0:25-0:50','0:15-0:55','0:20-0:35',null,null] }],
+    ['-8 à -14 °C', {
+      '100/0':['0:45-2:30','0:20-0:40','1:45-2:05','0:55-1:45','0:30-0:55','0:25-1:10*','0:20-0:30*',null,null],
+      '75/25':['0:35-1:55','0:20-0:35','1:35-2:00','0:50-1:35','0:25-0:50','0:15-0:55*','0:20-0:35*',null,null] }],
+    ['-14 à -18 °C', { '100/0':['0:15-0:40','0:01-0:05','0:20-0:30','0:07-0:20','0:02-0:07',null,null,null,null] }],
+    ['-18 à -25 °C', { '100/0':['0:15-0:40','0:00-0:02','0:09-0:15','0:03-0:09','0:01-0:03',null,null,null,null] }],
+    ['-25 à -27 °C', { '100/0':['0:15-0:40','0:00-0:00','0:05-0:07','0:01-0:05','0:00-0:01',null,null,null,null] }]
+  ];
+  let hotT = 0, hotC = '100/0';
+  function hotRender(){
+    const box = document.getElementById('hotBox'); if(!box) return;
+    const concs = Object.keys(HOT[hotT][1]); if(!concs.includes(hotC)) hotC = concs[0];
+    const vals = HOT[hotT][1][hotC];
+    let h = '<div class="hot-l">Température extérieure</div><div class="hot-chips">'
+      + HOT.map((r, i) => '<button type="button" data-t="' + i + '" class="' + (i === hotT ? 'on' : '') + '">' + r[0] + '</button>').join('') + '</div>'
+      + '<div class="hot-l">Concentration fluide / eau</div><div class="hot-seg">'
+      + concs.map(c => '<button type="button" data-c="' + c + '" class="' + (c === hotC ? 'on' : '') + '">' + c + '</button>').join('') + '</div>'
+      + '<div class="hot-list">'
+      + HOT_COLS.map((c, i) => {
+          const v = vals[i];
+          return '<div class="hot-row' + (v ? '' : ' none') + '"><span class="hot-c">' + (c[1] ? '<i class="hot-dot ' + c[1] + '"></i>' : '') + c[0] + '</span>'
+            + '<b class="num">' + (v ? v.replace('-', ' – ').replace('*', '<sup>11</sup>') : 'Pas de HOT') + '</b></div>';
+        }).join('')
+      + '<div class="hot-row none"><span class="hot-c">Other</span><b>Pas de HOT</b></div></div>'
+      + '<div class="hot-src">FAA Holdover Time Guidelines, Winter 2025-2026, Table 5. Durées en h:min. <sup>11</sup> voir la note 11 du document FAA. À titre indicatif : le document officiel fait foi.</div>';
+    box.innerHTML = h;
+    box.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { hotT = +b.dataset.t; hotRender(); });
+    box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { hotC = b.dataset.c; hotRender(); });
+  }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
