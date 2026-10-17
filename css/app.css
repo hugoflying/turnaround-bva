@@ -1392,3 +1392,6 @@ html[data-edition="bva"] .tab-refresh,html[data-edition="bva"] .home-alt{display
 .hot-src{font-size:11px;color:var(--muted);line-height:1.4}
 /* v2.64.1 : le contenu d'Infos & Fréquences défile au lieu de s'écraser */
 .sh-body.ie > *{flex:none}
+/* v2.67 : clavier ouvert, la barre du bas laisse la place à la saisie */
+body.kb-open{--tabbar-h:0px}
+body.kb-open .tabbar{display:none!important}

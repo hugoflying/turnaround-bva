@@ -1036,7 +1036,7 @@
     syncTabbar();
     uiWhatsNewMaybe();
     const rp = document.querySelector('.panel-retard'); if(rp) rp.addEventListener('input', ()=>requestAnimationFrame(syncDelayUI)); syncDelayUI();
-    initNoteDock(); initNoteJournal(); initIvChips(); initIvRoute(); demoBoot(); hotRender();
+    initNoteDock(); initNoteJournal(); initIvChips(); initIvRoute(); demoBoot(); hotRender(); initKeyboardGuard();
     if(typeof window.bnSetTool === 'function'){ const st = window.bnSetTool; window.bnSetTool = function(t){ st(t); syncNoteDock(); }; }
 
     // Le LOAD peut s'ouvrir / se fermer depuis app.js (changement de vol, etc.)
@@ -1388,5 +1388,34 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   };
+
+  /* v2.67 : clavier ouvert → la barre du bas se cache et la case en cours reste visible
+     (sinon l'écran remontait pendant la saisie et la case passait sous le clavier) */
+  function initKeyboardGuard(){
+    let maxH = window.innerHeight;
+    const isField = el => el && !el.readOnly && !el.disabled &&
+      (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/.test(el.type)));
+    const vvH = () => (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+    const keepVisible = () => {
+      const el = document.activeElement;
+      if(!isField(el)) return;
+      const r = el.getBoundingClientRect(), vv = window.visualViewport;
+      const top = vv ? vv.offsetTop : 0, bottom = top + vvH();
+      const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 0;
+      if(r.top < head || r.bottom > bottom - 8) el.scrollIntoView({ block:'center', inline:'nearest' });
+      if(window.scrollY) window.scrollTo(0, 0);
+    };
+    const sync = () => {
+      if(!document.activeElement || !isField(document.activeElement)) maxH = Math.max(maxH, window.innerHeight);
+      const kb = isField(document.activeElement) && Math.min(window.innerHeight, vvH()) < maxH * 0.8;
+      document.body.classList.toggle('kb-open', kb);
+      if(kb) requestAnimationFrame(keepVisible);
+    };
+    window.addEventListener('resize', sync);
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', sync);
+    document.addEventListener('focusin', () => setTimeout(sync, 300));
+    document.addEventListener('focusout', () => setTimeout(sync, 50));
+    document.addEventListener('input', e => { if(document.body.classList.contains('kb-open') && e.target === document.activeElement) requestAnimationFrame(keepVisible); }, true);
+  }
 
 })();
