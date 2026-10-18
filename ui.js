@@ -544,15 +544,17 @@ function clockMin(){
     const left = eobt != null ? eobt - now : null;
     let st, cls = '', next;
     const has = k => !!g(k);
-    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = 'Off-block fait à ' + fmtHM(aobt); }
+    // v2.71 : état en cours du vol (pas l'action à venir)
+    const atotIso = d.akMeta?.atot || '';
+    const atotD = atotIso ? new Date(atotIso) : null;
+    const atot = atotD && !isNaN(atotD.getTime()) ? ((typeof isUTC !== 'undefined' && isUTC) ? atotD.getUTCHours()*60 + atotD.getUTCMinutes() : atotD.getHours()*60 + atotD.getMinutes()) : null;
+    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = atot != null ? 'Décollé ' + fmtHM(atot) : 'Repoussé ' + fmtHM(aobt); }
     else if(aibt == null){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
     else {
-      // v2.70 : l'étape suivante part de la dernière étape saisie (une case sautée ne fait pas reculer)
-      const remise = (cie === 'FR' || cie === 'RK') ? 'Remise LID' : 'Remise LDS/LDF';
-      const STEPS = ['PremierDebarque','DernierDebarque','AvionPremierEmbarque','AvionDernierEmbarque','RemiseLID','FermeturePorteAvion'];
-      const NEXT = ['Débarquement à lancer','Débarquement en cours','Embarquement à lancer','Embarquement en cours', remise + ' à faire','Fermeture porte à faire','Off-block à venir'];
-      let lastDone = -1; STEPS.forEach((k, i) => { if(has(k)) lastDone = i; });
-      next = NEXT[lastDone + 1];
+      next = has('FermeturePorteAvion') ? 'Porte fermée'
+           : has('AvionPremierEmbarque') || has('AvionDernierEmbarque') ? 'Embarquement en cours'
+           : has('PremierDebarque') || has('DernierDebarque') ? 'Débarquement en cours'
+           : 'Arrivé au block';
       if(left != null && left < 0){ st = '+' + Math.round(-left) + '′'; cls = 'late'; }
       else if(left != null && left <= 5){ st = 'EOBT −5'; cls = 'soon'; }
       else st = 'En escale';
@@ -606,7 +608,7 @@ function clockMin(){
       + ringHTML(f)
       + '<span class="rc-t"><b>' + esc(f.fno) + (f.place ? ' · ' + esc(f.place) : '') + '</b><small>' + esc([f.park && 'P' + f.park.replace(/^P/i,''), f.immat].filter(Boolean).join(' · ') || '—') + '</small></span>'
       + '<span class="rc-cdbig">' + cdHTML(f) + '</span>'
-      + (f.done ? '' : '<span class="rc-next"><i></i>' + esc(f.next) + '</span>')
+      + '<span class="rc-next' + (f.done ? ' is-done' : '') + '"><i></i>' + esc(f.next) + '</span>'
       + '<span class="rc-meta">' + metaT('SOBT', f.sobt) + metaT('EOBT', f.eobt) + metaT('CTOT', f.ctot, f.ctot != null ? 'rc-ctot' : '') + '<em class="rc-blk ' + f.blk.c + '">' + f.blk.t + '</em></span>'
       + '</button>';
     const live = sorted.filter(f => !f.done), done = sorted.filter(f => f.done);

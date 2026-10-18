@@ -1395,3 +1395,5 @@ html[data-edition="bva"] .tab-refresh,html[data-edition="bva"] .home-alt{display
 /* v2.67 : clavier ouvert, la barre du bas laisse la place à la saisie */
 body.kb-open{--tabbar-h:0px}
 body.kb-open .tabbar{display:none!important}
+/* v2.71 : état « Repoussé / Décollé » des vols terminés */
+.rc-next.is-done i{background:var(--green,#1F9D57)}

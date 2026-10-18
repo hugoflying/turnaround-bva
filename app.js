@@ -5041,6 +5041,9 @@ function storeAKMetaForTab(meta){
     // Regulation CTOT (cause du creneau) : conservee telle quelle depuis AK
     regulation: meta.regulation || null,
 
+    // v2.71 : heure de décollage réelle (Keeper), pour l'état « Décollé » du Récap
+    atot: meta.atotIso || '',
+
     // ✅ fallback
     reg:  (meta.reg  || '').toUpperCase().trim(),
     ff:   (meta.ff   || '').toUpperCase().trim(),     // fullFlightNumber du vol sélectionné
@@ -5341,6 +5344,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
     const depForReg = (flow === 'DEP') ? f : (nextDepUsed || null);
     const regInfo   = (depForReg && depForReg.regulation) ? depForReg.regulation : null;
     const ctotIso   = (depForReg && depForReg.ctot) ? depForReg.ctot : '';
+    const atotIso   = (depForReg && depForReg.atot) ? depForReg.atot : '';
 
     storeAKMetaForTab({
       flow,
@@ -5348,6 +5352,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
       linkedId: resolvedLinkedId,
       regulation: regInfo,
       ctotIso: ctotIso,
+      atotIso: atotIso,
       reg: f.reg || '',
       ff: (f.fullFlightNumber || f.callsign || ''),
       timeISO: (flow === 'DEP')
@@ -6845,7 +6850,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v83';
+const CACHE = 'suivi-perf-v84';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
