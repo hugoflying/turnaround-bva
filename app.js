@@ -6862,7 +6862,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v105';
+const CACHE = 'suivi-perf-v106';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7114,3 +7114,22 @@ function pafConfirm(){
   const id = m.dataset.field; if(!id) return;
   setNow(id); updateAllCalculations(); twSync(id);
 }
+
+/* v2.85 : rafraîchissement AK automatique quand le premier embarqué est saisi (vols AK uniquement) */
+let _peRefreshAt = {};
+document.addEventListener('change', function(e){
+  if(e.target?.id !== 'AvionPremierEmbarque' || !(e.target.value || '').trim()) return;
+  if(window.APP_EDITION === 'bva' || !currentTabId) return;
+  const id = currentTabId;
+  let d = null; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || 'null'); }catch(_){}
+  if(!d || !d.akMeta) return;
+  if(Date.now() - (_peRefreshAt[id] || 0) < 60000) return; // un seul refresh par minute
+  _peRefreshAt[id] = Date.now();
+  setTimeout(async () => {
+    try{ saveCurrentTabData(); }catch(_){}
+    const r = document.querySelector('#tab-bar .tab-wrap[data-tab="' + id + '"] .tab-refresh');
+    if(r) r.classList.add('is-loading');
+    try{ await refreshAKTab(id); }
+    finally{ document.querySelector('#tab-bar .tab-wrap[data-tab="' + id + '"] .tab-refresh')?.classList.remove('is-loading'); }
+  }, 300);
+});
