@@ -6862,7 +6862,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v104';
+const CACHE = 'suivi-perf-v105';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7096,11 +7096,15 @@ function pafGuard(id){
   const c = window._twClearedAt;
   if(c && c.id === id && Date.now() - c.t < 800) return true;
   const paf = pafValue();
-  if(filled || !paf || (door && paf === 'PAF')) return false;
-  const msg = door ? 'Les contrôles PAF aux arrivées sont-ils bien terminés ?'
-    : paf === 'PAF' ? 'Le vol est contrôlé par la PAF.'
-    : 'Je confirme que le débarquement est en cours vers la ' + (/^S?[1-3]$/.test(paf) ? 'salle ' + paf.replace('S','') : paf) + '.';
-  document.getElementById('pafMsg').textContent = msg;
+  // S1 / 1 : salle non contrôlée par la PAF → aucune confirmation
+  const room = (paf.match(/^S?([1-3])$/) || [])[1] || '';
+  if(filled || !paf || room === '1') return false;
+  // Fermeture porte : seulement pour les salles contrôlées (S2/S3)
+  if(door && !room) return false;
+  const el = document.getElementById('pafMsg');
+  if(door) el.textContent = 'Les contrôles PAF aux arrivées sont-ils bien terminés ?';
+  else if(room) el.innerHTML = 'Je confirme que le cheminement est préparé pour la <b>salle ' + room + '</b>.';
+  else el.textContent = 'J\'ai bien pris en compte que le vol était contrôlé.';
   const m = document.getElementById('pafModal');
   m.dataset.field = id; m.style.display = 'flex';
   return true;
