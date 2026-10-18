@@ -147,7 +147,7 @@
     $('signThemes').innerHTML = SIGN_THEMES.map(t => '<button type="button" data-k="' + t.k + '" class="' + (t.k === cur ? 'is-on' : '') + '" style="--bg:' + t.bg + ';--fg:' + t.fg + '" aria-label="' + t.n + '">Aa</button>').join('');
     let rec = []; try{ rec = JSON.parse(ls.get('signRecent', '[]')) || []; }catch(e){}
     $('signRecentK').hidden = !rec.length;
-    $('signRecent').innerHTML = rec.map(r => '<button type="button">' + esc(r) + '</button>').join('');
+    $('signRecent').innerHTML = rec.map((r, i) => '<div class="sign-rc"><button type="button" class="sign-rc-t" data-i="' + i + '">' + esc(r) + '</button><button type="button" class="sign-rc-x" data-i="' + i + '" aria-label="Supprimer ce message"><svg class="ico"><use href="#i-x"/></svg></button></div>').join('');
   }
   window.signOpen = function(){
     signRender();
@@ -195,7 +195,12 @@
   document.addEventListener('click', e => {
     const th = e.target.closest('#signThemes button');
     if(th){ ls.set('signTheme', th.dataset.k); signRender(); return; }
-    const rc = e.target.closest('#signRecent button');
+    const rx = e.target.closest('#signRecent .sign-rc-x');
+    if(rx){
+      let rec = []; try{ rec = JSON.parse(ls.get('signRecent', '[]')) || []; }catch(_){}
+      rec.splice(+rx.dataset.i, 1); ls.set('signRecent', JSON.stringify(rec)); signRender(); return;
+    }
+    const rc = e.target.closest('#signRecent .sign-rc-t');
     if(rc){ document.querySelector('#signModal .sign-input').value = rc.textContent; window.signShow(); }
   });
 })();

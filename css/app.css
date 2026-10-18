@@ -1470,3 +1470,8 @@ body.has-ctot .chronos .chip-ctot{display:none}
 #signFull{z-index:20500}
 .dmg-vclose{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.55)!important;border:1px solid rgba(255,255,255,.35);display:grid;place-items:center}
 .dmg-vclose .ico{width:24px;height:24px;color:#fff}
+/* v2.86.3 — supprimer un message récent du Panneau */
+.sign-rc{display:flex;align-items:stretch;gap:6px}
+.sign-rc .sign-rc-t{flex:1;min-width:0}
+.sign-recent .sign-rc-x{flex:none;width:44px;padding:0;display:grid;place-items:center;color:var(--muted)}
+.sign-rc-x .ico{width:18px;height:18px}
