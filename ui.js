@@ -633,7 +633,9 @@ function clockMin(){
     const now = nowMin();
     const eobtCur = cur ? toMin(txt('timer-eobt')) : null;
     const sobt = toMin(g('SOBT')), sibt = toMin(g('SIBT')), aibt = toMin(g('AIBT')), aobt = toMin(g('AOBT'));
-    let eobt = rel(eobtCur ?? sobt, now);
+    // v2.90 : EOBT calculée enregistrée avec le vol (avant : SOBT pour les vols en arrière-plan)
+    const eobtSaved = cur ? null : toMin(String(d.timer_eobt || ''));
+    let eobt = rel(eobtCur ?? eobtSaved ?? sobt, now);
     const ctot = rel(toMin(g('CTOT') || (cur ? txt('timer-ctot') : String(d.timer_ctot || ''))), now);
     const left = eobt != null ? eobt - now : null;
     let st, cls = '', next;
@@ -667,6 +669,8 @@ function clockMin(){
 
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
   window.uiRecapRefresh = () => { if(document.body.dataset.panel === 'vols') renderRecap(); };
+  function recapSort(){ try{ const s = localStorage.getItem('rcSort'); return s === 'park' || s === 'add' ? s : 'eobt'; }catch(e){ return 'eobt'; } }
+  window.uiRecapSort = function(s){ try{ localStorage.setItem('rcSort', s); }catch(e){} renderRecap(); };
   window.uiRecapView = function(v){ try{ localStorage.setItem('rcView', v); }catch(e){} renderRecap(); };
   window.uiOpenFlight = function(id){ try{ switchTab(id); }catch(e){} uiTab('vol'); };
 
@@ -692,9 +696,22 @@ function clockMin(){
     const view = recapView();
     document.querySelectorAll('.rc-seg button').forEach(b => b.classList.toggle('is-on', b.dataset.view === view));
     document.getElementById('rcSub').textContent = F.length ? F.length + ' vol' + (F.length > 1 ? 's' : '') + ' · ' + fmtHM(nowMin()) + (lateN ? ' · ' + lateN + ' en retard' : '') : '';
+    const sortRow = document.querySelector('.rc-sort'); if(sortRow) sortRow.hidden = F.length < 2;
     if(!F.length){ list.innerHTML = '<div class="rc-empty">Aucun vol ouvert. Touche le « + » en haut pour en ajouter un.</div>'; return; }
-    const key = f => f.done ? 1e6 : (f.left == null ? 1e5 : f.left);
-    const sorted = F.slice().sort((a,b) => key(a) - key(b));
+    // v2.90 (Hugo) : tri au choix EOBT / Parking / Ordre d'ajout (vides à la fin, puis EOBT)
+    const sortBy = recapSort();
+    document.querySelectorAll('.rc-sort button').forEach(b => b.classList.toggle('is-on', b.dataset.sort === sortBy));
+    const eo = f => f.eobt == null ? 1e6 : f.eobt;
+    const pk = f => (f.park || '').replace(/^P/i, '').trim();
+    const sorted = sortBy === 'add' ? F.slice() : F.slice().sort((a,b) => {
+      if(sortBy === 'park'){
+        const pa = pk(a), pb = pk(b);
+        if(!pa !== !pb) return pa ? -1 : 1;
+        const c = pa.localeCompare(pb, 'fr', { numeric:true, sensitivity:'base' });
+        if(c) return c;
+      }
+      return eo(a) - eo(b);
+    });
     if(view === 'cmp'){
       list.innerHTML = '<div class="rc-list">' + sorted.map(f =>
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)

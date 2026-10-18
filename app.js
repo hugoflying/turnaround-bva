@@ -2394,6 +2394,7 @@ function saveCurrentTabData(){
   data.timer_tobt=document.getElementById('timer-eobt')?.textContent || '--:--';
   data.timer_cd=document.getElementById('timer-cd')?.textContent || '--:--';
   data.timer_ctot=document.getElementById('timer-ctot')?.textContent || '--:--';
+  data.timer_eobt=document.getElementById('timer-eobt')?.textContent || '--:--'; // v2.90 : tri du Récap par EOBT
 
   data.timingPanel = localStorage.getItem('timingPanel') || 'dep';
 
@@ -6877,7 +6878,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v114';
+const CACHE = 'suivi-perf-v115';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
