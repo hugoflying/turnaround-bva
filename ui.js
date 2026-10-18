@@ -317,7 +317,7 @@ function clockMin(){
     // cie, arr, dep, from/to, immat, type, parking, escale (min), PAF
     ['FR','594','595','OPO','EIDCL','B38M','4',25,''],
     ['W4','5148','5149','TIA','9HWAU','A321','12',35,'S3'],
-    ['FR','1037','1038','VIE','9HLOA','A320','7',25,''],
+    ['FR','1037','1038','VIE','9HLOA','A320','7',25,'S2'],
     ['FR','3016','3017','PMI','EIEVA','B738','2',25,''],
     ['FR','2961','2962','OTP','EIIGR','B38M','5',25,''],
     ['FR','2853','2854','VNO','EIFZD','B738','9',25,''],
@@ -336,9 +336,19 @@ function clockMin(){
     ['FR','4721','4722','FEZ','EIDPW','B738','1',25],
     ['H4','2379','2380','AGA','9HHAB','A320','9',45],
   ];
+  // v2.87 : seuls 3 vols sont ouverts en onglets (les autres restent dans la liste AK)
+  // 0 = FR OPO en embarquement · 1 = W4 TIA posé, PAF S3, CTOT · 2 = FR VIE à l'arrivée, PAF S2, CTOT météo
+  const DEMO_OPEN = [0, 1, 2];
+  const DEMO_SCHED = {
+    0: { sibt:-15 },
+    1: { sibt:1, ctot:20, reg:{ regul:'LROPTA', cause:'C · ATC', reason:'ATC capacity', remark:'Expect improvements after 1030z' } },
+    2: { sibt:10, ctot:28, reg:{ regul:'LFFFUTA', cause:'W · Weather', reason:'Weather', description:'Thunderstorms sector UT' } },
+  };
   // Horaires d'un vol de démo, en minutes par rapport au début de la démo (T0)
   function demoSched(i){
-    const tat = DEMO_FLIGHTS[i][7], sibt = -150 + i*17;
+    const tat = DEMO_FLIGHTS[i][7], o = DEMO_SCHED[i];
+    if(o){ const D = o.sibt + tat; return { sibt:o.sibt, A:o.sibt - 2, D, ctot: o.ctot != null ? D + o.ctot : null }; }
+    const sibt = -150 + i*17;
     return { sibt, A: sibt - 2, D: sibt + tat, ctot: (i === 7 || i === 8) ? sibt + tat + 15 + (i === 7 ? 18 : 12) : null };
   }
   async function demoBuild(T0){
@@ -346,7 +356,7 @@ function clockMin(){
     const hm = m => { const d = new Date(now.getTime() + m*60000); const h = isUTC ? d.getUTCHours() : d.getHours(), mi = isUTC ? d.getUTCMinutes() : d.getMinutes(); return String(h).padStart(2,'0') + ':' + String(mi).padStart(2,'0'); };
     const iso = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,10);
     const set = (id, v) => { const e = document.getElementById(id); if(!e) return; e.value = v; e.dispatchEvent(new Event('input', {bubbles:true})); e.dispatchEvent(new Event('change', {bubbles:true})); };
-    for(let i = 0; i < DEMO_FLIGHTS.length; i++){
+    for(const i of DEMO_OPEN){
       const [cie, arr, dep, ap, reg, type, park, tat, paf] = DEMO_FLIGHTS[i];
       createNewTab();
       const { sibt, A, D } = demoSched(i);           // un vol toutes les 17 min : la plupart déjà partis ou en cours, les derniers à venir
@@ -362,7 +372,7 @@ function clockMin(){
         : [['PremierDebarque',A+2],['DernierDebarque',A+11],['ArriveeFuel',A+5],['DepartFuel',A+20],['AvionPremierEmbarque',D-14],['AvionDernierEmbarque',D-3],['RemiseLID',D-7],['FermeturePorteAvion',D-2]];
       if(i % 3 === 1) ev.push(['ArriveeLiftArr',A+1],['DepartLiftArr',A+11],['ArriveeLift',D-22],['DepartLift',D-9]);
       ev.forEach(([id, rel]) => past(id, rel));
-      const withCtot = (i === 7 || i === 8);
+      const withCtot = demoSched(i).ctot != null;
       if(withCtot){ const c = hm(demoSched(i).ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
       else past('AOBT', D);
       // Load : arrivée et prévi pour tous, final une fois l'embarquement terminé
@@ -400,9 +410,7 @@ function clockMin(){
         const meta = { flow:'ARR', arrFF: cie + arr, depFF: cie + dep, bc: paf, reg };
         if(withCtot){
           const c = d.CTOT || '';
-          meta.regulation = i === 7
-            ? { regul:'LROPTA', cause:'C · ATC', reason:'ATC capacity', remark:'Expect improvements after 1030z' }
-            : { regul:'LFFFUTA', cause:'W · Weather', reason:'Weather', description:'Thunderstorms sector UT' };
+          meta.regulation = (DEMO_SCHED[i] && DEMO_SCHED[i].reg) || { regul:'LFFFUTA', cause:'W · Weather', reason:'Weather' };
           meta.ctotHistory = [{ hhmm: hm(D + 25), seenAt: now.getTime() - 40*60000 }, { hhmm: c, seenAt: now.getTime() - 10*60000 }];
         }
         d.akMeta = Object.assign({}, d.akMeta, meta);
@@ -421,10 +429,18 @@ function clockMin(){
   const isTabKey = k => /^(tab-|bnCanvas_|bnMode_)/.test(k) || k === 'flightTabs' || k === 'lastTabId';
   const demoState = () => { try{ return localStorage.getItem('demoMode') || ''; }catch(e){ return ''; } };
   const demoAllowed = () => (window.APP_EDITION || 'demo') === 'demo';
-  window.demoActive = () => demoAllowed() && demoState() === '1';
-  window.uiDemoToggle = function(){
+  // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
+  window.demoActive = () => demoAllowed();
+  const DEMO_VER = '3';                       // changer pour regénérer les vols de démo chez tout le monde
+  const DEMO_TTL = 4 * 3600e3;                // vols de démo regénérés après 4 h (horaires relatifs à l'ouverture)
+  window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
-    if(demoActive()) uiDemoExit(); else uiDemoEnter();
+    localStorage.setItem('demoMode', 'pending');
+    location.reload();
+  };
+  window.uiDemoToggle = function(){
+    if(demoAllowed()) return window.uiDemoReset();
+    if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
   };
   window.uiDemoEnter = function(){
     if(demoActive()) return;
@@ -450,8 +466,8 @@ function clockMin(){
     const bar = document.getElementById('demoBar'); if(bar) bar.hidden = !on;
     const btn = document.getElementById('demoFlightsBtn');
     if(btn){
-      btn.querySelector('b').textContent = on ? 'Quitter le mode démo' : 'Mode démo';
-      btn.querySelector('small').textContent = on ? 'Retrouver tes vols réels' : 'Vols fictifs remplis, tes vols sont mis de côté';
+      btn.querySelector('b').textContent = 'Réinitialiser la démo';
+      btn.querySelector('small').textContent = 'Remet les vols fictifs à l\'heure actuelle';
     }
     try{ updateHeaderOffset(); }catch(e){}
   }
@@ -461,7 +477,13 @@ function clockMin(){
       const cta = document.querySelector('.home-cta'); if(cta) cta.lastChild.textContent = 'Créer un vol';
     }
     if(!demoAllowed()) return;
-    if(demoState() === 'pending'){
+    const T0old = +(localStorage.getItem('demoT0') || 0);
+    const need = demoState() === 'pending' || localStorage.getItem('demoVer') !== DEMO_VER || !T0old || Date.now() - T0old > DEMO_TTL;
+    if(need){
+      // Les champs de timing sont créés au chargement complet de la page (initForm) : on les attend
+      for(let k = 0; k < 60 && !document.getElementById('PremierDebarque'); k++) await new Promise(r => setTimeout(r, 50));
+      Object.keys(localStorage).filter(k => isTabKey(k) || k.startsWith(DEMO_BK)).forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('demoVer', DEMO_VER);
       const T0 = Date.now();
       localStorage.setItem('demoT0', String(T0));
       currentTabId = null;
@@ -470,7 +492,7 @@ function clockMin(){
       const first = (JSON.parse(localStorage.getItem('flightTabs') || '[]'))[0];
       if(first) try{ switchTab(first); }catch(e){}
       uiTab('vols');
-      if(typeof showPopup === 'function') showPopup('Mode démo : ' + DEMO_FLIGHTS.length + ' vols ouverts', '#B45309', 2200);
+      if(typeof showPopup === 'function') showPopup('Démo : ' + DEMO_OPEN.length + ' vols ouverts, les autres dans « Ouvrir un vol »', '#B45309', 2400);
     }
     demoSync();
   }
@@ -485,7 +507,7 @@ function clockMin(){
     const add = (row, i, sc, extra) => {
       const [cie, arr, dep, ap, reg, type, park] = row;
       if(flow === 'ARR'){
-        const f = { id:'demo-a' + i, linkedId:'demo-d' + i, fullFlightNumber:cie + arr, callsign:(cs[cie] || cie) + arr, reg, acTypeIcao:type, pkg:'P' + park, adepIata:ap, sibt:T(sc.sibt) };
+        const f = { id:'demo-a' + i, linkedId:'demo-d' + i, fullFlightNumber:cie + arr, callsign:(cs[cie] || cie) + arr, reg, acTypeIcao:type, pkg:'P' + park, adepIata:ap, sibt:T(sc.sibt), borderControl: row[8] || '' };
         if(past(sc.A)) f.aibt = T(sc.A); else f.eibt = T(sc.A + (extra && i % 2 ? 9 : 0));
         f.status = past(sc.A) ? 'TERMINATED' : (past(sc.A - 120) ? 'IN_FLIGHT' : 'SCHEDULED');
         out.push(f);
@@ -777,7 +799,7 @@ function clockMin(){
     ['i-phone',  '#1F9D57', 'Annuaire', 'Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP, RYR OCC.'],
     ['i-radio',  '#0891b2', 'Fréquences et dégivrage', 'Dans le menu : fréquences LFOB, produit ABAX et holdover times.'],
     ['i-check',  '#7c3aed', 'Auto-contrôle Ryanair', 'La feuille FR/RK en version numérique, signature au doigt. En test, pas obligatoire.'],
-    WN_ED === 'demo' ? ['i-plane', '#D93636', 'Mode démo', 'Des vols fictifs pour découvrir l\'app sans toucher aux tiens.'] : null,
+    WN_ED === 'demo' ? ['i-plane', '#D93636', 'Version démo', 'Des vols fictifs pour tout essayer : 3 ouverts, les autres dans « Ouvrir un vol ». Menu › Réinitialiser la démo pour repartir à l\'heure actuelle.'] : null,
   ].filter(Boolean);
   window.uiWhatsNew = function(){
     let m = document.getElementById('wnModal');
