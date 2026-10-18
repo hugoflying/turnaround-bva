@@ -6858,7 +6858,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v98';
+const CACHE = 'suivi-perf-v99';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7090,7 +7090,7 @@ function pafGuard(id){
   if(id !== 'PremierDebarque' && id !== 'PremierDebarqueL2' && !door) return false;
   const filled = (door ? ['FermeturePorteAvion'] : ['PremierDebarque','PremierDebarqueL2']).some(k => (document.getElementById(k)?.value || '').trim());
   const paf = pafValue();
-  if(filled || !paf) return false;
+  if(filled || !paf || (door && paf === 'PAF')) return false;
   const msg = door ? 'Les contrôles PAF aux arrivées sont-ils bien terminés ?'
     : paf === 'PAF' ? 'Le vol est contrôlé par la PAF.'
     : 'Je confirme que le débarquement est en cours vers la ' + (/^S?[1-3]$/.test(paf) ? 'salle ' + paf.replace('S','') : paf) + '.';
