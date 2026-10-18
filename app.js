@@ -2048,6 +2048,9 @@ function renderTabs(){
   if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'nearest' });
 
   updateHeaderOffset();
+  // v2.89 : le Récap suit tout de suite les onglets (avant : jusqu'à 15 s d'attente)
+  clearTimeout(window._rcSoon);
+  window._rcSoon = setTimeout(()=>{ if(window.uiRecapRefresh) window.uiRecapRefresh(); }, 120);
 }
 
 /* ===== VOLS EN DOUBLE : detection + synchronisation locale =====
@@ -6874,7 +6877,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v113';
+const CACHE = 'suivi-perf-v114';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
