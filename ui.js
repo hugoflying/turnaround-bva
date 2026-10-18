@@ -553,8 +553,10 @@ function clockMin(){
     else if(aibt == null){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
     else {
       next = has('FermeturePorteAvion') ? 'Porte fermée'
-           : has('AvionPremierEmbarque') || has('AvionDernierEmbarque') ? 'Embarquement en cours'
-           : has('PremierDebarque') || has('DernierDebarque') ? 'Débarquement en cours'
+           : has('AvionDernierEmbarque') ? 'Embarquement terminé'
+           : has('AvionPremierEmbarque') ? 'Embarquement en cours'
+           : has('DernierDebarque') ? 'Débarquement terminé'
+           : has('PremierDebarque') ? 'Débarquement en cours'
            : 'Arrivé au block';
       if(left != null && left < 0){ st = '+' + Math.round(-left) + '′'; cls = 'late'; }
       else if(left != null && left <= 5){ st = 'EOBT −5'; cls = 'soon'; }
