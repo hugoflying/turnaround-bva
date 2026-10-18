@@ -6850,7 +6850,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v84';
+const CACHE = 'suivi-perf-v85';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7023,3 +7023,47 @@ window.addEventListener('load', function(){
   majDate();
   setInterval(majDate, 60*1000);
 })();
+
+/* v2.71 : ATOT automatique. Pour chaque vol AK ouvert parti (AOBT saisi) sans ATOT,
+   on interroge Keeper 15 min après l'off-block, puis une seconde fois 10 min plus tard. */
+const ATOT_TRIES = [15, 25];
+let _atotBusy = false;
+async function autoFetchATOT(){
+  if(_atotBusy || window.APP_EDITION === 'bva' || typeof fetchAK !== 'function') return;
+  let tabs = [];
+  try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(_){ return; }
+  const now = typeof clockMin === 'function' ? clockMin() : (new Date().getHours()*60 + new Date().getMinutes());
+  const due = [];
+  tabs.forEach(t => {
+    const id = (t && t.id != null) ? t.id : t;
+    let d; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || 'null'); }catch(_){ d = null; }
+    if(!d || !d.akMeta || d.akMeta.atot) return;
+    const depId = d.akMeta.flow === 'DEP' ? d.akMeta.id : d.akMeta.linkedId;
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String((String(id) === String(currentTabId) ? document.getElementById('AOBT')?.value : d.AOBT) || '').trim());
+    if(!depId || !m) return;
+    let el = now - (+m[1]*60 + +m[2]); if(el < -720) el += 1440; if(el > 720) el -= 1440;
+    const tries = d.akMeta.atotTries || 0;
+    if(el < 0 || el > 360 || tries >= ATOT_TRIES.length || el < ATOT_TRIES[tries]) return;
+    due.push({ id, depId: String(depId) });
+  });
+  if(!due.length) return;
+  _atotBusy = true;
+  try{
+    const n = Date.now();
+    const iso = t => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+    let deps = [];
+    try{ deps = await fetchAK('DEP', iso(n - 18*36e5), iso(n + 6*36e5)) || []; }catch(_){ deps = null; }
+    due.forEach(x => {
+      let d; try{ d = JSON.parse(localStorage.getItem('tab-' + x.id) || 'null'); }catch(_){ d = null; }
+      if(!d || !d.akMeta) return;
+      if(deps === null) return; // réseau indisponible : on retentera à la minute suivante
+      const f = deps.find(v => String(v.id) === x.depId);
+      d.akMeta.atotTries = (d.akMeta.atotTries || 0) + 1;
+      if(f && f.atot) d.akMeta.atot = f.atot;
+      localStorage.setItem('tab-' + x.id, JSON.stringify(d));
+    });
+    if(window.uiRecapRefresh) window.uiRecapRefresh();
+  }finally{ _atotBusy = false; }
+}
+setInterval(autoFetchATOT, 60000);
+setTimeout(autoFetchATOT, 5000);

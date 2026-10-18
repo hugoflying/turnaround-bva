@@ -570,6 +570,7 @@ function clockMin(){
   }
 
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
+  window.uiRecapRefresh = () => { if(document.body.dataset.panel === 'vols') renderRecap(); };
   window.uiRecapView = function(v){ try{ localStorage.setItem('rcView', v); }catch(e){} renderRecap(); };
   window.uiOpenFlight = function(id){ try{ switchTab(id); }catch(e){} uiTab('vol'); };
 
