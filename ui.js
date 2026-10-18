@@ -37,6 +37,7 @@ function clockMin(){
       if(tl && tl.style.display !== 'none') requestAnimationFrame(()=>{ try{ renderTimeline(); }catch(e){} });
     }
     if(name === 'vols') renderRecap();
+    syncCtotBand();
     // Le bandeau du vol courant est masqué sur le Récap : recalcule la hauteur d'en-tête
     try{ updateHeaderOffset(); }catch(e){}
     if(name === 'notes'){
@@ -104,6 +105,24 @@ function clockMin(){
     bar.style.width = Math.max(0, Math.min(1, r)) * 100 + '%';
   }
 
+
+  /* v2.76 : bande créneau CTOT sur l'onglet Vol (option B) : fenêtre −5/+10, push estimé, retard estimé */
+  function syncCtotBand(){
+    const band = document.getElementById('ctotBand'); if(!band) return;
+    const ct = toMin(txt('timer-ctot')), eo = toMin(txt('timer-eobt'));
+    const on = ct != null && document.body.dataset.panel === 'vol';
+    document.body.classList.toggle('has-ctot', ct != null);
+    if(band.hidden === on){ band.hidden = !on; try{ updateHeaderOffset(); }catch(e){} }
+    if(!on) return;
+    const f = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
+    let e = eo; if(e != null){ while(e - ct > 720) e -= 1440; while(ct - e > 720) e += 1440; }
+    const push = e != null ? Math.max(e, ct - 15) : ct - 15;
+    const dl = e != null ? Math.round(push - e) : 0;
+    document.getElementById('ctbCtot').textContent = f(ct);
+    document.getElementById('ctbWin').textContent = f(ct - 5) + ' – ' + f(ct + 10);
+    document.getElementById('ctbPush').textContent = f(push);
+    const d = document.getElementById('ctbDl'); d.hidden = !(dl > 0); d.textContent = '+' + dl + ' min';
+  }
 
   /* ===== Événements optionnels du Départ (Crew, Recherche bag, INAD, Nayak) ===== */
   const EVENTS = [
@@ -1039,7 +1058,7 @@ function clockMin(){
   window.syncIvRoute = syncIvRoute;
 
   function init(){
-    syncHero(); setInterval(()=>{ syncHero(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
+    syncHero(); syncCtotBand(); setInterval(()=>{ syncHero(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
     initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000); setInterval(()=>{ if(rcFast && document.body.dataset.panel === 'vols') renderRecap(); }, 1000);
     const tb = document.getElementById('tab-bar'); if(tb) new MutationObserver(()=>requestAnimationFrame(syncTabRings)).observe(tb, { childList:true }); setInterval(tlTick, 15000);
     document.addEventListener('click', e => { if(e.target.closest('.ev-x, .tw-zone')) setTimeout(syncEvents, 0); });
