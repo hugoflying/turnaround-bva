@@ -1398,7 +1398,7 @@ body.kb-open .tabbar{display:none!important}
 /* v2.71 : état « Repoussé / Décollé » des vols terminés */
 .rc-next.is-done i{background:var(--green,#1F9D57)}
 /* v2.76 : bande créneau CTOT, onglet Vol uniquement (la case CTOT du bandeau s'efface alors) */
-body[data-panel="vol"].has-ctot .chronos .chip-ctot{display:none}
+body.has-ctot .chronos .chip-ctot{display:none}
 .ctb{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;background:rgba(245,184,61,.12);border:1px solid rgba(245,184,61,.55);border-radius:14px;padding:9px 12px;color:#fff}
 .ctb[hidden]{display:none}
 .ctb-l{display:flex;flex-direction:column;flex:none}
@@ -1408,3 +1408,12 @@ body[data-panel="vol"].has-ctot .chronos .chip-ctot{display:none}
 .ctb-r b{color:#fff;font-weight:700}
 .ctb-d{display:inline-block;background:#E5484D;color:#fff;border-radius:6px;padding:0 6px;font-weight:800;font-size:11.5px;margin-left:6px}
 .ctb-ch{color:#AFC0EC;font-size:18px;flex:none}
+
+/* v2.77 — réglage bandeau CTOT dans le menu */
+.li-ctb{cursor:default}
+.ctb-seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:2px;flex:none}
+.ctb-seg button{border:0;background:transparent;border-radius:6px;height:30px;padding:0 9px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.ctb-seg button.is-on{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(11,30,79,.12)}
+#settingsMenu .sh-body > *{flex:none}
+.li-ctb{row-gap:8px}
+.li-ctb .ctb-seg{grid-column:2 / 4;justify-self:start}

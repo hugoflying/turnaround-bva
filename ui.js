@@ -107,11 +107,15 @@ function clockMin(){
 
 
   /* v2.76 : bande créneau CTOT sur l'onglet Vol (option B) : fenêtre −5/+10, push estimé, retard estimé */
+  function ctotBandMode(){ let m = null; try{ m = localStorage.getItem('ctotBandMode'); }catch(e){} return (m === 'all' || m === 'off') ? m : 'vol'; }
+  function paintCtotBandSeg(){ const m = ctotBandMode(); document.querySelectorAll('.ctb-seg button').forEach(b => b.classList.toggle('is-on', b.dataset.ctb === m)); }
+  window.setCtotBandMode = function(m){ try{ localStorage.setItem('ctotBandMode', m); }catch(e){} paintCtotBandSeg(); syncCtotBand(); };
   function syncCtotBand(){
     const band = document.getElementById('ctotBand'); if(!band) return;
     const ct = toMin(txt('timer-ctot')), eo = toMin(txt('timer-eobt'));
-    const on = ct != null && document.body.dataset.panel === 'vol';
-    document.body.classList.toggle('has-ctot', ct != null);
+    const mode = ctotBandMode();
+    const on = ct != null && (mode === 'all' || (mode === 'vol' && document.body.dataset.panel === 'vol'));
+    document.body.classList.toggle('has-ctot', on);
     if(band.hidden === on){ band.hidden = !on; try{ updateHeaderOffset(); }catch(e){} }
     if(!on) return;
     const f = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
@@ -1058,7 +1062,7 @@ function clockMin(){
   window.syncIvRoute = syncIvRoute;
 
   function init(){
-    syncHero(); syncCtotBand(); setInterval(()=>{ syncHero(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
+    paintCtotBandSeg(); syncHero(); syncCtotBand(); setInterval(()=>{ syncHero(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
     initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000); setInterval(()=>{ if(rcFast && document.body.dataset.panel === 'vols') renderRecap(); }, 1000);
     const tb = document.getElementById('tab-bar'); if(tb) new MutationObserver(()=>requestAnimationFrame(syncTabRings)).observe(tb, { childList:true }); setInterval(tlTick, 15000);
     document.addEventListener('click', e => { if(e.target.closest('.ev-x, .tw-zone')) setTimeout(syncEvents, 0); });
