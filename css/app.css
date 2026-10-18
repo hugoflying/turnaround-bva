@@ -1417,3 +1417,6 @@ body.has-ctot .chronos .chip-ctot{display:none}
 #settingsMenu .sh-body > *{flex:none}
 .li-ctb{row-gap:8px}
 .li-ctb .ctb-seg{grid-column:2 / 4;justify-self:start}
+
+/* v2.79 — confirmation PAF au 1er débarqué */
+.paf-msg{font-size:17px;font-weight:600;line-height:1.45;color:var(--fg);margin:0}

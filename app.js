@@ -6694,7 +6694,7 @@ function toggleInfoVolEdit(){
     const action=zone.dataset.action;
     if(action==='minus') adjustTime(id,-1);
     else if(action==='plus') adjustTime(id,1);
-    else if(action==='now') setNow(id);
+    else if(action==='now'){ if(pafGuard(id)) return; setNow(id); }
     updateAllCalculations(); twSync(id);
     if(window.getSelection) window.getSelection().removeAllRanges();
     // Pas de blur() — évite les sauts de scroll sur tablette Android
@@ -6858,7 +6858,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v94';
+const CACHE = 'suivi-perf-v95';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7075,3 +7075,30 @@ async function autoFetchATOT(){
 }
 setInterval(autoFetchATOT, 60000);
 setTimeout(autoFetchATOT, 5000);
+
+
+/* PAF : confirmation au 1er débarqué quand une valeur PAF est connue (akMeta.bc) */
+function pafValue(){
+  try{
+    if(!currentTabId) return '';
+    const d = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
+    return (d?.akMeta?.bc || '').toUpperCase().trim();
+  }catch(e){ return ''; }
+}
+function pafGuard(id){
+  if(id !== 'PremierDebarque' && id !== 'PremierDebarqueL2') return false;
+  const filled = ['PremierDebarque','PremierDebarqueL2'].some(k => (document.getElementById(k)?.value || '').trim());
+  const paf = pafValue();
+  if(filled || !paf) return false;
+  const msg = paf === 'PAF' ? 'Le vol est contrôlé par la PAF.'
+    : 'Je confirme que le débarquement est en cours vers la ' + (/^[1-3]$/.test(paf) ? 'salle ' + paf : paf) + '.';
+  document.getElementById('pafMsg').textContent = msg;
+  const m = document.getElementById('pafModal');
+  m.dataset.field = id; m.style.display = 'flex';
+  return true;
+}
+function pafConfirm(){
+  const m = document.getElementById('pafModal'); m.style.display = 'none';
+  const id = m.dataset.field; if(!id) return;
+  setNow(id); updateAllCalculations(); twSync(id);
+}
