@@ -670,7 +670,28 @@ function clockMin(){
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
   window.uiRecapRefresh = () => { if(document.body.dataset.panel === 'vols') renderRecap(); };
   function recapSort(){ try{ const s = localStorage.getItem('rcSort'); return s === 'park' || s === 'add' ? s : 'eobt'; }catch(e){ return 'eobt'; } }
-  window.uiRecapSort = function(s){ try{ localStorage.setItem('rcSort', s); }catch(e){} renderRecap(); };
+  // v2.90 (Hugo) : tri EOBT / Parking / Ordre d'ajout (vides à la fin, puis EOBT), partagé Récap + onglets
+  function sortFlights(F, sortBy){
+    const eo = f => f.eobt == null ? 1e6 : f.eobt;
+    const pk = f => (f.park || '').replace(/^P/i, '').trim();
+    return sortBy === 'add' ? F.slice() : F.slice().sort((a,b) => {
+      if(sortBy === 'park'){
+        const pa = pk(a), pb = pk(b);
+        if(!pa !== !pb) return pa ? -1 : 1;
+        const c = pa.localeCompare(pb, 'fr', { numeric:true, sensitivity:'base' });
+        if(c) return c;
+      }
+      return eo(a) - eo(b);
+    });
+  }
+  // v2.91 (Hugo) : les onglets du bandeau suivent le tri du Récap (vols en cours puis terminés)
+  window.uiSortedTabIds = function(ids){
+    try{
+      const F = sortFlights(ids.map(flightInfo), recapSort());
+      return F.filter(f => !f.done).concat(F.filter(f => f.done)).map(f => f.id);
+    }catch(e){ return ids; }
+  };
+  window.uiRecapSort = function(s){ try{ localStorage.setItem('rcSort', s); }catch(e){} try{ renderTabs(); }catch(e){} renderRecap(); };
   window.uiRecapView = function(v){ try{ localStorage.setItem('rcView', v); }catch(e){} renderRecap(); };
   window.uiOpenFlight = function(id){ try{ switchTab(id); }catch(e){} uiTab('vol'); };
 
@@ -701,17 +722,7 @@ function clockMin(){
     // v2.90 (Hugo) : tri au choix EOBT / Parking / Ordre d'ajout (vides à la fin, puis EOBT)
     const sortBy = recapSort();
     document.querySelectorAll('.rc-sort button').forEach(b => b.classList.toggle('is-on', b.dataset.sort === sortBy));
-    const eo = f => f.eobt == null ? 1e6 : f.eobt;
-    const pk = f => (f.park || '').replace(/^P/i, '').trim();
-    const sorted = sortBy === 'add' ? F.slice() : F.slice().sort((a,b) => {
-      if(sortBy === 'park'){
-        const pa = pk(a), pb = pk(b);
-        if(!pa !== !pb) return pa ? -1 : 1;
-        const c = pa.localeCompare(pb, 'fr', { numeric:true, sensitivity:'base' });
-        if(c) return c;
-      }
-      return eo(a) - eo(b);
-    });
+    const sorted = sortFlights(F, sortBy);
     if(view === 'cmp'){
       list.innerHTML = '<div class="rc-list">' + sorted.map(f =>
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)

@@ -1975,6 +1975,7 @@ function renderTabs(){
 
   let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
+  if(window.uiSortedTabIds) tabs = window.uiSortedTabIds(tabs.map(String));
 
   tabs.forEach((id)=>{
     const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
@@ -6878,7 +6879,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v116';
+const CACHE = 'suivi-perf-v117';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
