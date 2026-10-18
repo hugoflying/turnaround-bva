@@ -14,7 +14,8 @@ const PRECACHE = [
   './css/app.css',
   './ui.js',
   './app.js',
-  './tools.js'
+  './tools.js',
+  './contacts.js'
 ];
 
 /* ── Install : précache ── */

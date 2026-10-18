@@ -344,78 +344,128 @@ function clockMin(){
     1: { sibt:1, ctot:20, reg:{ regul:'LROPTA', cause:'C · ATC', reason:'ATC capacity', remark:'Expect improvements after 1030z' } },
     2: { sibt:10, ctot:28, reg:{ regul:'LFFFUTA', cause:'W · Weather', reason:'Weather', description:'Thunderstorms sector UT' } },
   };
+  // v2.88 : scénarios de retard réalistes (93 retard arrivée, 32, 81 CTOT, 89, 77) sur les vols de la liste
+  const DEMO_SCEN = { 3:'late', 5:'89-77', 6:'ctot', 7:'ctot', 8:'ctot' };
+  const demoRow = i => i >= 100 ? DEMO_EXTRA[i - 100] : DEMO_FLIGHTS[i];
   // Horaires d'un vol de démo, en minutes par rapport au début de la démo (T0)
+  // sibt / A (AIBT) / D (SOBT) / ctot / off (AOBT réel) / eobt (EOBT calculée)
   function demoSched(i){
-    const tat = DEMO_FLIGHTS[i][7], o = DEMO_SCHED[i];
-    if(o){ const D = o.sibt + tat; return { sibt:o.sibt, A:o.sibt - 2, D, ctot: o.ctot != null ? D + o.ctot : null }; }
-    const sibt = -150 + i*17;
-    return { sibt, A: sibt - 2, D: sibt + tat, ctot: (i === 7 || i === 8) ? sibt + tat + 15 + (i === 7 ? 18 : 12) : null };
+    const row = demoRow(i), cie = row[0], tat = row[7], o = DEMO_SCHED[i];
+    let sibt, ctot = null, sc = DEMO_SCEN[i] || 'ok';
+    if(i >= 100) sibt = 25 + (i - 100)*28;
+    else if(o) sibt = o.sibt;
+    else sibt = -150 + i*17;
+    const D = sibt + tat;
+    const A = sc === 'late' ? sibt + 14 : sibt - 2;
+    const minTurn = (cie === 'FR' || cie === 'RK') ? 25 : (cie === 'W4' || cie === 'W6') ? 30 : tat;
+    const eobt = Math.max(D, A + minTurn);
+    if(o && o.ctot != null) ctot = D + o.ctot;
+    else if(sc === 'ctot') ctot = D + (i === 6 ? 20 : i === 7 ? 33 : 27);
+    let off = eobt - 1;                                  // à l'heure : repoussé 1 min avant
+    if(sc === 'late') off = eobt + 4;                    // + 4 min de chargement (32)
+    if(sc === '89-77') off = D + 10;
+    if(ctot != null) off = Math.max(eobt, ctot - 12);
+    return { sibt, A, D, ctot, off, eobt, sc };
   }
-  async function demoBuild(T0){
+  const DEMO_SI_ARR = ['2 WCHS 36B/37F + 1 WCHR 01B', '1 WCHC 02A + 1 BLND 03C', '3 WCHR 01A/01B/01C', '1 UMNR 12F', '1 WCHS 04D + 1 DEAF 05A', '2 WCHR 02B/02C', '1 MAAS 07A', ''];
+  const DEMO_SI_PREVI = ['1 WCHR 01B + 1 WCHS 33F', '2 WCHC 01A/01B · 1 UMNR 14C', '1 WCHR 02C', '1 BLND 03A + 1 WCHR 03B', '1 WCHS 30A + 2 WCHR 01E/01F', '1 MEDA 06C', '1 WCHR 01A', '1 UMNR 11D + 1 WCHR 02A'];
+  const DEMO_NOTES = [
+    [['A',3,'SNY · DERUHU'], ['off',-6,'BAGS OK']],
+    [['A',1,'PMR · 2 WCHC, lift demandé'], ['A',6,'Nettoyage · cabine propre'], ['off',-8,'BAGS OK']],
+    [['A',4,'Nettoyage · cabine sale, rangées 20 à 25'], ['off',-12,'Pax en retard · 3 pax au PIF']],
+    [['A',0,'Arrivée tardive · retard en provenance, 93'], ['A',2,'Bag manquant · 1 bag sans étiquette'], ['off',-6,'Chargement · 4 bags tardifs en soute 4, code 32'], ['off',-2,'BAGS OK']],
+    [['A',5,'Fuel · complément demandé par le CDB'], ['off',-5,'BAGS OK']],
+    [['off',-14,'Pax en retard · 2 pax au PIF, appel fait'], ['off',-9,'Push · tracteur en retard, code 89'], ['off',-4,'Pluie forte · chargement ralenti, code 77']],
+    [['A',3,'SNY · AMIEZV'], ['off',-20,'CTOT reçu · régulation ATC, code 81'], ['off',-3,'BAGS OK']],
+    [['A',2,'PMR · 1 WCHR'], ['off',-16,'CTOT reçu · régulation météo']],
+  ];
+  // Remplit le vol courant comme un vrai vol (timings passés, LOAD, retards justifiés, notes)
+  window.demoFillFlight = function(i, T0, withMeta){
     const now = new Date(T0);
     const hm = m => { const d = new Date(now.getTime() + m*60000); const h = isUTC ? d.getUTCHours() : d.getHours(), mi = isUTC ? d.getUTCMinutes() : d.getMinutes(); return String(h).padStart(2,'0') + ':' + String(mi).padStart(2,'0'); };
     const iso = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,10);
     const set = (id, v) => { const e = document.getElementById(id); if(!e) return; e.value = v; e.dispatchEvent(new Event('input', {bubbles:true})); e.dispatchEvent(new Event('change', {bubbles:true})); };
-    for(const i of DEMO_OPEN){
-      const [cie, arr, dep, ap, reg, type, park, tat, paf] = DEMO_FLIGHTS[i];
-      createNewTab();
-      const { sibt, A, D } = demoSched(i);           // un vol toutes les 17 min : la plupart déjà partis ou en cours, les derniers à venir
-      const isFR = cie === 'FR';
-      set('Cie', cie); set('NVol', dep); set('Date', iso);
-      set('From', ap); set('To', ap); set('Immat', reg); set('TypeAvion', type); set('Parking', park);
-      set('SIBT', hm(sibt)); set('SOBT', hm(D));
-      const past = (id, rel) => { if(rel <= 0) set(id, hm(rel)); };
-      past('AIBT', A);
-      // Timings du touchée au départ, renseignés seulement s'ils sont déjà passés
-      const ev = isFR
-        ? [['PremierDebarque',A+2],['DernierDebarque',A+9],['ArriveeFuel',A+3],['DepartFuel',A+14],['AvionPremierEmbarque',D-13],['AvionDernierEmbarque',D-4],['RemiseLID',D-5],['FermeturePorteAvion',D-3]]
-        : [['PremierDebarque',A+2],['DernierDebarque',A+11],['ArriveeFuel',A+5],['DepartFuel',A+20],['AvionPremierEmbarque',D-14],['AvionDernierEmbarque',D-3],['RemiseLID',D-7],['FermeturePorteAvion',D-2]];
-      if(i % 3 === 1) ev.push(['ArriveeLiftArr',A+1],['DepartLiftArr',A+11],['ArriveeLift',D-22],['DepartLift',D-9]);
-      ev.forEach(([id, rel]) => past(id, rel));
-      const withCtot = demoSched(i).ctot != null;
-      if(withCtot){ const c = hm(demoSched(i).ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
-      else past('AOBT', D);
-      // Load : arrivée et prévi pour tous, final une fois l'embarquement terminé
-      const pax = 148 + (i * 13) % 41, inf = i % 3, bags = 38 + (i * 7) % 30, kg = isFR ? 13 : 15;
-      if(A <= 0){ set('ArrPAX_MAIN', String(pax - 9)); set('ArrPAX_INF', String((i + 1) % 3)); set('ArrBAGS', String(bags - 4)); set('ArrPOIDS', String((bags - 4) * kg)); }
-      if(isFR){ set('PreviPAX_MAIN', String(pax + 3)); set('PreviPAX_INF', String(inf)); set('PreviBAGS', String(bags + 2)); }
-      else { set('PreviMALE', String(Math.round(pax*0.52))); set('PreviFEMALE', String(pax - Math.round(pax*0.52) - 6)); set('PreviCHILD', '6'); set('PreviINFANT', String(inf)); set('PreviBAGS_OTHER', String(bags + 2)); set('PreviPOIDS_OTHER', String((bags + 2) * kg)); }
-      if(D - 4 <= 0){
-        if(isFR) set('FinalADULT', String(pax));
-        else { set('FinalMALE', String(Math.round(pax*0.52))); set('FinalFEMALE', String(pax - Math.round(pax*0.52) - 5)); set('FinalCHILD', '5'); }
-        set('FinalINFANT', String(inf));
-        const z = Math.floor(pax / 4);
-        set('FinalOA', String(z)); set('FinalOB', String(z)); set('FinalOC', String(z)); set('FinalOD', String(pax - 3*z));
-        set('FinalBAGS', String(bags)); set('FinalPOIDS', String(bags * kg));
-        const h = Math.floor(bags / 4);
-        set('FinalH1', String(h)); set('FinalH2', String(h)); set('FinalH3', String(h)); set('FinalH4', String(bags - 3*h));
-        set('BlockFuel', String(isFR ? 7600 + i*150 : 8200 + i*120)); set('TripFuel', String(isFR ? 5900 + i*140 : 6400 + i*110)); set('TaxiFuel', '200');
-      }
-      // Commentaires du Clavier, horodatés au moment des faits
-      const notes = [];
-      const note = (rel, txt) => { if(rel <= 0) notes.push(hm(rel) + ' · ' + txt); };
-      if(i === 0){ note(A+3, 'SNY · DERUHU'); note(D-6, 'BAGS OK'); }
-      if(i === 1){ note(A+1, 'PMR · 2 WCHC, lift demandé'); note(D-8, 'BAGS OK'); }
-      if(i === 2){ note(A+4, 'Nettoyage · cabine sale, rangées 20 à 25'); }
-      if(i === 3){ note(A+2, 'Bag manquant · 1 bag sans étiquette'); note(D-10, 'Pax en retard · 2 pax au PIF'); }
-      if(i === 4){ note(D-20, 'Fuel · complément demandé par le CDB'); }
-      if(i === 6){ note(D-6, 'BAGS OK'); }
-      if(i === 5){ note(A+3, 'SNY · AMIEZV'); }
-      if(i === 7){ note(A+2, 'PMR · 1 WCHR'); }
-      if(notes.length) set('FaitsSaillants', notes.join('\n'));
-      if(typeof updateAllCalculations === 'function') updateAllCalculations();
-      saveCurrentTabData();
+    const nowRel = (Date.now() - T0) / 60000;             // minutes écoulées depuis T0 (vol importé plus tard)
+    const isPast = rel => rel <= nowRel;
+    const row = demoRow(i), [cie, arr, dep, ap, reg, type, park, tat] = row, paf = row[8] || '';
+    const sc = demoSched(i), { sibt, A, D, off } = sc;
+    const isFR = cie === 'FR' || cie === 'RK', k = i % 8;
+    set('Cie', cie); set('NVol', dep); set('Date', iso);
+    set('From', ap); set('To', ap); set('Immat', reg); set('TypeAvion', type); set('Parking', park);
+    set('SIBT', hm(sibt)); set('SOBT', hm(D));
+    const past = (id, rel) => { if(isPast(rel)) set(id, hm(rel)); };
+    past('AIBT', A);
+    const ev = [
+      ['PremierDebarque', A+2], ['DernierDebarque', A + (isFR ? 9 : 11)], ['ArriveeFuel', A+3], ['DepartFuel', A + (isFR ? 14 : 20)],
+      ['MiseEnPlaceTapis', A+1], ['DebutDechargementBagages', A+2], ['FinDechargementBagages', A+10],
+      ['DebutChargementBagages', off-16], ['FinChargementBagages', off-5],
+      ['AvionPremierEmbarque', off - (isFR ? 13 : 14)], ['AvionDernierEmbarque', off-4], ['RemiseLID', off - (isFR ? 5 : 7)],
+      ['FermetureSouteAV', off-4], ['FermetureSouteAR', off-3], ['FermeturePorteAvion', off-3], ['RetraitEchelleAV', off-2], ['RetraitEchelleAR', off-2],
+      ['ConnexionAgentCasque', off-6],
+    ];
+    if(i % 3 === 1) ev.push(['ArriveeLiftArr', A+1], ['DepartLiftArr', A+11], ['ArriveeLift', off-22], ['DepartLift', off-9]);
+    if(i % 4 === 2) ev.push(['DebutCleaningCabine', A+10], ['FinCleaningCabine', A+17]);
+    ev.forEach(([id, rel]) => past(id, rel));
+    if(sc.ctot != null){ const c = hm(sc.ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
+    past('AOBT', off);
+    // LOAD : arrivée dès le block, prévi pour tous, final une fois l'embarquement terminé
+    const pax = 148 + (i * 13) % 41, inf = i % 3, bags = 38 + (i * 7) % 30, kg = isFR ? 13 : 15, child = 2 + i % 5;
+    if(isPast(A)){ set('ArrPAX_MAIN', String(pax - 9)); set('ArrPAX_INF', String((i + 1) % 3)); set('ArrBAGS', String(bags - 4)); set('ArrPOIDS', String((bags - 4) * kg)); set('ArrSI', DEMO_SI_ARR[k]); }
+    if(isFR){ set('PreviPAX_MAIN', String(pax + 3)); set('PreviPAX_INF', String(inf)); set('PreviBAGS', String(bags + 2)); }
+    else { set('PreviMALE', String(Math.round(pax*0.52))); set('PreviFEMALE', String(pax - Math.round(pax*0.52) - child)); set('PreviCHILD', String(child)); set('PreviINFANT', String(inf)); set('PreviBAGS_OTHER', String(bags + 2)); set('PreviPOIDS_OTHER', String((bags + 2) * kg)); }
+    set('PreviSI', DEMO_SI_PREVI[k]); set('PreviPoussettesPorte', String(1 + i % 3)); set('PreviPoussettesCBS', String(i % 2));
+    if(isPast(off - 4)){
+      if(isFR){ set('FinalADULT', String(pax - child)); set('FinalCHILD', String(child)); }
+      else { set('FinalMALE', String(Math.round(pax*0.52))); set('FinalFEMALE', String(pax - Math.round(pax*0.52) - child)); set('FinalCHILD', String(child)); }
+      set('FinalINFANT', String(inf));
+      const z = Math.floor(pax / 4);
+      set('FinalOA', String(z - 2)); set('FinalOB', String(z + 3)); set('FinalOC', String(z + 1)); set('FinalOD', String(pax - 3*z - 2));
+      set('FinalBAGS', String(bags)); set('FinalPOIDS', String(bags * kg));
+      const h = Math.floor(bags / 4);
+      set('FinalH1', String(h - 3)); set('FinalH2', String(h + 2)); set('FinalH3', String(h + 4)); set('FinalH4', String(bags - 3*h - 3));
+      set('FinalSI', DEMO_SI_PREVI[k]);
+      set('BlockFuel', String(isFR ? 7600 + i*150 : 8200 + i*120)); set('TripFuel', String(isFR ? 5900 + i*140 : 6400 + i*110)); set('TaxiFuel', '200'); set('FuelUplift', String(isFR ? 3200 + i*90 : 3900 + i*80));
+    }
+    if(typeof updateAllCalculations === 'function') updateAllCalculations();
+    // Retards justifiés (le 93 / 93A est rempli tout seul par l'app quand l'arrivée est en retard)
+    if(isPast(off)){
+      if(sc.sc === 'late'){ set('DLcode2', '32'); set('DLduree2', '4'); }
+      else if(sc.sc === '89-77'){ set('DLcode1', '89'); set('DLduree1', '6'); set('DLcode2', '77'); set('DLduree2', '4'); }
+      else if(sc.ctot != null && off > D){ set('DLcode1', '81'); set('DLduree1', String(off - D)); }
+    }
+    // Notes du Clavier, horodatées au moment des faits
+    const notes = [];
+    (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
+    if(notes.length) set('FaitsSaillants', notes.join('\n'));
+    if(typeof updateAllCalculations === 'function') updateAllCalculations();
+    saveCurrentTabData();
+    if(withMeta){
       try{
-        const k = 'tab-' + currentTabId, d = JSON.parse(localStorage.getItem(k) || '{}');
-        const meta = { flow:'ARR', arrFF: cie + arr, depFF: cie + dep, bc: paf, reg };
-        if(withCtot){
-          const c = d.CTOT || '';
-          meta.regulation = (DEMO_SCHED[i] && DEMO_SCHED[i].reg) || { regul:'LFFFUTA', cause:'W · Weather', reason:'Weather' };
-          meta.ctotHistory = [{ hhmm: hm(D + 25), seenAt: now.getTime() - 40*60000 }, { hhmm: c, seenAt: now.getTime() - 10*60000 }];
+        const key = 'tab-' + currentTabId, d = JSON.parse(localStorage.getItem(key) || '{}');
+        const meta = { flow:'ARR', id:'demo-a' + i, linkedId:'demo-d' + i, arrFF: cie + arr, depFF: cie + dep, bc: paf, reg };
+        if(sc.ctot != null){
+          const o = DEMO_SCHED[i];
+          meta.regulation = (o && o.reg) || { regul:'LFFFUTA', cause:'W · Weather', reason:'Weather' };
+          meta.ctotHistory = [{ hhmm: hm(D + 25), seenAt: now.getTime() - 40*60000 }, { hhmm: hm(sc.ctot), seenAt: now.getTime() - 10*60000 }];
         }
         d.akMeta = Object.assign({}, d.akMeta, meta);
-        localStorage.setItem(k, JSON.stringify(d));
+        localStorage.setItem(key, JSON.stringify(d));
       }catch(e){}
+    }
+  };
+  // Vol importé depuis « Ouvrir un vol » en démo : on le complète comme un vrai vol
+  window.demoFillImported = function(f){
+    const m = String(f && f.id || '').match(/^demo-[ad](\d+)$/); if(!m) return;
+    const i = +m[1]; if(!demoRow(i)) return;
+    const T0 = +(localStorage.getItem('demoT0') || Date.now());
+    window.demoFillFlight(i, T0, false);
+    if(typeof renderTabs === 'function') renderTabs();
+    if(typeof updateInfoStrip === 'function') updateInfoStrip();
+  };
+  async function demoBuild(T0){
+    for(const i of DEMO_OPEN){
+      createNewTab();
+      window.demoFillFlight(i, T0, true);
       await new Promise(r => setTimeout(r, 5));       // id d'onglet = horodatage : on évite les doublons
     }
     if(typeof updateInfoStrip === 'function') updateInfoStrip();
@@ -431,7 +481,7 @@ function clockMin(){
   const demoAllowed = () => (window.APP_EDITION || 'demo') === 'demo';
   // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
   window.demoActive = () => demoAllowed();
-  const DEMO_VER = '3';                       // changer pour regénérer les vols de démo chez tout le monde
+  const DEMO_VER = '4';                       // changer pour regénérer les vols de démo chez tout le monde
   const DEMO_TTL = 4 * 3600e3;                // vols de démo regénérés après 4 h (horaires relatifs à l'ouverture)
   window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
@@ -513,17 +563,15 @@ function clockMin(){
         out.push(f);
       } else {
         const f = { id:'demo-d' + i, linkedId:'demo-a' + i, fullFlightNumber:cie + dep, callsign:(cs[cie] || cie) + dep, reg, acTypeIcao:type, pkg:'P' + park, adesIata:ap, sobt:T(sc.D) };
-        if(sc.ctot != null){ f.ctot = T(sc.ctot); f.eobt = T(Math.max(sc.D, sc.ctot - 15)); }
-        if(sc.ctot == null && past(sc.D)){ f.aobt = T(sc.D); f.atot = T(sc.D + 8); f.status = 'IN_FLIGHT'; }
+        if(sc.ctot != null){ f.ctot = T(sc.ctot); f.eobt = T(Math.max(sc.eobt, sc.ctot - 15)); }
+        else if(sc.eobt > sc.D) f.eobt = T(sc.eobt);
+        if(past(sc.off)){ f.aobt = T(sc.off); f.atot = T(sc.off + 8); f.status = 'IN_FLIGHT'; }
         else f.status = 'SCHEDULED';
         out.push(f);
       }
     };
     DEMO_FLIGHTS.forEach((row, i) => add(row, i, demoSched(i), false));
-    DEMO_EXTRA.forEach((row, k) => {
-      const sibt = 25 + k*28, A = sibt - 2;
-      add(row, 100 + k, { sibt, A, D: sibt + row[7], ctot: null }, true);
-    });
+    DEMO_EXTRA.forEach((row, k) => add(row, 100 + k, demoSched(100 + k), true));
     return out;
   };
 
@@ -796,7 +844,7 @@ function clockMin(){
     WN_ED !== 'bva' ? ['i-info', '#D93636', 'Contrôle transfrontalier', 'Sur un vol contrôlé, l\'app te demande de confirmer la salle PAF au 1er débarqué, et la fin des contrôles à la fermeture porte.'] : null,
     ['i-camera', '#0d9488', 'Dommages', 'Photos de rayures, bosses ou birdstrike prises depuis l\'app, rangées par vol et faciles à partager.'],
     ['i-board',  '#0B1E4F', 'Panneau', 'Écris un message et affiche-le en très grand, plein écran, comme un panneau d\'accueil.'],
-    ['i-phone',  '#1F9D57', 'Annuaire', 'Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP, RYR OCC.'],
+    ['i-phone',  '#1F9D57', 'Annuaire', 'Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP' + (WN_ED === 'demo' ? '.' : ', RYR OCC.')],
     ['i-radio',  '#0891b2', 'Fréquences et dégivrage', 'Dans le menu : fréquences LFOB, produit ABAX et holdover times.'],
     ['i-check',  '#7c3aed', 'Auto-contrôle Ryanair', 'La feuille FR/RK en version numérique, signature au doigt. En test, pas obligatoire.'],
     WN_ED === 'demo' ? ['i-plane', '#D93636', 'Version démo', 'Des vols fictifs pour tout essayer : 3 ouverts, les autres dans « Ouvrir un vol ». Menu › Réinitialiser la démo pour repartir à l\'heure actuelle.'] : null,

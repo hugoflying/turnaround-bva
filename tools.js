@@ -204,3 +204,16 @@
     if(rc){ document.querySelector('#signModal .sign-input').value = rc.textContent; window.signShow(); }
   });
 })();
+
+/* v2.88 — Annuaire rendu depuis contacts.js (numéros fictifs dans la démo) */
+(function(){
+  function renderContacts(){
+    const box = document.getElementById('annList'); if(!box) return;
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    box.innerHTML = (window.APP_CONTACTS || []).map(([n, d, t]) =>
+      '<a class="ie-row ann-row" href="tel:' + esc(t) + '"><span>' + esc(n) + '</span><b class="num">' + esc(d) + '</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>').join('');
+    const sub = document.querySelector('#annuaireBtn small');
+    if(sub) sub.textContent = 'Appel direct ' + (window.APP_CONTACTS || []).slice(0, 3).map(c => c[0]).join(', ') + '…';
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderContacts); else renderContacts();
+})();

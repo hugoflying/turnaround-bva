@@ -5188,6 +5188,8 @@ function applyAKFlight(f, flow, opts = {}){
     }
   }
   _doApplyAKFlight(f, flow, opts);
+  // v2.88 : en démo, le vol importé arrive rempli comme un vrai vol
+  if(!opts.refresh && window.demoActive && window.demoActive() && window.demoFillImported) window.demoFillImported(f);
 }
 
 function _doApplyAKFlight(f, flow, opts = {}){
@@ -6872,7 +6874,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v112';
+const CACHE = 'suivi-perf-v113';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
