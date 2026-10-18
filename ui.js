@@ -1206,7 +1206,7 @@ function clockMin(){
     const o = acGet(), miss = acMissing(o), ok = !miss.length;
     document.getElementById('acRowSub').textContent = o.c.length + '/' + AC_TOTAL + ' vérifiés · ' + (o.s ? 'signé' : 'non signé');
     const st = document.getElementById('acRowSt');
-    st.textContent = ok ? 'Signé' : (o.c.length || o.s ? 'En cours' : 'À faire');
+    st.textContent = ok ? 'Signé' : (o.c.length || o.s ? 'En cours' : (typeof AC_REQUIRED !== 'undefined' && !AC_REQUIRED ? 'Facultatif' : 'À faire'));
     row.classList.toggle('is-ok', ok);
   }
   window.acSyncRow = acSyncRow;

@@ -5767,6 +5767,8 @@ function confirmRza(){
   if(_validateCallback) _validateCallback();
 }
 
+const AC_REQUIRED = false; // remettre à true pour imposer l'auto-contrôle Ryanair avant validation
+
 function validateForm() {
   const err = checkValidateRules();
   showValidateError(err);
@@ -5775,7 +5777,8 @@ function validateForm() {
     return;
   }
   // v2.55 : FR/RK (hors CL35) passent d'abord par l'auto-contrôle Ryanair
-  if(typeof acNeeded === 'function' && acNeeded()){
+  // v2.81 : phase de test, l'auto-contrôle n'est plus imposé (AC_REQUIRED = false)
+  if(AC_REQUIRED && typeof acNeeded === 'function' && acNeeded()){
     acSteps(true);
     uiAutoCtrlOpen(() => openPrestationsModal(doValidate));
     return;
@@ -6001,7 +6004,7 @@ function doValidate() {
   }
 
   // ── AUTO-CONTRÔLE RYANAIR ─────────────────────────────────────────────────
-  if(typeof acNeeded === 'function' && acNeeded()){
+  if(typeof acNeeded === 'function' && acNeeded() && (AC_REQUIRED || acSummary().done > 0 || acSummary().signe)){
     const ac = acSummary();
     body += s();
     body += '[ AUTO-CONTROLE RYANAIR ]\n\n';
@@ -6858,7 +6861,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v99';
+const CACHE = 'suivi-perf-v100';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
