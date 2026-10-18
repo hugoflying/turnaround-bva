@@ -6014,6 +6014,16 @@ function doValidate() {
     body += `SIGNATURE : ${ac.signe ? 'OUI' : 'NON'}\n`;
   }
 
+  // ── DOMMAGES (photos à envoyer à part depuis le menu Dommages) ─────────────
+  const dmgTxt = v('Dommages');
+  if(dmgTxt){
+    const nb = dmgTxt.split(', ').length;
+    body += s();
+    body += '[ DOMMAGES ]\n\n';
+    body += dmgTxt.split(', ').join('\n') + '\n';
+    body += `PHOTOS : ${nb} (envoyées à part)\n`;
+  }
+
   // ── BLOC NOTE ─────────────────────────────────────────────────────────────
   const faitsTxt = v('FaitsSaillants');
   if(faitsTxt){
@@ -6862,7 +6872,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v106';
+const CACHE = 'suivi-perf-v107';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {

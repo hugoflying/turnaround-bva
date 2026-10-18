@@ -1428,3 +1428,40 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .ann-call .ico{width:17px;height:17px;color:#fff}
 .ann-row{align-items:center;grid-template-columns:1fr auto 34px;gap:10px}
 .ann-row b{font-size:18px}
+
+/* v2.86 — Dommages (photos) */
+.sh-body.dmg > *{flex:none}
+.dmg-types{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dmg-types button{appearance:none;font:inherit;font-weight:700;font-size:13.5px;color:var(--fg);background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;padding:7px 13px;cursor:pointer}
+.dmg-types button.is-on{background:var(--navy,#0B1E4F);border-color:var(--navy,#0B1E4F);color:#fff}
+.dmg-actions{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:16px}
+.dmg-actions .btn{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.dmg-shoot{min-height:52px;font-size:16px}
+.dmg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.dmg-th{appearance:none;border:0;padding:0;margin:0;position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--surface-2);cursor:pointer}
+.dmg-th img{width:100%;height:100%;object-fit:cover;display:block}
+.dmg-th span{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;font-size:11px;font-weight:700;color:#fff;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.dmg-empty{grid-column:1/-1;color:var(--muted);font-size:14px;margin:4px 0 8px}
+#dmgFoot .btn{display:flex;align-items:center;justify-content:center;gap:8px}
+#dmgViewer{position:fixed;inset:0;z-index:2000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#dmgViewer img{max-width:100%;max-height:calc(100% - 130px);object-fit:contain}
+.dmg-vbar{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:1fr 1fr;gap:8px;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%)}
+.dmg-vbar span{grid-column:1/-1;color:#fff;font-size:13.5px;font-weight:600}
+.dmg-vbar .btn{display:flex;align-items:center;justify-content:center;gap:6px}
+.dmg-vbar .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}
+.dmg-vclose{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;background:rgba(255,255,255,.15);color:#fff}
+
+/* v2.86 — Panneau (message plein écran) */
+.sh-body.sign > *{flex:none}
+.sign-input{width:100%;box-sizing:border-box;font:inherit;font-size:22px;font-weight:800;text-transform:uppercase;padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--fg);resize:none;margin-bottom:14px}
+.sign-input:focus{outline:none;border-color:var(--navy,#0B1E4F)}
+.sign-themes{display:flex;gap:8px;margin-bottom:14px}
+.sign-themes button{appearance:none;width:52px;height:40px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg);color:var(--fg);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.sign-themes button.is-on{outline:3px solid var(--yellow,#F5B83D);outline-offset:2px}
+.sign-recent{display:flex;flex-direction:column;gap:6px}
+.sign-recent button{appearance:none;text-align:left;font:inherit;font-weight:700;font-size:15px;text-transform:uppercase;color:var(--fg);background:var(--surface-2);border:0;border-radius:10px;padding:10px 12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#signFull{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#signFullText{max-width:94vw;font-family:var(--f-ui);font-weight:900;line-height:1.05;text-align:center;text-transform:uppercase;white-space:pre-wrap;overflow-wrap:anywhere;letter-spacing:.01em}
+.sign-hint{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:12px;opacity:.45;animation:signHint 3s forwards}
+@keyframes signHint{0%,70%{opacity:.45}100%{opacity:0}}
+.dmg-shoot{white-space:nowrap;font-size:15.5px}

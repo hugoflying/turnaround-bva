@@ -13,7 +13,8 @@ const PRECACHE = [
   './icon-512.png',
   './css/app.css',
   './ui.js',
-  './app.js'
+  './app.js',
+  './tools.js'
 ];
 
 /* ── Install : précache ── */
