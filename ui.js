@@ -1,3 +1,8 @@
+/* v2.69 : heure courante dans le mode affiché (LT ou UTC), comme les horaires saisis */
+function clockMin(){
+  const n = new Date(), u = (typeof isUTC !== 'undefined') && isUTC;
+  return u ? n.getUTCHours()*60 + n.getUTCMinutes() + n.getUTCSeconds()/60 : n.getHours()*60 + n.getMinutes() + n.getSeconds()/60;
+}
 /* =====================================================================
    Navigation de la nouvelle interface : barre d'onglets du bas
    (Vol · Timing · Load · Retard · Notes). Aucune logique métier ici :
@@ -91,7 +96,7 @@
     let d = toMin(txt('timer-eobt')) ?? toMin(val('SOBT'));
     if(a == null || d == null){ wrap.classList.add('is-empty'); return; }
     if(d <= a) d += 1440;
-    const n = new Date(); let now = n.getHours()*60 + n.getMinutes() + n.getSeconds()/60;
+    let now = clockMin();
     if(now < a - 720) now += 1440;
     const r = (now - a) / (d - a);
     wrap.classList.remove('is-empty');
@@ -165,7 +170,7 @@
     eau:['DebutEauPotable','FinEauPotable'], degivrage:['DebutDegivrage','FinDegivrage']
   };
   function syncEvDurations(){
-    const n = new Date(), nowM = n.getHours()*60 + n.getMinutes();
+    const nowM = Math.floor(clockMin());
     Object.keys(EV_PAIRS).forEach(k => {
       const p = document.getElementById('panel-' + k); if(!p) return;
       const h = p.querySelector('.ev-h'); if(!h) return;
@@ -494,7 +499,7 @@
   function ringRatio(a, d){
     if(a == null || d == null) return null;
     if(d <= a) d += 1440;
-    const n = new Date(); let now = n.getHours()*60 + n.getMinutes() + n.getSeconds()/60;
+    let now = clockMin();
     if(now < a - 720) now += 1440;
     return { r:(now - a) / (d - a), left: d - now };
   }
@@ -520,7 +525,7 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const fmtHM = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
   const fmtLeft = l => l < 0 ? '+' + Math.round(-l) + '′' : (l < 60 ? Math.floor(l) + '′' : Math.floor(l/60) + 'h' + String(Math.floor(l%60)).padStart(2,'0'));
-  function nowMin(){ const n = new Date(); return n.getHours()*60 + n.getMinutes() + n.getSeconds()/60; }
+  function nowMin(){ return clockMin(); }
   function rel(t, ref){ if(t == null) return null; while(t - ref > 720) t -= 1440; while(ref - t > 720) t += 1440; return t; }
 
   function flightInfo(id){
