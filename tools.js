@@ -133,17 +133,17 @@
 
   /* ---------- Panneau : message plein écran, taille de texte maximale ---------- */
   const SIGN_THEMES = [
+    { k:'wb', bg:'#ffffff', fg:'#000000', n:'Noir sur blanc' },
     { k:'bw', bg:'#000000', fg:'#ffffff', n:'Blanc sur noir' },
     { k:'yb', bg:'#FFD400', fg:'#000000', n:'Noir sur jaune' },
     { k:'nv', bg:'#0B1E4F', fg:'#ffffff', n:'Blanc sur bleu' },
-    { k:'wb', bg:'#ffffff', fg:'#000000', n:'Noir sur blanc' },
     { k:'rd', bg:'#D93636', fg:'#ffffff', n:'Blanc sur rouge' },
   ];
   const ls = { get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : v; }catch(e){ return d; } }, set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} } };
   let wakeLock = null;
 
   function signRender(){
-    const cur = ls.get('signTheme', 'bw');
+    const cur = ls.get('signTheme', 'wb');
     $('signThemes').innerHTML = SIGN_THEMES.map(t => '<button type="button" data-k="' + t.k + '" class="' + (t.k === cur ? 'is-on' : '') + '" style="--bg:' + t.bg + ';--fg:' + t.fg + '" aria-label="' + t.n + '">Aa</button>').join('');
     let rec = []; try{ rec = JSON.parse(ls.get('signRecent', '[]')) || []; }catch(e){}
     $('signRecentK').hidden = !rec.length;
@@ -172,7 +172,7 @@
     if(!txt){ if(typeof showPopup === 'function') showPopup('Écris un message', '#ef4444', 1400); return; }
     let rec = []; try{ rec = JSON.parse(ls.get('signRecent', '[]')) || []; }catch(e){}
     rec = [txt].concat(rec.filter(r => r !== txt)).slice(0, 6); ls.set('signRecent', JSON.stringify(rec));
-    const th = SIGN_THEMES.find(t => t.k === ls.get('signTheme', 'bw')) || SIGN_THEMES[0];
+    const th = SIGN_THEMES.find(t => t.k === ls.get('signTheme', 'wb')) || SIGN_THEMES[0];
     const box = $('signFull');
     box.style.background = th.bg; box.style.color = th.fg;
     $('signFullText').textContent = txt;
