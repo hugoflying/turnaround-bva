@@ -764,13 +764,14 @@ function clockMin(){
 
   /* ===== Nouveautés : popup animé à la première connexion sur la nouvelle version ===== */
   // v2.51 : contenu de la mise à jour du 17 octobre (changer WN_ID pour réafficher le popup une fois)
-  const WN_ID = 'maj-2026-10-18';
+  const WN_ID = 'maj-2026-10-18b';
   const WN_VER = 'Version 2.83';
   const WN_ED = window.APP_EDITION || 'demo';
   const WN_ITEMS = [
     ['i-grid',   '#0B1E4F', 'Interface repensée', 'Plus claire et plus fluide : onglets en bas, glisse d\'un écran à l\'autre, chronos toujours visibles.'],
     ['i-list',   '#3D6BE0', 'Onglet Récap', 'Tous tes vols d\'un coup d\'œil : où en est chaque vol et combien de temps il reste.'],
-    ['i-clock',  '#F59E0B', 'CTOT repensé', 'Bandeau avec le créneau, le push estimé et le retard. Un appui ouvre le détail de la régulation.'],
+    ['i-clock',  '#F59E0B', 'CTOT repensé', 'Bandeau avec le créneau, le push estimé et le retard. Un appui ouvre le détail de la régulation. Dans le menu, choisis où l\'afficher : partout, sur Vol ou jamais.'],
+    WN_ED !== 'bva' ? ['i-info', '#D93636', 'Contrôle transfrontalier', 'Sur un vol contrôlé, l\'app te demande de confirmer la salle PAF au 1er débarqué, et la fin des contrôles à la fermeture porte.'] : null,
     ['i-phone',  '#1F9D57', 'Annuaire', 'Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP, RYR OCC.'],
     ['i-radio',  '#0891b2', 'Fréquences et dégivrage', 'Dans le menu : fréquences LFOB, produit ABAX et holdover times.'],
     ['i-check',  '#7c3aed', 'Auto-contrôle Ryanair', 'La feuille FR/RK en version numérique, signature au doigt. En test, pas obligatoire.'],
