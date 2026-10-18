@@ -6681,6 +6681,7 @@ function toggleInfoVolEdit(){
   function clearVal(id){
     const inp=document.getElementById(id); if(!inp) return;
     inp.value='';
+    window._twClearedAt = { id, t: Date.now() }; // le clic qui suit un double appui ne doit pas rouvrir la confirmation PAF
     inp.dispatchEvent(new Event('change',{bubbles:true}));
     twSync(id); updateAllCalculations();
   }
@@ -6861,7 +6862,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v102';
+const CACHE = 'suivi-perf-v103';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7092,6 +7093,8 @@ function pafGuard(id){
   const door = id === 'FermeturePorteAvion';
   if(id !== 'PremierDebarque' && id !== 'PremierDebarqueL2' && !door) return false;
   const filled = (door ? ['FermeturePorteAvion'] : ['PremierDebarque','PremierDebarqueL2']).some(k => (document.getElementById(k)?.value || '').trim());
+  const c = window._twClearedAt;
+  if(c && c.id === id && Date.now() - c.t < 800) return true;
   const paf = pafValue();
   if(filled || !paf || (door && paf === 'PAF')) return false;
   const msg = door ? 'Les contrôles PAF aux arrivées sont-ils bien terminés ?'
