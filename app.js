@@ -1263,9 +1263,10 @@ function updateCountdownOnce(){
     return;
   }
 
-  // cible = SOBT si retard AIBT<=SIBT, sinon EOBT adj
+  // v2.74.1 : cible = EOBT calculé (il vaut le SOBT quand la règle le donne) ; SOBT seulement à défaut
   let targetMin = null;
-  if (AIBT <= SIBT) targetMin = SOBT;
+  if (window._eobtRawMins != null) targetMin = window._eobtRawMins;
+  else if (AIBT <= SIBT) targetMin = SOBT;
   else {
     const tobt = window._eobtRawMins;
     if(tobt == null){
@@ -6852,7 +6853,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v88';
+const CACHE = 'suivi-perf-v89';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
