@@ -6858,7 +6858,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v95';
+const CACHE = 'suivi-perf-v96';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7091,7 +7091,7 @@ function pafGuard(id){
   const paf = pafValue();
   if(filled || !paf) return false;
   const msg = paf === 'PAF' ? 'Le vol est contrôlé par la PAF.'
-    : 'Je confirme que le débarquement est en cours vers la ' + (/^[1-3]$/.test(paf) ? 'salle ' + paf : paf) + '.';
+    : 'Je confirme que le débarquement est en cours vers la ' + (/^S?[1-3]$/.test(paf) ? 'salle ' + paf.replace('S','') : paf) + '.';
   document.getElementById('pafMsg').textContent = msg;
   const m = document.getElementById('pafModal');
   m.dataset.field = id; m.style.display = 'flex';
