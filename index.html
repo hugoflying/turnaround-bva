@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261018r101';
+window.APP_VERSION = '20261018r102';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261018r101';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261018r101" />
-<link rel="stylesheet" href="./css/app.css?v=20261018r101" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261018r102" />
+<link rel="stylesheet" href="./css/app.css?v=20261018r102" />
 </head>
 <body>
 
@@ -158,6 +158,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></symbol>
   <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7M10.5 12H20M16.5 8.5 20 12l-3.5 3.5"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.6 3.5h2.6l1.4 4-2 1.5a11 11 0 0 0 6.4 6.4l1.5-2 4 1.4v2.6a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
 
@@ -764,6 +765,27 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   </div>
 </div>
 
+<!-- v2.82 : menu Annuaire -->
+<div id="annuaireModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
+  <div class="sheet-card">
+    <div class="sh-head">
+      <h3>Annuaire</h3>
+      <button class="iconbtn" type="button" aria-label="Fermer" onclick="document.getElementById('annuaireModal').style.display='none'"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="sh-body ie">
+      <div class="ie-k">Appuie sur un contact pour appeler</div>
+      <div class="ie-list">
+        <a class="ie-row ann-row" href="tel:+33604674234"><span>NAYAK</span><b class="num">06 04 67 42 34</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+        <a class="ie-row ann-row" href="tel:+33646718382"><span>Sup OPS</span><b class="num">06 46 71 83 82</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+        <a class="ie-row ann-row" href="tel:+33344114662"><span>PCE</span><b class="num">03 44 11 46 62</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+        <a class="ie-row ann-row" href="tel:+33360050074"><span>OPS T2</span><b class="num">03 60 05 00 74</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+        <a class="ie-row ann-row" href="tel:+33678009664"><span>CEP</span><b class="num">06 78 00 96 64</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+        <a class="ie-row ann-row" href="tel:+35312480557"><span>RYR OCC</span><b class="num">+353 1 248 0557</b><i class="ann-call"><svg class="ico"><use href="#i-phone"/></svg></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- v2.65 : menu Dégivrage -->
 <div id="degivrageModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
   <div class="sheet-card">
@@ -918,6 +940,9 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       </div>
     </div>
     <div class="list">
+      <button class="li" type="button" id="annuaireBtn" onclick="closeSettingsMenu(); document.getElementById('annuaireModal').style.display='flex'">
+        <svg class="ico"><use href="#i-phone"/></svg><span><b>Annuaire</b><small>Appel direct NAYAK, Sup OPS, PCE…</small></span><span></span>
+      </button>
       <button class="li" type="button" id="infoEscaleBtn" onclick="closeSettingsMenu(); document.getElementById('infoEscaleModal').style.display='flex'">
         <svg class="ico"><use href="#i-radio"/></svg><span><b>Fréquences</b><small>TWR, APP et OPS LFOB</small></span><span></span>
       </button>
@@ -1013,8 +1038,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261018r101"></script>
-<script src="./app.js?v=20261018r101"></script>
-<script src="./ui.js?v=20261018r101"></script>
+<script src="./edition.js?v=20261018r102"></script>
+<script src="./app.js?v=20261018r102"></script>
+<script src="./ui.js?v=20261018r102"></script>
 </body>
 </html>

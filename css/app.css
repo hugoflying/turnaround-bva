@@ -1420,3 +1420,11 @@ body.has-ctot .chronos .chip-ctot{display:none}
 
 /* v2.79 — confirmation PAF au 1er débarqué */
 .paf-msg{font-size:17px;font-weight:600;line-height:1.45;color:var(--fg);margin:0}
+
+/* v2.82 — Annuaire */
+.ann-row{text-decoration:none;color:inherit;cursor:pointer}
+.ann-row:active{background:var(--surface-2)}
+.ann-call{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--green,#1F9D57);color:#fff;font-style:normal}
+.ann-call .ico{width:17px;height:17px;color:#fff}
+.ann-row{align-items:center;grid-template-columns:1fr auto 34px;gap:10px}
+.ann-row b{font-size:18px}
