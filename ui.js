@@ -524,7 +524,8 @@ function clockMin(){
   /* ===== Onglet « Vols » : récap de tous les vols ouverts ===== */
   const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const fmtHM = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
-  const fmtLeft = l => l < 0 ? '+' + Math.round(-l) + '′' : (l < 60 ? Math.floor(l) + '′' : Math.floor(l/60) + 'h' + String(Math.floor(l%60)).padStart(2,'0'));
+  // v2.75 : sous la minute, secondes restantes (« 42″ »)
+  const fmtLeft = l => (l >= 0 && l < 1) ? Math.ceil(l * 60) + '″' : (l < 0 && l > -1) ? '+' + Math.floor(-l * 60) + '″' : l < 0 ? '+' + Math.round(-l) + '′' : (l < 60 ? Math.floor(l) + '′' : Math.floor(l/60) + 'h' + String(Math.floor(l%60)).padStart(2,'0'));
   function nowMin(){ return clockMin(); }
   function rel(t, ref){ if(t == null) return null; while(t - ref > 720) t -= 1440; while(ref - t > 720) t += 1440; return t; }
 
@@ -583,11 +584,13 @@ function clockMin(){
 
   const metaT = (k, v, c) => '<span' + (c ? ' class="' + c + '"' : '') + '>' + k + ' <b>' + (v != null ? fmtHM(v) : '--:--') + '</b></span>';
 
+  let rcFast = false;
   function renderRecap(){
     const list = document.getElementById('rcList'); if(!list) return;
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(e){}
     const F = (Array.isArray(ids) ? ids : []).map(flightInfo);
     const lateN = F.filter(f => f.late).length;
+    rcFast = F.some(f => f.left != null && f.left > -1.5 && f.left < 2);
     const badge = document.getElementById('volsBadge');
     if(badge){ badge.hidden = !lateN; badge.textContent = lateN; }
     if(document.body.dataset.panel !== 'vols') return;
@@ -1035,7 +1038,7 @@ function clockMin(){
 
   function init(){
     syncHero(); setInterval(()=>{ syncHero(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
-    initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000);
+    initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000); setInterval(()=>{ if(rcFast && document.body.dataset.panel === 'vols') renderRecap(); }, 1000);
     const tb = document.getElementById('tab-bar'); if(tb) new MutationObserver(()=>requestAnimationFrame(syncTabRings)).observe(tb, { childList:true }); setInterval(tlTick, 15000);
     document.addEventListener('click', e => { if(e.target.closest('.ev-x, .tw-zone')) setTimeout(syncEvents, 0); });
     let start = 'vol';
