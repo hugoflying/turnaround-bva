@@ -544,16 +544,15 @@ function clockMin(){
     const left = eobt != null ? eobt - now : null;
     let st, cls = '', next;
     const has = k => !!g(k);
-    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = 'Off-block ' + fmtHM(aobt); }
+    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = 'Off-block fait à ' + fmtHM(aobt); }
     else if(aibt == null){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
     else {
-      // Embarquement commencé = débarquement forcément fini, même sans « Dernier débarqué »
-      next = !has('DernierDebarque') && !has('AvionPremierEmbarque') ? 'Débarquement' + (has('PremierDebarque') ? ' en cours' : ' à lancer')
-           : !has('AvionPremierEmbarque') ? 'Embarquement à lancer'
-           : !has('AvionDernierEmbarque') ? 'Embarquement en cours'
-           : !has('RemiseLID') ? 'Remise LID'
-           : !has('FermeturePorteAvion') ? 'Fermeture porte'
-           : 'Off-block';
+      // v2.70 : l'étape suivante part de la dernière étape saisie (une case sautée ne fait pas reculer)
+      const remise = (cie === 'FR' || cie === 'RK') ? 'Remise LID' : 'Remise LDS/LDF';
+      const STEPS = ['PremierDebarque','DernierDebarque','AvionPremierEmbarque','AvionDernierEmbarque','RemiseLID','FermeturePorteAvion'];
+      const NEXT = ['Débarquement à lancer','Débarquement en cours','Embarquement à lancer','Embarquement en cours', remise + ' à faire','Fermeture porte à faire','Off-block à venir'];
+      let lastDone = -1; STEPS.forEach((k, i) => { if(has(k)) lastDone = i; });
+      next = NEXT[lastDone + 1];
       if(left != null && left < 0){ st = '+' + Math.round(-left) + '′'; cls = 'late'; }
       else if(left != null && left <= 5){ st = 'EOBT −5'; cls = 'soon'; }
       else st = 'En escale';
