@@ -3110,8 +3110,10 @@ function updateEOBT() {
 
   let EOBT_raw_ext = null;
 
-  // ===== RÈGLE COMMUNE : si AIBT <= SIBT => EOBT = SOBT
-  if (!isDelayed) {
+  // v2.74 : FR/RK et W4/W6 = max(SOBT, AIBT + rotation mini), même à l'heure (plus de saut à 1 min près)
+  const minTurnCie = !isBVA && !!aibttxt && (cie === 'FR' || cie === 'RK' || cie === 'W4' || cie === 'W6');
+  // ===== RÈGLE COMMUNE (autres compagnies) : si AIBT <= SIBT => EOBT = SOBT
+  if (!isDelayed && !minTurnCie) {
     EOBT_raw_ext = SOBT_ext;
   } else {
     // ===== FR / RK : EOBT = max(SOBT, AIBT + turn)
@@ -6850,7 +6852,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v86';
+const CACHE = 'suivi-perf-v87';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
