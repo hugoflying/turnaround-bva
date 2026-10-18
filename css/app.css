@@ -1465,3 +1465,8 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .sign-hint{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:12px;opacity:.45;animation:signHint 3s forwards}
 @keyframes signHint{0%,70%{opacity:.45}100%{opacity:0}}
 .dmg-shoot{white-space:nowrap;font-size:15.5px}
+/* v2.86.1 — visionneuse photo et panneau au-dessus de l'en-tête et de la barre du bas */
+#dmgViewer{z-index:20500}
+#signFull{z-index:20500}
+.dmg-vclose{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.55)!important;border:1px solid rgba(255,255,255,.35);display:grid;place-items:center}
+.dmg-vclose .ico{width:24px;height:24px;color:#fff}
