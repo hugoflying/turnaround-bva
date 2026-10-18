@@ -1157,7 +1157,9 @@ function updateChipColors(){
   // getNowMinutes() renvoie l'heure courante DANS LE MEME REFERENTIEL que les
   // pastilles (local ou UTC selon isUTC). Utiliser new Date().getHours() ici
   // comparerait une heure UTC affichee a un "maintenant" local -> faux ecart.
-  const nowMin = getNowMinutes().mins;
+  // v2.75.2 : à la seconde près, une échéance passée de quelques secondes est déjà rouge
+  const nowParts = getNowMinutes();
+  const nowMin = nowParts.mins + nowParts.secs / 60;
 
   CHIP_TIME_IDS.forEach(id=>{
     const el = document.getElementById(id);
@@ -6853,7 +6855,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v89';
+const CACHE = 'suivi-perf-v90';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
