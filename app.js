@@ -3753,10 +3753,10 @@ function getPairWindow(idA, idB){
   const a = parseHHMM(elA.value || '');
   const b = parseHHMM(elB.value || '');
   if(a==null || b==null) return null;
-  // Gère minuit : si b < a, b est le lendemain
-  let bAdj = b;
-  if(bAdj < a) bAdj += 1440;
-  return [a, bAdj];
+  // Minuit : b n'est le lendemain que si l'écart dépasse 12 h.
+  // v2.73 : une fin saisie juste avant le début (11:04 → 11:02) n'est plus lue comme 24 h
+  if(b < a && a - b > 720) return [a, b + 1440];
+  return [Math.min(a, b), Math.max(a, b)];
 }
 
 function collectTimelineData(){
@@ -5720,7 +5720,7 @@ function openRzaModal(callback){
   actionPairs.forEach(([name, startId, endId]) => {
     const s = parseHM(v(startId)), e = parseHM(v(endId));
     if(s == null || e == null) return;
-    let dur = e - s; if(dur < 0) dur += 1440;
+    let dur = e - s; if(dur < -720) dur += 1440;
     if(dur < 0) warnings.push(`⚠️ ${name} : fin avant début`);
     else if(dur < 5) warnings.push(`⚠️ ${name} : durée anormalement courte (${dur}min)`);
     else if(dur > 120) warnings.push(`⚠️ ${name} : durée anormalement longue (${fmtDur(dur)})`);
@@ -6850,7 +6850,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v85';
+const CACHE = 'suivi-perf-v86';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {

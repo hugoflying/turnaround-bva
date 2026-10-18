@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261018r86';
+window.APP_VERSION = '20261018r87';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261018r86';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261018r86" />
-<link rel="stylesheet" href="./css/app.css?v=20261018r86" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261018r87" />
+<link rel="stylesheet" href="./css/app.css?v=20261018r87" />
 </head>
 <body>
 
@@ -987,8 +987,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261018r86"></script>
-<script src="./app.js?v=20261018r86"></script>
-<script src="./ui.js?v=20261018r86"></script>
+<script src="./edition.js?v=20261018r87"></script>
+<script src="./app.js?v=20261018r87"></script>
+<script src="./ui.js?v=20261018r87"></script>
 </body>
 </html>
