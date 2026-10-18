@@ -2995,7 +2995,10 @@ function updateTimers() {
   }
   const [hh, mm] = sobt.split(':').map(Number);
   const base = new Date(); base.setHours(hh, mm, 0, 0);
-  const h40 = new Date(base.getTime() - 40 * 60000);
+  // HLE : SOBT - 60 pour FR/RK, SOBT - 40 pour les autres compagnies
+  const cieHle = (document.getElementById('Cie')?.value || '').trim().toUpperCase();
+  const hleMin = (cieHle === 'FR' || cieHle === 'RK') ? 60 : 40;
+  const h40 = new Date(base.getTime() - hleMin * 60000);
   const h15 = new Date(base.getTime() - 15 * 60000);
   document.getElementById('timer-h40').textContent = `${String(h40.getHours()).padStart(2, '0')}:${String(h40.getMinutes()).padStart(2, '0')}`;
   document.getElementById('timer-h15').textContent = `${String(h15.getHours()).padStart(2, '0')}:${String(h15.getMinutes()).padStart(2, '0')}`;
@@ -6855,7 +6858,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v93';
+const CACHE = 'suivi-perf-v94';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
