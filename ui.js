@@ -781,9 +781,31 @@ function clockMin(){
     chip.classList.toggle('up', d !== 0);
     chip.title = 'Écart avec le PRÉVI (' + previVal + ')';
   }
+  /* v3.00 (Hugo) : FR/RK, LOAD ARR → BAGS déduit du poids (1 bagage Ryanair = 13 kg), affiché « ≈ N »
+     car le poids peut contenir du cargo. Autres compagnies : BAGS saisi à la main comme avant. */
+  function syncArrBags(){
+    const b = document.getElementById('ArrBAGS'); if(!b) return;
+    const cie = val('Cie').toUpperCase(), frrk = cie === 'FR' || cie === 'RK';
+    const stat = b.closest('.ld-stat');
+    if(stat && !stat.querySelector('.ld-approx')){
+      const row = document.createElement('div'); row.className = 'ld-approx-row';
+      row.innerHTML = '<span class="ld-approx">≈</span>'; b.before(row); row.appendChild(b);
+    }
+    if(stat) stat.classList.toggle('is-approx', frrk);
+    b.readOnly = frrk;
+    if(frrk){
+      const kg = parseInt(val('ArrPOIDS'), 10);
+      const n = kg > 0 ? String(Math.round(kg / 13)) : '';
+      if(b.value !== n) b.value = n;
+    }
+  }
+  window.syncArrBags = syncArrBags;
+  document.addEventListener('input', e => { if(e.target && (e.target.id === 'ArrPOIDS' || e.target.id === 'Cie')) syncArrBags(); });
+
   function syncLoadUI(){
     const m = document.getElementById('ldmModal');
     if(!m || m.style.display === 'none') return;
+    syncArrBags();
     const cie = val('Cie').toUpperCase(), frrk = cie === 'FR' || cie === 'RK';
     const elid = frrk && (typeof isELID === 'function') && isELID();
     // Écarts par tuile

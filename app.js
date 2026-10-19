@@ -5295,8 +5295,8 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
         if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
 
-        const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
-        if(cieNow !== 'FR' && cieNow !== 'RK' && prevArr?.bags != null){
+        // v3.00 (Hugo) : poids des bagages à l'arrivée pour toutes les compagnies (FR/RK : bags ≈ poids ÷ 13)
+        if(prevArr?.bags != null){
           setIfEmptyOrAK('ArrPOIDS', String(prevArr.bags));
         }
 
@@ -5319,8 +5319,8 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
       if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
 
-      const cieNow = (document.getElementById('Cie')?.value || '').toUpperCase();
-      if(cieNow !== 'FR' && cieNow !== 'RK' && f?.bags != null){
+      // v3.00 (Hugo) : poids des bagages à l'arrivée pour toutes les compagnies (FR/RK : bags ≈ poids ÷ 13)
+      if(f?.bags != null){
         setIfEmptyOrAK('ArrPOIDS', String(f.bags));
       }
 
@@ -6911,7 +6911,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v128';
+const CACHE = 'suivi-perf-v129';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {

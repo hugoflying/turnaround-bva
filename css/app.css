@@ -1516,3 +1516,9 @@ body.no-tab.kb-open .home-hero,body.pv-locked.kb-open .home-hero{padding-top:18p
   html,body{height:100vh}
   .home-screen{bottom:auto;height:100vh}
 }
+
+/* ===== v3.00 — LOAD ARR FR/RK : bags ≈ poids ÷ 13 ===== */
+.ld-approx-row{display:flex;align-items:center;gap:4px;min-width:0}
+.ld-approx{display:none;font-family:var(--f-num);font-weight:700;font-size:19px;color:var(--muted)}
+.ld-stat.is-approx .ld-approx{display:inline}
+.ld-stat.is-approx .ld-stat-label::after{content:" · 13 kg";text-transform:none;letter-spacing:0;font-weight:500}
