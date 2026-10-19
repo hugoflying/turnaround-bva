@@ -1504,3 +1504,8 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .dlc-sec{position:sticky;top:0;z-index:1;background:var(--surface);padding:12px 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 #dlcList .dlc-row{padding-left:0;padding-right:0}
 #dlcList .dlc-row.is-sub{padding-left:14px}
+
+/* ===== v2.99.1 — iPhone : fond sombre sous l'accueil (plus de barre blanche en bas), accueil compact clavier ouvert ===== */
+html:has(body.no-tab),html:has(body.pv-locked),body.no-tab,body.pv-locked{background:#0a1017}
+body.no-tab.kb-open .home-content,body.pv-locked.kb-open .home-content{gap:14px;padding-bottom:14px}
+body.no-tab.kb-open .home-hero,body.pv-locked.kb-open .home-hero{padding-top:18px}

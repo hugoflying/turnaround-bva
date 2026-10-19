@@ -1543,9 +1543,22 @@ function clockMin(){
       const kb = isField(document.activeElement) && Math.min(window.innerHeight, vvH()) < maxH * 0.8;
       document.body.classList.toggle('kb-open', kb);
       if(kb) requestAnimationFrame(keepVisible);
+      fitHome(kb);
+    };
+    // v2.99.1 (Hugo, iPhone) : iOS pose le clavier par-dessus l'écran d'accueil (position fixed) et cache
+    // le mot de passe. On cale l'accueil sur la zone visible (au-dessus du clavier).
+    const fitHome = kb => {
+      const hs = document.querySelector('.home-screen'), vv = window.visualViewport;
+      if(!hs) return;
+      const b = document.body.classList;
+      if(kb && vv && (b.contains('no-tab') || b.contains('pv-locked'))){
+        hs.style.top = vv.offsetTop + 'px'; hs.style.height = vv.height + 'px'; hs.style.bottom = 'auto';
+      } else if(hs.style.height){
+        hs.style.top = hs.style.height = hs.style.bottom = '';
+      }
     };
     window.addEventListener('resize', sync);
-    if(window.visualViewport) window.visualViewport.addEventListener('resize', sync);
+    if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => fitHome(document.body.classList.contains('kb-open'))); }
     document.addEventListener('focusin', () => setTimeout(sync, 300));
     document.addEventListener('focusout', () => setTimeout(sync, 50));
     document.addEventListener('input', e => { if(document.body.classList.contains('kb-open') && e.target === document.activeElement) requestAnimationFrame(keepVisible); }, true);
