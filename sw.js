@@ -15,6 +15,7 @@ const PRECACHE = [
   './ui.js',
   './app.js',
   './tools.js',
+  './dlcodes.js',
   './contacts.js'
 ];
 

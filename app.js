@@ -5444,9 +5444,10 @@ function updateDelayCodesVisibility(){
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
   const btn = document.getElementById('delayCodesBtn');
   const box = document.getElementById('delayCodesBox');
-  const show = (cie === 'FR' || cie === 'RK');
+  const show = true;   // v2.98 : liste des codes pour toutes les compagnies
 
   if(btn) btn.style.display = show ? '' : 'none';
+  if(window.dlcSync) window.dlcSync();
 
   if(box){
     if(show){
@@ -6562,12 +6563,12 @@ function toggleDelayCodes() {
 
 function updateDLCodeInputMode(){
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase().trim();
-  const numeric = (cie === 'FR' || cie === 'RK' || cie === 'H4' || cie === 'V7');
+  // v2.98 (Hugo) : clavier numérique pour toutes les compagnies ; la lettre (81A…) se choisit dans la liste (dlcodes.js)
   ['DLcode1','DLcode2','DLcode3'].forEach(id => {
     const el = document.getElementById(id);
     if(!el) return;
-    el.inputMode = numeric ? 'numeric' : 'text';
-    el.pattern   = numeric ? '[0-9]*' : '';
+    el.inputMode = 'numeric';
+    el.removeAttribute('pattern');
   });
 }
 
@@ -6910,7 +6911,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v123';
+const CACHE = 'suivi-perf-v124';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {

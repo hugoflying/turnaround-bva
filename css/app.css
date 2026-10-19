@@ -1484,3 +1484,23 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .rc-sort button.is-on{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(11,30,79,.12)}
 .rc-sort[hidden]{display:none}
 #rcList > .rc-sec:first-child{margin-top:6px}
+
+/* ===== v2.98 — Codes retard : suggestions + liste par compagnie (dlcodes.js) ===== */
+.dlc-sugg{margin:-2px 0 4px 32px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.dlc-sugg[hidden]{display:none}
+.dlc-row{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;color:var(--fg);font:inherit;font-size:14px;line-height:1.3;cursor:pointer}
+.dlc-row:last-child{border-bottom:0}
+.dlc-row b{flex:none;min-width:38px;font-family:var(--f-num);font-weight:800;font-size:15px;color:var(--fg)}
+.dlc-row span{flex:1;min-width:0}
+.dlc-row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.dlc-row i{flex:none;font-style:normal;font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.dlc-row.is-sub b{color:var(--accent)}
+.dlc-row.is-sub{padding-left:22px}
+.dlc-row.is-hit{background:var(--accent-soft)}
+.dlc-row:active{background:var(--surface-2)}
+.dlc-more{padding:8px 12px;color:var(--muted);font-size:12px}
+.dlc-q-wrap{padding:0 16px 8px;flex:none}
+#dlcList{gap:0;padding-top:0}
+.dlc-sec{position:sticky;top:0;z-index:1;background:var(--surface);padding:12px 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+#dlcList .dlc-row{padding-left:0;padding-right:0}
+#dlcList .dlc-row.is-sub{padding-left:14px}

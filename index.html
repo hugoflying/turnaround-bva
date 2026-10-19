@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261019r124';
+window.APP_VERSION = '20261019r125';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261019r124';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261019r124" />
-<link rel="stylesheet" href="./css/app.css?v=20261019r124" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261019r125" />
+<link rel="stylesheet" href="./css/app.css?v=20261019r125" />
 </head>
 <body>
 
@@ -720,10 +720,10 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
     <div class="sh-body">
       <div class="iv-k">Compagnie</div>
       <div class="iv-chips" id="ivCieChips">
-        <button type="button" data-v="FR">FR</button><button type="button" data-v="RK">RK</button><button type="button" data-v="W4">W4</button><button type="button" data-v="W6">W6</button><button type="button" data-v="V7">V7</button><button type="button" data-v="H4">H4</button><button type="button" data-v="H6">H6</button><button type="button" data-v="U5">U5</button><button type="button" data-v="U7">U7</button>
+        <button type="button" data-v="FR">FR</button><button type="button" data-v="RK">RK</button><button type="button" data-v="W4">W4</button><button type="button" data-v="W6">W6</button><button type="button" data-v="V7">V7</button><button type="button" data-v="H4">H4</button><button type="button" data-v="U5">U5</button><button type="button" data-v="U7">U7</button>
         <span class="iv-other"><input class="input uppercase iv-chip-in" type="text" id="Cie" list="cieList" autocomplete="off" maxlength="4" placeholder="Autre" oninput="updateFinalWeightIfNeeded(); updateDLCodeInputMode(); updateTabLabelInstant();"></span><datalist id="cieList">
               <option>FR</option><option>RK</option><option>W4</option><option>W6</option>
-              <option>H4</option><option>H6</option><option>U5</option><option>U7</option>
+              <option>H4</option><option>U5</option><option>U7</option>
               <option>V7</option>
             </datalist>
       </div>
@@ -1105,10 +1105,11 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261019r124"></script>
-<script src="./contacts.js?v=20261019r124"></script>
-<script src="./app.js?v=20261019r124"></script>
-<script src="./ui.js?v=20261019r124"></script>
-<script src="./tools.js?v=20261019r124"></script>
+<script src="./edition.js?v=20261019r125"></script>
+<script src="./contacts.js?v=20261019r125"></script>
+<script src="./app.js?v=20261019r125"></script>
+<script src="./ui.js?v=20261019r125"></script>
+<script src="./tools.js?v=20261019r125"></script>
+<script src="./dlcodes.js?v=20261019r125"></script>
 </body>
 </html>
