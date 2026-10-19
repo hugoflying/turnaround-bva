@@ -1613,6 +1613,12 @@ function refreshUIForTabs(){
     currentTabId = null;
     closeAKPicker();
     stopCountdown(true);
+    // v2.95 : dernier vol fermé avec Load / Fuel / Modifier ouvert → on ferme tout (sinon écran bloqué)
+    const ldm = document.getElementById('ldmModal');
+    if(ldm && ldm.style.display !== 'none' && ldm.style.display !== '') closeLDM();
+    if(typeof closeFuelMenu === 'function') try{ closeFuelMenu(); }catch(e){}
+    const ive = document.getElementById('ivEdit'); if(ive) ive.style.display = 'none';
+    if(typeof uiTab === 'function') try{ uiTab('vol'); }catch(e){}
   }
 }
 
@@ -6890,7 +6896,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v120';
+const CACHE = 'suivi-perf-v121';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
