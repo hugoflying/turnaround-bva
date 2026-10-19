@@ -217,3 +217,26 @@
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderContacts); else renderContacts();
 })();
+
+/* v3.02 (Hugo) — Retours au toucher : on voit (et sent, sur Android) que l'appui est pris en compte,
+   même avec des gants ou en plein soleil. Flash vert sur l'heure saisie par Now, vibration courte. */
+(function(){
+  const buzz = ms => { try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} };
+  function flash(id){
+    const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;
+    w.classList.remove('tap-ok'); void w.offsetWidth; w.classList.add('tap-ok');
+    setTimeout(() => w.classList.remove('tap-ok'), 700);
+  }
+  if(typeof window.setNow === 'function'){
+    const orig = window.setNow;
+    window.setNow = function(id){ const r = orig.apply(this, arguments); flash(id); buzz(15); return r; };
+  }
+  if(typeof window.adjustTime === 'function'){
+    const orig = window.adjustTime;
+    window.adjustTime = function(){ const r = orig.apply(this, arguments); buzz(6); return r; };
+  }
+  // Boutons principaux (Valider, Entrer, Terminé…) et barre d'onglets : vibration très courte
+  document.addEventListener('pointerdown', e => {
+    if(e.target.closest('.btn-primary, .tabbar a, .tabbar button, .vols-btn')) buzz(8);
+  }, { passive:true });
+})();
