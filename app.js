@@ -1613,17 +1613,21 @@ function refreshUIForTabs(){
     currentTabId = null;
     closeAKPicker();
     stopCountdown(true);
-    // v2.95-96 : dernier vol fermé alors qu'une fenêtre du vol est ouverte → on les ferme toutes
-    // (sinon elle reste par-dessus l'accueil et bloque l'écran). Les outils du menu restent ouverts.
-    const ldm = document.getElementById('ldmModal');
-    if(ldm && ldm.style.display !== 'none' && ldm.style.display !== '') closeLDM();
-    if(typeof closeFuelMenu === 'function') try{ closeFuelMenu(); }catch(e){}
-    const KEEP = ['infoEscaleModal','annuaireModal','degivrageModal','signModal','closeAllModal'];
-    document.querySelectorAll('.sheet-modal').forEach(m => { if(!KEEP.includes(m.id)) m.style.display = 'none'; });
-    const lb = document.getElementById('lightboxOverlay'); if(lb) lb.style.display = 'none';
-    if(document.body.classList.contains('modal-open')) unlockScroll();
+    closeFlightWindows();
     if(typeof uiTab === 'function') try{ uiTab('vol'); }catch(e){}
   }
+}
+
+/* v2.97 (Hugo) : fermer le vol en cours ferme toutes les fenêtres liées à ce vol
+   (sinon elles restent ouvertes et peuvent bloquer l'écran). Les outils du menu restent ouverts. */
+function closeFlightWindows(){
+  const ldm = document.getElementById('ldmModal');
+  if(ldm && ldm.style.display !== 'none' && ldm.style.display !== '') closeLDM();
+  if(typeof closeFuelMenu === 'function') try{ closeFuelMenu(); }catch(e){}
+  const KEEP = ['infoEscaleModal','annuaireModal','degivrageModal','signModal','closeAllModal'];
+  document.querySelectorAll('.sheet-modal').forEach(m => { if(!KEEP.includes(m.id)) m.style.display = 'none'; });
+  const lb = document.getElementById('lightboxOverlay'); if(lb) lb.style.display = 'none';
+  if(document.body.classList.contains('modal-open')) unlockScroll();
 }
 
 /* INIT */
@@ -2334,11 +2338,17 @@ function confirmCloseTab(deleteRemote){
 
 function deleteTab(id, deleteRemote = false){
   stopCountdown();
-  id = String(id);  let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
+  id = String(id);
+  let tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]');
   if(!Array.isArray(tabs)) tabs = [];
 
   const idx = tabs.indexOf(id);
   if(idx === -1) return;
+
+  // v2.97 : le vol affiché change (vol en cours fermé, ou bascule sur le voisin) → on ferme ses fenêtres
+  const rest = tabs.filter(t => t !== id);
+  const nextShown = rest.length ? rest[Math.max(0, idx - 1)] : null;
+  if(String(nextShown) !== String(currentTabId)) closeFlightWindows();
 
   tabs.splice(idx, 1);
   localStorage.setItem('flightTabs', JSON.stringify(tabs));
@@ -6900,7 +6910,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v122';
+const CACHE = 'suivi-perf-v123';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
