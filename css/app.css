@@ -1509,3 +1509,10 @@ body.has-ctot .chronos .chip-ctot{display:none}
 html:has(body.no-tab),html:has(body.pv-locked),body.no-tab,body.pv-locked{background:#0a1017}
 body.no-tab.kb-open .home-content,body.pv-locked.kb-open .home-content{gap:14px;padding-bottom:14px}
 body.no-tab.kb-open .home-hero,body.pv-locked.kb-open .home-hero{padding-top:18px}
+
+/* ===== v2.99.2 — iPhone, appli ajoutée à l'écran d'accueil (standalone, barre d'état translucide) :
+   iOS calcule 100% sans la barre d'état, d'où une bande vide en bas. 100vh y couvre tout l'écran. ===== */
+@media (display-mode: standalone){
+  html,body{height:100vh}
+  .home-screen{bottom:auto;height:100vh}
+}

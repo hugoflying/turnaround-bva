@@ -6911,7 +6911,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v127';
+const CACHE = 'suivi-perf-v128';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
