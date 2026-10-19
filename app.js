@@ -1920,7 +1920,7 @@ function wireVolsButton(){
   const openManual = ()=>{
     longFired = true;
     clearTimeout(clickTimer); clickTimer = null;
-    if(typeof createNewTab === 'function') createNewTab();
+    if(typeof createManualFlight === 'function') createManualFlight();
   };
 
   // --- souris / clavier ---
@@ -1937,7 +1937,7 @@ function wireVolsButton(){
   btn.addEventListener('dblclick', (e)=>{
     e.preventDefault();
     clearTimeout(clickTimer); clickTimer = null;
-    if(typeof createNewTab === 'function') createNewTab();
+    if(typeof createManualFlight === 'function') createManualFlight();
   });
 
   // --- tactile : appui long ---
@@ -2233,6 +2233,16 @@ function createNewTab(){
   refreshUIForTabs();
   updateInfoStrip();
   renderTimeline();
+}
+
+/* v2.93 : vol créé à la main = ouvert directement sur « Modifier le vol » */
+function createManualFlight(){
+  createNewTab();
+  if(typeof uiTab === 'function') uiTab('vol');
+  setTimeout(()=>{
+    const edit = document.getElementById('ivEdit');
+    if(edit && edit.style.display !== 'flex') toggleInfoVolEdit();
+  }, 50);
 }
 
 function switchTab(id){
@@ -4565,9 +4575,7 @@ const AK_AIRPORT = "LFOB";
 function openAKPicker(){
   // Édition sans Keeper (turnaround-bva) : le « + » crée un vol manuel et ouvre sa fiche
   if(window.APP_EDITION === 'bva'){
-    createNewTab();
-    if(typeof uiTab === 'function') uiTab('vol');
-    if(typeof toggleInfoVolEdit === 'function') setTimeout(toggleInfoVolEdit, 50);
+    createManualFlight();
     return;
   }
   const b = document.getElementById('akBackdrop');
@@ -6879,7 +6887,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v118';
+const CACHE = 'suivi-perf-v119';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
