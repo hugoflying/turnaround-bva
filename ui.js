@@ -1075,7 +1075,7 @@ function clockMin(){
   /* Vol (v2.37) : pastilles Compagnie / Parking / Type de la feuille « Modifier le vol » */
   // Types proposés selon la compagnie (Hugo) ; autre compagnie = toute la liste
   const IV_TYPES_ALL = ['A319','A320','A321','A20N','A21N','A21NY','B734','B737','B738','B38M','BCS3','CL35'];
-  const IV_TYPES = { FR:['B737','B738','B38M','CL35'], RK:['B737','B738','B38M','CL35'],
+  const IV_TYPES = { FR:['B737','B738','B38M','A320','CL35'], RK:['B737','B738','B38M','A320','CL35'], // v2.92 : A320 (Lauda) pour FR/RK
     W4:['A320','A321','A20N','A21N','A21NY'], W6:['A320','A321','A20N','A21N','A21NY'],
     V7:['A319','A320'], H4:['A319','A320','A321','A21N'], H6:['A319','A320','A321','A21N'] };
   function renderIvTypes(){
