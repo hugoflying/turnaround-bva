@@ -5196,6 +5196,7 @@ function applyAKFlight(f, flow, opts = {}){
         }
         // Les deux onglets sont maintenant identiques : on peut sauver normalement
         if(typeof saveCurrentTabData === 'function') saveCurrentTabData();
+        if(typeof uiTab === 'function') uiTab('vol');   // v2.94 : vol AK ouvert sur Vol
       });
       return;
     }
@@ -5203,6 +5204,8 @@ function applyAKFlight(f, flow, opts = {}){
   _doApplyAKFlight(f, flow, opts);
   // v2.88 : en démo, le vol importé arrive rempli comme un vrai vol
   if(!opts.refresh && window.demoActive && window.demoActive() && window.demoFillImported) window.demoFillImported(f);
+  // v2.94 (Hugo) : un vol ouvert depuis AK s'affiche toujours sur l'onglet Vol
+  if(!opts.refresh && typeof uiTab === 'function') uiTab('vol');
 }
 
 function _doApplyAKFlight(f, flow, opts = {}){
@@ -6887,7 +6890,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v119';
+const CACHE = 'suivi-perf-v120';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
