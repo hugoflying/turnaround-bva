@@ -1557,13 +1557,33 @@ function clockMin(){
       const r = el.getBoundingClientRect(), vv = window.visualViewport;
       const top = vv ? vv.offsetTop : 0, bottom = top + vvH();
       const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 0;
-      if(r.top < head || r.bottom > bottom - 8) el.scrollIntoView({ block:'center', inline:'nearest' });
+      // v3.01 (Hugo, iPhone) : on fait défiler le conteneur du champ (Load, app…), pas la page :
+      // scrollIntoView faisait aussi glisser tout l'écran vers le haut sur iOS à chaque changement de case.
+      if(r.top < top + head || r.bottom > bottom - 8){
+        let sc = el.parentElement;
+        while(sc && sc !== document.body){ const o = getComputedStyle(sc).overflowY; if((o === 'auto' || o === 'scroll') && sc.scrollHeight > sc.clientHeight) break; sc = sc.parentElement; }
+        if(sc && sc !== document.body){
+          const want = (top + head + bottom) / 2 - (r.top + r.height / 2);
+          sc.scrollTop -= want;
+        }
+      }
       if(window.scrollY) window.scrollTo(0, 0);
+    };
+    // v3.01 : iOS ne réduit pas la page sous le clavier et fait glisser la zone visible. On recale
+    // l'en-tête, l'app et Load sur la zone réellement visible (variables --vv-top / --vv-bot).
+    const fitVV = () => {
+      const vv = window.visualViewport, st = document.documentElement.style;
+      const kb = document.body.classList.contains('kb-open');
+      if(kb && vv){
+        st.setProperty('--vv-top', Math.max(0, vv.offsetTop) + 'px');
+        st.setProperty('--vv-bot', Math.max(0, window.innerHeight - vv.offsetTop - vv.height) + 'px');
+      } else { st.removeProperty('--vv-top'); st.removeProperty('--vv-bot'); }
     };
     const sync = () => {
       if(!document.activeElement || !isField(document.activeElement)) maxH = Math.max(maxH, window.innerHeight);
       const kb = isField(document.activeElement) && Math.min(window.innerHeight, vvH()) < maxH * 0.8;
       document.body.classList.toggle('kb-open', kb);
+      fitVV();
       if(kb) requestAnimationFrame(keepVisible);
       fitHome(kb);
     };
@@ -1580,7 +1600,7 @@ function clockMin(){
       }
     };
     window.addEventListener('resize', sync);
-    if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => fitHome(document.body.classList.contains('kb-open'))); }
+    if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => { fitVV(); fitHome(document.body.classList.contains('kb-open')); }); }
     document.addEventListener('focusin', () => setTimeout(sync, 300));
     document.addEventListener('focusout', () => setTimeout(sync, 50));
     document.addEventListener('input', e => { if(document.body.classList.contains('kb-open') && e.target === document.activeElement) requestAnimationFrame(keepVisible); }, true);

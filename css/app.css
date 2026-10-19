@@ -1522,3 +1522,7 @@ body.no-tab.kb-open .home-hero,body.pv-locked.kb-open .home-hero{padding-top:18p
 .ld-approx{display:none;font-family:var(--f-num);font-weight:700;font-size:19px;color:var(--muted)}
 .ld-stat.is-approx .ld-approx{display:inline}
 .ld-stat.is-approx .ld-stat-label::after{content:" · 13 kg";text-transform:none;letter-spacing:0;font-weight:500}
+
+/* ===== v3.01 — iPhone clavier ouvert : l'interface suit la zone visible (au-dessus du clavier) ===== */
+body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
+body.kb-open .app-wrap,body.kb-open #ldmModal{top:calc(var(--fixed-header-h) + var(--vv-top,0px));bottom:var(--vv-bot,0px)}
