@@ -641,10 +641,8 @@ function clockMin(){
     let st, cls = '', next;
     const has = k => !!g(k);
     // v2.71 : état en cours du vol (pas l'action à venir)
-    const atotIso = d.akMeta?.atot || '';
-    const atotD = atotIso ? new Date(atotIso) : null;
-    const atot = atotD && !isNaN(atotD.getTime()) ? ((typeof isUTC !== 'undefined' && isUTC) ? atotD.getUTCHours()*60 + atotD.getUTCMinutes() : atotD.getHours()*60 + atotD.getMinutes()) : null;
-    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = atot != null ? 'Décollé ' + fmtHM(atot) : 'Repoussé ' + fmtHM(aobt); }
+    // v2.99 (Hugo) : plus d'ATOT Keeper, « Departed » dès que l'AOBT est saisi
+    if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = 'Departed'; }
     else if(aibt == null){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
     else {
       next = has('FermeturePorteAvion') ? 'Porte fermée'

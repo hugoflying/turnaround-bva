@@ -6911,7 +6911,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v125';
+const CACHE = 'suivi-perf-v126';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
@@ -7126,8 +7126,9 @@ async function autoFetchATOT(){
     if(window.uiRecapRefresh) window.uiRecapRefresh();
   }finally{ _atotBusy = false; }
 }
-setInterval(autoFetchATOT, 60000);
-setTimeout(autoFetchATOT, 5000);
+// v2.99 (Hugo) : recherche automatique de l'ATOT désactivée, le Récap affiche « Departed » dès l'AOBT
+// setInterval(autoFetchATOT, 60000);
+// setTimeout(autoFetchATOT, 5000);
 
 
 /* PAF : confirmation au 1er débarqué quand une valeur PAF est connue (akMeta.bc) */
