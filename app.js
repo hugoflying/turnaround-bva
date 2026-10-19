@@ -1613,11 +1613,15 @@ function refreshUIForTabs(){
     currentTabId = null;
     closeAKPicker();
     stopCountdown(true);
-    // v2.95 : dernier vol fermé avec Load / Fuel / Modifier ouvert → on ferme tout (sinon écran bloqué)
+    // v2.95-96 : dernier vol fermé alors qu'une fenêtre du vol est ouverte → on les ferme toutes
+    // (sinon elle reste par-dessus l'accueil et bloque l'écran). Les outils du menu restent ouverts.
     const ldm = document.getElementById('ldmModal');
     if(ldm && ldm.style.display !== 'none' && ldm.style.display !== '') closeLDM();
     if(typeof closeFuelMenu === 'function') try{ closeFuelMenu(); }catch(e){}
-    const ive = document.getElementById('ivEdit'); if(ive) ive.style.display = 'none';
+    const KEEP = ['infoEscaleModal','annuaireModal','degivrageModal','signModal','closeAllModal'];
+    document.querySelectorAll('.sheet-modal').forEach(m => { if(!KEEP.includes(m.id)) m.style.display = 'none'; });
+    const lb = document.getElementById('lightboxOverlay'); if(lb) lb.style.display = 'none';
+    if(document.body.classList.contains('modal-open')) unlockScroll();
     if(typeof uiTab === 'function') try{ uiTab('vol'); }catch(e){}
   }
 }
@@ -6896,7 +6900,7 @@ function checkAndDeleteIfEmpty(){
 /* ===== Service Worker — enregistrement ===== */
 if ('serviceWorker' in navigator) {
   const swCode = `
-const CACHE = 'suivi-perf-v121';
+const CACHE = 'suivi-perf-v122';
 const PRECACHE = [];   // fichiers à précacher (vide = online-only)
 
 self.addEventListener('install', e => {
