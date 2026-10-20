@@ -235,8 +235,8 @@
     window.adjustTime = function(id){ if(id === 'AIBT' && aibtLocked()) return; return orig.apply(this, arguments); };
   }
 
-  /* v3.03 (Hugo) — Vol au départ de BVA : pas d'arrivée, AIBT désactivé dans Vol. */
-  function aibtLocked(){ return (document.getElementById('From')?.value || '').trim().toUpperCase() === 'BVA'; }
+  /* v3.04 (Hugo) — Pas de SIBT renseigné = pas d'arrivée : AIBT désactivé dans Vol. */
+  function aibtLocked(){ return !(document.getElementById('SIBT')?.value || '').trim(); }
   function syncAIBTLock(){
     const w = document.querySelector('.time-wrap[data-id="AIBT"]'); if(!w) return;
     const on = aibtLocked();
@@ -248,7 +248,7 @@
     const orig = window.updateAllCalculations;
     window.updateAllCalculations = function(){ const r = orig.apply(this, arguments); syncAIBTLock(); return r; };
   }
-  document.addEventListener('input', e => { if(e.target && e.target.id === 'From') syncAIBTLock(); });
-  document.addEventListener('change', e => { if(e.target && e.target.id === 'From') syncAIBTLock(); });
+  document.addEventListener('input', e => { if(e.target && e.target.id === 'SIBT') syncAIBTLock(); });
+  document.addEventListener('change', e => { if(e.target && e.target.id === 'SIBT') syncAIBTLock(); });
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncAIBTLock); else syncAIBTLock();
 })();
