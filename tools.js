@@ -224,7 +224,7 @@
   function flash(id){
     const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;
     w.classList.remove('tap-ok', 'tap-clr'); void w.offsetWidth; w.classList.add('tap-ok');
-    setTimeout(() => w.classList.remove('tap-ok'), 450);
+    setTimeout(() => w.classList.remove('tap-ok'), 700);
   }
   window.twFlashClear = function(id){
     const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;

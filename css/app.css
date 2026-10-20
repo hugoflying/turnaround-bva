@@ -1357,13 +1357,11 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 .ld-stat.is-approx .ld-approx{display:inline}
 .ld-stat.is-approx .ld-stat-label::after{content:" · 13 kg";text-transform:none;letter-spacing:0;font-weight:500}
 @keyframes tapOk{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
-
+@keyframes tapOkBg{0%{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}}
 
 /* ===== Timing (suite : doit rester après les règles ci-dessus) ===== */
 .time-wrap.tap-ok{animation:tapOk .6s ease-out;border-radius:var(--r)}
-/* v3.06.1 : fond bleu marine franc (les fonds de .tw-display sont en !important, d'où une classe et non une animation) */
-.time-wrap .tw-display{transition:background-color .5s ease-out,color .5s ease-out,outline-color .5s ease-out;outline:6px solid transparent;outline-offset:0}
-.time-wrap.tap-ok .tw-display,#timing-grid .time-wrap.tap-ok .tw-display{background:var(--accent)!important;color:var(--accent-ink)!important;outline-color:var(--accent);border-radius:6px;transition:none}
+.time-wrap.tap-ok .tw-display{animation:tapOkBg .7s ease-out}
 
 /* ===== v3.04 — AIBT désactivé sans SIBT ===== */
 .time-wrap.tw-locked{pointer-events:none;opacity:.4;filter:grayscale(1)}
@@ -1374,4 +1372,3 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 @keyframes tapClrBg{0%{background:var(--surface-3);color:var(--faint);opacity:.35}}
 .time-wrap.tap-clr{animation:tapClr .4s ease-out}
 .time-wrap.tap-clr .tw-display{animation:tapClrBg .5s ease-out}
-.time-wrap.tap-clr .tw-display{outline-color:transparent;transition:none}
