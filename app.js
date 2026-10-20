@@ -349,7 +349,9 @@ function updateHBagsValidity(mode){
     if(el) sum += parseInt(el.value || '0', 10);
   });
 
-  bagsEl.classList.toggle('is-invalid', bags > 0 && sum !== bags);
+  // v3.07 (Hugo) : les soutes contiennent BAGS + GB
+  const gb = parseInt(document.getElementById('FinalGB')?.value || '0', 10) || 0;
+  bagsEl.classList.toggle('is-invalid', bags > 0 && sum !== bags + gb);
 }
 
 function syncAdultGenderLocks(){

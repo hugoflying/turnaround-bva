@@ -95,6 +95,9 @@ function clockMin(){
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
     let a = toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40'));
     let d = toMin(txt('timer-eobt')) ?? toMin(val('SOBT'));
+    // v3.07 (Hugo) : vol parti (AOBT) = barre pleine verte
+    const gone = !!val('AOBT'); wrap.classList.toggle('done', gone);
+    if(gone){ wrap.classList.remove('is-empty', 'over'); bar.style.width = '100%'; return; }
     if(a == null || d == null){ wrap.classList.add('is-empty'); return; }
     if(d <= a) d += 1440;
     let now = clockMin();
@@ -605,9 +608,13 @@ function clockMin(){
       } else {
         let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}'); }catch(e){}
         // v3.05 : sans arrivée (vol qui part de la base), départ du chrono à HLE = SOBT − 60
-        const sobt = toMin(d.SOBT || '');
-        r = ringRatio(toMin(d.AIBT || '') ?? toMin(d.SIBT || '') ?? (sobt != null ? sobt - 60 : null), sobt);
+        const sobt = toMin(d.SOBT || ''), hle = /^(FR|RK)$/i.test((d.Cie || '').trim()) ? 60 : 40;
+        r = ringRatio(toMin(d.AIBT || '') ?? toMin(d.SIBT || '') ?? (sobt != null ? sobt - hle : null), sobt);
       }
+      // v3.07 (Hugo) : vol parti (AOBT) = anneau vert plein, comme dans Récap
+      const gone = t.classList.contains('is-on') ? !!val('AOBT') : (() => { try{ return !!JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}').AOBT; }catch(e){ return false; } })();
+      if(gone){ ring.style.setProperty('--p', '100%'); ring.classList.remove('over', 'soon'); ring.classList.add('done'); return; }
+      ring.classList.remove('done');
       // Vert, puis jaune à EOBT −5 min, rouge une fois l'EOBT dépassée
       const p = r == null ? 0 : Math.max(0, Math.min(1, r.r)) * 100;
       ring.style.setProperty('--p', p.toFixed(1) + '%');
@@ -873,8 +880,8 @@ function clockMin(){
         bar.hidden = !pcs;
       }
       const hsum = document.getElementById('ldHoldSum');
-      const bags = ldInt('FinalBAGS');
-      if(hsum) hsum.innerHTML = pcs ? ('<b class="' + (bags != null && bags !== pcs ? 'ko' : '') + '">' + pcs + ' pcs</b>' + (k ? ' · ' + (k.approx ? '≈ ' : '') + fmtKg(pcs * k.kg) + ' kg' : '')) : '';
+      const bags = ldInt('FinalBAGS'), gbs = ldInt('FinalGB') || 0; // v3.07 : soutes = BAGS + GB
+      if(hsum) hsum.innerHTML = pcs ? ('<b class="' + (bags != null && bags + gbs !== pcs ? 'ko' : '') + '">' + pcs + ' pcs</b>' + (k ? ' · ' + (k.approx ? '≈ ' : '') + fmtKg(pcs * k.kg) + ' kg' : '')) : '';
     }
     // Nombre de tuiles passagers visibles (2 à 4 par ligne)
     const pr = document.getElementById('finalPaxRow');

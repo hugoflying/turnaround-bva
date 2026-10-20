@@ -1372,3 +1372,6 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 @keyframes tapClrBg{0%{background:var(--surface-3);color:var(--faint);opacity:.35}}
 .time-wrap.tap-clr{animation:tapClr .4s ease-out}
 .time-wrap.tap-clr .tw-display{animation:tapClrBg .5s ease-out}
+
+/* ===== v3.07 — Vol parti : barre du bandeau verte ===== */
+.fh-prog.done i{background:var(--ok)}
