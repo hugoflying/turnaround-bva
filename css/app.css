@@ -1362,3 +1362,6 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 /* ===== Timing (suite : doit rester après les règles ci-dessus) ===== */
 .time-wrap.tap-ok{animation:tapOk .6s ease-out;border-radius:var(--r)}
 .time-wrap.tap-ok .tw-display{animation:tapOkBg .7s ease-out}
+
+/* ===== v3.03 — AIBT désactivé pour un départ de BVA ===== */
+.time-wrap.tw-locked{pointer-events:none;opacity:.4;filter:grayscale(1)}

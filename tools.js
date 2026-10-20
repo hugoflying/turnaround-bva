@@ -218,10 +218,9 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderContacts); else renderContacts();
 })();
 
-/* v3.02 (Hugo) — Retours au toucher : on voit (et sent, sur Android) que l'appui est pris en compte,
-   même avec des gants ou en plein soleil. Flash vert sur l'heure saisie par Now, vibration courte. */
+/* v3.02 (Hugo) — Retour visuel : flash vert sur l'heure saisie par Now.
+   v3.03 (Hugo) : plus de vibration. */
 (function(){
-  const buzz = ms => { try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} };
   function flash(id){
     const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;
     w.classList.remove('tap-ok'); void w.offsetWidth; w.classList.add('tap-ok');
@@ -229,14 +228,27 @@
   }
   if(typeof window.setNow === 'function'){
     const orig = window.setNow;
-    window.setNow = function(id){ const r = orig.apply(this, arguments); flash(id); buzz(15); return r; };
+    window.setNow = function(id){ if(id === 'AIBT' && aibtLocked()) return; const r = orig.apply(this, arguments); flash(id); return r; };
   }
   if(typeof window.adjustTime === 'function'){
     const orig = window.adjustTime;
-    window.adjustTime = function(){ const r = orig.apply(this, arguments); buzz(6); return r; };
+    window.adjustTime = function(id){ if(id === 'AIBT' && aibtLocked()) return; return orig.apply(this, arguments); };
   }
-  // Boutons principaux (Valider, Entrer, Terminé…) et barre d'onglets : vibration très courte
-  document.addEventListener('pointerdown', e => {
-    if(e.target.closest('.btn-primary, .tabbar a, .tabbar button, .vols-btn')) buzz(8);
-  }, { passive:true });
+
+  /* v3.03 (Hugo) — Vol au départ de BVA : pas d'arrivée, AIBT désactivé dans Vol. */
+  function aibtLocked(){ return (document.getElementById('From')?.value || '').trim().toUpperCase() === 'BVA'; }
+  function syncAIBTLock(){
+    const w = document.querySelector('.time-wrap[data-id="AIBT"]'); if(!w) return;
+    const on = aibtLocked();
+    w.classList.toggle('tw-locked', on);
+    w.setAttribute('aria-disabled', on ? 'true' : 'false');
+  }
+  window.syncAIBTLock = syncAIBTLock;
+  if(typeof window.updateAllCalculations === 'function'){
+    const orig = window.updateAllCalculations;
+    window.updateAllCalculations = function(){ const r = orig.apply(this, arguments); syncAIBTLock(); return r; };
+  }
+  document.addEventListener('input', e => { if(e.target && e.target.id === 'From') syncAIBTLock(); });
+  document.addEventListener('change', e => { if(e.target && e.target.id === 'From') syncAIBTLock(); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncAIBTLock); else syncAIBTLock();
 })();
