@@ -228,11 +228,11 @@
   }
   if(typeof window.setNow === 'function'){
     const orig = window.setNow;
-    window.setNow = function(id){ if(id === 'AIBT' && aibtLocked()) return; const r = orig.apply(this, arguments); flash(id); return r; };
+    window.setNow = function(id){ if((id === 'AIBT' && aibtLocked()) || (id === 'AOBT' && aobtLocked())) return; const r = orig.apply(this, arguments); flash(id); return r; };
   }
   if(typeof window.adjustTime === 'function'){
     const orig = window.adjustTime;
-    window.adjustTime = function(id){ if(id === 'AIBT' && aibtLocked()) return; return orig.apply(this, arguments); };
+    window.adjustTime = function(id){ if((id === 'AIBT' && aibtLocked()) || (id === 'AOBT' && aobtLocked())) return; return orig.apply(this, arguments); };
   }
 
   /* v3.04 (Hugo) — Pas de SIBT renseigné = pas d'arrivée : AIBT désactivé dans Vol. */
@@ -244,11 +244,19 @@
     w.setAttribute('aria-disabled', on ? 'true' : 'false');
   }
   window.syncAIBTLock = syncAIBTLock;
+  /* v3.05 (Hugo) — Pareil au départ : pas de SOBT = AOBT désactivé. */
+  function syncAOBTLock(){
+    const w = document.querySelector('.time-wrap[data-id="AOBT"]'); if(!w) return;
+    const on = aobtLocked();
+    w.classList.toggle('tw-locked', on);
+    w.setAttribute('aria-disabled', on ? 'true' : 'false');
+  }
+  function aobtLocked(){ return !(document.getElementById('SOBT')?.value || '').trim(); }
   if(typeof window.updateAllCalculations === 'function'){
     const orig = window.updateAllCalculations;
-    window.updateAllCalculations = function(){ const r = orig.apply(this, arguments); syncAIBTLock(); return r; };
+    window.updateAllCalculations = function(){ const r = orig.apply(this, arguments); syncAIBTLock(); syncAOBTLock(); return r; };
   }
-  document.addEventListener('input', e => { if(e.target && e.target.id === 'SIBT') syncAIBTLock(); });
-  document.addEventListener('change', e => { if(e.target && e.target.id === 'SIBT') syncAIBTLock(); });
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncAIBTLock); else syncAIBTLock();
+  document.addEventListener('input', e => { if(e.target && (e.target.id === 'SIBT' || e.target.id === 'SOBT')){ syncAIBTLock(); syncAOBTLock(); } });
+  document.addEventListener('change', e => { if(e.target && (e.target.id === 'SIBT' || e.target.id === 'SOBT')){ syncAIBTLock(); syncAOBTLock(); } });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { syncAIBTLock(); syncAOBTLock(); }); else { syncAIBTLock(); syncAOBTLock(); }
 })();

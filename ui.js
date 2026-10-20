@@ -91,9 +91,9 @@ function clockMin(){
     [txt('kvImmat'), txt('kvType')].forEach(v => { if(isSet(v)) parts.push(v); });
     const pk = txt('kvPark'); if(isSet(pk)) parts.push('P' + pk.replace(/^P/i,''));
     document.getElementById('fhSub').textContent = parts.join(' · ');
-    // Avancement : de l'arrivée (AIBT, sinon SIBT) au départ (EOBT, sinon SOBT)
+    // Avancement : de l'arrivée (AIBT, sinon SIBT, sinon HLE si pas d'arrivée) au départ (EOBT, sinon SOBT)
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
-    let a = toMin(val('AIBT')) ?? toMin(val('SIBT'));
+    let a = toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40'));
     let d = toMin(txt('timer-eobt')) ?? toMin(val('SOBT'));
     if(a == null || d == null){ wrap.classList.add('is-empty'); return; }
     if(d <= a) d += 1440;
@@ -601,10 +601,12 @@ function clockMin(){
       const ring = t.querySelector('.flt-cie'); if(!ring) return;
       let r = null;
       if(t.classList.contains('is-on')){
-        r = ringRatio(toMin(val('AIBT')), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')));
+        r = ringRatio(toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40')), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')));
       } else {
         let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}'); }catch(e){}
-        r = ringRatio(toMin(d.AIBT || ''), toMin(d.SOBT || ''));
+        // v3.05 : sans arrivée (vol qui part de la base), départ du chrono à HLE = SOBT − 60
+        const sobt = toMin(d.SOBT || '');
+        r = ringRatio(toMin(d.AIBT || '') ?? toMin(d.SIBT || '') ?? (sobt != null ? sobt - 60 : null), sobt);
       }
       // Vert, puis jaune à EOBT −5 min, rouge une fois l'EOBT dépassée
       const p = r == null ? 0 : Math.max(0, Math.min(1, r.r)) * 100;
