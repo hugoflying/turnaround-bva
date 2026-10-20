@@ -218,14 +218,19 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderContacts); else renderContacts();
 })();
 
-/* v3.02 (Hugo) — Retour visuel : flash vert sur l'heure saisie par Now.
-   v3.03 (Hugo) : plus de vibration. */
+/* v3.02 (Hugo) — Retour visuel sur l'heure saisie par Now.
+   v3.03 (Hugo) : plus de vibration. v3.06 : flash bleu marine (Now), gris + secousse (effacement). */
 (function(){
   function flash(id){
     const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;
-    w.classList.remove('tap-ok'); void w.offsetWidth; w.classList.add('tap-ok');
+    w.classList.remove('tap-ok', 'tap-clr'); void w.offsetWidth; w.classList.add('tap-ok');
     setTimeout(() => w.classList.remove('tap-ok'), 700);
   }
+  window.twFlashClear = function(id){
+    const w = document.querySelector('.time-wrap[data-id="' + id + '"]'); if(!w) return;
+    w.classList.remove('tap-ok', 'tap-clr'); void w.offsetWidth; w.classList.add('tap-clr');
+    setTimeout(() => w.classList.remove('tap-clr'), 500);
+  };
   if(typeof window.setNow === 'function'){
     const orig = window.setNow;
     window.setNow = function(id){ if((id === 'AIBT' && aibtLocked()) || (id === 'AOBT' && aobtLocked())) return; const r = orig.apply(this, arguments); flash(id); return r; };

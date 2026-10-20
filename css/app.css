@@ -1356,8 +1356,8 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 .ld-approx{display:none;font-family:var(--f-num);font-weight:700;font-size:19px;color:var(--muted)}
 .ld-stat.is-approx .ld-approx{display:inline}
 .ld-stat.is-approx .ld-stat-label::after{content:" · 13 kg";text-transform:none;letter-spacing:0;font-weight:500}
-@keyframes tapOk{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
-@keyframes tapOkBg{0%{background:var(--ok-soft);color:var(--ok)}}
+@keyframes tapOk{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+@keyframes tapOkBg{0%{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}}
 
 /* ===== Timing (suite : doit rester après les règles ci-dessus) ===== */
 .time-wrap.tap-ok{animation:tapOk .6s ease-out;border-radius:var(--r)}
@@ -1365,3 +1365,10 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 
 /* ===== v3.04 — AIBT désactivé sans SIBT ===== */
 .time-wrap.tw-locked{pointer-events:none;opacity:.4;filter:grayscale(1)}
+
+/* ===== v3.06 — Effacement d'une heure (double appui) : gris + secousse, pas de bleu ===== */
+.time-wrap:not(.tw-empty) .tw-zone-center:active{background:transparent}
+@keyframes tapClr{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes tapClrBg{0%{background:var(--surface-3);color:var(--faint);opacity:.35}}
+.time-wrap.tap-clr{animation:tapClr .4s ease-out}
+.time-wrap.tap-clr .tw-display{animation:tapClrBg .5s ease-out}

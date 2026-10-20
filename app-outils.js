@@ -636,6 +636,7 @@ function toggleInfoVolEdit(){
   function clearVal(id){
     const inp=document.getElementById(id); if(!inp) return;
     inp.value='';
+    window.twFlashClear?.(id); // v3.06 : retour « effacé » (gris + secousse), distinct du flash Now
     window._twClearedAt = { id, t: Date.now() }; // le clic qui suit un double appui ne doit pas rouvrir la confirmation PAF
     inp.dispatchEvent(new Event('change',{bubbles:true}));
     twSync(id); updateAllCalculations();
