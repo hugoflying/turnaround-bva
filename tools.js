@@ -295,33 +295,88 @@
     $('ivCrewVal').textContent = cl ? cl.label : 'Choisir';
     $('ivCrewWhy').textContent = !cl ? 'Même avion, pas de changement'
       : cl.closed ? 'Ce vol a été fermé'
-      : cl.t ? (cl.real ? 'AIBT ' : 'SIBT prévu ') + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
+      : cl.t ? (cl.real ? 'AIBT ' : cl.est ? 'Estimé ' : 'SIBT prévu ') + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
       : 'Heure d\'arrivée pas encore connue';
   }
   function addMin(hm, n){ const [h, m] = hm.split(':').map(Number); const t = ((h * 60 + m + n) % 1440 + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
   window.syncCrewRow = sync;
-  window.crewPick = function(){
+  // v3.12 (Hugo) : Keeper → toutes les arrivées FR/RK autour de maintenant, même si le vol n'est pas ouvert.
+  // Sans Keeper (édition BVA) → les vols FR/RK ouverts, pas encore partis.
+  const akOn = () => window.APP_EDITION !== 'bva' && typeof fetchAK === 'function';
+  const isoAK = t => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  let akArr = null;
+  async function loadArr(){
+    const n = Date.now();
+    const list = await fetchAK('ARR', isoAK(n - 8 * 36e5), isoAK(n + 8 * 36e5));
+    akArr = (list || []).filter(f => /^(FR|RK)\d/i.test((f.fullFlightNumber || f.callsign || '').trim()));
+    return akArr;
+  }
+  const akSnap = f => JSON.stringify({ ff:(f.fullFlightNumber || f.callsign || '').toUpperCase(), from:f.adepIata || '', sibt:f.sibt || '', eibt:f.eibt || '', aibt:f.aibt || '' });
+  const akTime = f => Date.parse(f.aibt || f.eibt || f.sibt || '') || 0;
+  function rowHTML(id, title, sub, t, on){
+    return '<button type="button" class="ie-row crew-row' + (on ? ' is-on' : '') + '" data-id="' + esc(id) + '"><span>' + esc(title) + '<small>' + esc(sub) + '</small></span><b class="num">' + esc(t || '--:--') + '</b><i>' + (on ? '✓' : '') + '</i></button>';
+  }
+  function head(cur){ return rowHTML('', 'Même avion', 'Pas de changement d\'équipage', '', !cur).replace('<b class="num">--:--</b>', '<b></b>'); }
+  function renderAK(cur){
+    const own = (() => { try{ return (JSON.parse(localStorage.getItem('tab-' + currentTabId) || '{}').akMeta?.arrFF || '').toUpperCase(); }catch(e){ return ''; } })();
+    const now = Date.now();
+    const list = akArr.filter(f => (f.fullFlightNumber || f.callsign || '').toUpperCase() !== own)
+      .filter(f => { const t = akTime(f); return 'ak:' + f.id === cur || (t > now - 3 * 36e5 && t < now + 4 * 36e5); })
+      .sort((a, b) => akTime(a) - akTime(b));
+    const hm = v => (typeof crewIsoHM === 'function' ? crewIsoHM(v) : '');
+    const rows = list.map(f => {
+      const t = hm(f.aibt) || hm(f.eibt) || hm(f.sibt);
+      const kind = f.aibt ? 'AIBT' : f.eibt ? 'Estimé' : 'SIBT';
+      const sub = (f.adepIata ? f.adepIata.toUpperCase() + ' · ' : '') + kind + ' ' + (t || '--:--') + (f.reg ? ' · ' + f.reg : '');
+      return rowHTML('ak:' + f.id, (f.fullFlightNumber || f.callsign || 'Vol').toUpperCase(), sub, t, 'ak:' + f.id === cur);
+    });
+    $('crewList').innerHTML = head(cur) + (rows.length ? rows.join('') : '<p class="dmg-empty">Aucune arrivée Ryanair autour de maintenant.</p>');
+  }
+  window.crewPick = async function(){
+    const cur = ($('CrewFrom')?.value || '').trim();
+    $('crewModal').style.display = 'flex';
+    if(akOn()){
+      $('crewList').innerHTML = head(cur) + '<p class="dmg-empty">Chargement des arrivées…</p>';
+      try{ await loadArr(); renderAK(cur); return; }
+      catch(e){ $('crewList').innerHTML = head(cur) + '<p class="dmg-empty">Keeper indisponible, vols ouverts :</p>' + openRows(cur); return; }
+    }
+    $('crewList').innerHTML = head(cur) + (openRows(cur) || '<p class="dmg-empty">Aucun autre vol Ryanair ouvert. Ouvre d\'abord le vol de l\'équipage avec +.</p>');
+  };
+  function openRows(cur){
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
     if(window.uiSortedTabIds) ids = window.uiSortedTabIds(ids);
-    const cur = ($('CrewFrom')?.value || '').trim();
     // v3.11.1 (Hugo) : seulement les vols FR/RK ouverts, pas encore partis (sauf celui déjà choisi)
-    const rows = ids.filter(id => id !== String(currentTabId)).map(id => {
+    return ids.filter(id => id !== String(currentTabId)).map(id => {
       let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
       const cie = (d.Cie || d.akMeta?.arrFF || d.akMeta?.depFF || '').toUpperCase().slice(0, 2);
       if(id !== cur && (!/^(FR|RK)$/.test(cie) || (d.AOBT || '').trim())) return '';
       const arr = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || 'Vol').toUpperCase();
       const t = (d.AIBT || '').trim() || (d.SIBT || '').trim();
-      const sub = (d.From ? d.From.toUpperCase() + ' · ' : '') + (d.AIBT ? 'AIBT ' : 'SIBT ') + (t || '--:--');
-      return '<button type="button" class="ie-row crew-row' + (id === cur ? ' is-on' : '') + '" data-id="' + id + '"><span>' + esc(arr) + '<small>' + esc(sub) + '</small></span><b class="num">' + esc(t || '--:--') + '</b><i>' + (id === cur ? '✓' : '') + '</i></button>';
-    });
-    $('crewList').innerHTML = '<button type="button" class="ie-row crew-row' + (!cur ? ' is-on' : '') + '" data-id=""><span>Même avion<small>Pas de changement d\'équipage</small></span><b></b><i>' + (!cur ? '✓' : '') + '</i></button>'
-      + (rows.some(Boolean) ? rows.join('') : '<p class="dmg-empty">Aucun autre vol Ryanair ouvert. Ouvre d\'abord le vol de l\'équipage avec +.</p>');
-    $('crewModal').style.display = 'flex';
-  };
+      return rowHTML(id, arr, (d.From ? d.From.toUpperCase() + ' · ' : '') + (d.AIBT ? 'AIBT ' : 'SIBT ') + (t || '--:--'), t, id === cur);
+    }).join('');
+  }
+  // Mise à jour de l'heure de l'équipage (Keeper) : à l'ouverture du vol puis toutes les 2 min
+  async function refreshAK(){
+    const id = ($('CrewFrom')?.value || '').trim(); if(!id.startsWith('ak:') || !akOn()) return;
+    try{
+      const f = (await loadArr()).find(x => 'ak:' + x.id === id); if(!f) return;
+      const snap = akSnap(f);
+      if($('CrewInfo').value !== snap){ $('CrewInfo').value = snap; try{ saveCurrentTabData(); updateAllCalculations(); }catch(e){} }
+    }catch(e){}
+  }
+  setInterval(refreshAK, 120000);
+  window.crewRefresh = refreshAK;
+  if(typeof window.switchTab === 'function'){
+    const orig = window.switchTab;
+    window.switchTab = function(){ const r = orig.apply(this, arguments); setTimeout(refreshAK, 300); return r; };
+  }
   window.crewClose = function(){ $('crewModal').style.display = 'none'; };
   document.addEventListener('click', e => {
     const b = e.target.closest('#crewList .crew-row'); if(!b) return;
-    $('CrewFrom').value = b.dataset.id || '';
+    const id = b.dataset.id || '';
+    $('CrewFrom').value = id;
+    const f = id.startsWith('ak:') && akArr ? akArr.find(x => 'ak:' + x.id === id) : null;
+    $('CrewInfo').value = f ? akSnap(f) : '';
     window.crewClose();
     try{ saveCurrentTabData(); }catch(err){}
     try{ updateAllCalculations(); }catch(err){}

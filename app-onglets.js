@@ -1023,9 +1023,20 @@ function updateSOBTDefault() {
 
 /* v3.10 (Hugo) : l'équipage du départ arrive sur un autre vol ouvert (#CrewFrom = id de son onglet).
    t = AIBT de ce vol, sinon son SIBT (prévu). */
+function crewIsoHM(v){
+  const d = v ? new Date(v) : null; if(!d || isNaN(d.getTime())) return '';
+  const p = n => String(n).padStart(2,'0');
+  return isUTC ? p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) : p(d.getHours()) + ':' + p(d.getMinutes());
+}
 function crewLink(){
   const id = (document.getElementById('CrewFrom')?.value || '').trim();
   if(!id || id === String(currentTabId)) return null;
+  // v3.12 (Hugo) : arrivée choisie dans la liste Keeper (vol pas forcément ouvert) : CrewInfo = instantané AK
+  if(id.startsWith('ak:')){
+    let k = {}; try{ k = JSON.parse(document.getElementById('CrewInfo')?.value || '{}'); }catch(e){}
+    const aibt = crewIsoHM(k.aibt), eibt = crewIsoHM(k.eibt), sibt = crewIsoHM(k.sibt);
+    return { id, ak:true, label:(k.ff || 'Vol').toUpperCase(), from:(k.from || '').toUpperCase(), t: aibt || eibt || sibt, real: !!aibt, est: !aibt && !!eibt };
+  }
   let tabs = []; try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
   if(!tabs.includes(id)) return { id, closed:true, label:'Vol fermé', t:'' };
   let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
