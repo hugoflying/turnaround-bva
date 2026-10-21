@@ -280,3 +280,55 @@
   document.addEventListener('change', e => { if(e.target && (e.target.id === 'SIBT' || e.target.id === 'SOBT')){ syncAIBTLock(); syncAOBTLock(); } });
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { syncAIBTLock(); syncAOBTLock(); }); else { syncAIBTLock(); syncAOBTLock(); }
 })();
+
+/* v3.10 (Hugo) — « Équipage de » : l'équipage du départ arrive sur un autre vol ouvert.
+   EOBT FR/RK ≥ arrivée de ce vol (AIBT, sinon SIBT) + 35 (app-onglets.js crewLink / updateEOBT). */
+(function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  function isFR(){ return /^(FR|RK)$/.test(($('Cie')?.value || '').trim().toUpperCase()); }
+  function sync(){
+    const row = $('ivCrewRow'); if(!row) return;
+    const cl = typeof crewLink === 'function' ? crewLink() : null;
+    row.hidden = !isFR() && !cl;
+    row.classList.toggle('is-on', !!cl && !cl.closed);
+    $('ivCrewVal').textContent = cl ? cl.label : 'Choisir';
+    $('ivCrewWhy').textContent = !cl ? 'Même avion, pas de changement'
+      : cl.closed ? 'Ce vol a été fermé'
+      : cl.t ? (cl.real ? 'AIBT ' : 'SIBT prévu ') + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
+      : 'Heure d\'arrivée pas encore connue';
+  }
+  function addMin(hm, n){ const [h, m] = hm.split(':').map(Number); const t = ((h * 60 + m + n) % 1440 + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+  window.syncCrewRow = sync;
+  window.crewPick = function(){
+    let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
+    if(window.uiSortedTabIds) ids = window.uiSortedTabIds(ids);
+    const cur = ($('CrewFrom')?.value || '').trim();
+    const rows = ids.filter(id => id !== String(currentTabId)).map(id => {
+      let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
+      const arr = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || 'Vol').toUpperCase();
+      const t = (d.AIBT || '').trim() || (d.SIBT || '').trim();
+      const sub = (d.From ? d.From.toUpperCase() + ' · ' : '') + (d.AIBT ? 'AIBT ' : 'SIBT ') + (t || '--:--');
+      return '<button type="button" class="ie-row crew-row' + (id === cur ? ' is-on' : '') + '" data-id="' + id + '"><span>' + esc(arr) + '<small>' + esc(sub) + '</small></span><b class="num">' + esc(t || '--:--') + '</b><i>' + (id === cur ? '✓' : '') + '</i></button>';
+    });
+    $('crewList').innerHTML = '<button type="button" class="ie-row crew-row' + (!cur ? ' is-on' : '') + '" data-id=""><span>Même avion<small>Pas de changement d\'équipage</small></span><b></b><i>' + (!cur ? '✓' : '') + '</i></button>'
+      + (rows.length ? rows.join('') : '<p class="dmg-empty">Aucun autre vol ouvert.</p>');
+    $('crewModal').style.display = 'flex';
+  };
+  window.crewClose = function(){ $('crewModal').style.display = 'none'; };
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#crewList .crew-row'); if(!b) return;
+    $('CrewFrom').value = b.dataset.id || '';
+    window.crewClose();
+    try{ saveCurrentTabData(); }catch(err){}
+    try{ updateAllCalculations(); }catch(err){}
+    sync();
+    try{ renderTimeline(); }catch(err){}
+  });
+  if(typeof window.updateAllCalculations === 'function'){
+    const orig = window.updateAllCalculations;
+    window.updateAllCalculations = function(){ const r = orig.apply(this, arguments); sync(); return r; };
+  }
+  document.addEventListener('input', e => { if(e.target && e.target.id === 'Cie') sync(); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync); else sync();
+})();

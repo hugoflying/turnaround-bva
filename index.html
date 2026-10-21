@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261021r142';
+window.APP_VERSION = '20261021r143';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261021r142';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261021r142" />
-<link rel="stylesheet" href="./css/app.css?v=20261021r142" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261021r143" />
+<link rel="stylesheet" href="./css/app.css?v=20261021r143" />
 </head>
 <body>
 
@@ -471,6 +471,12 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
         <div><dt id="kvParkTitle">Parking</dt><dd id="kvPark">--</dd></div>
         <div id="kvBCWrap"><dt>PAF</dt><dd id="kvBC">--</dd></div>
       </dl>
+      <!-- v3.10 : équipage qui arrive sur un autre vol (FR/RK) -->
+      <button type="button" class="iv-cab iv-crew" id="ivCrewRow" onclick="crewPick()" hidden>
+        <span class="cab-lbl"><b>Équipage de</b><small id="ivCrewWhy">Même avion, pas de changement</small></span>
+        <span class="iv-crew-v num" id="ivCrewVal">Choisir</span>
+      </button>
+      <input type="hidden" id="CrewFrom">
       <!-- v2.39 : version cabine A320 W4/W6 -->
       <div class="iv-cab" id="ivCabRow" hidden>
         <div class="cab-lbl"><b>Configuration cabine</b><small class="cab-why"></small></div>
@@ -771,6 +777,18 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 </div>
 
 <!-- v2.82 : menu Annuaire -->
+<div id="crewModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) crewClose()">
+  <div class="sheet-card">
+    <div class="sh-head">
+      <h3>Équipage de</h3>
+      <button class="iconbtn" type="button" aria-label="Fermer" onclick="crewClose()"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="sh-body ie">
+      <div class="ie-k">Vol sur lequel arrive l'équipage de ce départ</div>
+      <div class="ie-list" id="crewList"></div>
+    </div>
+  </div>
+</div>
 <div id="annuaireModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
   <div class="sheet-card">
     <div class="sh-head">
@@ -1099,17 +1117,17 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261021r142"></script>
-<script src="./contacts.js?v=20261021r142"></script>
-<script src="./app.js?v=20261021r142"></script>
-<script src="./app-load.js?v=20261021r142"></script>
-<script src="./app-onglets.js?v=20261021r142"></script>
-<script src="./app-retard.js?v=20261021r142"></script>
-<script src="./app-timeline.js?v=20261021r142"></script>
-<script src="./app-keeper.js?v=20261021r142"></script>
-<script src="./app-outils.js?v=20261021r142"></script>
-<script src="./ui.js?v=20261021r142"></script>
-<script src="./tools.js?v=20261021r142"></script>
-<script src="./dlcodes.js?v=20261021r142"></script>
+<script src="./edition.js?v=20261021r143"></script>
+<script src="./contacts.js?v=20261021r143"></script>
+<script src="./app.js?v=20261021r143"></script>
+<script src="./app-load.js?v=20261021r143"></script>
+<script src="./app-onglets.js?v=20261021r143"></script>
+<script src="./app-retard.js?v=20261021r143"></script>
+<script src="./app-timeline.js?v=20261021r143"></script>
+<script src="./app-keeper.js?v=20261021r143"></script>
+<script src="./app-outils.js?v=20261021r143"></script>
+<script src="./ui.js?v=20261021r143"></script>
+<script src="./tools.js?v=20261021r143"></script>
+<script src="./dlcodes.js?v=20261021r143"></script>
 </body>
 </html>

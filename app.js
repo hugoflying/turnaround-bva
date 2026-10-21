@@ -1228,7 +1228,8 @@ function getMTT(){
   if(cie === 'W4' || cie === 'W6') return isA321fam ? 35 : 30;
   if(cie === 'FR' || cie === 'RK'){
     const crewChange = !!((document.getElementById('ArrPNT')?.value || '').trim()
-                        || (document.getElementById('ArrPNC')?.value || '').trim());
+                        || (document.getElementById('ArrPNC')?.value || '').trim()
+                        || (document.getElementById('CrewFrom')?.value || '').trim());   // v3.10 : équipage d'un autre vol
     return crewChange ? 35 : 25;   // 25 de base, +10 (=> 35) si changement d'equipage
   }
   return null;

@@ -1021,6 +1021,19 @@ function updateSOBTDefault() {
     `${String(sobtCalc.getHours()).padStart(2,'0')}:${String(sobtCalc.getMinutes()).padStart(2,'0')}`;
 }
 
+/* v3.10 (Hugo) : l'équipage du départ arrive sur un autre vol ouvert (#CrewFrom = id de son onglet).
+   t = AIBT de ce vol, sinon son SIBT (prévu). */
+function crewLink(){
+  const id = (document.getElementById('CrewFrom')?.value || '').trim();
+  if(!id || id === String(currentTabId)) return null;
+  let tabs = []; try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
+  if(!tabs.includes(id)) return { id, closed:true, label:'Vol fermé', t:'' };
+  let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
+  const label = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || d.akMeta?.depFF || 'Vol').toUpperCase();
+  const aibt = (d.AIBT || '').trim(), sibt = (d.SIBT || '').trim();
+  return { id, label, from:(d.From || '').toUpperCase(), t: aibt || sibt, real: !!aibt };
+}
+
 /* EOBT + règle CTOT */
 function updateEOBT() {
   const cie = (document.getElementById('Cie')?.value || '').toUpperCase();
@@ -1075,7 +1088,8 @@ function updateEOBT() {
 
   const crewChange = !!(
     (document.getElementById('ArrPNT')?.value || '').trim() ||
-    (document.getElementById('ArrPNC')?.value || '').trim()
+    (document.getElementById('ArrPNC')?.value || '').trim() ||
+    (document.getElementById('CrewFrom')?.value || '').trim()   // v3.10 : équipage arrivant sur un autre vol
   );
 
   const isDelayed = (AIBT_ext > SIBT_ext);
@@ -1109,6 +1123,13 @@ function updateEOBT() {
       const rot = SOBT_ext - SIBT_ext;
       EOBT_raw_ext = AIBT_ext + rot;
     }
+  }
+
+  // v3.10 (Hugo) : FR/RK, équipage arrivant sur un autre vol → EOBT ≥ arrivée de ce vol + 35
+  if (cie === 'FR' || cie === 'RK') {
+    const cl = crewLink();
+    const T = cl && cl.t ? parseHHMM(cl.t) : null;
+    if (T != null) EOBT_raw_ext = Math.max(EOBT_raw_ext, SIBT_ext + diffSigned(T, SIBT) + 35);
   }
 
   // Raw minutes 0..1439

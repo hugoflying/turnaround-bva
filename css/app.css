@@ -1375,3 +1375,14 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 
 /* ===== v3.07 — Vol parti : barre du bandeau verte ===== */
 .fh-prog.done i{background:var(--ok)}
+
+/* ===== v3.10 — Équipage de (autre vol) ===== */
+.iv-crew{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);color:inherit;font:inherit;cursor:pointer}
+.iv-crew-v{font-weight:800;font-size:15px;color:var(--muted)}
+.iv-crew.is-on .iv-crew-v{color:var(--fg)}
+.iv-crew::after{content:"›";font-size:20px;color:var(--muted);margin-left:2px}
+.crew-row{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);color:inherit;font:inherit;cursor:pointer;align-items:center}
+.crew-row small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+.crew-row b{font-size:18px}
+.crew-row i{font-style:normal;font-weight:800;color:var(--ok);text-align:center}
+.crew-row.is-on{background:var(--accent-soft)}
