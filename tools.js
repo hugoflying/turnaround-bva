@@ -293,12 +293,13 @@
     row.hidden = !isFR() && !cl;
     row.classList.toggle('is-on', !!cl && !cl.closed);
     // v3.12.5 (Hugo) : sans lien = « Équipage · Même avion » ; avec lien = « Équipage de IAS »
-    $('ivCrewVal').textContent = cl ? cl.label : 'Même avion';
+    // v3.13 (Hugo) : tout sur une ligne : « Équipage de TSF   FR1539 · AIBT 12:05 › »
+    const sub = !cl ? '' : cl.closed ? 'fermé' : cl.t ? 'AIBT ' + cl.t : 'pas au bloc';
+    $('ivCrewVal').innerHTML = cl ? esc(cl.label) + '<small> · ' + esc(sub) + '</small>' : 'Même avion';
     $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') : 'Équipage';
-    $('ivCrewWhy').textContent = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
-      : cl.closed ? 'Ce vol a été fermé'
-      : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35)
-      : 'Pas encore au bloc' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '') + ' · en attente de l\'AIBT';
+    row.title = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
+      : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35) : 'En attente de l\'AIBT' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '');
+    $('ivCrewWhy').textContent = '';
   }
   function addMin(hm, n){ const [h, m] = hm.split(':').map(Number); const t = ((h * 60 + m + n) % 1440 + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
   window.syncCrewRow = sync;
