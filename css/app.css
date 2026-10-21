@@ -1406,3 +1406,6 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 .fh-mp[hidden]{display:none}
 .fh-sub b{color:#fff;font-weight:800}
 .fh-id{min-width:0}
+
+/* ===== v3.16 : iOS zoome sur les champs < 16 px (saut d écran) ===== */
+#ArrSI,#PreviSI,#FinalSI{font-size:16px}

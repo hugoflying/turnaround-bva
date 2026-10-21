@@ -1642,6 +1642,34 @@ function clockMin(){
     };
     window.addEventListener('resize', sync);
     if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => { fitVV(); fitHome(document.body.classList.contains('kb-open')); }); }
+    // v3.16 (Hugo, iPhone : ça saute encore à chaque changement de case dans LOAD). Quand le clavier est
+    // déjà ouvert, iOS fait glisser tout l'écran pour « montrer » la nouvelle case, puis on recale. On
+    // prend la main : sur un simple appui, on amène la case dans la zone visible en faisant défiler son
+    // conteneur, puis on lui donne le focus sans défilement natif (focus({preventScroll})).
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let tStart = null;
+    document.addEventListener('touchstart', e => { const t = e.touches[0]; tStart = t ? { x: t.clientX, y: t.clientY, el: e.target } : null; }, { passive: true, capture: true });
+    document.addEventListener('touchend', e => {
+      const st = tStart; tStart = null;
+      if(!isIOS || !st || !document.body.classList.contains('kb-open')) return;
+      const el = e.target;
+      if(el !== st.el || el === document.activeElement || !isField(el) || el.tagName !== 'INPUT') return;
+      const t = e.changedTouches[0]; if(!t || Math.abs(t.clientX - st.x) > 10 || Math.abs(t.clientY - st.y) > 10) return;
+      e.preventDefault();
+      bringIntoView(el);
+      try { el.focus({ preventScroll: true }); } catch(_) { el.focus(); }
+      try { const n = el.value.length; if(el.setSelectionRange && /^(text|search|tel|url|password)$/.test(el.type)) el.setSelectionRange(n, n); } catch(_) {}
+      if(window.scrollY) window.scrollTo(0, 0);
+    }, { passive: false, capture: true });
+    const bringIntoView = el => {
+      const r = el.getBoundingClientRect(), vv = window.visualViewport;
+      const top = vv ? vv.offsetTop : 0, bottom = top + vvH();
+      const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 0;
+      if(r.top >= top + head + 8 && r.bottom <= bottom - 8) return;
+      let sc = el.parentElement;
+      while(sc && sc !== document.body){ const o = getComputedStyle(sc).overflowY; if((o === 'auto' || o === 'scroll') && sc.scrollHeight > sc.clientHeight) break; sc = sc.parentElement; }
+      if(sc && sc !== document.body) sc.scrollTop -= (top + head + bottom) / 2 - (r.top + r.height / 2);
+    };
     document.addEventListener('focusin', () => setTimeout(sync, 300));
     document.addEventListener('focusout', () => setTimeout(sync, 50));
     document.addEventListener('input', e => { if(document.body.classList.contains('kb-open') && e.target === document.activeElement) requestAnimationFrame(keepVisible); }, true);
