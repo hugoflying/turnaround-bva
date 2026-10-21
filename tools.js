@@ -293,9 +293,10 @@
     row.hidden = !isFR() && !cl;
     row.classList.toggle('is-on', !!cl && !cl.closed);
     $('ivCrewVal').textContent = cl ? cl.label : 'Choisir';
+    $('ivCrewT').textContent = 'Équipage de' + (cl && cl.from ? ' ' + cl.from : '');   // v3.12.4 (Hugo) : « Équipage de IAS »
     $('ivCrewWhy').textContent = !cl ? 'Même avion, pas de changement'
       : cl.closed ? 'Ce vol a été fermé'
-      : cl.t ? 'AIBT ' + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
+      : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35)
       : 'Pas encore au bloc' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '') + ' · en attente de l\'AIBT';
   }
   function addMin(hm, n){ const [h, m] = hm.split(':').map(Number); const t = ((h * 60 + m + n) % 1440 + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
