@@ -304,15 +304,18 @@
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
     if(window.uiSortedTabIds) ids = window.uiSortedTabIds(ids);
     const cur = ($('CrewFrom')?.value || '').trim();
+    // v3.11.1 (Hugo) : seulement les vols FR/RK ouverts, pas encore partis (sauf celui déjà choisi)
     const rows = ids.filter(id => id !== String(currentTabId)).map(id => {
       let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
+      const cie = (d.Cie || d.akMeta?.arrFF || d.akMeta?.depFF || '').toUpperCase().slice(0, 2);
+      if(id !== cur && (!/^(FR|RK)$/.test(cie) || (d.AOBT || '').trim())) return '';
       const arr = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || 'Vol').toUpperCase();
       const t = (d.AIBT || '').trim() || (d.SIBT || '').trim();
       const sub = (d.From ? d.From.toUpperCase() + ' · ' : '') + (d.AIBT ? 'AIBT ' : 'SIBT ') + (t || '--:--');
       return '<button type="button" class="ie-row crew-row' + (id === cur ? ' is-on' : '') + '" data-id="' + id + '"><span>' + esc(arr) + '<small>' + esc(sub) + '</small></span><b class="num">' + esc(t || '--:--') + '</b><i>' + (id === cur ? '✓' : '') + '</i></button>';
     });
     $('crewList').innerHTML = '<button type="button" class="ie-row crew-row' + (!cur ? ' is-on' : '') + '" data-id=""><span>Même avion<small>Pas de changement d\'équipage</small></span><b></b><i>' + (!cur ? '✓' : '') + '</i></button>'
-      + (rows.length ? rows.join('') : '<p class="dmg-empty">Aucun autre vol ouvert.</p>');
+      + (rows.some(Boolean) ? rows.join('') : '<p class="dmg-empty">Aucun autre vol Ryanair ouvert. Ouvre d\'abord le vol de l\'équipage avec +.</p>');
     $('crewModal').style.display = 'flex';
   };
   window.crewClose = function(){ $('crewModal').style.display = 'none'; };
