@@ -91,8 +91,13 @@ function clockMin(){
     const from = txt('kvFrom'), to = txt('kvTo');
     if(isSet(from) || isSet(to)) parts.push((isSet(from)?from:'---') + ' → ' + (isSet(to)?to:'---'));
     [txt('kvImmat'), txt('kvType')].forEach(v => { if(isSet(v)) parts.push(v); });
-    const pk = txt('kvPark'); if(isSet(pk)) parts.push('P' + pk.replace(/^P/i,''));
-    document.getElementById('fhSub').textContent = parts.join(' · ');
+    const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    document.getElementById('fhSub').innerHTML = parts.map((p, i) => i === 0 && /→/.test(p) ? '<b>' + esc(p) + '</b>' : esc(p)).join(' · ');
+    // v3.15 (Hugo, option C) : parking et PAF en pastilles en haut à droite (PAF = valeur seule, ex. S1)
+    const pk = txt('kvPark'), bc = txt('kvBC');
+    const pkEl = document.getElementById('fhPk'), bcEl = document.getElementById('fhPaf');
+    pkEl.hidden = !isSet(pk); pkEl.textContent = isSet(pk) ? 'P' + pk.replace(/^P/i,'') : '';
+    bcEl.hidden = !isSet(bc); bcEl.textContent = isSet(bc) ? bc : '';
     // Avancement : de l'arrivée (AIBT, sinon SIBT, sinon HLE si pas d'arrivée) au départ (EOBT, sinon SOBT)
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
     let a = toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40'));
