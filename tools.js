@@ -295,7 +295,7 @@
     // v3.12.5 (Hugo) : sans lien = « Équipage · Même avion » ; avec lien = « Équipage de IAS »
     // v3.13.1 (Hugo) : « Équipage de TSF (FR1539)      AIBT 12:05 › »
     $('ivCrewVal').textContent = !cl ? 'Même avion' : cl.closed ? 'Vol fermé' : cl.t ? 'AIBT ' + cl.t : 'Pas au bloc';
-    $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') + (cl.label ? ' (' + cl.label + ')' : '') : 'Équipage';
+    $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') + (cl.label ? ' (' + cl.label + ')' : '') : 'Même équipage';
     row.title = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
       : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35) : 'En attente de l\'AIBT' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '');
     $('ivCrewWhy').textContent = '';
