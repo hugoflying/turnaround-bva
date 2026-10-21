@@ -365,7 +365,18 @@
       if($('CrewInfo').value !== snap){ $('CrewInfo').value = snap; try{ saveCurrentTabData(); updateAllCalculations(); }catch(e){} }
     }catch(e){}
   }
-  setInterval(refreshAK, 60000);   // v3.12.2 : chaque minute, pour récupérer l'AIBT vite
+  // v3.12.3 (Hugo) : interrogation chaque minute seulement quand ça peut compter :
+  // à partir de EOBT − 35 (un AIBT plus tôt ne repousse pas l'EOBT), jusqu'à l'AIBT ou l'AOBT.
+  function crewPollDue(){
+    const id = ($('CrewFrom')?.value || '').trim(); if(!id.startsWith('ak:')) return false;
+    if(($('AOBT')?.value || '').trim()) return false;
+    let k = {}; try{ k = JSON.parse($('CrewInfo')?.value || '{}'); }catch(e){}
+    if(k.aibt) return false;
+    const eobt = window._eobtRawMins; if(eobt == null || typeof clockMin !== 'function') return true;
+    let d = clockMin() - (eobt - 35); if(d < -720) d += 1440; if(d > 720) d -= 1440;
+    return d >= 0;
+  }
+  setInterval(() => { if(crewPollDue()) refreshAK(); }, 60000);
   window.crewRefresh = refreshAK;
   if(typeof window.switchTab === 'function'){
     const orig = window.switchTab;
