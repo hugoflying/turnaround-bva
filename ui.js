@@ -744,6 +744,23 @@ function clockMin(){
   const metaT = (k, v, c) => '<span' + (c ? ' class="' + c + '"' : '') + '>' + k + ' <b>' + (v != null ? fmtHM(v) : '--:--') + '</b></span>';
 
   let rcFast = false;
+  // v3.17 (Hugo, option C) : les vols terminés restent dans Récap jusqu'à ce qu'on les retire :
+  // croix sur chaque vol terminé + « Tout retirer » sur la ligne Terminés, toujours avec confirmation.
+  let rcAsk = null;   // id du vol à retirer, ou '*' pour tous les terminés
+  const rcConfirmHTML = (txt, key) => '<div class="rc-confirm" role="alertdialog"><span>' + txt + '</span><span class="rc-cf-b">'
+    + '<button type="button" class="rc-cf-no" onclick="uiRecapAsk(null)">Annuler</button>'
+    + '<button type="button" class="rc-cf-ok" onclick="uiRecapRemove(\'' + key + '\')">Retirer</button></span></div>';
+  const rcX = f => f.done ? '<span class="rc-x" role="button" aria-label="Retirer ' + esc(f.fno) + '" onclick="event.stopPropagation();uiRecapAsk(\'' + esc(f.id) + '\')">×</span>' : '';
+  window.uiRecapAsk = function(k){ rcAsk = k; renderRecap(); };
+  window.uiRecapRemove = function(k){
+    rcAsk = null;
+    let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
+    const gone = k === '*' ? ids.filter(id => flightInfo(id).done) : ids.filter(id => id === String(k) && flightInfo(id).done);
+    // Même fermeture que la croix d'un onglet (garde ou supprime côté serveur selon le vol)
+    gone.forEach(id => { try{ _tabCloseId = id; confirmCloseTab(); }catch(e){ console.warn(e); } });
+    try{ renderTabs(); }catch(e){}
+    renderRecap();
+  };
   function renderRecap(){
     const list = document.getElementById('rcList'); if(!list) return;
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(e){}
@@ -762,12 +779,18 @@ function clockMin(){
     const sortBy = recapSort();
     document.querySelectorAll('.rc-sort button').forEach(b => b.classList.toggle('is-on', b.dataset.sort === sortBy));
     const sorted = sortFlights(F, sortBy);
+    const doneN = sorted.filter(f => f.done).length;
+    if(rcAsk && rcAsk !== '*' && !sorted.some(f => String(f.id) === rcAsk && f.done)) rcAsk = null;
+    if(rcAsk === '*' && !doneN) rcAsk = null;
     if(view === 'cmp'){
       list.innerHTML = '<div class="rc-list">' + sorted.map(f =>
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)
         + '<span class="rc-t"><b>' + esc(f.fno) + '</b><small>' + esc([f.place, f.park && 'P' + f.park.replace(/^P/i,'')].filter(Boolean).join(' · ')) + '</small></span>'
         + '<span class="rc-e">EOBT<b>' + (f.eobt != null ? fmtHM(f.eobt) : '--:--') + '</b></span>'
-        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? '✓' : f.left == null ? '—' : fmtLeft(f.left)) + '</span></button>').join('') + '</div>';
+        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? '✓' : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
+        + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '')).join('') + '</div>'
+        + (doneN ? (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + doneN + ' vol' + (doneN > 1 ? 's' : '') + ' terminé' + (doneN > 1 ? 's' : '') + ' ?', '*')
+                   : '<button type="button" class="rc-clear rc-clear-cmp" onclick="uiRecapAsk(\'*\')">✕ Retirer les terminés (' + doneN + ')</button>') : '');
       return;
     }
     const card = f => '<button type="button" class="rc-card' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">'
@@ -776,10 +799,13 @@ function clockMin(){
       + '<span class="rc-cdbig">' + cdHTML(f) + '</span>'
       + '<span class="rc-next' + (f.done ? ' is-done' : '') + '"><i></i>' + esc(f.next) + '</span>'
       + '<span class="rc-meta">' + metaT('SOBT', f.sobt) + metaT('EOBT', f.eobt) + metaT('CTOT', f.ctot, f.ctot != null ? 'rc-ctot' : '') + '<em class="rc-blk ' + f.blk.c + '">' + f.blk.t + '</em></span>'
-      + '</button>';
+      + rcX(f) + '</button>'
+      + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '');
     const live = sorted.filter(f => !f.done), done = sorted.filter(f => f.done);
     list.innerHTML = (live.length ? '<div class="rc-sec">En cours · ' + live.length + '</div>' + live.map(card).join('') : '')
-      + (done.length ? '<div class="rc-sec">Terminés · ' + done.length + '</div>' + done.map(card).join('') : '');
+      + (done.length ? '<div class="rc-sec rc-sec-done">Terminés · ' + done.length + '<button type="button" class="rc-clear" onclick="uiRecapAsk(\'*\')">✕ Tout retirer</button></div>'
+        + (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + done.length + ' vol' + (done.length > 1 ? 's' : '') + ' terminé' + (done.length > 1 ? 's' : '') + ' ?', '*') : '')
+        + done.map(card).join('') : '');
   }
 
   /* ===== LOAD : swipe ARR ⇄ PREVI ⇄ FINAL ⇄ FUEL ===== */
