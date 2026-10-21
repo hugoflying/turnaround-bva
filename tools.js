@@ -290,7 +290,7 @@
   function sync(){
     const row = $('ivCrewRow'); if(!row) return;
     const cl = typeof crewLink === 'function' ? crewLink() : null;
-    row.hidden = !isFR() && !cl;
+    row.hidden = true;   // v3.14 (Hugo) : ligne Équipage retirée
     row.classList.toggle('is-on', !!cl && !cl.closed);
     // v3.12.5 (Hugo) : sans lien = « Équipage · Même avion » ; avec lien = « Équipage de IAS »
     // v3.13.1 (Hugo) : « Équipage de TSF (FR1539)      AIBT 12:05 › »

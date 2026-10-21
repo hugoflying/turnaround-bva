@@ -1029,6 +1029,7 @@ function crewIsoHM(v){
   return isUTC ? p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) : p(d.getHours()) + ':' + p(d.getMinutes());
 }
 function crewLink(){
+  return null;   // v3.14 (Hugo) : lien retiré, le changement d'équipage = Arrivée PNT/PNC (+10 min)
   const id = (document.getElementById('CrewFrom')?.value || '').trim();
   if(!id || id === String(currentTabId)) return null;
   // v3.12 (Hugo) : arrivée choisie dans la liste Keeper (vol pas forcément ouvert) : CrewInfo = instantané AK
@@ -1100,8 +1101,7 @@ function updateEOBT() {
 
   const crewChange = !!(
     (document.getElementById('ArrPNT')?.value || '').trim() ||
-    (document.getElementById('ArrPNC')?.value || '').trim() ||
-    (document.getElementById('CrewFrom')?.value || '').trim()   // v3.10 : équipage arrivant sur un autre vol
+    (document.getElementById('ArrPNC')?.value || '').trim()
   );
 
   const isDelayed = (AIBT_ext > SIBT_ext);

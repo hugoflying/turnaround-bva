@@ -329,8 +329,7 @@ function collectTimelineData(){
   // Affiché SAUF si (SOBT - SIBT) > 35 ou si Arr PNT/PNC rempli
   const hasArrCrew = !!(
     (document.getElementById('ArrPNC')?.value || '').trim() ||
-    (document.getElementById('ArrPNT')?.value || '').trim() ||
-    (document.getElementById('CrewFrom')?.value || '').trim()
+    (document.getElementById('ArrPNT')?.value || '').trim()
   );
 
   let turnMin = null;
@@ -446,8 +445,7 @@ function renderTimeline(){
   const hideCabinTidy = fromBVA || toBVA;
 
   const crewChange = !!( (document.getElementById('ArrPNT')?.value||'').trim() ||
-                         (document.getElementById('ArrPNC')?.value||'').trim() ||
-                         (document.getElementById('CrewFrom')?.value || '').trim() );
+                         (document.getElementById('ArrPNC')?.value||'').trim() );
   // Cabin tidy FR/RK : 3 min max entre dernier debarque et premier embarque,
   // porte a 10 min quand il y a un changement d'equipage (Arr PNT / Arr PNC).
   const cabinMaxMin = (isFRRK && crewChange) ? 10 : 3;
