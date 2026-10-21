@@ -97,12 +97,11 @@ function clockMin(){
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
     let a = toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40'));
     let d = toMin(txt('timer-eobt')) ?? toMin(val('SOBT'));
-    // v3.07 (Hugo) : vol parti (AOBT) = barre pleine verte
-    const gone = !!val('AOBT'); wrap.classList.toggle('done', gone);
-    if(gone){ wrap.classList.remove('is-empty', 'over'); bar.style.width = '100%'; return; }
+    // v3.11 (Hugo) : vol parti = la barre s'arrête à l'AOBT et garde sa couleur (jaune, ou rouge si en retard)
+    const off = toMin(val('AOBT'));
     if(a == null || d == null){ wrap.classList.add('is-empty'); return; }
     if(d <= a) d += 1440;
-    let now = clockMin();
+    let now = off ?? clockMin();
     if(now < a - 720) now += 1440;
     const r = (now - a) / (d - a);
     wrap.classList.remove('is-empty');
@@ -594,10 +593,10 @@ function clockMin(){
   }
 
   /* ===== Onglets de vol : anneau d'avancement autour du code compagnie ===== */
-  function ringRatio(a, d){
+  function ringRatio(a, d, at){
     if(a == null || d == null) return null;
     if(d <= a) d += 1440;
-    let now = clockMin();
+    let now = at ?? clockMin();   // v3.11 : figé à l'AOBT une fois le vol parti
     if(now < a - 720) now += 1440;
     return { r:(now - a) / (d - a), left: d - now };
   }
@@ -606,16 +605,13 @@ function clockMin(){
       const ring = t.querySelector('.flt-cie'); if(!ring) return;
       let r = null;
       if(t.classList.contains('is-on')){
-        r = ringRatio(toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40')), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')));
+        r = ringRatio(toMin(val('AIBT')) ?? toMin(val('SIBT')) ?? toMin(txt('timer-h40')), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')), toMin(val('AOBT')));
       } else {
         let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}'); }catch(e){}
         // v3.05 : sans arrivée (vol qui part de la base), départ du chrono à HLE = SOBT − 60
         const sobt = toMin(d.SOBT || ''), hle = /^(FR|RK)$/i.test((d.Cie || '').trim()) ? 60 : 40;
-        r = ringRatio(toMin(d.AIBT || '') ?? toMin(d.SIBT || '') ?? (sobt != null ? sobt - hle : null), sobt);
+        r = ringRatio(toMin(d.AIBT || '') ?? toMin(d.SIBT || '') ?? (sobt != null ? sobt - hle : null), toMin(String(d.timer_eobt || '')) ?? sobt, toMin(d.AOBT || ''));
       }
-      // v3.07 (Hugo) : vol parti (AOBT) = anneau vert plein, comme dans Récap
-      const gone = t.classList.contains('is-on') ? !!val('AOBT') : (() => { try{ return !!JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}').AOBT; }catch(e){ return false; } })();
-      if(gone){ ring.style.setProperty('--p', '100%'); ring.classList.remove('over', 'soon'); ring.classList.add('done'); return; }
       ring.classList.remove('done');
       // Vert, puis jaune à EOBT −5 min, rouge une fois l'EOBT dépassée
       const p = r == null ? 0 : Math.max(0, Math.min(1, r.r)) * 100;
