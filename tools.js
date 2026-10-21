@@ -292,9 +292,10 @@
     const cl = typeof crewLink === 'function' ? crewLink() : null;
     row.hidden = !isFR() && !cl;
     row.classList.toggle('is-on', !!cl && !cl.closed);
-    $('ivCrewVal').textContent = cl ? cl.label : 'Choisir';
-    $('ivCrewT').textContent = 'Équipage de' + (cl && cl.from ? ' ' + cl.from : '');   // v3.12.4 (Hugo) : « Équipage de IAS »
-    $('ivCrewWhy').textContent = !cl ? 'Même avion, pas de changement'
+    // v3.12.5 (Hugo) : sans lien = « Équipage · Même avion » ; avec lien = « Équipage de IAS »
+    $('ivCrewVal').textContent = cl ? cl.label : 'Même avion';
+    $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') : 'Équipage';
+    $('ivCrewWhy').textContent = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
       : cl.closed ? 'Ce vol a été fermé'
       : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35)
       : 'Pas encore au bloc' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '') + ' · en attente de l\'AIBT';
