@@ -1386,3 +1386,5 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 .crew-row b{font-size:18px}
 .crew-row i{font-style:normal;font-weight:800;color:var(--ok);text-align:center}
 .crew-row.is-on{background:var(--accent-soft)}
+.crew-q{width:100%;margin:2px 0 10px;flex:none}
+.crew-row[hidden]{display:none}

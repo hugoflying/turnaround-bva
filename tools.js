@@ -334,6 +334,7 @@
   }
   window.crewPick = async function(){
     const cur = ($('CrewFrom')?.value || '').trim();
+    const q = document.querySelector('#crewModal .crew-q'); if(q) q.value = '';
     $('crewModal').style.display = 'flex';
     if(akOn()){
       $('crewList').innerHTML = head(cur) + '<p class="dmg-empty">Chargement des arrivées…</p>';
@@ -370,6 +371,14 @@
     const orig = window.switchTab;
     window.switchTab = function(){ const r = orig.apply(this, arguments); setTimeout(refreshAK, 300); return r; };
   }
+  // v3.12.1 (Hugo) : recherche en haut de la liste (n° de vol, provenance, immat)
+  window.crewFilter = function(q){
+    q = (q || '').trim().toUpperCase().replace(/\s+/g, '');
+    document.querySelectorAll('#crewList .crew-row').forEach(b => {
+      if(!b.dataset.id){ b.hidden = !!q; return; }
+      b.hidden = !!q && !b.textContent.toUpperCase().replace(/\s+/g, '').includes(q);
+    });
+  };
   window.crewClose = function(){ $('crewModal').style.display = 'none'; };
   document.addEventListener('click', e => {
     const b = e.target.closest('#crewList .crew-row'); if(!b) return;
