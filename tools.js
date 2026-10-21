@@ -125,6 +125,21 @@
     const th = e.target.closest('.dmg-th');
     if(th) view(th.dataset.id);
   });
+  // v3.09 (Hugo) : les photos suivent le vol. Fermer le vol les efface ; au démarrage on retire
+  // celles des vols déjà fermés.
+  async function dmgPurge(keep){
+    try{
+      const all = await dmgAll(); const ok = new Set(keep.map(String));
+      const gone = all.filter(p => !ok.has(String(p.tab))).map(p => p.id);
+      if(gone.length) await tx('readwrite', st => { gone.forEach(id => st.delete(id)); });
+    }catch(e){}
+  }
+  const openTabs = () => { try{ const t = JSON.parse(localStorage.getItem('flightTabs') || '[]'); return Array.isArray(t) ? t : []; }catch(e){ return []; } };
+  if(typeof window.deleteTab === 'function'){
+    const orig = window.deleteTab;
+    window.deleteTab = function(){ const r = orig.apply(this, arguments); dmgPurge(openTabs()); return r; };
+  }
+  setTimeout(() => dmgPurge(openTabs()), 3000);
   document.addEventListener('change', e => {
     const inp = e.target.closest('input[data-dmg]'); if(!inp) return;
     const files = Array.from(inp.files || []); inp.value = '';
