@@ -597,7 +597,11 @@ function renderTabs(){
   if(!Array.isArray(tabs)) tabs = [];
   if(window.uiSortedTabIds) tabs = window.uiSortedTabIds(tabs.map(String));
 
+  window._tabSig = tabs.slice().sort().map(id => id + ':' + (window.uiTabState ? window.uiTabState(id) : '')).join('|');
   tabs.forEach((id)=>{
+    // v3.08 : vol parti depuis 30 min = seulement dans Récap
+    const tState = window.uiTabState ? window.uiTabState(id) : '';
+    if(tState === 'hidden') return;
     const data = JSON.parse(localStorage.getItem('tab-'+id) || '{}');
 
     const cie  = (data.Cie  || '').toUpperCase();
@@ -622,7 +626,7 @@ function renderTabs(){
         : 'VOL';
 
     const wrap = document.createElement('span');
-    wrap.className = 'tab-wrap flt' + (id === currentTabId ? ' is-on' : '');
+    wrap.className = 'tab-wrap flt' + (id === currentTabId ? ' is-on' : '') + (tState === 'gone' ? ' is-gone' : '');
 
     // bouton onglet (switch)
     const btn = document.createElement('button');

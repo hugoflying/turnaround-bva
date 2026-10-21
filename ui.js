@@ -29,6 +29,8 @@ function clockMin(){
   function showPanel(name){
     if(!PANELS.includes(name)) name = 'vol';
     document.body.dataset.panel = name;
+    if(name !== 'vols') window.uiLeaveGoneTab?.();
+    setTimeout(() => window.uiTabsSync?.(), 0); // v3.08 : un vol parti se range en passant sur Récap
     try{ localStorage.setItem('uiPanel', name); }catch(e){}
 
     if(name === 'timing'){
@@ -671,7 +673,7 @@ function clockMin(){
     // Statut sol affiché en bas des cartes
     const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : aibt != null ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
     return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? fno.slice(0,2) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
-             sobt: rel(sobt, now), eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
+             sobt: rel(sobt, now), aobt: rel(aobt, now), eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
   }
 
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
@@ -698,9 +700,38 @@ function clockMin(){
       return F.filter(f => !f.done).concat(F.filter(f => f.done)).map(f => f.id);
     }catch(e){ return ids; }
   };
+  // v3.08 (Hugo) : vol parti = onglet compact en fin de bande ; 30 min après l'AOBT il quitte la bande
+  // (reste dans Récap « Terminés », un appui le rouvre). Jamais pendant qu'on est dessus (hors Récap).
+  const GONE_MIN = 30;
+  window.uiTabState = function(id){
+    try{
+      const f = flightInfo(id);
+      if(!f.done) return '';
+      const onIt = f.cur && document.body.dataset.panel !== 'vols';
+      const ago = f.aobt != null ? nowMin() - f.aobt : 0;
+      return (!onIt && ago >= GONE_MIN) ? 'hidden' : 'gone';
+    }catch(e){ return ''; }
+  };
+  function tabsSig(){
+    let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(e){}
+    return (Array.isArray(ids) ? ids : []).map(String).sort().map(id => id + ':' + window.uiTabState(id)).join('|');
+  }
+  window.uiTabsSync = function(){ if(tabsSig() !== window._tabSig){ try{ renderTabs(); }catch(e){} } };
+  setInterval(window.uiTabsSync, 20000);
+  // En quittant Récap sur un vol parti depuis 30 min : on bascule sur un vol encore dans la bande
+  // (sauf s'il vient d'être rouvert depuis Récap).
+  window.uiLeaveGoneTab = function(){
+    if(window._tabJustOpened || typeof currentTabId === 'undefined' || !currentTabId) return;
+    const f = flightInfo(currentTabId);
+    if(!f.done || f.aobt == null || nowMin() - f.aobt < GONE_MIN) return;
+    let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
+    if(window.uiSortedTabIds) ids = window.uiSortedTabIds(ids);
+    const next = ids.find(id => id !== String(currentTabId) && window.uiTabState(id) !== 'hidden');
+    if(next) try{ switchTab(next); }catch(e){}
+  };
   window.uiRecapSort = function(s){ try{ localStorage.setItem('rcSort', s); }catch(e){} try{ renderTabs(); }catch(e){} renderRecap(); };
   window.uiRecapView = function(v){ try{ localStorage.setItem('rcView', v); }catch(e){} renderRecap(); };
-  window.uiOpenFlight = function(id){ try{ switchTab(id); }catch(e){} uiTab('vol'); };
+  window.uiOpenFlight = function(id){ window._tabJustOpened = true; try{ switchTab(id); }catch(e){} try{ uiTab('vol'); } finally { window._tabJustOpened = false; } };
 
   function ringHTML(f){ return '<span class="flt-cie rc-ring ' + f.ringCls + '" style="--p:' + f.p.toFixed(1) + '%"><b>' + esc(f.cie || '–') + '</b></span>'; }
   function cdHTML(f){
