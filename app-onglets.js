@@ -1035,14 +1035,15 @@ function crewLink(){
   if(id.startsWith('ak:')){
     let k = {}; try{ k = JSON.parse(document.getElementById('CrewInfo')?.value || '{}'); }catch(e){}
     const aibt = crewIsoHM(k.aibt), eibt = crewIsoHM(k.eibt), sibt = crewIsoHM(k.sibt);
-    return { id, ak:true, label:(k.ff || 'Vol').toUpperCase(), from:(k.from || '').toUpperCase(), t: aibt || eibt || sibt, real: !!aibt, est: !aibt && !!eibt };
+    // v3.12.2 (Hugo) : seulement l'AIBT réel, jamais d'estimée
+    return { id, ak:true, label:(k.ff || 'Vol').toUpperCase(), from:(k.from || '').toUpperCase(), t: aibt, real: !!aibt, sibt };
   }
   let tabs = []; try{ tabs = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
   if(!tabs.includes(id)) return { id, closed:true, label:'Vol fermé', t:'' };
   let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
   const label = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || d.akMeta?.depFF || 'Vol').toUpperCase();
   const aibt = (d.AIBT || '').trim(), sibt = (d.SIBT || '').trim();
-  return { id, label, from:(d.From || '').toUpperCase(), t: aibt || sibt, real: !!aibt };
+  return { id, label, from:(d.From || '').toUpperCase(), t: aibt, real: !!aibt, sibt };   // v3.12.2 : AIBT réel seulement
 }
 
 /* EOBT + règle CTOT */

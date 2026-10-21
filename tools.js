@@ -295,8 +295,8 @@
     $('ivCrewVal').textContent = cl ? cl.label : 'Choisir';
     $('ivCrewWhy').textContent = !cl ? 'Même avion, pas de changement'
       : cl.closed ? 'Ce vol a été fermé'
-      : cl.t ? (cl.real ? 'AIBT ' : cl.est ? 'Estimé ' : 'SIBT prévu ') + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
-      : 'Heure d\'arrivée pas encore connue';
+      : cl.t ? 'AIBT ' + cl.t + ' · EOBT mini ' + addMin(cl.t, 35)
+      : 'Pas encore au bloc' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '') + ' · en attente de l\'AIBT';
   }
   function addMin(hm, n){ const [h, m] = hm.split(':').map(Number); const t = ((h * 60 + m + n) % 1440 + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
   window.syncCrewRow = sync;
@@ -312,7 +312,7 @@
     return akArr;
   }
   const akSnap = f => JSON.stringify({ ff:(f.fullFlightNumber || f.callsign || '').toUpperCase(), from:f.adepIata || '', sibt:f.sibt || '', eibt:f.eibt || '', aibt:f.aibt || '' });
-  const akTime = f => Date.parse(f.aibt || f.eibt || f.sibt || '') || 0;
+  const akTime = f => Date.parse(f.aibt || f.sibt || '') || 0;
   function rowHTML(id, title, sub, t, on){
     return '<button type="button" class="ie-row crew-row' + (on ? ' is-on' : '') + '" data-id="' + esc(id) + '"><span>' + esc(title) + '<small>' + esc(sub) + '</small></span><b class="num">' + esc(t || '--:--') + '</b><i>' + (on ? '✓' : '') + '</i></button>';
   }
@@ -325,9 +325,9 @@
       .sort((a, b) => akTime(a) - akTime(b));
     const hm = v => (typeof crewIsoHM === 'function' ? crewIsoHM(v) : '');
     const rows = list.map(f => {
-      const t = hm(f.aibt) || hm(f.eibt) || hm(f.sibt);
-      const kind = f.aibt ? 'AIBT' : f.eibt ? 'Estimé' : 'SIBT';
-      const sub = (f.adepIata ? f.adepIata.toUpperCase() + ' · ' : '') + kind + ' ' + (t || '--:--') + (f.reg ? ' · ' + f.reg : '');
+      // v3.12.2 (Hugo) : AIBT réel seulement ; sinon « pas encore au bloc » avec le SIBT pour info
+      const t = hm(f.aibt);
+      const sub = (f.adepIata ? f.adepIata.toUpperCase() + ' · ' : '') + (t ? 'AIBT ' + t : 'Pas encore au bloc · SIBT ' + (hm(f.sibt) || '--:--')) + (f.reg ? ' · ' + f.reg : '');
       return rowHTML('ak:' + f.id, (f.fullFlightNumber || f.callsign || 'Vol').toUpperCase(), sub, t, 'ak:' + f.id === cur);
     });
     $('crewList').innerHTML = head(cur) + (rows.length ? rows.join('') : '<p class="dmg-empty">Aucune arrivée Ryanair autour de maintenant.</p>');
@@ -352,8 +352,8 @@
       const cie = (d.Cie || d.akMeta?.arrFF || d.akMeta?.depFF || '').toUpperCase().slice(0, 2);
       if(id !== cur && (!/^(FR|RK)$/.test(cie) || (d.AOBT || '').trim())) return '';
       const arr = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || 'Vol').toUpperCase();
-      const t = (d.AIBT || '').trim() || (d.SIBT || '').trim();
-      return rowHTML(id, arr, (d.From ? d.From.toUpperCase() + ' · ' : '') + (d.AIBT ? 'AIBT ' : 'SIBT ') + (t || '--:--'), t, id === cur);
+      const t = (d.AIBT || '').trim();
+      return rowHTML(id, arr, (d.From ? d.From.toUpperCase() + ' · ' : '') + (t ? 'AIBT ' + t : 'Pas encore au bloc · SIBT ' + ((d.SIBT || '').trim() || '--:--')), t, id === cur);
     }).join('');
   }
   // Mise à jour de l'heure de l'équipage (Keeper) : à l'ouverture du vol puis toutes les 2 min
@@ -365,7 +365,7 @@
       if($('CrewInfo').value !== snap){ $('CrewInfo').value = snap; try{ saveCurrentTabData(); updateAllCalculations(); }catch(e){} }
     }catch(e){}
   }
-  setInterval(refreshAK, 120000);
+  setInterval(refreshAK, 60000);   // v3.12.2 : chaque minute, pour récupérer l'AIBT vite
   window.crewRefresh = refreshAK;
   if(typeof window.switchTab === 'function'){
     const orig = window.switchTab;
