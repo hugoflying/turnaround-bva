@@ -293,10 +293,9 @@
     row.hidden = !isFR() && !cl;
     row.classList.toggle('is-on', !!cl && !cl.closed);
     // v3.12.5 (Hugo) : sans lien = « Équipage · Même avion » ; avec lien = « Équipage de IAS »
-    // v3.13 (Hugo) : tout sur une ligne : « Équipage de TSF   FR1539 · AIBT 12:05 › »
-    const sub = !cl ? '' : cl.closed ? 'fermé' : cl.t ? 'AIBT ' + cl.t : 'pas au bloc';
-    $('ivCrewVal').innerHTML = cl ? esc(cl.label) + '<small> · ' + esc(sub) + '</small>' : 'Même avion';
-    $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') : 'Équipage';
+    // v3.13.1 (Hugo) : « Équipage de TSF (FR1539)      AIBT 12:05 › »
+    $('ivCrewVal').textContent = !cl ? 'Même avion' : cl.closed ? 'Vol fermé' : cl.t ? 'AIBT ' + cl.t : 'Pas au bloc';
+    $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') + (cl.label ? ' (' + cl.label + ')' : '') : 'Équipage';
     row.title = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
       : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35) : 'En attente de l\'AIBT' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '');
     $('ivCrewWhy').textContent = '';
