@@ -1375,7 +1375,3 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 
 /* ===== v3.07 — Vol parti : barre du bandeau verte ===== */
 .fh-prog.done i{background:var(--ok)}
-
-/* ===== v3.08 — Vol parti : onglet compact en fin de bande ===== */
-.flt.is-gone .flt-d,.flt.is-gone .tab-refresh{display:none}
-.flt.is-gone:not(.is-on){opacity:.7}
