@@ -708,7 +708,7 @@ function clockMin(){
     try{
       const f = flightInfo(id);
       if(!f.done) return '';
-      const onIt = f.cur && document.body.dataset.panel !== 'vols';
+      const onIt = f.cur && (document.body.dataset.panel !== 'vols' || String(id) === window._keepGoneId);
       const ago = f.aobt != null ? nowMin() - f.aobt : 0;
       return (!onIt && ago >= GONE_MIN) ? 'hidden' : 'gone';
     }catch(e){ return ''; }
@@ -723,6 +723,8 @@ function clockMin(){
   // (sauf s'il vient d'être rouvert depuis Récap).
   window.uiLeaveGoneTab = function(){
     if(window._tabJustOpened || typeof currentTabId === 'undefined' || !currentTabId) return;
+    // v3.18 (Hugo) : rouvert depuis Récap = on le garde pour le consulter, jusqu'à ce qu'on choisisse un autre vol
+    if(String(currentTabId) === window._keepGoneId) return;
     const f = flightInfo(currentTabId);
     if(!f.done || f.aobt == null || nowMin() - f.aobt < GONE_MIN) return;
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
@@ -732,7 +734,7 @@ function clockMin(){
   };
   window.uiRecapSort = function(s){ try{ localStorage.setItem('rcSort', s); }catch(e){} try{ renderTabs(); }catch(e){} renderRecap(); };
   window.uiRecapView = function(v){ try{ localStorage.setItem('rcView', v); }catch(e){} renderRecap(); };
-  window.uiOpenFlight = function(id){ window._tabJustOpened = true; try{ switchTab(id); }catch(e){} try{ uiTab('vol'); } finally { window._tabJustOpened = false; } };
+  window.uiOpenFlight = function(id){ window._tabJustOpened = true; window._keepGoneId = String(id); try{ switchTab(id); }catch(e){} try{ uiTab('vol'); } finally { window._tabJustOpened = false; } };
 
   function ringHTML(f){ return '<span class="flt-cie rc-ring ' + f.ringCls + '" style="--p:' + f.p.toFixed(1) + '%"><b>' + esc(f.cie || '–') + '</b></span>'; }
   function cdHTML(f){
