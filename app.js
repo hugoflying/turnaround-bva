@@ -1124,7 +1124,7 @@ function applyManualCtot(){
   // Enregistrer la modif dans l'historique CTOT, marquee (man)
   try{
     const refDay = (typeof cdRefDayMs === 'function') ? cdRefDayMs() : null;
-    const iso = (refDay != null) ? new Date(refDay + hh*3600000 + mm*60000).toISOString() : '';
+    const iso = (refDay != null) ? new Date(cdWallMs(refDay, hh*60 + mm)).toISOString() : '';
     const data = JSON.parse(localStorage.getItem('tab-'+currentTabId) || '{}');
     if(!data.akMeta) data.akMeta = {};
     const hist = Array.isArray(data.akMeta.ctotHistory) ? data.akMeta.ctotHistory : [];
@@ -1190,6 +1190,14 @@ function updateChipColors(){
    deux apps (auto = date du jour, ou valeur importee). A defaut, on lit
    akMeta.timeISO (COMPANION / Airport Keeper). Retourne null si rien de fiable
    -> le compte a rebours retombe sur l'ancien comportement 24h. */
+// v3.19 : heure murale du jour de référence (minuit + minutes). Un jour de changement d'heure dure
+// 23 h ou 25 h : ajouter des millisecondes à minuit décalait le compte à rebours d'une heure.
+function cdWallMs(refDayMs, min){
+  if(isUTC) return refDayMs + min * 60000;
+  const d = new Date(refDayMs);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, min).getTime();
+}
+
 function cdRefDayMs(){
   // 1) champ Date visible
   const dv = (document.getElementById('Date')?.value || '').trim();
@@ -1321,9 +1329,9 @@ function updateCountdownOnce(){
     // targetMin. Si l'echeance passe minuit (EOBT du lendemain), targetMin est
     // petit alors que le vol est le soir : on la reporte au jour suivant si
     // elle tombe plus de 12h AVANT le SOBT de reference.
-    const sobtRefMs = refDayMs + SOBT * 60000;   // SOBT = ancre "jour du vol"
-    let targetMs = refDayMs + targetMin * 60000;
-    if(targetMs < sobtRefMs - 12*3600000) targetMs += 86400000;
+    const sobtRefMs = cdWallMs(refDayMs, SOBT);   // SOBT = ancre "jour du vol"
+    let targetMs = cdWallMs(refDayMs, targetMin);
+    if(targetMs < sobtRefMs - 12*3600000) targetMs = cdWallMs(refDayMs, targetMin + 1440);
     remainingSeconds = Math.round((targetMs - Date.now()) / 1000);
   } else {
     // Pas de date connue (vol saisi a la main) : ancien comportement sur 24h
