@@ -904,6 +904,7 @@ function clockMin(){
     }
     // v3.20 (Hugo) : section Zones inutile en eLID ; poids corrigé seulement s'il y a des GB
     const zb = document.getElementById('ldZonesBox'); if(zb) zb.style.display = elid ? 'none' : '';
+    try{ updateLidGuideVisibility(); }catch(e){}
     const pc = document.getElementById('FinalPoidsCorrige')?.closest('.ld-stat');
     if(pc) pc.style.display = (ldInt('FinalGB') || 0) > 0 ? '' : 'none';
     // Zones : total vs passagers, barre de répartition

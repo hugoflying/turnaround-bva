@@ -849,8 +849,11 @@ function updateLidGuideVisibility(){
   const btn = document.querySelector('#ldmFinal button[onclick="toggleFinalImage()"]');
   if(!btn) return;
 
-  const show = (cie === 'FR' || cie === 'RK');
+  // v3.24 (Hugo) : guide LID seulement en Paper LID
+  const show = (cie === 'FR' || cie === 'RK') && !(typeof isELID === 'function' && isELID());
   btn.style.display = show ? '' : 'none';
+  const box = document.getElementById('finalImageBox');
+  if(!show && box) box.style.display = 'none';
 }
 
 function updateDelayCodesVisibility(){
