@@ -197,7 +197,8 @@ function updateFinalTOB(){
   const od = n('FinalOD') ?? 0;
   const sumZones = oa + ob + oc + od;
 
-  const ok = (sumZones === main);
+  // v3.20 (Hugo) : en eLID FR/RK pas de zones à saisir → pas de contrôle zones = TOB
+  const ok = grouped || (sumZones === main);
 
   tobEl.classList.toggle('is-invalid', !ok);
   tobEl.classList.toggle('is-valid', ok);

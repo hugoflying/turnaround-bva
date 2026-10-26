@@ -902,6 +902,10 @@ function clockMin(){
         cmp.innerHTML = 'Prévi <b>' + esc(pv) + '</b>' + (d == null ? '' : '<span class="ld-dl' + (d ? ' up' : '') + '">' + (d === 0 ? '=' : (d > 0 ? '+' + d : '−' + (-d))) + '</span>');
       }
     }
+    // v3.20 (Hugo) : section Zones inutile en eLID ; poids corrigé seulement s'il y a des GB
+    const zb = document.getElementById('ldZonesBox'); if(zb) zb.style.display = elid ? 'none' : '';
+    const pc = document.getElementById('FinalPoidsCorrige')?.closest('.ld-stat');
+    if(pc) pc.style.display = (ldInt('FinalGB') || 0) > 0 ? '' : 'none';
     // Zones : total vs passagers, barre de répartition
     const zIds = ['FinalOA','FinalOB','FinalOC','FinalOD'].filter(id => isShown(document.getElementById(id)?.closest('.ld-stat')));
     const zSum = zIds.reduce((t, id) => t + (ldInt(id) || 0), 0);
