@@ -438,8 +438,9 @@
     4: 'Duty / Staff Travel sur un siège passager : compté en TOB et THOB.',
   };
   const GRP = { p: 'Passagers', s: 'Sièges spéciaux', y: 'SNY et Staff' };
-  const word = x => x === 'YES' ? 'Oui' : x === 'NO' ? 'Non' : 'N/A';
-  const cls = x => x === 'YES' ? 'y' : x === 'NO' ? 'n' : 'na';
+  // v3.23 (Hugo) : N/A du guide affiché comme Non
+  const word = x => x === 'YES' ? 'Oui' : 'Non';
+  const cls = x => x === 'YES' ? 'y' : 'n';
   let sel = 0, full = false;
   try{ sel = Math.max(0, Math.min(ROWS.length - 1, parseInt(localStorage.getItem('lidGuideSel2') || '0', 10) || 0)); }catch(e){}
 
