@@ -370,7 +370,7 @@ function confirmClearFields(){
     'FinalMALE','FinalFEMALE','FinalADULT','FinalCHILD','FinalINFANT',
     'FinalTOB','FinalOA','FinalOB','FinalOC','FinalOD',
     'FinalBAGS','FinalPOIDS','FinalGB','FinalH1','FinalH2','FinalH3','FinalH4','FinalSI',
-    'BlockFuel','TripFuel','TaxiFuel','FuelUplift',
+    'BlockFuel','TripFuel','TaxiFuel','FuelUplift','FuelUplift2','FuelUplift3','FuelUplift4',
     'DLcode1','DLcode2','DLcode3','DLduree1','DLduree2','DLduree3',
     'FaitsSaillants','AutoCtrl'
   ];

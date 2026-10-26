@@ -479,3 +479,52 @@
   window.renderLidGuide = render;
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
 })();
+
+/* =====================================================
+   v3.25 (Hugo) — FUEL : plusieurs UPLIFT (jusqu'à 4) et leur total
+   Un uplift rempli reste affiché ; « Ajouter » ouvre le suivant ; × l'efface et le range.
+   ===================================================== */
+(function(){
+  'use strict';
+  const opened = new Set();
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  let lastTab = null;
+  function sync(){
+    const tab = (typeof currentTabId !== 'undefined') ? String(currentTabId) : '';
+    if(tab !== lastTab){   // nouveau vol : on repart des valeurs enregistrées (un vol d'avant v3.25 n'a pas ces champs)
+      opened.clear(); lastTab = tab;
+      let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + tab) || '{}'); }catch(_){}
+      ['FuelUplift2', 'FuelUplift3', 'FuelUplift4'].forEach(id => { const i = document.getElementById(id); if(i && !(id in d)) i.value = ''; });
+    }
+    const tiles = [...document.querySelectorAll('#upRow .up-x')];
+    let shown = 0, sum = 0, n = 0;
+    const u1 = parseInt(v('FuelUplift'), 10); if(!isNaN(u1)){ sum += u1; n++; }
+    tiles.forEach(t => {
+      const k = t.dataset.k, val = v('FuelUplift' + k);
+      const on = val !== '' || opened.has(k);
+      t.hidden = !on; if(on) shown++;
+      const x = parseInt(val, 10); if(!isNaN(x)){ sum += x; n++; }
+    });
+    const lbl = document.getElementById('upLbl1'); if(lbl) lbl.textContent = shown ? 'UPLIFT 1' : 'UPLIFT';
+    const row = document.getElementById('upRow'); if(row) row.hidden = !shown;
+    const add = document.getElementById('upAdd'); if(add) add.hidden = shown >= tiles.length;
+    const tot = document.getElementById('upTot');
+    if(tot){ tot.hidden = n < 2; tot.innerHTML = 'Total <b>' + sum + '</b>'; }
+  }
+  document.addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('#upAdd')){
+      const t = [...document.querySelectorAll('#upRow .up-x')].find(x => x.hidden);
+      if(t){ opened.add(t.dataset.k); sync(); const i = t.querySelector('input'); i && i.focus(); }
+      return;
+    }
+    const d = e.target.closest && e.target.closest('.up-del');
+    if(d){
+      const t = d.closest('.up-x'), i = t.querySelector('input');
+      i.value = ''; i.dispatchEvent(new Event('input', { bubbles:true })); i.dispatchEvent(new Event('change', { bubbles:true }));
+      opened.delete(t.dataset.k); sync();
+      try{ saveCurrentTabData(); }catch(_){}
+    }
+  });
+  document.addEventListener('input', e => { if(e.target && /^FuelUplift/.test(e.target.id || '')) sync(); });
+  window.syncUplifts = sync;
+})();

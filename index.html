@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261026r167';
+window.APP_VERSION = '20261026r168';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261026r167';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261026r167" />
-<link rel="stylesheet" href="./css/app.css?v=20261026r167" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261026r168" />
+<link rel="stylesheet" href="./css/app.css?v=20261026r168" />
 </head>
 <body>
 
@@ -351,7 +351,16 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
           <div class="ld-stat"><span class="ld-stat-label">BLOCK</span><input class="ldm-in" id="BlockFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
           <div class="ld-stat"><span class="ld-stat-label">TAXI</span><input class="ldm-in" id="TaxiFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
           <div class="ld-stat"><span class="ld-stat-label">TRIP</span><input class="ldm-in" id="TripFuel" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
-          <div class="ld-stat"><span class="ld-stat-label">UPLIFT</span><input class="ldm-in" id="FuelUplift" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
+          <div class="ld-stat"><span class="ld-stat-label" id="upLbl1">UPLIFT</span><input class="ldm-in" id="FuelUplift" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"></div>
+        </div>
+        <!-- v3.25 (Hugo) : plusieurs UPLIFT -->
+        <div class="up-more" id="upMore">
+          <div class="ld-row-4 up-row" id="upRow">
+            <div class="ld-stat up-x" data-k="2" hidden><span class="ld-stat-label">UPLIFT 2</span><input class="ldm-in" id="FuelUplift2" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"><button type="button" class="up-del" aria-label="Retirer l'uplift 2">×</button></div>
+            <div class="ld-stat up-x" data-k="3" hidden><span class="ld-stat-label">UPLIFT 3</span><input class="ldm-in" id="FuelUplift3" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"><button type="button" class="up-del" aria-label="Retirer l'uplift 3">×</button></div>
+            <div class="ld-stat up-x" data-k="4" hidden><span class="ld-stat-label">UPLIFT 4</span><input class="ldm-in" id="FuelUplift4" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" oninput="digitsOnly(this)"><button type="button" class="up-del" aria-label="Retirer l'uplift 4">×</button></div>
+          </div>
+          <div class="up-foot"><button type="button" class="up-add" id="upAdd"><svg class="ico"><use href="#i-plus"/></svg>Ajouter un UPLIFT</button><span class="up-tot" id="upTot" hidden></span></div>
         </div>
       </div>
     </section>
@@ -1114,17 +1123,17 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261026r167"></script>
-<script src="./contacts.js?v=20261026r167"></script>
-<script src="./app.js?v=20261026r167"></script>
-<script src="./app-load.js?v=20261026r167"></script>
-<script src="./app-onglets.js?v=20261026r167"></script>
-<script src="./app-retard.js?v=20261026r167"></script>
-<script src="./app-timeline.js?v=20261026r167"></script>
-<script src="./app-keeper.js?v=20261026r167"></script>
-<script src="./app-outils.js?v=20261026r167"></script>
-<script src="./ui.js?v=20261026r167"></script>
-<script src="./tools.js?v=20261026r167"></script>
-<script src="./dlcodes.js?v=20261026r167"></script>
+<script src="./edition.js?v=20261026r168"></script>
+<script src="./contacts.js?v=20261026r168"></script>
+<script src="./app.js?v=20261026r168"></script>
+<script src="./app-load.js?v=20261026r168"></script>
+<script src="./app-onglets.js?v=20261026r168"></script>
+<script src="./app-retard.js?v=20261026r168"></script>
+<script src="./app-timeline.js?v=20261026r168"></script>
+<script src="./app-keeper.js?v=20261026r168"></script>
+<script src="./app-outils.js?v=20261026r168"></script>
+<script src="./ui.js?v=20261026r168"></script>
+<script src="./tools.js?v=20261026r168"></script>
+<script src="./dlcodes.js?v=20261026r168"></script>
 </body>
 </html>
