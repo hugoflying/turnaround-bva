@@ -421,9 +421,7 @@
   'use strict';
   const COLS = [['SNY', 'SNY BOX'], ['ZONE', 'ZONE'], ['TOB', 'TOB'], ['THOB', 'THOB'], ['SI', 'SI BOX'], ['CREW', 'CREW CONFIG']];
   const ROWS = [
-    ['p', 'Adult', '', 'N/A YES YES YES NO N/A'],
-    ['p', 'Child', '', 'N/A YES YES YES NO N/A'],
-    ['p', 'Infant', '', 'N/A NO NO YES NO N/A'],
+    // v3.22 (Hugo) : Adult, Child, Infant retirés (cas évidents)
     ['s', 'Item Seat', 'ex. violoncelle', 'N/A YES YES NO YES N/A'],
     ['s', 'Comfort Seat', 'ex. passager corpulent', 'N/A NO YES NO YES N/A'],
     ['s', 'Leg Seat', 'ex. jambe cassée', 'N/A NO YES NO YES N/A'],
@@ -443,7 +441,7 @@
   const word = x => x === 'YES' ? 'Oui' : x === 'NO' ? 'Non' : 'N/A';
   const cls = x => x === 'YES' ? 'y' : x === 'NO' ? 'n' : 'na';
   let sel = 0, full = false;
-  try{ sel = Math.max(0, Math.min(ROWS.length - 1, parseInt(localStorage.getItem('lidGuideSel') || '0', 10) || 0)); }catch(e){}
+  try{ sel = Math.max(0, Math.min(ROWS.length - 1, parseInt(localStorage.getItem('lidGuideSel2') || '0', 10) || 0)); }catch(e){}
 
   function render(){
     const el = document.getElementById('lidGuide'); if(!el) return;
@@ -474,7 +472,7 @@
   document.addEventListener('click', e => {
     const box = e.target.closest && e.target.closest('#lidGuide'); if(!box) return;
     const b = e.target.closest('[data-i]');
-    if(b){ sel = +b.dataset.i; try{ localStorage.setItem('lidGuideSel', String(sel)); }catch(_){} render(); return; }
+    if(b){ sel = +b.dataset.i; try{ localStorage.setItem('lidGuideSel2', String(sel)); }catch(_){} render(); return; }
     if(e.target.closest('.lg-more')){ full = !full; render(); }
   });
   window.renderLidGuide = render;

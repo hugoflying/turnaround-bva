@@ -17,7 +17,7 @@ const out = process.argv[2] || '/tmp';
       document.getElementById('lidGuideBtn').click(); await W(300);
       const box = document.getElementById('finalImageBox');
       const ok = [box.style.display !== 'none', document.querySelectorAll('#lidGuide .lg-c').length, document.querySelectorAll('#lidGuide .lg-t').length];
-      document.querySelector('#lidGuide .lg-c[data-i="7"]').click(); await W(200);
+      document.querySelector('#lidGuide .lg-c[data-i="4"]').click(); await W(200);
       ok.push(document.querySelector('#lidGuide .lg-h b').textContent, [...document.querySelectorAll('#lidGuide .lg-t b')].map(x => x.textContent).join('/'), !!document.querySelector('#lidGuide .lg-note'));
       box.scrollIntoView({ block: 'start' }); window.scrollBy(0, -220); document.querySelector('#ldmModal .ldm-body, #ldmModal')?.scrollBy?.(0, -220); await W(300);
       window.__more = () => document.querySelector('#lidGuide .lg-more').click();
