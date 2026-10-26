@@ -1,0 +1,21 @@
+// v3.26 : défilement de la page (plus de cadres fixes) : LOAD, case du bas, en-tête, feuilles
+const { chromium, devices } = require('playwright');
+(async()=>{ const b=await chromium.launch(); const c=await b.newContext({...devices['iPhone 13'], viewport:{width:390,height:500}}); const p=await c.newPage();
+const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
+const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const o=[];
+ uiTab('load'); ldmSwitch('final'); await W(300);
+ o.push('appWrap cache:'+(getComputedStyle(document.getElementById('appWrap')).display==='none'));
+ const si=[...document.querySelectorAll('#ldmModal textarea')].find(e=>e.offsetParent); si.focus(); await W(300);
+ const r1=si.getBoundingClientRect(); o.push('SI visible:'+(r1.bottom<=innerHeight && r1.top>=0)+' y='+scrollY+' top='+Math.round(r1.top)+' ih='+innerHeight+' sh='+document.documentElement.scrollHeight);
+ const seg=document.querySelector('.ldm-header').getBoundingClientRect(); const hh=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'));
+ o.push('segment collé sous en-tête:'+(Math.abs(seg.top-hh)<2));
+ const top=[...document.querySelectorAll('#ldmModal .ldm-body input:not([readonly])')].find(e=>e.offsetParent); top.focus(); await W(300);
+ const r2=top.getBoundingClientRect(); o.push('case du haut visible sous segment:'+(r2.top>=seg.bottom-1 && r2.bottom<=innerHeight)+' y='+scrollY+' '+top.id+' top='+Math.round(r2.top));
+ si.blur(); top.blur(); await W(100);
+ uiTab('vol'); await W(200); o.push('Vol y='+scrollY+' wrap:'+(getComputedStyle(document.getElementById('appWrap')).display));
+ openSettingsMenu(); await W(100); o.push('menu bloque:'+(getComputedStyle(document.documentElement).overflow==='hidden')); closeSettingsMenu(); await W(100);
+ o.push('menu fermé:'+getComputedStyle(document.documentElement).overflow);
+ return o.join(' | '); });
+console.log(r, errs.length?'ERR '+errs.join(';'):''); await p.screenshot({path:process.argv[2]+'/kb.png'}); await b.close(); })();

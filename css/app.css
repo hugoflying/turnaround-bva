@@ -35,7 +35,12 @@ html.dark{
   --tile-shadow:none; --scrim:rgba(3,6,14,.6); --shadow:0 18px 50px rgba(0,0,0,.5);--tl-eobt:#8FA6FF;--tl-tgt:rgba(143,166,255,.18);--tl-blue:#8FA6FF;
 }
 *,*::before,*::after{box-sizing:border-box}
-html,body{height:100%;margin:0;overflow:hidden!important;overscroll-behavior:none;background:var(--bg);color:var(--fg)}
+/* v3.26 : la page défile elle-même (plus de cadres fixes qui défilent) : iOS gère alors le clavier sans faire sauter l'écran */
+html,body{min-height:100%;margin:0;overscroll-behavior:none;background:var(--bg);color:var(--fg)}
+html{scroll-padding:calc(var(--fixed-header-h) + 60px) 0 16px}
+/* Fenêtre ou feuille ouverte : la page derrière ne défile pas */
+html:has(.sheet-modal[style*="flex"],#settingsMenu[style*="block"],body.ak-open,#lightboxOverlay[style*="flex"],#wnModal.is-on){overflow:hidden}
+.sh-body,#akList,.wn-list,.ev-list,.dlc-sugg,#settingsMenu{overscroll-behavior:contain}
 body{font-family:var(--f-ui);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 h1,h2,h3,h4,p,dl,dd,ul{margin:0;padding:0}
 ul{list-style:none}
@@ -113,7 +118,7 @@ html.modal-open,body.modal-open{overflow:hidden;overscroll-behavior:none}
 .hint{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);background:var(--surface-2);border-radius:var(--r);padding:10px 12px}
 .hint .ico{width:18px;height:18px;color:var(--ok);margin-top:1px}
 .hint b{color:var(--fg);font-weight:600}
-.app-wrap{display:none;position:fixed;top:var(--fixed-header-h);bottom:var(--tabbar-h);left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px var(--pad-x) 24px}
+.app-wrap{display:none;padding:calc(var(--fixed-header-h) + 14px) var(--pad-x) calc(var(--tabbar-h) + 24px)}
 body.has-tab .app-wrap{display:block}
 .app-wrap > .panel{max-width:720px;margin:0 auto}
 .panel{display:none;flex-direction:column;gap:14px}
@@ -321,13 +326,16 @@ html.dark #dlBadgesRow{border:1px solid var(--line-strong)}
 
 /* ===== Load ===== */
 #ldmBackdrop{display:none!important}
-#ldmModal{position:fixed;top:var(--fixed-header-h);bottom:var(--tabbar-h);left:0;right:0;z-index:2500;background:var(--bg);display:none;flex-direction:column;overflow:hidden;touch-action:pan-y pinch-zoom}
-.ldm-header{display:flex;align-items:center;gap:8px;padding:12px var(--pad-x) 0;max-width:720px;width:100%;margin:0 auto}
+#ldmModal{background:var(--bg);display:none;flex-direction:column;padding:var(--fixed-header-h) 0 var(--tabbar-h);touch-action:pan-y pinch-zoom}
+body:has(#ldmModal[style*="flex"]) .app-wrap{display:none}
+.ldm-header{display:flex;align-items:center;gap:8px;padding:12px var(--pad-x) 6px;max-width:720px;width:100%;margin:0 auto;position:sticky;top:var(--fixed-header-h);z-index:5;background:var(--bg);box-shadow:0 -6px 0 var(--bg)}
 .ldm-title,.ldm-close{display:none!important}
 .lm-seg{flex:1;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
 .lm-seg .button{min-height:36px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:700;font-size:14px;padding:0}
 .lm-seg .button.is-active{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.18),0 0 0 1px var(--line)}
-.ldm-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px var(--pad-x) 24px}
+.ldm-body{padding:8px var(--pad-x) 24px}
+/* Case en cours de saisie : place sous le contenu pour que la page puisse toujours remonter la case au-dessus du clavier */
+.app-wrap:has(input:not([type=checkbox]):not([type=radio]):focus,textarea:focus),.ldm-body:has(input:not([type=checkbox]):not([type=radio]):focus,textarea:focus){padding-bottom:max(calc(var(--tabbar-h) + 24px),55vh)}
 .ldm-card{max-width:720px;margin:0 auto}
 .ldm-grid{display:flex;flex-direction:column;gap:12px}
 .ld-row-4,.ld-row-3,.ld-row-2,#finalPaxRow{display:grid;gap:8px}
@@ -452,7 +460,7 @@ body.ak-open #akBackdrop,body:has(#settingsMenu[style*="block"]) #settingsBackdr
 body.pv-locked .app-wrap,body.pv-locked .fixed-header,body.pv-locked .tabbar{display:none!important}
 .num,.chip .v,.tw-display,.kv dd,.ld-stat input,.ld-tob input{font-variant-numeric:tabular-nums;letter-spacing:0}
 .dark .fixed-header .vols-btn,html.dark .fixed-header .vols-btn{background:#22357A}
-.app-wrap{padding-top:12px}
+.app-wrap{padding-top:calc(var(--fixed-header-h) + 12px)}
 .card{border-radius:var(--r-lg)}
 .sec-t{font-family:var(--f-ui);font-weight:700}
 .tabs.is-toggle ul,.lm-seg{display:flex;justify-content:flex-start;gap:20px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 2px}
@@ -1112,7 +1120,6 @@ button.akc-s:active,button.akc-s:hover{background:var(--surface-2)}
 html[data-edition="bva"] .tab-refresh,html[data-edition="bva"] .home-alt{display:none!important}
 body.kb-open{--tabbar-h:0px}
 html:has(body.no-tab),html:has(body.pv-locked),body.no-tab,body.pv-locked{background:#0a1017}
-body.kb-open .app-wrap,body.kb-open #ldmModal{top:calc(var(--fixed-header-h) + var(--vv-top,0px));bottom:var(--vv-bot,0px)}
 .btn-primary:active,.tabbar a:active,.tabbar button:active{transform:scale(.97)}
 
 /* ===== CTOT ===== */
@@ -1228,7 +1235,6 @@ html.dark .ct-chain span.on{color:#FFC94D}
 .demo-bar button{appearance:none;border:0;background:#0B1E4F;color:#fff;font:inherit;font-size:12px;font-weight:700;border-radius:999px;padding:5px 12px;cursor:pointer}
 #demoFlightsBtn[hidden]{display:none!important}
 body.has-ctot .chronos .chip-ctot{display:none}
-body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 
 /* ===== Outils du menu (suite : doit rester après les règles ci-dessus) ===== */
 .ie-card.hot{display:flex;flex-direction:column;gap:8px}
@@ -1347,7 +1353,7 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 #dlcList .dlc-row.is-sub{padding-left:14px}
 
 @media (display-mode: standalone){
-  html,body{height:100vh}
+  html,body{min-height:100vh}
   .home-screen{bottom:auto;height:100vh}
 }
 

@@ -18,7 +18,7 @@ function openLDM(mode=null){
   const b = document.getElementById('ldmBackdrop');
   const m = document.getElementById('ldmModal');
 
-  lockScroll();
+  window.scrollTo(0, 0);
 
   if(b) b.style.display = '';
   if(m) m.style.display = 'flex';
@@ -50,9 +50,8 @@ function closeLDM(){
   const b = document.getElementById('ldmBackdrop');
   const m = document.getElementById('ldmModal');
 
-  unlockScroll();
-
   if(m) m.style.display = 'none';
+  window.scrollTo(0, 0);
   if(b) b.style.display = 'none';
 
   saveCurrentTabData();
@@ -671,7 +670,12 @@ function renderTabs(){
 
   // Garder l'onglet actif visible dans la bande défilante
   const on = tabBar.querySelector('.flt.is-on');
-  if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'nearest' });
+  // v3.26 : on fait défiler la bande seulement (scrollIntoView pouvait aussi faire bouger la page sur iPhone)
+  if(on){
+    const l = on.getBoundingClientRect().left - tabBar.getBoundingClientRect().left + tabBar.scrollLeft, r = l + on.offsetWidth;
+    if(l < tabBar.scrollLeft) tabBar.scrollLeft = l;
+    else if(r > tabBar.scrollLeft + tabBar.clientWidth) tabBar.scrollLeft = r - tabBar.clientWidth;
+  }
 
   updateHeaderOffset();
   // v2.89 : le Récap suit tout de suite les onglets (avant : jusqu'à 15 s d'attente)

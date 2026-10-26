@@ -68,8 +68,7 @@ function clockMin(){
     showPanel(name);
     // v2.40 : vol avec changement d'équipage probable → Timing s'ouvre sur Départ
     if(name === 'timing' && !same && typeof crewRouteRule === 'function' && crewRouteRule() && typeof switchTimingPanel === 'function') switchTimingPanel('dep');
-    const wrap = document.getElementById('appWrap');
-    if(wrap && !same) wrap.scrollTop = 0;
+    if(!same) window.scrollTo(0, 0);
     syncTabbar();
   };
 
@@ -287,7 +286,7 @@ function clockMin(){
       uiTab(tab);
       if(tab === 'timing'){ switchTimingPanel(sub); el = sub === 'tl' ? document.getElementById('timelineCard') : document.getElementById('panel-' + sub); }
       else el = document.querySelector('.panel-' + tab);
-      const w = document.getElementById('appWrap'); if(w) w.scrollTop = 0;
+      window.scrollTo(0, 0);
     }
     if(el){ el.classList.remove('sw-l','sw-r'); void el.offsetWidth; el.classList.add(dx < 0 ? 'sw-l' : 'sw-r'); }
     return true;
@@ -1619,47 +1618,18 @@ function clockMin(){
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   };
 
-  /* v2.67 : clavier ouvert → la barre du bas se cache et la case en cours reste visible
-     (sinon l'écran remontait pendant la saisie et la case passait sous le clavier) */
+  /* v2.67 : clavier ouvert → la barre du bas se cache (classe kb-open).
+     v3.26 (Hugo, iPhone : sauts dans LOAD) : la page défile elle-même, iOS amène donc la case au-dessus du
+     clavier tout seul. On ne déplace plus rien en JS (v3.01 et v3.16 retirés : ils luttaient contre iOS). */
   function initKeyboardGuard(){
     let maxH = window.innerHeight;
     const isField = el => el && !el.readOnly && !el.disabled &&
       (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/.test(el.type)));
     const vvH = () => (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-    const keepVisible = () => {
-      const el = document.activeElement;
-      if(!isField(el)) return;
-      const r = el.getBoundingClientRect(), vv = window.visualViewport;
-      const top = vv ? vv.offsetTop : 0, bottom = top + vvH();
-      const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 0;
-      // v3.01 (Hugo, iPhone) : on fait défiler le conteneur du champ (Load, app…), pas la page :
-      // scrollIntoView faisait aussi glisser tout l'écran vers le haut sur iOS à chaque changement de case.
-      if(r.top < top + head || r.bottom > bottom - 8){
-        let sc = el.parentElement;
-        while(sc && sc !== document.body){ const o = getComputedStyle(sc).overflowY; if((o === 'auto' || o === 'scroll') && sc.scrollHeight > sc.clientHeight) break; sc = sc.parentElement; }
-        if(sc && sc !== document.body){
-          const want = (top + head + bottom) / 2 - (r.top + r.height / 2);
-          sc.scrollTop -= want;
-        }
-      }
-      if(window.scrollY) window.scrollTo(0, 0);
-    };
-    // v3.01 : iOS ne réduit pas la page sous le clavier et fait glisser la zone visible. On recale
-    // l'en-tête, l'app et Load sur la zone réellement visible (variables --vv-top / --vv-bot).
-    const fitVV = () => {
-      const vv = window.visualViewport, st = document.documentElement.style;
-      const kb = document.body.classList.contains('kb-open');
-      if(kb && vv){
-        st.setProperty('--vv-top', Math.max(0, vv.offsetTop) + 'px');
-        st.setProperty('--vv-bot', Math.max(0, window.innerHeight - vv.offsetTop - vv.height) + 'px');
-      } else { st.removeProperty('--vv-top'); st.removeProperty('--vv-bot'); }
-    };
     const sync = () => {
       if(!document.activeElement || !isField(document.activeElement)) maxH = Math.max(maxH, window.innerHeight);
       const kb = isField(document.activeElement) && Math.min(window.innerHeight, vvH()) < maxH * 0.8;
       document.body.classList.toggle('kb-open', kb);
-      fitVV();
-      if(kb) requestAnimationFrame(keepVisible);
       fitHome(kb);
     };
     // v2.99.1 (Hugo, iPhone) : iOS pose le clavier par-dessus l'écran d'accueil (position fixed) et cache
@@ -1675,38 +1645,9 @@ function clockMin(){
       }
     };
     window.addEventListener('resize', sync);
-    if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => { fitVV(); fitHome(document.body.classList.contains('kb-open')); }); }
-    // v3.16 (Hugo, iPhone : ça saute encore à chaque changement de case dans LOAD). Quand le clavier est
-    // déjà ouvert, iOS fait glisser tout l'écran pour « montrer » la nouvelle case, puis on recale. On
-    // prend la main : sur un simple appui, on amène la case dans la zone visible en faisant défiler son
-    // conteneur, puis on lui donne le focus sans défilement natif (focus({preventScroll})).
-    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    let tStart = null;
-    document.addEventListener('touchstart', e => { const t = e.touches[0]; tStart = t ? { x: t.clientX, y: t.clientY, el: e.target } : null; }, { passive: true, capture: true });
-    document.addEventListener('touchend', e => {
-      const st = tStart; tStart = null;
-      if(!isIOS || !st || !document.body.classList.contains('kb-open')) return;
-      const el = e.target;
-      if(el !== st.el || el === document.activeElement || !isField(el) || el.tagName !== 'INPUT') return;
-      const t = e.changedTouches[0]; if(!t || Math.abs(t.clientX - st.x) > 10 || Math.abs(t.clientY - st.y) > 10) return;
-      e.preventDefault();
-      bringIntoView(el);
-      try { el.focus({ preventScroll: true }); } catch(_) { el.focus(); }
-      try { const n = el.value.length; if(el.setSelectionRange && /^(text|search|tel|url|password)$/.test(el.type)) el.setSelectionRange(n, n); } catch(_) {}
-      if(window.scrollY) window.scrollTo(0, 0);
-    }, { passive: false, capture: true });
-    const bringIntoView = el => {
-      const r = el.getBoundingClientRect(), vv = window.visualViewport;
-      const top = vv ? vv.offsetTop : 0, bottom = top + vvH();
-      const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 0;
-      if(r.top >= top + head + 8 && r.bottom <= bottom - 8) return;
-      let sc = el.parentElement;
-      while(sc && sc !== document.body){ const o = getComputedStyle(sc).overflowY; if((o === 'auto' || o === 'scroll') && sc.scrollHeight > sc.clientHeight) break; sc = sc.parentElement; }
-      if(sc && sc !== document.body) sc.scrollTop -= (top + head + bottom) / 2 - (r.top + r.height / 2);
-    };
+    if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => fitHome(document.body.classList.contains('kb-open'))); }
     document.addEventListener('focusin', () => setTimeout(sync, 300));
     document.addEventListener('focusout', () => setTimeout(sync, 50));
-    document.addEventListener('input', e => { if(document.body.classList.contains('kb-open') && e.target === document.activeElement) requestAnimationFrame(keepVisible); }, true);
   }
 
 })();

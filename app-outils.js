@@ -74,7 +74,8 @@ function toggleLDM(mode=null){
   // v2.35 : feuille haute (option A) ; les traits sont en px CSS, donc les
   // anciens dessins restent en place, la feuille est juste plus grande.
   function bnCanvasH(w){
-    const area = document.getElementById('appWrap')?.clientHeight || (window.innerHeight || 700) - 300;
+    const head = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fixed-header-h'), 10) || 118;
+    const area = (window.innerHeight || 700) - head - 62;   // v3.26 : zone visible (la page défile, l'app n'a plus de hauteur fixe)
     return Math.round(Math.max(w * 0.45, Math.min(w * 1.6, area - 96)));
   }
   function ctx(){ const c=canvas(); return c ? c.getContext('2d') : null; }
@@ -852,24 +853,6 @@ function _lightboxKey(e){ if(e.key === 'Escape') closeLightbox(); }
 
 // Init au chargement de la page
 window.addEventListener('load', initForm);
-
-// iOS : désactive le scroll quand le contenu rentre dans app-wrap
-window.addEventListener('load', function(){
-  const wrap = document.querySelector('.app-wrap');
-  if (!wrap) return;
-  function syncOverflow(){
-    wrap.style.overflowY = wrap.scrollHeight > wrap.clientHeight + 1 ? 'auto' : 'hidden';
-  }
-  // Mise à jour à chaque changement de taille ou de contenu
-  new ResizeObserver(syncOverflow).observe(wrap);
-  // Changement d'onglet ou de panneau (Arrivée/Départ, Vol/Timing…) : la hauteur du contenu change sans ajout de nœud
-  const resync = () => requestAnimationFrame(syncOverflow);
-  new MutationObserver(resync).observe(wrap, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
-  new MutationObserver(resync).observe(document.body, { attributes:true, attributeFilter:['data-panel','class'] });
-  wrap.querySelectorAll('.panel').forEach(p => new ResizeObserver(resync).observe(p));
-  syncOverflow();
-});
-
 
 /* ===== Accueil : horloge LT/Z ===== */
 (function(){
