@@ -1426,3 +1426,47 @@ body.kb-open .fixed-header{transform:translateY(var(--vv-top,0px))}
 .rc-cf-no{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
 .rc-cf-ok{background:#E5484D;color:#fff;border:0}
 .rc-list .rc-confirm{margin:6px 8px}
+
+/* =====================================================
+   v3.21 — Guide LID en écran (option C) : cas à toucher, 6 cases du LID en grand, tableau replié
+   ===================================================== */
+#finalImageBox{margin:0}
+.lg{display:flex;flex-direction:column;gap:14px;padding:0 0 12px}
+.lg .ld-box-h span{font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--muted)}
+.lg-pick{display:flex;flex-direction:column;gap:10px;padding:0 12px}
+.lg-g{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lg-gt{flex-basis:100%;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lg-c{font:inherit;font-size:13px;font-weight:700;color:var(--fg);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer;min-height:36px}
+.lg-c.is-on{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:inset 0 -3px 0 var(--yellow)}
+.lg-res{margin:0 12px;padding:14px 12px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:12px}
+.lg-h b{display:block;font-size:18px;font-weight:800}
+.lg-h i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.lg-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.lg-t{border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.lg-t span{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--muted)}
+.lg-t b{font-size:22px;font-weight:800;color:var(--muted)}
+.lg-t.y{background:var(--ok-soft)}.lg-t.y b{color:var(--ok)}
+.lg-t.na b{font-weight:500;opacity:.55}
+.lg-note{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:8px 10px}
+.lg-more{font:inherit;align-self:flex-start;margin:0 12px;background:none;border:0;color:var(--fg);font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 0}
+.lg-scroll{overflow-x:auto;margin:0 12px}
+.lg-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.lg-tbl th{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--muted);padding:6px 2px;border-bottom:1px solid var(--line);text-align:center}
+.lg-tbl th:first-child,.lg-tbl td:first-child{text-align:left;padding-left:4px}
+.lg-tbl td{padding:6px 2px;border-bottom:1px solid var(--line);text-align:center;font-size:12px}
+.lg-tbl td:first-child{font-weight:700;font-size:12.5px;line-height:1.2}
+.lg-tbl tr[data-i]{cursor:pointer}
+.lg-tbl tr.is-on td{background:var(--surface-2)}
+.lg-tbl sup{font-size:9px;color:var(--warn);font-weight:800}
+.lg-grp td{font-size:10px!important;font-weight:800!important;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:10px!important}
+.lg-y{display:inline-block;min-width:30px;padding:2px 4px;border-radius:6px;background:var(--ok-soft);color:var(--ok);font-weight:800}
+.lg-n{color:var(--muted);font-weight:700}
+.lg-na{color:var(--muted);opacity:.5}
+.lg-notes{margin:0 12px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.lg-notes p{margin:0}.lg-notes b{color:var(--fg)}
+@media (min-width:700px){
+  .lg-c{font-size:15px;padding:9px 16px;min-height:42px}
+  .lg-h b{font-size:22px}
+  .lg-t{padding:14px}.lg-t span{font-size:12px}.lg-t b{font-size:30px}
+  .lg-tbl td{font-size:14px}.lg-tbl th{font-size:11.5px}.lg-tbl td:first-child{font-size:14px}
+}

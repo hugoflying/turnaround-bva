@@ -412,3 +412,71 @@
   document.addEventListener('input', e => { if(e.target && e.target.id === 'Cie') sync(); });
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync); else sync();
 })();
+
+/* =====================================================
+   v3.21 (Hugo, option C) — Guide LID en écran : on touche un cas, les 6 cases du LID s'affichent.
+   Contenu = « LID Completion Guide (above wing) » Ryanair, Issue 1 Revision 3. Tableau complet replié dessous.
+   ===================================================== */
+(function(){
+  'use strict';
+  const COLS = [['SNY', 'SNY BOX'], ['ZONE', 'ZONE'], ['TOB', 'TOB'], ['THOB', 'THOB'], ['SI', 'SI BOX'], ['CREW', 'CREW CONFIG']];
+  const ROWS = [
+    ['p', 'Adult', '', 'N/A YES YES YES NO N/A'],
+    ['p', 'Child', '', 'N/A YES YES YES NO N/A'],
+    ['p', 'Infant', '', 'N/A NO NO YES NO N/A'],
+    ['s', 'Item Seat', 'ex. violoncelle', 'N/A YES YES NO YES N/A'],
+    ['s', 'Comfort Seat', 'ex. passager corpulent', 'N/A NO YES NO YES N/A'],
+    ['s', 'Leg Seat', 'ex. jambe cassée', 'N/A NO YES NO YES N/A'],
+    ['s', 'Infant Seat', 'bébé qui occupe un siège', 'N/A NO YES NO YES N/A'],
+    ['y', 'SNY on Jumpseat', '', 'NO NO NO YES YES YES', 1],
+    ['y', 'SNY on passenger seat', '', 'YES YES NO YES YES NO', 2],
+    ['y', 'Duty / Staff Travel on Jumpseat', '', 'NO NO YES YES YES YES', 3],
+    ['y', 'Duty / Staff Travel on passenger seat', '', 'NO YES YES YES NO NO', 4],
+  ];
+  const NOTES = {
+    1: 'SNY sur jumpseat : compté en Crew et THOB sur le LID, avec une explication en SI.',
+    2: 'SNY sur un siège passager : compté seulement dans le THOB.',
+    3: 'Duty / Staff Travel sur jumpseat : compté en Crew, TOB et THOB, avec une explication en SI (ex. 2+5, Staff Travel, aft J/seat, inclus dans TOB et Crew Config).',
+    4: 'Duty / Staff Travel sur un siège passager : compté en TOB et THOB.',
+  };
+  const GRP = { p: 'Passagers', s: 'Sièges spéciaux', y: 'SNY et Staff' };
+  const word = x => x === 'YES' ? 'Oui' : x === 'NO' ? 'Non' : 'N/A';
+  const cls = x => x === 'YES' ? 'y' : x === 'NO' ? 'n' : 'na';
+  let sel = 0, full = false;
+  try{ sel = Math.max(0, Math.min(ROWS.length - 1, parseInt(localStorage.getItem('lidGuideSel') || '0', 10) || 0)); }catch(e){}
+
+  function render(){
+    const el = document.getElementById('lidGuide'); if(!el) return;
+    let g = '', pick = '';
+    ROWS.forEach((r, i) => {
+      if(r[0] !== g){ g = r[0]; pick += (pick ? '</div>' : '') + '<div class="lg-g"><span class="lg-gt">' + GRP[g] + '</span>'; }
+      pick += '<button type="button" class="lg-c' + (i === sel ? ' is-on' : '') + '" data-i="' + i + '">' + r[1] + '</button>';
+    });
+    pick += '</div>';
+    const r = ROWS[sel], v = r[3].split(' ');
+    const tiles = v.map((x, i) => '<div class="lg-t ' + cls(x) + '"><span>' + COLS[i][1] + '</span><b>' + word(x) + '</b></div>').join('');
+    let tbl = '';
+    if(full){
+      tbl = '<div class="lg-scroll"><table class="lg-tbl"><thead><tr><th>Cas</th>' + COLS.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody>';
+      let gg = '';
+      ROWS.forEach((x, i) => {
+        if(x[0] !== gg){ gg = x[0]; tbl += '<tr class="lg-grp"><td colspan="7">' + GRP[gg] + '</td></tr>'; }
+        tbl += '<tr class="' + (i === sel ? 'is-on' : '') + '" data-i="' + i + '"><td>' + x[1] + (x[4] ? '<sup>*' + x[4] + '</sup>' : '') + '</td>' + x[3].split(' ').map(y => '<td><span class="lg-' + cls(y) + '">' + word(y) + '</span></td>').join('') + '</tr>';
+      });
+      tbl += '</tbody></table></div><div class="lg-notes">' + Object.keys(NOTES).map(k => '<p><b>*' + k + '</b> ' + NOTES[k] + '</p>').join('') + '</div>';
+    }
+    el.innerHTML = '<div class="ld-box-h">Guide LID<span>Above wing</span></div>'
+      + '<div class="lg-pick">' + pick + '</div>'
+      + '<div class="lg-res"><div class="lg-h"><b>' + r[1] + '</b>' + (r[2] ? '<i>' + r[2] + '</i>' : '') + '</div><div class="lg-tiles">' + tiles + '</div>'
+      + (r[4] ? '<div class="lg-note">' + NOTES[r[4]] + '</div>' : '') + '</div>'
+      + '<button type="button" class="lg-more">' + (full ? 'Masquer le tableau' : 'Voir tout le tableau') + '</button>' + tbl;
+  }
+  document.addEventListener('click', e => {
+    const box = e.target.closest && e.target.closest('#lidGuide'); if(!box) return;
+    const b = e.target.closest('[data-i]');
+    if(b){ sel = +b.dataset.i; try{ localStorage.setItem('lidGuideSel', String(sel)); }catch(_){} render(); return; }
+    if(e.target.closest('.lg-more')){ full = !full; render(); }
+  });
+  window.renderLidGuide = render;
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
+})();
