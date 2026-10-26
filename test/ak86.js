@@ -1,0 +1,20 @@
+// v3.27 : refresh AK auto à l'AIBT, et au 1er embarqué seulement si départ − AIBT > 35 min
+const { chromium } = require('playwright');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
+console.log(await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const o=[]; let n=0;
+ window.refreshAKTab = async()=>{ n++; };
+ const set=(id,v)=>{ const e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); };
+ const ids=JSON.parse(localStorage.flightTabs).filter(i=>JSON.parse(localStorage.getItem('tab-'+i)||'{}').akMeta);
+ o.push('vols AK:'+ids.length);
+ const run=async(id,aibt,sobt)=>{ switchTab(id); await W(400); _peRefreshAt={}; n=0;
+   ['AIBT','AOBT','AvionPremierEmbarque'].forEach(f=>{document.getElementById(f).value='';});
+   set('SOBT',sobt); await W(50); set('AIBT',aibt); await W(500); const a=n; _peRefreshAt={}; n=0;
+   const eobt=document.getElementById('timer-eobt').textContent.trim();
+   set('AvionPremierEmbarque', '10:20'); await W(500); return 'AIBT→'+a+' PE→'+n+' (eobt '+eobt+')'; };
+ o.push('rotation 25 min: '+await run(ids[0],'09:30','09:55'));
+ o.push('rotation 50 min: '+await run(ids[1]||ids[0],'09:30','10:20'));
+ settingFromAK=true; n=0; _peRefreshAt={}; set('AIBT','09:31'); settingFromAK=false; await W(500); o.push('AIBT venant d AK→'+n);
+ return o.join(' | '); }));
+await b.close(); })();

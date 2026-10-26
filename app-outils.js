@@ -1014,11 +1014,22 @@ function pafConfirm(){
   setNow(id); updateAllCalculations(); twSync(id);
 }
 
-/* v2.85 : rafraîchissement AK automatique quand le premier embarqué est saisi (vols AK uniquement) */
+/* v2.85 : rafraîchissement AK automatique quand le premier embarqué est saisi (vols AK uniquement).
+   v3.27 (Hugo) : aussi à l'AIBT ; au 1er embarqué seulement si la rotation dépasse 35 min
+   (départ − AIBT > 35, départ = AOBT, sinon EOBT, sinon SOBT), ou s'il n'y a pas d'AIBT. */
 let _peRefreshAt = {};
+function _akAutoRotLong(){
+  const m = id => { const v = (document.getElementById(id)?.value || document.getElementById(id)?.textContent || '').trim(); const x = /^(\d{1,2}):(\d{2})/.exec(v); return x ? (+x[1]) * 60 + (+x[2]) : null; };
+  const aibt = m('AIBT'); if(aibt === null) return true;
+  const dep = m('AOBT') ?? m('timer-eobt') ?? m('SOBT'); if(dep === null) return true;
+  let d = dep - aibt; if(d < -720) d += 1440;
+  return d > 35;
+}
 document.addEventListener('change', function(e){
-  if(e.target?.id !== 'AvionPremierEmbarque' || !(e.target.value || '').trim()) return;
-  if(window.APP_EDITION === 'bva' || !currentTabId) return;
+  const fid = e.target?.id;
+  if((fid !== 'AvionPremierEmbarque' && fid !== 'AIBT') || !(e.target.value || '').trim()) return;
+  if(settingFromAK || window.APP_EDITION === 'bva' || !currentTabId) return;
+  if(fid === 'AvionPremierEmbarque' && !_akAutoRotLong()) return;
   const id = currentTabId;
   let d = null; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || 'null'); }catch(_){}
   if(!d || !d.akMeta) return;
