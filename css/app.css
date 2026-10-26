@@ -1491,3 +1491,7 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .up-add[hidden],.up-tot[hidden]{display:none}
 .up-tot{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .up-tot b{font-size:20px;color:var(--fg);font-weight:800;margin-left:4px}
+
+/* ===== v3.28 (Hugo) : vol pas encore arrivé, barre et anneau en attente (démarrent à l'AIBT) ===== */
+.fh-prog.is-wait{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 6px,rgba(255,255,255,.08) 6px 12px)}
+.flt-cie.wait,html.dark .flt-cie.wait{background:repeating-conic-gradient(var(--muted) 0 12deg,var(--line) 12deg 24deg)}
