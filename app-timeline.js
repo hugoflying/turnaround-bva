@@ -205,6 +205,18 @@ function toExtended(t, min, max){
   const startMod = ((min % 1440) + 1440) % 1440;
   return (t < startMod) ? t + 1440 : t;
 }
+/* v3.33 : « maintenant » dans le repère de la timeline, grâce à la date du vol (sinon l'heure seule) */
+function tlFlightAnchor(){
+  const s = parseHHMM(document.getElementById('SOBT')?.value || '') ?? parseHHMM(document.getElementById('SIBT')?.value || '');
+  const date = document.getElementById('Date')?.value || '';
+  const ms = (s != null && typeof flightAt === 'function') ? flightAt(s, date, s) : null;
+  return ms == null ? null : { t:s, ms };
+}
+function tlNowExt(nowM, min, max){
+  const a = tlFlightAnchor();
+  if(!a) return toExtended(nowM, min, max);
+  return toExtended(a.t, min, max) + (Date.now() - a.ms) / 60000;
+}
 function computeTimelineWindow(allTimes){
   const H40  = parseHHMM((document.getElementById('timer-h40')?.textContent || '').replace('--:--',''));
   const SIBT = parseHHMM(document.getElementById('SIBT')?.value || '');
@@ -234,8 +246,10 @@ function computeTimelineWindow(allTimes){
   if(AIBT != null && AOBT == null){
     const d = new Date();
     const nowM = (typeof isUTC !== 'undefined' && isUTC) ? d.getUTCHours()*60 + d.getUTCMinutes() : d.getHours()*60 + d.getMinutes();
-    const since = ((nowM - AIBT) % 1440 + 1440) % 1440;
-    if(since <= 360) ends.push(AIBT + since + 3);
+    let since = ((nowM - AIBT) % 1440 + 1440) % 1440;
+    const anc = tlFlightAnchor(), aMs = anc ? flightAt(AIBT, document.getElementById('Date')?.value || '', anc.t) : null;
+    if(aMs != null) since = (Date.now() - aMs) / 60000;   // v3.33 : vol daté (hier = plus de 6 h)
+    if(since >= 0 && since <= 360) ends.push(AIBT + since + 3);
   }
 
   if(starts.length && ends.length){
@@ -648,7 +662,7 @@ function renderTimeline(){
   // v2.44 : repères verticaux (SIBT, AIBT, SOBT, AOBT, EOBT, CTOT, TOBT, NOW) calculés avant le dessin,
   // pour réserver autant de rangées de puces que nécessaire au-dessus de l'axe
   const _nowD   = new Date();
-  const _nowExt = toExtended(isUTC ? _nowD.getUTCHours()*60 + _nowD.getUTCMinutes() : _nowD.getHours()*60 + _nowD.getMinutes(), min, max);
+  const _nowExt = tlNowExt(isUTC ? _nowD.getUTCHours()*60 + _nowD.getUTCMinutes() : _nowD.getHours()*60 + _nowD.getMinutes(), min, max);
   const rawMarkers = [];
   const ptOf = l => fixedPoints.find(p => p.label === l);
   const MK = {
@@ -804,7 +818,7 @@ function renderTimeline(){
   const nowD   = new Date();
   const nowM   = isUTC ? nowD.getUTCHours()*60 + nowD.getUTCMinutes()
                        : nowD.getHours()*60    + nowD.getMinutes();
-  const nowExt = toExtended(nowM, min, max);
+  const nowExt = tlNowExt(nowM, min, max);
 
   rows.forEach((d, i) => {
     const color   = getColor(d);

@@ -100,17 +100,19 @@ function clockMin(){
     // Avancement : de l'arrivée (AIBT, sinon HLE si pas d'arrivée) au départ (EOBT, sinon SOBT)
     // v3.28 (Hugo) : vol pas encore arrivé (SIBT sans AIBT) = barre en attente, elle ne part qu'à l'AIBT
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
-    let a = rotStart(toMin(val('AIBT')), toMin(val('SIBT')), toMin(txt('timer-h40')));
-    let d = toMin(txt('timer-eobt')) ?? toMin(val('SOBT'));
+    // v3.33 : heures rattachées à la date du vol (sinon ancien calcul à ±12 h)
+    const nowC = clockMin(), anc = toMin(val('SOBT')) ?? toMin(val('SIBT')), dated = flightDayMs(val('Date')) != null;
+    const R = t => dated ? flightRel(t, val('Date'), anc, nowC) : t;
+    let a = rotStart(R(toMin(val('AIBT'))), toMin(val('SIBT')), R(toMin(txt('timer-h40'))));
+    let d = R(toMin(txt('timer-eobt')) ?? toMin(val('SOBT')));
     // v3.11 (Hugo) : vol parti = la barre s'arrête à l'AOBT et garde sa couleur (jaune, ou rouge si en retard)
-    const off = toMin(val('AOBT'));
+    const off = R(toMin(val('AOBT')));
     wrap.classList.toggle('is-wait', a === 'wait' && d != null);
     if(a === 'wait' && d != null){ wrap.classList.remove('is-empty', 'over'); bar.style.width = '0%'; return; }
     if(a == null || a === 'wait' || d == null){ wrap.classList.add('is-empty'); return; }
-    if(d <= a) d += 1440;
-    let now = off ?? clockMin();
-    if(now < a - 720) now += 1440;
-    const r = (now - a) / (d - a);
+    let now = off ?? nowC;
+    if(!dated){ if(d <= a) d += 1440; if(now < a - 720) now += 1440; }
+    const r = (now - a) / Math.max(1, d - a);
     wrap.classList.remove('is-empty');
     wrap.classList.toggle('over', r > 1);
     bar.style.width = Math.max(0, Math.min(1, r)) * 100 + '%';
@@ -602,11 +604,18 @@ function clockMin(){
   /* ===== Onglets de vol : anneau d'avancement autour du code compagnie ===== */
   // v3.28 : début de rotation = AIBT ; arrivée prévue mais pas encore là → 'wait' ; vol sans arrivée → HLE
   function rotStart(aibt, sibt, hle){ return aibt ?? (sibt != null ? 'wait' : hle); }
-  function ringRatio(a, d, at){
+  // v3.33 : date = date du vol (heures rattachées à ce jour) ; sans date, ancien calcul à ±12 h
+  function ringRatio(a, d, at, date, anc){
     if(a === 'wait') return d == null ? null : { wait:true };
     if(a == null || d == null) return null;
+    const nowC = clockMin();
+    if(flightDayMs(date) != null){
+      a = flightRel(a, date, anc, nowC); d = flightRel(d, date, anc, nowC); at = at == null ? null : flightRel(at, date, anc, nowC);
+      const now = at ?? nowC;
+      return { r:(now - a) / Math.max(1, d - a), left: d - now };
+    }
     if(d <= a) d += 1440;
-    let now = at ?? clockMin();   // v3.11 : figé à l'AOBT une fois le vol parti
+    let now = at ?? nowC;   // v3.11 : figé à l'AOBT une fois le vol parti
     if(now < a - 720) now += 1440;
     return { r:(now - a) / (d - a), left: d - now };
   }
@@ -615,12 +624,12 @@ function clockMin(){
       const ring = t.querySelector('.flt-cie'); if(!ring) return;
       let r = null;
       if(t.classList.contains('is-on')){
-        r = ringRatio(rotStart(toMin(val('AIBT')), toMin(val('SIBT')), toMin(txt('timer-h40'))), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')), toMin(val('AOBT')));
+        r = ringRatio(rotStart(toMin(val('AIBT')), toMin(val('SIBT')), toMin(txt('timer-h40'))), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')), toMin(val('AOBT')), val('Date'), toMin(val('SOBT')) ?? toMin(val('SIBT')));
       } else {
         let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}'); }catch(e){}
         // v3.05 : sans arrivée (vol qui part de la base), départ du chrono à HLE = SOBT − 60
         const sobt = toMin(d.SOBT || ''), hle = /^(FR|RK)$/i.test((d.Cie || '').trim()) ? 60 : 40;
-        r = ringRatio(rotStart(toMin(d.AIBT || ''), toMin(d.SIBT || ''), sobt != null ? sobt - hle : null), toMin(String(d.timer_eobt || '')) ?? sobt, toMin(d.AOBT || ''));
+        r = ringRatio(rotStart(toMin(d.AIBT || ''), toMin(d.SIBT || ''), sobt != null ? sobt - hle : null), toMin(String(d.timer_eobt || '')) ?? sobt, toMin(d.AOBT || ''), d.Date, sobt ?? toMin(d.SIBT || ''));
       }
       ring.classList.remove('done');
       ring.classList.toggle('wait', !!(r && r.wait));
@@ -652,10 +661,12 @@ function clockMin(){
     const now = nowMin();
     const eobtCur = cur ? toMin(txt('timer-eobt')) : null;
     const sobt = toMin(g('SOBT')), sibt = toMin(g('SIBT')), aibt = toMin(g('AIBT')), aobt = toMin(g('AOBT'));
+    // v3.33 : heures rattachées à la date du vol (repli ±12 h autour de maintenant sans date)
+    const date = g('Date'), dated = flightDayMs(date) != null, R = t => flightRel(t, date, sobt ?? sibt, now);
     // v2.90 : EOBT calculée enregistrée avec le vol (avant : SOBT pour les vols en arrière-plan)
     const eobtSaved = cur ? null : toMin(String(d.timer_eobt || ''));
-    let eobt = rel(eobtCur ?? eobtSaved ?? sobt, now);
-    const ctot = rel(toMin(g('CTOT') || (cur ? txt('timer-ctot') : String(d.timer_ctot || ''))), now);
+    let eobt = R(eobtCur ?? eobtSaved ?? sobt);
+    const ctot = R(toMin(g('CTOT') || (cur ? txt('timer-ctot') : String(d.timer_ctot || ''))));
     const left = eobt != null ? eobt - now : null;
     let st, cls = '', next;
     const has = k => !!g(k);
@@ -676,12 +687,12 @@ function clockMin(){
     }
     let p = 0;
     if(aobt != null) p = 100;
-    else if(aibt != null && eobt != null){ const a = rel(aibt, now); p = Math.max(0, Math.min(1, (now - a) / Math.max(1, eobt - a))) * 100; }
+    else if(aibt != null && eobt != null){ const a = R(aibt); p = Math.max(0, Math.min(1, (now - a) / Math.max(1, eobt - a))) * 100; }
     const ringCls = aobt != null ? 'done' : cls === 'late' ? 'over' : cls === 'soon' ? 'soon' : '';
     // Statut sol affiché en bas des cartes
     const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : aibt != null ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
     return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? fno.slice(0,2) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
-             sobt: rel(sobt, now), aobt: rel(aobt, now), eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
+             sobt: R(sobt), aobt: R(aobt), dated, eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
   }
 
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
@@ -712,21 +723,13 @@ function clockMin(){
   // (reste dans Récap « Terminés », un appui le rouvre). Jamais pendant qu'on est dessus (hors Récap).
   const GONE_MIN = 30;
   // v3.30 (Hugo : vol parti hier soir encore dans la bande le matin) : temps écoulé depuis l'AOBT.
-  // v3.31 (Hugo : chaque vol est daté) : on part de la date du vol + AOBT (recalée sur le SOBT si minuit
-  // passe entre les deux). Sans date utilisable : AOBT toujours passée, modulo 24 h (jusqu'à 1 h d'avance admise).
+  // v3.31/v3.33 : avec la date du vol, f.aobt est déjà sur l'échelle de maintenant. Sans date (ou date
+  // incohérente) : AOBT toujours passée, modulo 24 h (jusqu'à 1 h d'avance admise).
   const aobtAgo = f => {
     if(f.aobt == null) return null;
-    let d = {}; if(!f.cur){ try{ d = JSON.parse(localStorage.getItem('tab-' + f.id) || '{}'); }catch(e){} }
-    const g = k => String((f.cur ? val(k) : d[k]) || '').trim();
-    const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(g('Date')), ao = toMin(g('AOBT')), so = toMin(g('SOBT'));
-    if(ymd && ao != null){
-      let m = ao; if(so != null){ if(m - so > 720) m -= 1440; else if(so - m > 720) m += 1440; }
-      const y = +ymd[1], mo = +ymd[2] - 1, da = +ymd[3];
-      const t = (typeof isUTC !== 'undefined' && isUTC) ? Date.UTC(y, mo, da, 0, m) : new Date(y, mo, da, 0, m).getTime();
-      const ago = (Date.now() - t) / 60000;
-      if(ago >= -60) return ago;
-    }
-    const r = (((nowMin() - f.aobt) % 1440) + 1440) % 1440; return r > 1380 ? r - 1440 : r;
+    const now = nowMin();
+    if(f.dated && now - f.aobt >= -60) return now - f.aobt;
+    const r = (((now - f.aobt) % 1440) + 1440) % 1440; return r > 1380 ? r - 1440 : r;
   };
   window.uiTabState = function(id){
     try{

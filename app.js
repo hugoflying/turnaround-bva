@@ -1198,6 +1198,29 @@ function cdWallMs(refDayMs, min){
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, min).getTime();
 }
 
+/* v3.33 (Hugo) : les heures d'un vol sont rattachées à la date du vol (champ Date = jour du SOBT,
+   ou du SIBT sans départ). Une heure à plus de 12 h de cette ancre passe au jour d'avant ou d'après.
+   Sans date : repli sur l'ancien calcul (l'heure la plus proche de maintenant, à ±12 h). */
+function flightDayMs(date){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date || '').trim());
+  if(!m) return null;
+  return isUTC ? Date.UTC(+m[1], +m[2]-1, +m[3]) : new Date(+m[1], +m[2]-1, +m[3]).getTime();
+}
+// Instant (ms) d'une heure du vol, null sans date
+function flightAt(t, date, anchor){
+  if(t == null) return null;
+  const day = flightDayMs(date); if(day == null) return null;
+  let m = t; if(anchor != null){ if(m - anchor > 720) m -= 1440; else if(anchor - m > 720) m += 1440; }
+  return cdWallMs(day, m);
+}
+// Même heure en minutes sur l'échelle de « maintenant » (now = clockMin()) : peut être < 0 (hier) ou > 1440 (demain)
+function flightRel(t, date, anchor, now){
+  if(t == null) return null;
+  const ms = flightAt(t, date, anchor);
+  if(ms == null){ let x = t; while(x - now > 720) x -= 1440; while(now - x > 720) x += 1440; return x; }
+  return now + (ms - Date.now()) / 60000;
+}
+
 function cdRefDayMs(){
   // 1) champ Date visible
   const dv = (document.getElementById('Date')?.value || '').trim();
