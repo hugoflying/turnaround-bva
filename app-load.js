@@ -635,7 +635,7 @@ function renderTabs(){
     btn.className = 'flt-go';
     btn.type = 'button';
     // B3 : rond compagnie entouré de l'anneau d'avancement, puis n° et escale
-    const cieCode = (cie || volRef.slice(0,2) || '').slice(0,2);
+    const cieCode = (cie || cieFromFF(volRef) || '').slice(0,2);   // v3.34 : pas « RY » pour RYR2LT
     const num = volRef ? (cieCode && volRef.startsWith(cieCode) ? volRef.slice(cieCode.length) : volRef) : '';
     btn.innerHTML = (volRef || place)
       ? `<span class="flt-cie"><b>${escapeHtml(cieCode || '–')}</b></span><span class="flt-n">${escapeHtml(num)}</span>${place ? `<span class="flt-d">${escapeHtml(place)}</span>` : ''}`

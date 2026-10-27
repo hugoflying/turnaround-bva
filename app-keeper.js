@@ -356,7 +356,7 @@ function _renderAKListWithRza(pairs, list, akIdToRza){
   }
 
   window._akPairs = pairs;
-  const cieOf = p => (((p.arr||p.dep||{}).fullFlightNumber || (p.arr||p.dep||{}).callsign || '') + '').trim().slice(0,2).toUpperCase();
+  const cieOf = p => cieFromFF((p.arr||p.dep||{}).fullFlightNumber || (p.arr||p.dep||{}).callsign);   // v3.34
 
   // Filtres compagnie + recherche
   const fbox = document.getElementById('akFilters');
@@ -672,6 +672,8 @@ function _doApplyAKFlight(f, flow, opts = {}){
         setValAK('NVol', nvol);
       }else{
         setValAK('NVol', ff);
+        // v3.34 : indicatif seul (RYR2LT) → compagnie traduite (FR), vol privé → compagnie vide
+        setValAK('Cie', cieFromFF(ff));
       }
     }
 

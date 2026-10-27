@@ -691,7 +691,7 @@ function clockMin(){
     const ringCls = aobt != null ? 'done' : cls === 'late' ? 'over' : cls === 'soon' ? 'soon' : '';
     // Statut sol affiché en bas des cartes
     const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : aibt != null ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
-    return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? fno.slice(0,2) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
+    return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? cieFromFF(fno) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
              sobt: R(sobt), aobt: R(aobt), dated, eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
   }
 

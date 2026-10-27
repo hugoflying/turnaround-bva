@@ -1201,6 +1201,21 @@ function cdWallMs(refDayMs, min){
 /* v3.33 (Hugo) : les heures d'un vol sont rattachées à la date du vol (champ Date = jour du SOBT,
    ou du SIBT sans départ). Une heure à plus de 12 h de cette ancre passe au jour d'avant ou d'après.
    Sans date : repli sur l'ancien calcul (l'heure la plus proche de maintenant, à ±12 h). */
+/* v3.34 (Hugo) : compagnie d'un vol. Numéro IATA (FR1234, W45149) → 2 premiers caractères.
+   Sans numéro, AK ne donne que l'indicatif OACI (RYR2LT, WZZ12AB) : on le traduit (RYR → FR, WMT → W4…).
+   Indicatif inconnu (vol privé SUZ9, immatriculation) → pas de compagnie, au lieu de « SU ». */
+const CS_TO_IATA = { RYR:'FR', RUK:'RK', MAY:'AL', RYS:'RR', LDM:'OE', WZZ:'W6', WMT:'W4', WUK:'W9', WAZ:'5W',
+  EZY:'U2', EJU:'EC', EZS:'DS', VLG:'VY', VOE:'V7', TVF:'TO', TRA:'HV', AFR:'AF', MAC:'3O', PGT:'PC', SXS:'XQ',
+  TAP:'TP', IBE:'IB', DLH:'LH', BEL:'SN', KLM:'KL', BAW:'BA', AEE:'A3', ROT:'RO', LOT:'LO', TAR:'TU', RAM:'AT', DAH:'AH', THY:'TK', AUA:'OS', SWR:'LX' };
+function cieFromFF(ff){
+  ff = String(ff || '').toUpperCase().replace(/[\s-]/g, '');
+  if(!ff) return '';
+  const icao = /^([A-Z]{3})[0-9]/.exec(ff);
+  if(icao && CS_TO_IATA[icao[1]]) return CS_TO_IATA[icao[1]];
+  if(/^[A-Z0-9]{2}[0-9]{1,5}[A-Z]?$/.test(ff) && /[A-Z]/.test(ff.slice(0, 2))) return ff.slice(0, 2);
+  return '';
+}
+
 function flightDayMs(date){
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date || '').trim());
   if(!m) return null;

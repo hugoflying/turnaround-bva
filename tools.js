@@ -351,7 +351,7 @@
     // v3.11.1 (Hugo) : seulement les vols FR/RK ouverts, pas encore partis (sauf celui déjà choisi)
     return ids.filter(id => id !== String(currentTabId)).map(id => {
       let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
-      const cie = (d.Cie || d.akMeta?.arrFF || d.akMeta?.depFF || '').toUpperCase().slice(0, 2);
+      const cie = (d.Cie || cieFromFF(d.akMeta?.arrFF) || cieFromFF(d.akMeta?.depFF) || '').toUpperCase().slice(0, 2);
       if(id !== cur && (!/^(FR|RK)$/.test(cie) || (d.AOBT || '').trim())) return '';
       const arr = (d.akMeta?.arrFF || ((d.Cie || '') + (d.NVol || '')) || 'Vol').toUpperCase();
       const t = (d.AIBT || '').trim();
