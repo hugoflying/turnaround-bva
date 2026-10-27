@@ -986,11 +986,16 @@ function renderTimeline(){
   // 5. Auto-scroll
   // Option « Suivre Now » : recentre sauf si l'utilisateur a touché la timeline il y a moins de 8 s
   const followNow = (()=>{ try{ return localStorage.getItem('tlFollowNow') !== '0'; }catch(e){ return true; } })();
+  // v3.29 (Hugo : la timeline se recalait toute seule) : Now hors de l'escale (vol terminé ou pas encore là)
+  // = rien à suivre, on laisse la timeline où l'utilisateur l'a mise. L'attente de 8 s compte depuis le
+  // dernier geste ou défilement (élan compris), plus depuis le simple début du toucher.
+  const nowIn     = nowExt >= min && nowExt <= max;
   const userIdle  = (Date.now() - (window._tlLastTouch || 0)) > 8000;
-  if(followNow ? userIdle : !timelineUserScrolled){
-    const targetT = (nowExt >= min && nowExt <= max) ? nowExt : (min + max) / 2;
+  if((followNow && nowIn) ? userIdle : !timelineUserScrolled){
+    const targetT = nowIn ? nowExt : (min + max) / 2;
     const targetX = toPx(targetT);
-    scroller.scrollLeft = Math.max(0, targetX - viewport / 2);
+    const left = Math.max(0, targetX - viewport / 2);
+    if(Math.abs(scroller.scrollLeft - left) >= 1){ window._tlAutoScrollAt = Date.now(); scroller.scrollLeft = left; }
   }
 
   const zlbl = document.getElementById('timelineZoomLabel');

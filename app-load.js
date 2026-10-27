@@ -367,10 +367,12 @@ function initForm(){
       e.preventDefault();
     });
 
-    ['wheel','mousedown','touchstart','keydown'].forEach(ev=>{
+    ['wheel','mousedown','touchstart','touchend','keydown'].forEach(ev=>{
       scroller.addEventListener(ev, ()=>{ window._tlLastTouch = Date.now(); }, {passive:true});
     });
-    ['wheel','mousedown','touchstart','keydown','scroll'].forEach(ev=>{
+    // v3.29 : un défilement de l'utilisateur (élan compris) repousse aussi le recentrage ; pas celui de l'app
+    scroller.addEventListener('scroll', ()=>{ if(Date.now() - (window._tlAutoScrollAt || 0) > 150) window._tlLastTouch = Date.now(); }, {passive:true});
+    ['wheel','mousedown','touchstart','keydown'].forEach(ev=>{
       scroller.addEventListener(ev, ()=>{ timelineUserScrolled = true; }, {passive:true});
     });
   }
