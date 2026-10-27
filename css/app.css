@@ -1495,3 +1495,16 @@ body.has-ctot .chronos .chip-ctot{display:none}
 /* ===== v3.28 (Hugo) : vol pas encore arrivé, barre et anneau en attente (démarrent à l'AIBT) ===== */
 .fh-prog.is-wait{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 6px,rgba(255,255,255,.08) 6px 12px)}
 .flt-cie.wait,html.dark .flt-cie.wait{background:repeating-conic-gradient(var(--muted) 0 12deg,var(--line) 12deg 24deg)}
+
+/* ===== v3.32 (Hugo) : vols des jours précédents ===== */
+.old-list{display:flex;flex-direction:column;gap:8px}
+.old-row{appearance:none;display:flex;align-items:center;gap:10px;justify-content:space-between;text-align:left;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer}
+.old-row.is-warn{border-color:var(--warn);background:var(--warn-soft)}
+.old-main{display:flex;flex-direction:column;min-width:0}
+.old-main b{font-size:15.5px}
+.old-main span{font-size:12.5px;color:var(--muted)}
+.old-tags{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.old-tags i{font-style:normal;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--warn);color:#1b1b1b;white-space:nowrap}
+.old-tags i.ok{background:var(--ok-soft);color:var(--ok)}
+.old-btns{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:4px}
+.old-btns .btn{height:48px;font-size:15px}

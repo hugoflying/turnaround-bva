@@ -528,3 +528,62 @@
   document.addEventListener('input', e => { if(e.target && /^FuelUplift/.test(e.target.id || '')) sync(); });
   window.syncUplifts = sync;
 })();
+
+/* ===== v3.32 (Hugo) : au lancement (ou au retour dans l'app), les vols datés d'avant la journée
+   d'exploitation en cours (3 h à 3 h) sont proposés à la fermeture, une fois par jour. Alerte sur les vols
+   non validés, sans AOBT (To ≠ BVA) ou sans AIBT (From ≠ BVA). ===== */
+(function(){
+  const pad = n => String(n).padStart(2, '0');
+  const opsDay = () => { const d = new Date(Date.now() - 3 * 36e5); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const tabs = () => { try{ const t = JSON.parse(localStorage.getItem('flightTabs') || '[]'); return Array.isArray(t) ? t.map(String) : []; }catch(e){ return []; } };
+  const data = id => { try{ return JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){ return {}; } };
+  let list = [];
+
+  function oldFlights(){
+    const today = opsDay();
+    return tabs().map(id => ({ id, d: data(id) })).filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f.d.Date || '') && f.d.Date < today).map(f => {
+      const d = f.d, up = k => String(d[k] || '').trim().toUpperCase(), has = k => !!String(d[k] || '').trim();
+      const fno = (d.akMeta?.depFF || d.akMeta?.arrFF || (up('Cie') + up('NVol')) || 'Vol').toUpperCase();
+      const warn = [];
+      if(!has('ValideLe')) warn.push('Non validé');
+      if(up('To') && up('To') !== 'BVA' && !has('AOBT')) warn.push('AOBT manquante');
+      if(up('From') && up('From') !== 'BVA' && !has('AIBT')) warn.push('AIBT manquante');
+      const [y, m, j] = d.Date.split('-');
+      return { id: f.id, fno, route: (up('From') || '???') + ' → ' + (up('To') || '???'), date: j + '/' + m, warn };
+    });
+  }
+  function show(){
+    const box = document.getElementById('oldModal'); if(!box) return;
+    const n = list.length, bad = list.filter(f => f.warn.length).length;
+    document.getElementById('oldSub').textContent = n + (n > 1 ? ' vols encore ouverts' : ' vol encore ouvert') + (bad ? ' · ' + bad + ' à vérifier' : '');
+    document.getElementById('oldList').innerHTML = list.map(f =>
+      '<button type="button" class="old-row' + (f.warn.length ? ' is-warn' : '') + '" onclick="uiOldOpen(\'' + esc(f.id) + '\')">'
+      + '<span class="old-main"><b>' + esc(f.fno) + '</b><span>' + esc(f.route) + ' · ' + esc(f.date) + '</span></span>'
+      + '<span class="old-tags">' + (f.warn.length ? f.warn.map(w => '<i>' + esc(w) + '</i>').join('') : '<i class="ok">Validé</i>') + '</span></button>').join('');
+    document.getElementById('oldCloseAll').textContent = bad ? 'Tout fermer quand même' : 'Tout fermer';
+    box.style.display = 'flex';
+  }
+  function check(){
+    if(document.body.classList.contains('pv-locked')) return;
+    if(window.demoActive && window.demoActive()) return;
+    let seen = null; try{ seen = localStorage.getItem('oldAskDay'); }catch(e){}
+    if(seen === opsDay()) return;
+    list = oldFlights();
+    if(list.length) show();
+  }
+  const done = () => { try{ localStorage.setItem('oldAskDay', opsDay()); }catch(e){} const b = document.getElementById('oldModal'); if(b) b.style.display = 'none'; };
+  window.uiOldKeep = done;
+  window.uiOldOpen = id => { done(); try{ window.uiOpenFlight ? uiOpenFlight(id) : switchTab(id); }catch(e){} };
+  window.uiOldCloseAll = () => {
+    const ids = list.map(f => f.id); done();
+    ids.forEach(id => { try{ _tabCloseId = id; confirmCloseTab(); }catch(e){ try{ deleteTab(id); }catch(_){} } });
+    try{ renderRecap?.(); }catch(e){}
+  };
+  window.uiOldCheck = check;
+  window.addEventListener('load', () => setTimeout(check, 1500));
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') setTimeout(check, 800); });
+  // Après la connexion (mot de passe) : l'écran de code masquait l'app
+  let locked = document.body.classList.contains('pv-locked');
+  new MutationObserver(() => { const l = document.body.classList.contains('pv-locked'); if(locked && !l) setTimeout(check, 800); locked = l; }).observe(document.body, { attributes:true, attributeFilter:['class'] });
+})();

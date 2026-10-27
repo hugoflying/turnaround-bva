@@ -1487,6 +1487,9 @@ function doValidate() {
     body += faitsTxt + '\n';
   }
 
+  // v3.32 : vol validé (rapport envoyé), pour l'alerte des vols des jours précédents
+  try{ const vl = document.getElementById('ValideLe'); if(vl){ vl.value = new Date().toISOString(); saveCurrentTabData(); } }catch(e){}
+
   window.location.href =
     `mailto:?subject=${encodeURIComponent(titre)}&body=${encodeURIComponent(body)}`;
 }

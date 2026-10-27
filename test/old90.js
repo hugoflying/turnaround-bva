@@ -1,0 +1,26 @@
+// v3.32 : vols des jours précédents proposés à la fermeture, avec alertes (non validé, AOBT/AIBT manquante)
+const { chromium } = require('playwright');
+const out = process.argv[2] || '/tmp';
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
+const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
+const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const o=[];
+ window.demoActive=()=>false; localStorage.removeItem('oldAskDay');
+ const ids=JSON.parse(localStorage.flightTabs); const y=new Date(Date.now()-27*36e5), iso=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0');
+ const put=(id,f)=>{ const d=JSON.parse(localStorage.getItem('tab-'+id)); Object.assign(d,f); localStorage.setItem('tab-'+id,JSON.stringify(d)); };
+ switchTab(ids[2]); await W(200);
+ put(ids[0],{Date:iso, From:'OPO', To:'OPO', AIBT:'17:10', AOBT:'17:44', ValideLe:'2026-10-26T18:00:00Z'});
+ put(ids[1],{Date:iso, From:'VIE', To:'BVA', AIBT:'', AOBT:'', ValideLe:''});
+ uiOldCheck(); await W(200);
+ const m=document.getElementById('oldModal');
+ o.push('ouvert:'+(m.style.display==='flex')+' sous-titre:'+document.getElementById('oldSub').textContent);
+ o.push([...document.querySelectorAll('.old-row')].map(r=>r.innerText.replace(/\s+/g,' ')).join(' / '));
+ return o.join(' | '); });
+console.log(r, errs.join(';'));
+await p.screenshot({path:out+'/old.png'});
+const r2=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const n0=JSON.parse(localStorage.flightTabs).length;
+ uiOldCloseAll(); await W(500); const n1=JSON.parse(localStorage.flightTabs).length;
+ localStorage.removeItem('x'); uiOldCheck(); await W(100);
+ return 'avant:'+n0+' après:'+n1+' fermé:'+(document.getElementById('oldModal').style.display==='none')+' redemande:'+(document.getElementById('oldModal').style.display==='flex'); });
+console.log(r2, errs.join(';')); await b.close(); })();
