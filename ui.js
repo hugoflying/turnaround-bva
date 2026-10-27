@@ -711,12 +711,16 @@ function clockMin(){
   // v3.08 (Hugo) : vol parti = onglet compact en fin de bande ; 30 min après l'AOBT il quitte la bande
   // (reste dans Récap « Terminés », un appui le rouvre). Jamais pendant qu'on est dessus (hors Récap).
   const GONE_MIN = 30;
+  // v3.30 (Hugo : vol parti hier soir encore dans la bande le matin) : une AOBT est toujours passée.
+  // Les heures n'ont pas de date : 17:44 vu à 07:55 semblait « dans 10 h ». On compte donc le temps écoulé
+  // modulo 24 h (une AOBT jusqu'à 1 h dans le futur reste « à venir », pour les petites saisies en avance).
+  const aobtAgo = f => { if(f.aobt == null) return null; const d = (((nowMin() - f.aobt) % 1440) + 1440) % 1440; return d > 1380 ? d - 1440 : d; };
   window.uiTabState = function(id){
     try{
       const f = flightInfo(id);
       if(!f.done) return '';
       const onIt = f.cur && (document.body.dataset.panel !== 'vols' || String(id) === window._keepGoneId);
-      const ago = f.aobt != null ? nowMin() - f.aobt : 0;
+      const ago = aobtAgo(f) ?? 0;
       return (!onIt && ago >= GONE_MIN) ? 'hidden' : 'gone';
     }catch(e){ return ''; }
   };
@@ -733,7 +737,7 @@ function clockMin(){
     // v3.18 (Hugo) : rouvert depuis Récap = on le garde pour le consulter, jusqu'à ce qu'on choisisse un autre vol
     if(String(currentTabId) === window._keepGoneId) return;
     const f = flightInfo(currentTabId);
-    if(!f.done || f.aobt == null || nowMin() - f.aobt < GONE_MIN) return;
+    if(!f.done || f.aobt == null || aobtAgo(f) < GONE_MIN) return;
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
     if(window.uiSortedTabIds) ids = window.uiSortedTabIds(ids);
     const next = ids.find(id => id !== String(currentTabId) && window.uiTabState(id) !== 'hidden');
