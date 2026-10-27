@@ -711,10 +711,23 @@ function clockMin(){
   // v3.08 (Hugo) : vol parti = onglet compact en fin de bande ; 30 min après l'AOBT il quitte la bande
   // (reste dans Récap « Terminés », un appui le rouvre). Jamais pendant qu'on est dessus (hors Récap).
   const GONE_MIN = 30;
-  // v3.30 (Hugo : vol parti hier soir encore dans la bande le matin) : une AOBT est toujours passée.
-  // Les heures n'ont pas de date : 17:44 vu à 07:55 semblait « dans 10 h ». On compte donc le temps écoulé
-  // modulo 24 h (une AOBT jusqu'à 1 h dans le futur reste « à venir », pour les petites saisies en avance).
-  const aobtAgo = f => { if(f.aobt == null) return null; const d = (((nowMin() - f.aobt) % 1440) + 1440) % 1440; return d > 1380 ? d - 1440 : d; };
+  // v3.30 (Hugo : vol parti hier soir encore dans la bande le matin) : temps écoulé depuis l'AOBT.
+  // v3.31 (Hugo : chaque vol est daté) : on part de la date du vol + AOBT (recalée sur le SOBT si minuit
+  // passe entre les deux). Sans date utilisable : AOBT toujours passée, modulo 24 h (jusqu'à 1 h d'avance admise).
+  const aobtAgo = f => {
+    if(f.aobt == null) return null;
+    let d = {}; if(!f.cur){ try{ d = JSON.parse(localStorage.getItem('tab-' + f.id) || '{}'); }catch(e){} }
+    const g = k => String((f.cur ? val(k) : d[k]) || '').trim();
+    const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(g('Date')), ao = toMin(g('AOBT')), so = toMin(g('SOBT'));
+    if(ymd && ao != null){
+      let m = ao; if(so != null){ if(m - so > 720) m -= 1440; else if(so - m > 720) m += 1440; }
+      const y = +ymd[1], mo = +ymd[2] - 1, da = +ymd[3];
+      const t = (typeof isUTC !== 'undefined' && isUTC) ? Date.UTC(y, mo, da, 0, m) : new Date(y, mo, da, 0, m).getTime();
+      const ago = (Date.now() - t) / 60000;
+      if(ago >= -60) return ago;
+    }
+    const r = (((nowMin() - f.aobt) % 1440) + 1440) % 1440; return r > 1380 ? r - 1440 : r;
+  };
   window.uiTabState = function(id){
     try{
       const f = flightInfo(id);
