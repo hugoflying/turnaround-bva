@@ -95,7 +95,11 @@ function clockMin(){
     // v3.15 (Hugo, option C) : parking et PAF en pastilles en haut à droite (PAF = valeur seule, ex. S1)
     const pk = txt('kvPark'), bc = txt('kvBC');
     const pkEl = document.getElementById('fhPk'), bcEl = document.getElementById('fhPaf');
-    pkEl.hidden = !isSet(pk); pkEl.textContent = isSet(pk) ? 'P' + pk.replace(/^P/i,'') : '';
+    // v3.35 (Hugo, option B) : parking en gros bloc blanc devant le numéro de vol.
+    // Retour à l'ancienne pastille (v3.15) : mettre PK_BLOCK = false.
+    const PK_BLOCK = true, pkB = document.getElementById('fhPkB');
+    pkEl.hidden = PK_BLOCK || !isSet(pk); pkEl.textContent = isSet(pk) ? 'P' + pk.replace(/^P/i,'') : '';
+    if(pkB){ pkB.hidden = !PK_BLOCK || !isSet(pk); document.getElementById('fhPkBn').textContent = isSet(pk) ? pk.replace(/^P/i,'') : ''; }
     bcEl.hidden = !isSet(bc); bcEl.textContent = isSet(bc) ? bc : '';
     // Avancement : de l'arrivée (AIBT, sinon HLE si pas d'arrivée) au départ (EOBT, sinon SOBT)
     // v3.28 (Hugo) : vol pas encore arrivé (SIBT sans AIBT) = barre en attente, elle ne part qu'à l'AIBT

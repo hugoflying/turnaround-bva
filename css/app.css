@@ -1508,3 +1508,10 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .old-tags i.ok{background:var(--ok-soft);color:var(--ok)}
 .old-btns{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:4px}
 .old-btns .btn{height:48px;font-size:15px}
+
+/* ===== v3.35 (Hugo, option B) : parking en bloc blanc devant le numéro de vol ===== */
+.fh-hero{align-items:center}
+.fh-pkb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:58px;height:58px;padding:0 6px;border-radius:12px;background:#fff;color:#0B1E4F;margin-right:12px}
+.fh-pkb[hidden]{display:none}
+.fh-pkb small{font-size:10px;font-weight:800;letter-spacing:.12em;opacity:.65;line-height:1}
+.fh-pkb b{font-size:26px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
