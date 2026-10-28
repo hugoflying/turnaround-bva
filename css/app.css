@@ -1515,3 +1515,7 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .fh-pkb[hidden]{display:none}
 .fh-pkb small{font-size:10px;font-weight:800;letter-spacing:.12em;opacity:.65;line-height:1}
 .fh-pkb b{font-size:26px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* v3.35.2 (Hugo) : centrage optique du bloc STAND (espacement final du libellé, chiffres proportionnels) */
+.fh-pkb small{margin-right:-.12em}
+.fh-pkb b{font-variant-numeric:proportional-nums;margin-top:1px}
+.fh-pkb{padding-top:2px}
