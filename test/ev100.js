@@ -1,0 +1,32 @@
+// v3.41 : événement à plusieurs actions (heure / début / fin), détails des vols de démo, ordre des codes retard
+const { chromium } = require('playwright');
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1280,height:900}});
+const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); }); await p.reload(); await p.waitForTimeout(4500);
+await p.goto('http://localhost:8803/admin.html'); await p.waitForTimeout(700);
+const o={};
+await p.evaluate(()=>{ go('events'); evAdd(); const i=C.events.length-1; evSet(i,'t','Remorquage'); evSet(i,'side','dep');
+  C.events[i].items=[{id:'ap',t:'Appel remorqueur',r:'h'},{id:'ar',t:'Arrivée remorqueur',r:'d'},{id:'de',t:'Départ remorqueur',r:'f'}]; save(); render(); });
+o.sum = await p.evaluate(()=>document.getElementById('evs-'+(C.events.length-1)).textContent);
+await p.screenshot({path:process.argv[2]+'/adm-ev.png', fullPage:false});
+await p.evaluate(()=>{ go('demo'); const f=dEdit(); f.forEach(x=>x.open=false); const x=f[0]; x.open=true; x.sibt='-60'; x.aibt='-58'; x.sobt='-25'; x.aobt='non'; x.fill='none';
+  x.tm={PremierDebarque:'AIBT+2',DernierDebarque:'AIBT+9',AppelNayak:'-30',ArriveeNayak:'-28',DepartNayak:'-20',['Cx_'+C.events[C.events.length-1].id+'_ap']:'AIBT+15',['Cx_'+C.events[C.events.length-1].id+'_ar']:'AIBT+20',['Cx_'+C.events[C.events.length-1].id+'_de']:'AIBT+31'};
+  x.evs=['gpu','cx-'+C.events[C.events.length-1].id]; x.val={ArrBAGS:'77',ArrPAX_MAIN:'150',FinalBAGS:'60',BlockFuel:'7800'}; x.notes='AIBT+3 · SNY · DERUHU\n-10 · BAGS OK\nnote sans heure';
+  dOpen.add(0); save(); render(); });
+await p.screenshot({path:process.argv[2]+'/adm-det.png', fullPage:true});
+// codes retard : tri
+await p.evaluate(()=>{ go('compagnies'); });
+await p.evaluate(()=>{ sel='FR'; cur='fiche'; tab='dl'; render(); });
+await p.waitForTimeout(800);
+await p.evaluate(()=>{ dlAdd(); dlOwn()[0]=['10','Test dix','']; save(); dlSort(); });
+o.dlOrder = await p.evaluate(()=>dlOwn().slice(0,6).map(r=>r[0]).join(' '));
+o.subRows = await p.evaluate(()=>document.querySelectorAll('.dlt tr.dsub').length);
+await p.screenshot({path:process.argv[2]+'/adm-dl.png'});
+await p.evaluate(()=>publish()); await p.waitForTimeout(500);
+await p.goto('http://localhost:8803/'); await p.waitForTimeout(4000);
+o.tab = await p.evaluate(()=>{ const d=JSON.parse(localStorage.getItem('tab-'+JSON.parse(localStorage.flightTabs)[0])); const ks=Object.keys(d).filter(k=>/^Cx_|Nayak|Debarque$|ArrBAGS|ArrPAX_MAIN|FinalBAGS|BlockFuel|AIBT|FaitsSaillants|ArriveeFuel/.test(k)&&d[k]); return Object.fromEntries(ks.map(k=>[k,d[k]])); });
+o.panels = await p.evaluate(()=>[...document.querySelectorAll('.ev-panel')].filter(x=>x.style.display!=='none').map(x=>x.querySelector('.ev-h b').textContent+':'+[...x.querySelectorAll('label')].map(l=>l.textContent.trim()).join('/')));
+o.tl = await p.evaluate(()=>{ try{ switchTimingPanel('tl'); renderTimeline(); }catch(e){ return 'err '+e.message; } return document.getElementById('timelineCard').innerText.replace(/\s+/g,' ').match(/Remorquage[^A-Z]{0,20}|Appel remorqueur|Nayak/g); });
+o.list = await p.evaluate(()=>{ const e=[...document.querySelectorAll('*')].length; return typeof uiEvOpen; });
+console.log(JSON.stringify(o,null,1)); console.log(errs.join(';')||'no errors'); await b.close(); })();

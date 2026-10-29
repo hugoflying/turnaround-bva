@@ -34,7 +34,7 @@ window.DL_CODES = {"FR":{"src":"Ryanair GOPS IATA · avr. 2024 rév. 1.7","codes
     return codes().filter(([c]) => c.startsWith(q) || (q.length === 1 && c.startsWith('0' + q)) || (/^\d[A-Z]$/.test(q) && c === '0' + q));
   }
   function row(c, t, d, hit){
-    return '<button type="button" class="dlc-row' + (hit ? ' is-hit' : '') + (c.length > 2 ? ' is-sub' : '') + '" data-code="' + esc(c) + '">'
+    return '<button type="button" class="dlc-row' + (hit ? ' is-hit' : '') + (/^\d+[A-Z]+$/.test(c) ? ' is-sub' : '') + '" data-code="' + esc(c) + '">'
       + '<b class="num">' + esc(c) + '</b><span>' + esc(t) + (d && !/^[A-Z]{2}$/.test(d) ? '<small>' + esc(d) + '</small>' : '') + '</span>'
       + (d && /^[A-Z]{2}$/.test(d) ? '<i>' + esc(d) + '</i>' : '') + '</button>';
   }

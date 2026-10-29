@@ -1359,9 +1359,9 @@ function doValidate() {
   });
   // v3.37 : événements ajoutés dans l'admin (démo)
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
-    const [a, b] = cfgEvFields(e), lb = String(e.t).toUpperCase();
-    if(b){ if(t(a) || t(b)) body += r(lb, `${t(a)||'--:--'} → ${t(b)||'--:--'}`); }
-    else if(t(a)) body += r(lb, t(a));
+    const { pairs, points } = cfgEvSplit(e), one = pairs.length === 1;
+    pairs.forEach(([a, b]) => { if(t(a.f) || t(b.f)) body += r((one ? e.t : a.t).toUpperCase(), `${t(a.f)||'--:--'} → ${t(b.f)||'--:--'}`); });
+    points.forEach(x => { if(t(x.f)) body += r(x.t.toUpperCase(), t(x.f)); });
   });
 
   body += br();

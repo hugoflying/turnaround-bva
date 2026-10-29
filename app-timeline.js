@@ -587,8 +587,9 @@ function renderTimeline(){
     ['AnnonceINAD','Annonce INAD'], ['AppelNayak','Appel Nayak'],
   ];
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {   // v3.37 : événements ajoutés dans l'admin (démo)
-    const [a, b] = cfgEvFields(e);
-    if(b) EV_SPANS.push([e.t, a, b]); else EV_POINTS.push([a, e.t]);
+    const { pairs, points } = cfgEvSplit(e), one = pairs.length === 1;
+    pairs.forEach(([a, b]) => EV_SPANS.push([one ? e.t : a.t, a.f, b.f]));
+    points.forEach(x => EV_POINTS.push([x.f, x.t]));
   });
   EV_POINTS.forEach(([id]) => POINT_EVENTS.add(id));
   function eventRows(){

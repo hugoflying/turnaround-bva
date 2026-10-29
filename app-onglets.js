@@ -743,8 +743,8 @@ function generateTimingFields(){
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
     const z = document.getElementById(e.side === 'arr' ? 'evZoneArr' : 'evZone'); if(!z) return;
     const t = String(e.t).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-    const col = /^#[0-9a-f]{3,8}$/i.test(e.c || '') ? e.c : '#64748b', [a, b] = cfgEvFields(e);
-    const f = b ? fieldHTML(a, 'Début ' + t) + fieldHTML(b, 'Fin ' + t) : fieldHTML(a, t);
+    const col = /^#[0-9a-f]{3,8}$/i.test(e.c || '') ? e.c : '#64748b';
+    const f = cfgEvItems(e).map(x => fieldHTML(x.f, x.t.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])))).join('');
     z.insertAdjacentHTML('beforeend', `<div id="panel-cx-${e.id}" class="card mb-3 ev-panel" data-ev="cx-${e.id}" style="display:none;">
       <div class="ev-h"><i style="background:${col}"></i><b>${t}</b><button type="button" class="ev-x" onclick="toggleDepExtra('cx-${e.id}')" aria-label="Masquer ${t}">×</button></div>
       <div class="card-content"><div class="grid-auto">${f}</div></div></div>`);

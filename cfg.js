@@ -62,7 +62,21 @@ function cfgEvents(){
   if(!window.CFG || !Array.isArray(window.CFG.events)) return [];
   return window.CFG.events.filter(e => e && cfgId(e.id) && e.t).map(e => ({ ...e, id: cfgId(e.id) }));
 }
-function cfgEvFields(e){ return e.kind === 'span' ? ['CxD_' + e.id, 'CxF_' + e.id] : ['Cx_' + e.id]; }
+// v3.41 : un événement regroupe 1 à 4 actions, chacune avec son nom et son rôle : h = une heure, d = début, f = fin
+// (Nayak : Appel h, Arrivée d, Départ f). Les événements v3.37 (kind point / span) restent lus tels quels.
+function cfgEvItems(e){
+  if(Array.isArray(e.items) && e.items.length)
+    return e.items.filter(x => x && String(x.t || '').trim()).slice(0, 4).map((x, j) => ({ f: x.f || ('Cx_' + e.id + '_' + (cfgId(x.id) || j)), t: String(x.t).trim(), r: ['d','f'].includes(x.r) ? x.r : 'h' }));
+  return e.kind === 'span' ? [{ f:'CxD_' + e.id, t:'Début ' + e.t, r:'d' }, { f:'CxF_' + e.id, t:'Fin ' + e.t, r:'f' }] : [{ f:'Cx_' + e.id, t:e.t, r:'h' }];
+}
+function cfgEvFields(e){ return cfgEvItems(e).map(x => x.f); }
+// Chaque début va avec la fin qui le suit : [[début, fin]] ; le reste se lit comme des heures seules
+function cfgEvSplit(e){
+  const it = cfgEvItems(e), pairs = [], used = new Set();
+  it.forEach((x, j) => { if(x.r !== 'd') return; const k = it.findIndex((y, n) => n > j && y.r === 'f' && !used.has(n)); if(k > 0){ used.add(j); used.add(k); pairs.push([x, it[k]]); } });
+  return { pairs, points: it.filter((x, j) => !used.has(j)) };
+}
+function cfgEvDesc(e){ return e.d || cfgEvItems(e).map(x => x.t).join(', '); }
 function cfgEvHidden(k){ return !!(window.CFG && Array.isArray(window.CFG.evHide) && window.CFG.evHide.includes(k)); }
 function cfgWords(){ return (window.CFG && Array.isArray(window.CFG.words) && window.CFG.words.length) ? window.CFG.words.map(String) : null; }
 // Liste de codes retard propre à la compagnie (ou à celle qu'elle copie), sinon null

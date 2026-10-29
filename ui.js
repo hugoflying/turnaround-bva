@@ -172,7 +172,7 @@ function clockMin(){
   // v3.37 : événements ajoutés dans l'admin (démo)
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
     const k = 'cx-' + e.id;
-    EVENTS.push({ k, side: e.side || 'dep', t: e.t, d: e.d || (e.kind === 'span' ? 'Début et fin' : 'Heure'), c: e.c || '#64748b', cies: e.cies });
+    EVENTS.push({ k, side: e.side || 'dep', t: e.t, d: cfgEvDesc(e), c: e.c || '#64748b', cies: e.cies });
   });
   const evAllowed = e => {
     if(typeof cfgEvHidden === 'function' && cfgEvHidden(e.k)) return false;
@@ -222,7 +222,7 @@ function clockMin(){
     cleaning:['DebutCleaningCabine','FinCleaningCabine'], vidange:['DebutVidangeToilettes','FinVidangeToilettes'],
     eau:['DebutEauPotable','FinEauPotable'], degivrage:['DebutDegivrage','FinDegivrage']
   };
-  if(typeof cfgEvents === 'function') cfgEvents().filter(e => e.kind === 'span').forEach(e => { EV_PAIRS['cx-' + e.id] = cfgEvFields(e); });
+  if(typeof cfgEvents === 'function') cfgEvents().forEach(e => { const p = cfgEvSplit(e).pairs[0]; if(p) EV_PAIRS['cx-' + e.id] = [p[0].f, p[1].f]; });
   function syncEvDurations(){
     const nowM = Math.floor(clockMin());
     Object.keys(EV_PAIRS).forEach(k => {
@@ -507,9 +507,24 @@ function clockMin(){
       ['1','2','3'].forEach(n => { set('DLcode' + n, ''); set('DLduree' + n, ''); });
       String(sc.cus.dl).split(/[,;]/).map(x => x.trim().split(/\s+/)).filter(x => x[0]).slice(0, 3).forEach(([c, d], j) => { set('DLcode' + (j + 1), c.toUpperCase()); if(d) set('DLduree' + (j + 1), d); });
     }
+    // v3.41 : détails saisis dans l'admin pour ce vol (heures, événements, loads, fuel), par-dessus le remplissage auto
+    const cus = sc.cus || {};
+    const tmRel = v => {   // « AIBT+3 », « AOBT-5 » : par rapport au vol ; sinon comme demoRel (-20, +15, 10:35)
+      const m = /^(SIBT|AIBT|SOBT|EOBT|CTOT|AOBT)\s*([+-]\s*\d+)?$/i.exec(String(v).trim().replace(/[−–]/g, '-'));
+      if(m){ const b = { SIBT:sibt, AIBT:A, SOBT:D, EOBT:sc.eobt, CTOT:sc.ctot, AOBT:off }[m[1].toUpperCase()]; return b == null ? null : b + (m[2] ? parseInt(m[2].replace(/\s/g, ''), 10) : 0); }
+      const r = demoRel(v, T0); return typeof r === 'number' ? r : null;
+    };
+    Object.entries(cus.tm || {}).forEach(([id, v]) => { if(/^vide$/i.test(String(v).trim())) set(id, ''); else { const r = tmRel(v); if(r != null) set(id, hm(r)); } });
+    Object.entries(cus.val || {}).forEach(([id, v]) => set(id, /^vide$/i.test(String(v).trim()) ? '' : String(v)));
+    if(typeof updateAllCalculations === 'function') updateAllCalculations();
     // Notes du Clavier, horodatées au moment des faits
     const notes = [];
-    if(!bare) (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
+    if(String(cus.notes || '').trim()){
+      String(cus.notes).split('\n').map(x => x.trim()).filter(Boolean).forEach(x => {
+        const m = /^([^·]+?)\s*·\s*(.+)$/.exec(x), r = m ? tmRel(m[1]) : null;
+        notes.push(r != null ? hm(r) + ' · ' + m[2] : x);
+      });
+    } else if(!bare) (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
     if(notes.length) set('FaitsSaillants', notes.join('\n'));
     if(typeof updateAllCalculations === 'function') updateAllCalculations();
     saveCurrentTabData();
