@@ -1546,3 +1546,7 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .time-wrap.tw-plan.arr-late .tw-display::after,.time-wrap.tw-plan.arr-ok .tw-display::after{animation:arrLive 1.8s ease-out infinite}
 @keyframes arrLive{0%{box-shadow:0 0 0 0 rgba(var(--pc),.55);opacity:1}60%{box-shadow:0 0 0 7px rgba(var(--pc),0);opacity:.75}100%{box-shadow:0 0 0 0 rgba(var(--pc),0);opacity:1}}
 @media (prefers-reduced-motion:reduce){.time-wrap.tw-plan .tw-display::after{animation:none!important}}
+
+/* v3.44 : mention sous les horaires quand une pastille est affichée */
+.arr-dot-help{display:flex;align-items:center;gap:7px}.arr-dot-help[hidden]{display:none}
+.arr-dot-help .dh-dot{width:7px;height:7px;border-radius:50%;flex:none;background:linear-gradient(90deg,#D7263D 50%,#1F9D57 50%)}

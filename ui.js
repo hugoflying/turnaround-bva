@@ -83,11 +83,25 @@ function clockMin(){
     const w = document.querySelector('.time-wrap[data-id="SIBT"]'); if(!w) return;
     const v = id => (document.getElementById(id)?.value || '').trim();
     const tm = s => { const m = /^(\d{1,2}):(\d{2})/.exec(s); return m ? +m[1]*60 + +m[2] : null; };
+    const now = clockMin();
     const si = tm(v('SIBT')), on = si != null && !v('AIBT');
     let late = false;
-    if(on){ const now = clockMin(), t = flightRel(si, v('Date'), si, now); late = t != null && now >= t + 1; }
+    if(on){ const t = flightRel(si, v('Date'), si, now); late = t != null && now >= t + 1; }
     w.classList.toggle('arr-late', on && late);
     w.classList.toggle('arr-ok', on && !late);
+    /* v3.44 (Hugo) : même pastille sur SOBT tant que l'AOBT est vide.
+       Rouge = EOBT calculée après la SOBT, ou SOBT dépassée. */
+    const wd = document.querySelector('.time-wrap[data-id="SOBT"]');
+    const so = tm(v('SOBT')), onD = so != null && !v('AOBT');
+    let lateD = false;
+    if(onD){
+      const t = flightRel(so, v('Date'), so, now);
+      const eo = tm(document.getElementById('timer-eobt')?.textContent || '');
+      let d = eo == null ? 0 : eo - so; if(d > 720) d -= 1440; if(d < -720) d += 1440;
+      lateD = d > 0 || (t != null && now >= t + 1);
+    }
+    if(wd){ wd.classList.toggle('arr-late', onD && lateD); wd.classList.toggle('arr-ok', onD && !lateD); }
+    const h = document.getElementById('dotHelp'); if(h) h.hidden = !(on || onD);
   }
   window.uiSyncArrDot = syncArrDot;
   function syncHero(){
