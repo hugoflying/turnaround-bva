@@ -86,6 +86,9 @@ function clockMin(){
     const csEl = document.getElementById('fhCs');
     const showCs = cs && cs.replace(/\s/g,'') !== fno.textContent.replace(/\s/g,'');
     csEl.hidden = !showCs; csEl.textContent = showCs ? '(' + cs + ')' : '';
+    // v3.38 : vol annulé → pastille rouge (côté précisé quand l'autre côté de la rotation a lieu)
+    const cx = val('AkAnnule'), cxEl = document.getElementById('fhCx');
+    if(cxEl){ cxEl.hidden = !cx; cxEl.textContent = !cx ? '' : /SEUL|ARR,DEP/.test(cx) ? 'ANNULÉ' : cx === 'DEP' ? 'DÉPART ANNULÉ' : 'ARRIVÉE ANNULÉE'; }
     const parts = [];
     const from = txt('kvFrom'), to = txt('kvTo');
     if(isSet(from) || isSet(to)) parts.push((isSet(from)?from:'---') + ' → ' + (isSet(to)?to:'---'));
@@ -588,6 +591,7 @@ function clockMin(){
         const f = { id:'demo-a' + i, linkedId:'demo-d' + i, fullFlightNumber:cie + arr, callsign:(cs[cie] || cie) + arr, reg, acTypeIcao:type, pkg:'P' + park, adepIata:ap, sibt:T(sc.sibt), borderControl: row[8] || '' };
         if(past(sc.A)) f.aibt = T(sc.A); else f.eibt = T(sc.A + (extra && i % 2 ? 9 : 0));
         f.status = past(sc.A) ? 'TERMINATED' : (past(sc.A - 120) ? 'IN_FLIGHT' : 'SCHEDULED');
+        if(i === 104){ f.status = 'CANCELLED'; delete f.aibt; }
         out.push(f);
       } else {
         const f = { id:'demo-d' + i, linkedId:'demo-a' + i, fullFlightNumber:cie + dep, callsign:(cs[cie] || cie) + dep, reg, acTypeIcao:type, pkg:'P' + park, adesIata:ap, sobt:T(sc.D) };
@@ -595,6 +599,7 @@ function clockMin(){
         else if(sc.eobt > sc.D) f.eobt = T(sc.eobt);
         if(past(sc.off)){ f.aobt = T(sc.off); f.atot = T(sc.off + 8); f.status = 'IN_FLIGHT'; }
         else f.status = 'SCHEDULED';
+        if(i === 104) f.status = 'CANCELLED';   // v3.38 : un vol annulé dans la démo (FR4721/4722)
         out.push(f);
       }
     };
@@ -637,7 +642,10 @@ function clockMin(){
   function syncTabRings(){
     document.querySelectorAll('#tab-bar .flt[data-tab]').forEach(t => {
       const ring = t.querySelector('.flt-cie'); if(!ring) return;
-      let r = null;
+      let r = null, cx = '';
+      if(t.classList.contains('is-on')) cx = val('AkAnnule');
+      else { try{ cx = (JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}').AkAnnule) || ''; }catch(e){} }
+      t.classList.toggle('is-cx', !!cx);   // v3.38 : onglet d'un vol annulé
       if(t.classList.contains('is-on')){
         r = ringRatio(rotStart(toMin(val('AIBT')), toMin(val('SIBT')), toMin(txt('timer-h40'))), toMin(txt('timer-eobt')) ?? toMin(val('SOBT')), toMin(val('AOBT')), val('Date'), toMin(val('SOBT')) ?? toMin(val('SIBT')));
       } else {

@@ -1519,3 +1519,19 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .fh-pkb small{margin-right:-.12em}
 .fh-pkb b{font-variant-numeric:proportional-nums;margin-top:1px}
 .fh-pkb{padding-top:2px}
+
+/* ===== v3.38 : vols annulés (Hugo : avertir) ===== */
+.akc-cx{opacity:.55}
+.akc-cx .akc-fn,.akc-cx .akc-tm{text-decoration:line-through;text-decoration-thickness:1.5px}
+.fh-cx{display:inline-block;margin-left:8px;vertical-align:middle;font-size:11px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--crit,#D6404A);border-radius:6px;padding:2px 7px}
+.fh-cx[hidden]{display:none}
+#tab-bar .flt.is-cx .flt-n{text-decoration:line-through;text-decoration-thickness:1.5px}
+#tab-bar .flt.is-cx .flt-cie b{color:var(--crit,#D6404A)}
+#akCxModal{align-items:center;justify-content:center}
+.akcx-card{max-width:360px;margin:0 16px;padding:22px 20px 18px;text-align:center;border-radius:18px}
+.akcx-ic{width:44px;height:44px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:22px;color:#fff;background:var(--crit,#D6404A)}
+.akcx-t{display:block;font-size:17px;margin-bottom:6px}
+.akcx-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.45}
+.akcx-b{display:flex;gap:8px}.akcx-b .btn{flex:1;min-height:44px;font-weight:700;border-radius:12px}
+.akcx-ok{background:var(--crit,#D6404A)!important;color:#fff!important;border-color:transparent!important}
+.akcx-no{background:var(--bg)!important;color:var(--fg)!important;border:1px solid var(--line)!important}

@@ -348,7 +348,7 @@ function _renderAKListWithRza(pairs, list, akIdToRza){
     const delta = (dly != null && dly !== 0) ? '<small class="akc-d ' + dCls + '">' + (dly > 0 ? '+' : '−') + Math.abs(dly) + '</small>' : '';
     const safeId = escapeHtml(String(f.id || f._id || ''));
     const lbl = sx === 'A' ? (flow==='ARR' ? 'AIBT' : 'AOBT') : (sx === 'S' ? (flow==='ARR' ? 'SIBT' : 'SOBT') : 'Estimé');
-    return '<button type="button" class="akc-s akc-' + fl + (done ? ' akc-done' : '') + '" onclick="_akClickFlight(\'' + safeId + '\',\'' + flow + '\')" title="' + lbl + '">'
+    return '<button type="button" class="akc-s akc-' + fl + (done ? ' akc-done' : '') + (akIsCancelled(f) ? ' akc-cx' : '') + '" onclick="_akClickFlight(\'' + safeId + '\',\'' + flow + '\')" title="' + lbl + '">'
       + '<span class="akc-tm num">' + escapeHtml(t || '--:--') + delta + '</span>'
       + '<span class="akc-ap">' + escapeHtml(iata || '---') + '</span>'
       + '<span class="akc-fn">' + escapeHtml(ff || '—') + '</span>'
@@ -425,6 +425,32 @@ function akToggleSearch(){
   const f = box.querySelector('.akc-find'); if(f) f.classList.toggle('on', on);
 }
 
+// v3.38 (Hugo) : vol annulé → on peut l'ouvrir, mais après confirmation, et il reste marqué ANNULÉ
+function akIsCancelled(f){ return !!f && String(f.status || f.milestone || '').toUpperCase() === 'CANCELLED'; }
+// Côtés annulés de la rotation : '' | 'ARR' | 'DEP' | 'ARR,DEP' (+ ',SEUL' quand l'autre côté n'existe pas)
+function akCancelSides(f, flow){
+  const id = String(f.id || f._id || '');
+  const p = (window._akPairs || []).find(x => (x.arr && String(x.arr.id) === id) || (x.dep && String(x.dep.id) === id));
+  const legs = p ? [['ARR', p.arr], ['DEP', p.dep]] : [[flow, f]];
+  const out = legs.filter(([, l]) => akIsCancelled(l)).map(([s]) => s);
+  if(out.length && legs.filter(([, l]) => l).length === out.length) out.push('SEUL');
+  return out.join(',');
+}
+function akCancelAsk(f, go){
+  let m = document.getElementById('akCxModal');
+  if(!m){
+    m = document.createElement('div'); m.id = 'akCxModal'; m.className = 'sheet-modal'; m.style.display = 'none';
+    m.innerHTML = '<div class="sheet-card akcx-card"><div class="akcx-ic">!</div><b class="akcx-t"></b>'
+      + '<p>Ce vol est indiqué <strong>ANNULÉ</strong>. Ouvrez-le seulement s\'il reste quelque chose à traiter (avion à l\'arrivée, bagages, nettoyage…).</p>'
+      + '<div class="akcx-b"><button type="button" class="btn akcx-no">Retour</button><button type="button" class="btn akcx-ok">Ouvrir quand même</button></div></div>';
+    m.addEventListener('click', e => { if(e.target === m || e.target.closest('.akcx-no')) m.style.display = 'none'; });
+    document.body.appendChild(m);
+  }
+  m.querySelector('.akcx-t').textContent = ((f.fullFlightNumber || f.callsign || 'Vol') + '').toUpperCase() + ' annulé';
+  m.querySelector('.akcx-ok').onclick = () => { m.style.display = 'none'; go(); };
+  m.style.display = 'flex';
+}
+
 // ── Gestionnaire de clic AK — lookup par ID dans le cache ──────────────────
 function _akClickFlight(id, flow){
   const f = window._akFlightById && window._akFlightById[id];
@@ -432,6 +458,7 @@ function _akClickFlight(id, flow){
     console.warn('[AK] Vol introuvable dans le cache, id=', id);
     return;
   }
+  if(akIsCancelled(f)){ akCancelAsk(f, () => applyAKFlight(f, flow)); return; }
   applyAKFlight(f, flow);
 }
   
@@ -650,6 +677,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
   }
 
   try{
+    setValAK('AkAnnule', akCancelSides(f, flow));   // v3.38 : vol marqué ANNULÉ (en-tête, onglet)
     /* ===== champs communs ===== */
     setValAK('Immat', (f.reg || ''));
 
