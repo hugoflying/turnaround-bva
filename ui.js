@@ -1719,6 +1719,24 @@ function clockMin(){
         hs.style.top = hs.style.height = hs.style.bottom = '';
       }
     };
+    // v3.41.3 (Hugo, Galaxy : la case POIDS du LOAD finissait sous l'en-tête et l'onglet ARR/PREVI collés en haut) :
+    // sur Android seulement, une fois le clavier ouvert, on ramène la case entre l'en-tête et le clavier. iOS n'est pas touché (v3.26).
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const keepVisible = () => {
+      const el = document.activeElement; if(!isAndroid || !isField(el)) return;
+      const r = el.getBoundingClientRect(); if(!r.height) return;
+      const hd = document.querySelector('.fixed-header'), hr = hd && hd.offsetHeight ? hd.getBoundingClientRect() : null;
+      let top = hr ? Math.max(0, hr.bottom) : 0;
+      document.querySelectorAll('.ldm-header').forEach(h => { const b = h.getBoundingClientRect(); if(b.height && h.offsetParent && b.top <= top + 2) top = Math.max(top, b.bottom); });   // onglet ARR / PREVI collé
+      top += 8;
+      const vv = window.visualViewport, bottom = (vv ? vv.offsetTop + vv.height : window.innerHeight) - 8;
+      if(r.top < top) window.scrollBy(0, r.top - top);
+      else if(r.bottom > bottom) window.scrollBy(0, Math.min(r.bottom - bottom, r.top - top));
+    };
+    window._kbKeepVisible = keepVisible;
+    window.addEventListener('resize', () => setTimeout(keepVisible, 120));
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(keepVisible, 120));
+    document.addEventListener('focusin', () => { setTimeout(keepVisible, 350); setTimeout(keepVisible, 700); });
     window.addEventListener('resize', sync);
     if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => fitHome(document.body.classList.contains('kb-open'))); }
     document.addEventListener('focusin', () => setTimeout(sync, 300));
