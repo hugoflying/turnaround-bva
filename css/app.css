@@ -1540,3 +1540,9 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .time-wrap.tw-plan.arr-late .tw-display::after,.time-wrap.tw-plan.arr-ok .tw-display::after{content:"";width:9px;height:9px;border-radius:50%;margin-left:9px;flex:none}
 .time-wrap.tw-plan.arr-late .tw-display::after{background:#D7263D;box-shadow:0 0 0 4px rgba(215,38,61,.15)}
 .time-wrap.tw-plan.arr-ok .tw-display::after{background:#1F9D57;box-shadow:0 0 0 4px rgba(31,157,87,.15)}
+/* v3.43.1 (Hugo) : la pastille pulse doucement, effet « en live » */
+.time-wrap.tw-plan.arr-late .tw-display::after{--pc:215,38,61}
+.time-wrap.tw-plan.arr-ok .tw-display::after{--pc:31,157,87}
+.time-wrap.tw-plan.arr-late .tw-display::after,.time-wrap.tw-plan.arr-ok .tw-display::after{animation:arrLive 1.8s ease-out infinite}
+@keyframes arrLive{0%{box-shadow:0 0 0 0 rgba(var(--pc),.55);opacity:1}60%{box-shadow:0 0 0 7px rgba(var(--pc),0);opacity:.75}100%{box-shadow:0 0 0 0 rgba(var(--pc),0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.time-wrap.tw-plan .tw-display::after{animation:none!important}}
