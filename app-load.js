@@ -599,7 +599,7 @@ function renderTabs(){
   if(!Array.isArray(tabs)) tabs = [];
   if(window.uiSortedTabIds) tabs = window.uiSortedTabIds(tabs.map(String));
 
-  window._tabSig = tabs.slice().sort().map(id => id + ':' + (window.uiTabState ? window.uiTabState(id) : '')).join('|');
+  window._tabSig = tabs.slice().sort().map(id => id + ':' + (window.uiTabState ? window.uiTabState(id) : '') + (window.uiTabPhase ? window.uiTabPhase(id) : '')).join('|');
   tabs.forEach((id)=>{
     // v3.08 : vol parti depuis 30 min = seulement dans Récap
     const tState = window.uiTabState ? window.uiTabState(id) : '';
@@ -618,7 +618,9 @@ function renderTabs(){
     const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
     const manual = `${cie}${nvol}`.trim();
     let volRef, place;
-    if(depFF)      { volRef = depFF;  place = to;   }
+    // v3.42 (Hugo, choix « Suit la phase ») : rotation = l'arrivée tant qu'elle n'est pas finie, puis le départ
+    if(depFF && arrFF && window.uiTabPhase && window.uiTabPhase(id) === 'arr') { volRef = arrFF; place = from; }
+    else if(depFF) { volRef = depFF;  place = to;   }
     else if(arrFF) { volRef = arrFF;  place = from; }
     else           { volRef = manual; place = to;   }
 

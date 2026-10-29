@@ -788,8 +788,19 @@ function clockMin(){
   };
   function tabsSig(){
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]'); }catch(e){}
-    return (Array.isArray(ids) ? ids : []).map(String).sort().map(id => id + ':' + window.uiTabState(id)).join('|');
+    return (Array.isArray(ids) ? ids : []).map(String).sort().map(id => id + ':' + window.uiTabState(id) + window.uiTabPhase(id)).join('|');
   }
+  // v3.42 : phase d'une rotation pour l'onglet. 'arr' tant que le débarquement n'est pas fini
+  // (pas de dernier débarqué, ni embarquement, ni AOBT), sinon 'dep'.
+  window.uiTabPhase = function(id){
+    const cur = (typeof currentTabId !== 'undefined') && String(currentTabId) === String(id);
+    let d = {}; if(!cur){ try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){} }
+    const g = k => (cur ? (document.getElementById(k)?.value || '') : String(d[k] || '')).trim();
+    return (g('DernierDebarque') || g('AvionPremierEmbarque') || g('AOBT')) ? 'dep' : 'arr';
+  };
+  ['input', 'change'].forEach(ev => document.addEventListener(ev, e => {
+    if(['DernierDebarque', 'AvionPremierEmbarque', 'AOBT'].includes(e.target && e.target.id)) setTimeout(() => window.uiTabsSync(), 50);
+  }));
   window.uiTabsSync = function(){ if(tabsSig() !== window._tabSig){ try{ renderTabs(); }catch(e){} } };
   setInterval(window.uiTabsSync, 20000);
   // En quittant Récap sur un vol parti depuis 30 min : on bascule sur un vol encore dans la bande
