@@ -77,6 +77,19 @@ function clockMin(){
   const val = id => ((document.getElementById(id)||{}).value || '').trim();
   const isSet = v => !!v && !/^[-–—\s]*$/.test(v);
   const toMin = t => { const m = /^(\d{1,2}):(\d{2})/.exec(t||''); return m ? (+m[1])*60 + (+m[2]) : null; };
+  /* v3.43 (Hugo, option A) : pastille sur SIBT tant que l'AIBT est vide.
+     Rouge = heure actuelle après la SIBT, vert = avant. Uniquement SIBT / heure actuelle, pas Keeper. */
+  function syncArrDot(){
+    const w = document.querySelector('.time-wrap[data-id="SIBT"]'); if(!w) return;
+    const v = id => (document.getElementById(id)?.value || '').trim();
+    const tm = s => { const m = /^(\d{1,2}):(\d{2})/.exec(s); return m ? +m[1]*60 + +m[2] : null; };
+    const si = tm(v('SIBT')), on = si != null && !v('AIBT');
+    let late = false;
+    if(on){ const now = clockMin(), t = flightRel(si, v('Date'), si, now); late = t != null && now >= t + 1; }
+    w.classList.toggle('arr-late', on && late);
+    w.classList.toggle('arr-ok', on && !late);
+  }
+  window.uiSyncArrDot = syncArrDot;
   function syncHero(){
     const fno = document.getElementById('fhFno'); if(!fno) return;
     const dep = txt('kvDepVol'), arr = txt('kvArrVol');
@@ -1342,7 +1355,7 @@ function clockMin(){
   window.syncIvRoute = syncIvRoute;
 
   function init(){
-    paintCtotBandSeg(); syncHero(); syncCtotBand(); setInterval(()=>{ syncHero(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
+    paintCtotBandSeg(); syncHero(); syncArrDot(); syncCtotBand(); setInterval(()=>{ syncHero(); syncArrDot(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
     initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000); setInterval(()=>{ if(rcFast && document.body.dataset.panel === 'vols') renderRecap(); }, 1000);
     const tb = document.getElementById('tab-bar'); if(tb) new MutationObserver(()=>requestAnimationFrame(syncTabRings)).observe(tb, { childList:true }); setInterval(tlTick, 15000);
     document.addEventListener('click', e => { if(e.target.closest('.ev-x, .tw-zone')) setTimeout(syncEvents, 0); });

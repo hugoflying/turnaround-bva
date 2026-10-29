@@ -1535,3 +1535,8 @@ body.has-ctot .chronos .chip-ctot{display:none}
 .akcx-b{display:flex;gap:8px}.akcx-b .btn{flex:1;min-height:44px;font-weight:700;border-radius:12px}
 .akcx-ok{background:var(--crit,#D6404A)!important;color:#fff!important;border-color:transparent!important}
 .akcx-no{background:var(--bg)!important;color:var(--fg)!important;border:1px solid var(--line)!important}
+
+/* v3.43 : pastille arrivée (SIBT dépassée sans AIBT = rouge, sinon vert) */
+.time-wrap.tw-plan.arr-late .tw-display::after,.time-wrap.tw-plan.arr-ok .tw-display::after{content:"";width:9px;height:9px;border-radius:50%;margin-left:9px;flex:none}
+.time-wrap.tw-plan.arr-late .tw-display::after{background:#D7263D;box-shadow:0 0 0 4px rgba(215,38,61,.15)}
+.time-wrap.tw-plan.arr-ok .tw-display::after{background:#1F9D57;box-shadow:0 0 0 4px rgba(31,157,87,.15)}
