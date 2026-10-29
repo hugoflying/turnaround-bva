@@ -433,18 +433,6 @@ function clockMin(){
     if(ctot != null) off = Math.max(eobt, ctot - 12);
     return { sibt, A, D, ctot, off, eobt, sc };
   }
-  const DEMO_SI_ARR = ['2 WCHS 36B/37F + 1 WCHR 01B', '1 WCHC 02A + 1 BLND 03C', '3 WCHR 01A/01B/01C', '1 UMNR 12F', '1 WCHS 04D + 1 DEAF 05A', '2 WCHR 02B/02C', '1 MAAS 07A', ''];
-  const DEMO_SI_PREVI = ['1 WCHR 01B + 1 WCHS 33F', '2 WCHC 01A/01B · 1 UMNR 14C', '1 WCHR 02C', '1 BLND 03A + 1 WCHR 03B', '1 WCHS 30A + 2 WCHR 01E/01F', '1 MEDA 06C', '1 WCHR 01A', '1 UMNR 11D + 1 WCHR 02A'];
-  const DEMO_NOTES = [
-    [['A',3,'SNY · DERUHU'], ['off',-6,'BAGS OK']],
-    [['A',1,'PMR · 2 WCHC, lift demandé'], ['A',6,'Nettoyage · cabine propre'], ['off',-8,'BAGS OK']],
-    [['A',4,'Nettoyage · cabine sale, rangées 20 à 25'], ['off',-12,'Pax en retard · 3 pax au PIF']],
-    [['A',0,'Arrivée tardive · retard en provenance, 93'], ['A',2,'Bag manquant · 1 bag sans étiquette'], ['off',-6,'Chargement · 4 bags tardifs en soute 4, code 32'], ['off',-2,'BAGS OK']],
-    [['A',5,'Fuel · complément demandé par le CDB'], ['off',-5,'BAGS OK']],
-    [['off',-14,'Pax en retard · 2 pax au PIF, appel fait'], ['off',-9,'Push · tracteur en retard, code 89'], ['off',-4,'Pluie forte · chargement ralenti, code 77']],
-    [['A',3,'SNY · AMIEZV'], ['off',-20,'CTOT reçu · régulation ATC, code 81'], ['off',-3,'BAGS OK']],
-    [['A',2,'PMR · 1 WCHR'], ['off',-16,'CTOT reçu · régulation météo']],
-  ];
   // Remplit le vol courant comme un vrai vol (timings passés, LOAD, retards justifiés, notes)
   window.demoFillFlight = function(i, T0, withMeta){
     const now = new Date(T0);
@@ -462,38 +450,12 @@ function clockMin(){
     const past = (id, rel) => { if(isPast(rel)) set(id, hm(rel)); };
     past('AIBT', A);
     const bare = !!(sc.cus && sc.cus.fill === 'none');   // v3.39 : « je saisis moi-même » → horaires seulement
-    const ev = [
-      ['PremierDebarque', A+2], ['DernierDebarque', A + (isFR ? 9 : 11)], ['ArriveeFuel', A+3], ['DepartFuel', A + (isFR ? 14 : 20)],
-      ['MiseEnPlaceTapis', A+1], ['DebutDechargementBagages', A+2], ['FinDechargementBagages', A+10],
-      ['DebutChargementBagages', off-16], ['FinChargementBagages', off-5],
-      ['AvionPremierEmbarque', off - (isFR ? 13 : 14)], ['AvionDernierEmbarque', off-4], ['RemiseLID', off - (isFR ? 5 : 7)],
-      ['FermetureSouteAV', off-4], ['FermetureSouteAR', off-3], ['FermeturePorteAvion', off-3], ['RetraitEchelleAV', off-2], ['RetraitEchelleAR', off-2],
-      ['ConnexionAgentCasque', off-6],
-    ];
-    if(i % 3 === 1) ev.push(['ArriveeLiftArr', A+1], ['DepartLiftArr', A+11], ['ArriveeLift', off-22], ['DepartLift', off-9]);
-    if(i % 4 === 2) ev.push(['DebutCleaningCabine', A+10], ['FinCleaningCabine', A+17]);
-    if(!bare) ev.forEach(([id, rel]) => past(id, rel));
+    const plan = demoAutoPlan(i, cie, sc);               // v3.41.2 : même plan que l'aperçu de l'admin (demo-auto.js)
+    if(!bare) plan.tm.forEach(([id, rel]) => past(id, rel));
     if(sc.ctot != null){ const c = hm(sc.ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
     past('AOBT', off);
-    // LOAD : arrivée dès le block, prévi pour tous, final une fois l'embarquement terminé
     if(!bare){
-    const pax = 148 + (i * 13) % 41, inf = i % 3, bags = 38 + (i * 7) % 30, kg = isFR ? 13 : 15, child = 2 + i % 5;
-    if(isPast(A)){ set('ArrPAX_MAIN', String(pax - 9)); set('ArrPAX_INF', String((i + 1) % 3)); set('ArrBAGS', String(bags - 4)); set('ArrPOIDS', String((bags - 4) * kg)); set('ArrSI', DEMO_SI_ARR[k]); }
-    if(isFR){ set('PreviPAX_MAIN', String(pax + 3)); set('PreviPAX_INF', String(inf)); set('PreviBAGS', String(bags + 2)); }
-    else { set('PreviMALE', String(Math.round(pax*0.52))); set('PreviFEMALE', String(pax - Math.round(pax*0.52) - child)); set('PreviCHILD', String(child)); set('PreviINFANT', String(inf)); set('PreviBAGS_OTHER', String(bags + 2)); set('PreviPOIDS_OTHER', String((bags + 2) * kg)); }
-    set('PreviSI', DEMO_SI_PREVI[k]); set('PreviPoussettesPorte', String(1 + i % 3)); set('PreviPoussettesCBS', String(i % 2));
-    if(isPast(off - 4)){
-      if(isFR){ set('FinalADULT', String(pax - child)); set('FinalCHILD', String(child)); }
-      else { set('FinalMALE', String(Math.round(pax*0.52))); set('FinalFEMALE', String(pax - Math.round(pax*0.52) - child)); set('FinalCHILD', String(child)); }
-      set('FinalINFANT', String(inf));
-      const z = Math.floor(pax / 4);
-      set('FinalOA', String(z - 2)); set('FinalOB', String(z + 3)); set('FinalOC', String(z + 1)); set('FinalOD', String(pax - 3*z - 2));
-      set('FinalBAGS', String(bags)); set('FinalPOIDS', String(bags * kg));
-      const h = Math.floor(bags / 4);
-      set('FinalH1', String(h - 3)); set('FinalH2', String(h + 2)); set('FinalH3', String(h + 4)); set('FinalH4', String(bags - 3*h - 3));
-      set('FinalSI', DEMO_SI_PREVI[k]);
-      set('BlockFuel', String(isFR ? 7600 + i*150 : 8200 + i*120)); set('TripFuel', String(isFR ? 5900 + i*140 : 6400 + i*110)); set('TaxiFuel', '200'); set('FuelUplift', String(isFR ? 3200 + i*90 : 3900 + i*80));
-    }
+    plan.val.forEach(([id, v, when]) => { if(when == null || isPast(when)) set(id, v); });
     if(typeof updateAllCalculations === 'function') updateAllCalculations();
     // Retards justifiés (le 93 / 93A est rempli tout seul par l'app quand l'arrivée est en retard)
     if(isPast(off)){
@@ -524,7 +486,7 @@ function clockMin(){
         const m = /^([^·]+?)\s*·\s*(.+)$/.exec(x), r = m ? tmRel(m[1]) : null;
         notes.push(r != null ? hm(r) + ' · ' + m[2] : x);
       });
-    } else if(!bare) (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
+    } else if(!bare) plan.notes.forEach(([rel, txt]) => { if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
     if(notes.length) set('FaitsSaillants', notes.join('\n'));
     if(typeof updateAllCalculations === 'function') updateAllCalculations();
     saveCurrentTabData();
