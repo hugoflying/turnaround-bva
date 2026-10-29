@@ -14,7 +14,11 @@ function cfgLoad(){
 }
 cfgLoad();
 // Fichier en ligne : s'il a changé depuis la dernière visite, on le garde et on recharge une fois
-if(window.APP_EDITION === 'demo' && typeof fetch === 'function'){
+// v3.41.1 : relu aussi au retour dans l'app (PWA restée ouverte en arrière-plan sur le téléphone), au plus une fois par minute
+let _cfgFetchAt = 0;
+function cfgFetch(){
+  if(window.APP_EDITION !== 'demo' || typeof fetch !== 'function' || Date.now() - _cfgFetchAt < 60000) return;
+  _cfgFetchAt = Date.now();
   fetch('./config.json?t=' + Date.now(), { cache:'no-store' }).then(r => r.ok ? r.text() : null).then(t => {
     if(t == null) return;
     try{ JSON.parse(t); }catch(e){ return; }
@@ -25,6 +29,8 @@ if(window.APP_EDITION === 'demo' && typeof fetch === 'function'){
     if(JSON.stringify(window.CFG) !== before && Date.now() - last > 30000){ sessionStorage.setItem('cfgReloadAt', String(Date.now())); location.reload(); }
   }).catch(() => {});
 }
+cfgFetch();
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') cfgFetch(); });
 
 // Compagnie configurée, ou null (l'app reprend alors ses règles codées)
 function cfgAl(cie){
