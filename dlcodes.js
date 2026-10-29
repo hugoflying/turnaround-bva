@@ -13,13 +13,18 @@ window.DL_CODES = {"FR":{"src":"Ryanair GOPS IATA · avr. 2024 rév. 1.7","codes
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 
   function cieKey(){
-    const c = ($('Cie')?.value || '').toUpperCase().trim();
+    let c = ($('Cie')?.value || '').toUpperCase().trim();
+    if(typeof cfgDlLike === 'function') c = cfgDlLike(c) || c;   // v3.37 : « comme FR » réglé dans l'admin (démo)
     return ({ FR:'FR', RK:'FR', W4:'W4', W6:'W4', H4:'H4', H6:'H4', V7:'V7' })[c] || 'H4';
   }
-  const codes = () => (window.DL_CODES[cieKey()] || {}).codes || [];
+  // v3.37 : liste modifiée dans l'admin (démo), sinon liste du manuel
+  const custom = () => (typeof cfgDl === 'function') ? cfgDl(($('Cie')?.value || '').toUpperCase().trim()) : null;
+  const list = () => custom() || window.DL_CODES[cieKey()] || {};
+  const codes = () => list().codes || [];
   const CIE_NAME = { FR:'Ryanair', W4:'Wizz Air', H4:'HiSky', V7:'Volotea' };
   // La liste HiSky sert de liste IATA générique pour les autres compagnies
   const listName = () => { const c = ($('Cie')?.value || '').toUpperCase().trim(); const k = cieKey();
+    if(custom()) return (cfgAl(c) || {}).n || c;
     return (k === 'H4' && !['H4','H6'].includes(c)) ? 'IATA' : CIE_NAME[k]; };
 
   // "8" → 8x ; "81" → 81, 81A… ; "2" (Wizz) trouve aussi 02… ; "81A" exact
@@ -91,7 +96,7 @@ window.DL_CODES = {"FR":{"src":"Ryanair GOPS IATA · avr. 2024 rév. 1.7","codes
   }
   window.dlcOpen = function(){
     const m = sheet();
-    $('dlcSrc').textContent = (listName() === 'IATA' ? 'Liste IATA générique · ' : '') + (window.DL_CODES[cieKey()].src || '');
+    $('dlcSrc').textContent = (listName() === 'IATA' ? 'Liste IATA générique · ' : '') + (list().src || '');
     m.querySelector('.dlc-q').value = '';
     renderList(); $('dlcList').scrollTop = 0;
     m.style.display = 'flex';

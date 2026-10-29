@@ -166,6 +166,16 @@ function clockMin(){
     { k:'eau',       side:'both', t:'Eau potable',       d:'Début et fin du plein d’eau',     c:'#2563eb' },
     { k:'degivrage', t:'Dégivrage', d:'Début et fin du dégivrage', c:'#0ea5e9' }
   ];
+  // v3.37 : événements ajoutés dans l'admin (démo)
+  if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
+    const k = 'cx-' + e.id;
+    EVENTS.push({ k, side: e.side || 'dep', t: e.t, d: e.d || (e.kind === 'span' ? 'Début et fin' : 'Heure'), c: e.c || '#64748b', cies: e.cies });
+  });
+  const evAllowed = e => {
+    if(typeof cfgEvHidden === 'function' && cfgEvHidden(e.k)) return false;
+    const c = (document.getElementById('Cie')?.value || '').trim().toUpperCase();
+    return !(Array.isArray(e.cies) && e.cies.length && !e.cies.includes(c));
+  };
   // v2.36 : un événement « both » s'affiche dans la zone (Arrivée / Départ) d'où on l'a ajouté.
   // Le côté est gardé par vol dans le champ caché EvCote (« cleaning:arr,eau:dep »).
   function evCoteMap(){
@@ -209,6 +219,7 @@ function clockMin(){
     cleaning:['DebutCleaningCabine','FinCleaningCabine'], vidange:['DebutVidangeToilettes','FinVidangeToilettes'],
     eau:['DebutEauPotable','FinEauPotable'], degivrage:['DebutDegivrage','FinDegivrage']
   };
+  if(typeof cfgEvents === 'function') cfgEvents().filter(e => e.kind === 'span').forEach(e => { EV_PAIRS['cx-' + e.id] = cfgEvFields(e); });
   function syncEvDurations(){
     const nowM = Math.floor(clockMin());
     Object.keys(EV_PAIRS).forEach(k => {
@@ -252,7 +263,7 @@ function clockMin(){
     side = side === 'arr' ? 'arr' : 'dep';
     const m = evSheet();
     m.dataset.side = side;
-    m.querySelector('.ev-list').innerHTML = EVENTS.filter(e => (e.side || 'dep') === side || e.side === 'both').map(e => {
+    m.querySelector('.ev-list').innerHTML = EVENTS.filter(e => ((e.side || 'dep') === side || e.side === 'both') && (evAllowed(e) || evShown(e.k))).map(e => {
       const on = evShown(e.k);
       const p = document.getElementById('panel-'+e.k);
       const full = on && p && evFilled(p);
@@ -632,7 +643,7 @@ function clockMin(){
       } else {
         let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + t.dataset.tab) || '{}'); }catch(e){}
         // v3.05 : sans arrivée (vol qui part de la base), départ du chrono à HLE = SOBT − 60
-        const sobt = toMin(d.SOBT || ''), hle = /^(FR|RK)$/i.test((d.Cie || '').trim()) ? 60 : 40;
+        const sobt = toMin(d.SOBT || ''), hleA = (typeof cfgAl === 'function') ? cfgAl(d.Cie) : null, hle = (hleA && +hleA.hle) ? +hleA.hle : /^(FR|RK)$/i.test((d.Cie || '').trim()) ? 60 : 40;
         r = ringRatio(rotStart(toMin(d.AIBT || ''), toMin(d.SIBT || ''), sobt != null ? sobt - hle : null), toMin(String(d.timer_eobt || '')) ?? sobt, toMin(d.AOBT || ''), d.Date, sobt ?? toMin(d.SIBT || ''));
       }
       ring.classList.remove('done');
@@ -1089,7 +1100,7 @@ function clockMin(){
     syncNoteDock();
   }
 
-  const NJ_TAGS = ['SNY', 'BAGS OK', 'PMR', 'Bag manquant', 'Pax en retard', 'Nettoyage', 'Fuel'];
+  const NJ_TAGS = (typeof cfgWords === 'function' && cfgWords()) || ['SNY', 'BAGS OK', 'PMR', 'Bag manquant', 'Pax en retard', 'Nettoyage', 'Fuel'];   // v3.37 : réglables dans l'admin (démo)
   const NJ_RE = /^(\d{1,2}:\d{2})\s*·\s*(.*)$/;
   let njTag = '', njLast = null, njArm = -1;
   const njEl = sel => document.querySelector('#bnTextMode ' + sel);
@@ -1206,7 +1217,9 @@ function clockMin(){
     V7:['A319','A320'], H4:['A319','A320','A321','A21N'], H6:['A319','A320','A321','A21N'] };
   function renderIvTypes(){
     const box = document.getElementById('ivTypeChips'); if(!box) return;
-    const list = IV_TYPES[(document.getElementById('Cie')?.value || '').trim().toUpperCase()] || IV_TYPES_ALL;
+    const cieV = (document.getElementById('Cie')?.value || '').trim().toUpperCase();
+    const cfgA = (typeof cfgAl === 'function') ? cfgAl(cieV) : null;   // v3.36 : types réglés dans l'admin (démo)
+    const list = (cfgA && Object.keys(cfgA.types || {}).length) ? Object.keys(cfgA.types) : IV_TYPES[cieV] || IV_TYPES_ALL;
     const key = list.join(',');
     if(box.dataset.k === key) return;
     box.dataset.k = key;

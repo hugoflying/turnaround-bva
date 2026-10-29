@@ -739,6 +739,17 @@ function generateTimingFields(){
     `<div id="panel-arr" style="display:none;">${arrNoHeader}</div>` +
     `<div id="panel-dep" style="display:none;">${depNoHeader}</div>`;
 
+  // v3.37 : événements ajoutés dans l'admin (démo), créés avant la restauration du vol
+  if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
+    const z = document.getElementById(e.side === 'arr' ? 'evZoneArr' : 'evZone'); if(!z) return;
+    const t = String(e.t).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    const col = /^#[0-9a-f]{3,8}$/i.test(e.c || '') ? e.c : '#64748b', [a, b] = cfgEvFields(e);
+    const f = b ? fieldHTML(a, 'Début ' + t) + fieldHTML(b, 'Fin ' + t) : fieldHTML(a, t);
+    z.insertAdjacentHTML('beforeend', `<div id="panel-cx-${e.id}" class="card mb-3 ev-panel" data-ev="cx-${e.id}" style="display:none;">
+      <div class="ev-h"><i style="background:${col}"></i><b>${t}</b><button type="button" class="ev-x" onclick="toggleDepExtra('cx-${e.id}')" aria-label="Masquer ${t}">×</button></div>
+      <div class="card-content"><div class="grid-auto">${f}</div></div></div>`);
+  });
+
   const from = (document.getElementById('From')?.value || '').toUpperCase().trim();
   const defaultPanel = (from === 'BVA') ? 'dep' : 'arr';
   switchTimingPanel(defaultPanel);
@@ -963,7 +974,8 @@ function updateTimers() {
   const base = new Date(); base.setHours(hh, mm, 0, 0);
   // HLE : SOBT - 60 pour FR/RK, SOBT - 40 pour les autres compagnies
   const cieHle = (document.getElementById('Cie')?.value || '').trim().toUpperCase();
-  const hleMin = (cieHle === 'FR' || cieHle === 'RK') ? 60 : 40;
+  const hleCfg = (typeof cfgAl === 'function') ? cfgAl(cieHle) : null;   // v3.36 : HLE réglé dans l'admin (démo)
+  const hleMin = (hleCfg && +hleCfg.hle) ? +hleCfg.hle : (cieHle === 'FR' || cieHle === 'RK') ? 60 : 40;
   const h40 = new Date(base.getTime() - hleMin * 60000);
   const h15 = new Date(base.getTime() - 15 * 60000);
   document.getElementById('timer-h40').textContent = `${String(h40.getHours()).padStart(2, '0')}:${String(h40.getMinutes()).padStart(2, '0')}`;
@@ -1109,13 +1121,20 @@ function updateEOBT() {
   let EOBT_raw_ext = null;
 
   // v2.74 : FR/RK et W4/W6 = max(SOBT, AIBT + rotation mini), même à l'heure (plus de saut à 1 min près)
-  const minTurnCie = !isBVA && !!aibttxt && (cie === 'FR' || cie === 'RK' || cie === 'W4' || cie === 'W6');
+  // v3.36 : compagnie réglée dans l'admin (démo) → rotation mini de son type, vide = rotation du programme
+  const cfgA = (typeof cfgAl === 'function') ? cfgAl(cie) : null;
+  const cfgX = cfgA ? cfgType(cie, document.getElementById('TypeAvion')?.value) : null;
+  const cfgTurn = (cfgX && cfgX.mtt != null && cfgX.mtt !== '') ? +((crewChange && cfgX.crew) ? cfgX.crew : cfgX.mtt) : null;
+  const minTurnCie = !isBVA && !!aibttxt && (cfgA ? cfgTurn != null : (cie === 'FR' || cie === 'RK' || cie === 'W4' || cie === 'W6'));
   // ===== RÈGLE COMMUNE (autres compagnies) : si AIBT <= SIBT => EOBT = SOBT
   if (!isDelayed && !minTurnCie) {
     EOBT_raw_ext = SOBT_ext;
   } else {
+    if (cfgA) {
+      EOBT_raw_ext = cfgTurn != null ? Math.max(SOBT_ext, AIBT_ext + cfgTurn) : AIBT_ext + (SOBT_ext - SIBT_ext);
+    }
     // ===== FR / RK : EOBT = max(SOBT, AIBT + turn)
-    if (cie === 'FR' || cie === 'RK') {
+    else if (cie === 'FR' || cie === 'RK') {
       const turn = crewChange ? 35 : 25;
       const candidate = AIBT_ext + turn;
       EOBT_raw_ext = (candidate <= SOBT_ext) ? SOBT_ext : candidate;

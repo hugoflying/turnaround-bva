@@ -375,6 +375,7 @@ function confirmClearFields(){
     'DLcode1','DLcode2','DLcode3','DLduree1','DLduree2','DLduree3',
     'FaitsSaillants','AutoCtrl','ValideLe'
   ];
+  if(typeof cfgEvents === 'function') cfgEvents().forEach(e => timingIds.push(...cfgEvFields(e)));   // v3.37 : événements de l'admin (démo)
   try {
     timingIds.forEach(id => {
       const el = document.getElementById(id);

@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261028r181';
+window.APP_VERSION = '20261028r183';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261028r181';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261028r181" />
-<link rel="stylesheet" href="./css/app.css?v=20261028r181" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261028r183" />
+<link rel="stylesheet" href="./css/app.css?v=20261028r183" />
 </head>
 <body>
 
@@ -1055,6 +1055,9 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       <button class="li" type="button" id="demoFlightsBtn" onclick="uiDemoToggle()">
         <svg class="ico"><use href="#i-refresh"/></svg><span><b>Mode démo</b><small>Vols fictifs remplis, tes vols sont mis de côté</small></span><span></span>
       </button>
+      <button class="li" type="button" id="adminBtn" hidden onclick="closeSettingsMenu(); location.href='./admin.html'">
+        <svg class="ico"><use href="#i-list"/></svg><span><b>Admin compagnies</b><small>Types avion, rotations et temps d'escale cibles</small></span><span></span>
+      </button>
       <button class="li" type="button" id="whatsNewBtn" onclick="closeSettingsMenu(); uiWhatsNew()">
         <svg class="ico"><use href="#i-info"/></svg><span><b>Nouveautés</b><small>Ce qui change dans cette version</small></span><span></span>
       </button>
@@ -1141,17 +1144,18 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261028r181"></script>
-<script src="./contacts.js?v=20261028r181"></script>
-<script src="./app.js?v=20261028r181"></script>
-<script src="./app-load.js?v=20261028r181"></script>
-<script src="./app-onglets.js?v=20261028r181"></script>
-<script src="./app-retard.js?v=20261028r181"></script>
-<script src="./app-timeline.js?v=20261028r181"></script>
-<script src="./app-keeper.js?v=20261028r181"></script>
-<script src="./app-outils.js?v=20261028r181"></script>
-<script src="./ui.js?v=20261028r181"></script>
-<script src="./tools.js?v=20261028r181"></script>
-<script src="./dlcodes.js?v=20261028r181"></script>
+<script src="./edition.js?v=20261028r183"></script>
+<script src="./cfg.js?v=20261028r183"></script>
+<script src="./contacts.js?v=20261028r183"></script>
+<script src="./app.js?v=20261028r183"></script>
+<script src="./app-load.js?v=20261028r183"></script>
+<script src="./app-onglets.js?v=20261028r183"></script>
+<script src="./app-retard.js?v=20261028r183"></script>
+<script src="./app-timeline.js?v=20261028r183"></script>
+<script src="./app-keeper.js?v=20261028r183"></script>
+<script src="./app-outils.js?v=20261028r183"></script>
+<script src="./ui.js?v=20261028r183"></script>
+<script src="./tools.js?v=20261028r183"></script>
+<script src="./dlcodes.js?v=20261028r183"></script>
 </body>
 </html>

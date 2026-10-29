@@ -1329,6 +1329,12 @@ function doValidate() {
    ['EAU POTABLE','DebutEauPotable','FinEauPotable'],['DEGIVRAGE','DebutDegivrage','FinDegivrage']].forEach(([lb,a,b])=>{
     if(t(a) || t(b)) body += r(lb, `${t(a)||'--:--'} → ${t(b)||'--:--'}`);
   });
+  // v3.37 : événements ajoutés dans l'admin (démo)
+  if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
+    const [a, b] = cfgEvFields(e), lb = String(e.t).toUpperCase();
+    if(b){ if(t(a) || t(b)) body += r(lb, `${t(a)||'--:--'} → ${t(b)||'--:--'}`); }
+    else if(t(a)) body += r(lb, t(a));
+  });
 
   body += br();
   if(t('AvionPremierEmbarque')) { body += r('PREMIER EMBARQUE',  t('AvionPremierEmbarque')); }
