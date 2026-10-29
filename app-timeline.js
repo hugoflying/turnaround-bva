@@ -333,7 +333,7 @@ function collectTimelineData(){
     if(t!=null) fixedPoints.push({label, t, cls:'tl--std'});
   });
   // Autres heures d'événements (début seul compris) : elles élargissent la fenêtre
-  ['ConnexionAgentCasque','AnnonceINAD','ArriveeINAD','AppelNayak','ArriveeNayak','DepartNayak','RechercheBagDebut','RechercheBagFin',
+  ['ConnexionAgentCasque','AnnonceINAD','ArriveeINAD','AppelNayak','ArriveeNayak','DepartNayak','RechercheBagDebut','RechercheBagFin','PremierScanne',
    'DebutDechargementBagages','DebutRepositionnement','DebutChargementBagages','DebutComptageBagages'].forEach(id=>{
     const t = parseHHMM(document.getElementById(id)?.value || '');
     if(t!=null) fixedPoints.push({label:id, t, cls:'tl--ev'});
@@ -381,6 +381,7 @@ function collectTimelineData(){
     {label:'Comptage bagages', pair:getPairWindow('DebutComptageBagages','FinComptageBagages'), cls:'tl--std', color:'#0d9488'},
     {label:'Recherche bag', pair:getPairWindow('RechercheBagDebut','RechercheBagFin'), cls:'tl--std', color:'#ec4899'},
     {label:'Nayak', pair:getPairWindow('ArriveeNayak','DepartNayak'), cls:'tl--std', color:'#FFAD00'},
+    {label:'Scan embarquement', pair:getPairWindow('PremierScanne','DernierScanne'), cls:'tl--std', color:'#0f766e'},
     {label:'Cleaning cabine', pair:getPairWindow('DebutCleaningCabine','FinCleaningCabine'), cls:'tl--std', color:'#0891b2'},
     {label:'Vidange toilettes', pair:getPairWindow('DebutVidangeToilettes','FinVidangeToilettes'), cls:'tl--std', color:'#78716c'},
     {label:'Eau potable', pair:getPairWindow('DebutEauPotable','FinEauPotable'), cls:'tl--std', color:'#2563eb'},
@@ -574,6 +575,7 @@ function renderTimeline(){
     ['Comptage bagages', 'DebutComptageBagages',     'FinComptageBagages'],
     ['Recherche bag',    'RechercheBagDebut',        'RechercheBagFin'],
     ['Nayak',            'ArriveeNayak',             'DepartNayak'],
+    ['Scan embarquement','PremierScanne',            'DernierScanne'],
     ['Cleaning cabine',  'DebutCleaningCabine',      'FinCleaningCabine'],
     ['Vidange toilettes','DebutVidangeToilettes',    'FinVidangeToilettes'],
     ['Eau potable',      'DebutEauPotable',          'FinEauPotable'],

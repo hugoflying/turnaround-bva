@@ -686,6 +686,17 @@ function generateTimingFields(){
       </div>
     </div>
 
+    <!-- v3.41.6 (Hugo) : scan de l'embarquement -->
+    <div id="panel-scan" class="card mb-3 ev-panel" data-ev="scan" style="display:none;">
+      <div class="ev-h"><i style="background:#0f766e"></i><b>Embarquement</b><button type="button" class="ev-x" onclick="toggleDepExtra('scan')" aria-label="Masquer Embarquement">×</button></div>
+      <div class="card-content">
+        <div class="grid-auto">
+          <div class="span-6">${fieldHTML('PremierScanne','Premier scanné',false,false,'is-success')}</div>
+          <div class="span-6">${fieldHTML('DernierScanne','Dernier scanné',false,false,'is-success')}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- v2.36 : événements d'escale, affichés côté Arrivée ou Départ selon l'endroit où on les ajoute (champ EvCote) -->
     <div id="panel-cleaning" class="card mb-3 ev-panel" data-ev="cleaning" style="display:none;">
       <div class="ev-h"><i style="background:#0891b2"></i><b>Cleaning cabine</b><button type="button" class="ev-x" onclick="toggleDepExtra('cleaning')" aria-label="Masquer Cleaning cabine">×</button></div>

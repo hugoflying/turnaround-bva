@@ -154,6 +154,7 @@ function clockMin(){
     { k:'recherche-bag', t:'Recherche bag', d:'Nombre de bags, début et fin',   c:'#ec4899' },
     { k:'inad',          t:'INAD',          d:'Annonce et arrivée INAD',        c:'#D7263D' },
     { k:'gpu',           t:'Nayak',         d:'Appel, arrivée et départ Nayak', c:'#FFAD00' },
+    { k:'scan',          t:'Embarquement',  d:'Premier et dernier scanné',      c:'#0f766e' },
     { k:'casque',        t:'Connexion casque',  d:'Connexion de l’agent casque',     c:'#7c3aed' },
     { k:'push',          t:'Push',              d:'Connexion et changement de push', c:'#3273dc' },
     { k:'soutes',        t:'Portes de soute',   d:'Fermeture soute AV et AR',        c:'#7f1d1d' },
@@ -218,7 +219,7 @@ function clockMin(){
   const EV_PAIRS = {
     dechargement:['DebutDechargementBagages','FinDechargementBagages'], repositionnement:['DebutRepositionnement','FinRepositionnement'],
     chargement:['DebutChargementBagages','FinChargementBagages'], comptage:['DebutComptageBagages','FinComptageBagages'],
-    'recherche-bag':['RechercheBagDebut','RechercheBagFin'], gpu:['ArriveeNayak','DepartNayak'],
+    'recherche-bag':['RechercheBagDebut','RechercheBagFin'], gpu:['ArriveeNayak','DepartNayak'], scan:['PremierScanne','DernierScanne'],
     cleaning:['DebutCleaningCabine','FinCleaningCabine'], vidange:['DebutVidangeToilettes','FinVidangeToilettes'],
     eau:['DebutEauPotable','FinEauPotable'], degivrage:['DebutDegivrage','FinDegivrage']
   };

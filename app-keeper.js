@@ -1389,6 +1389,8 @@ function doValidate() {
   if(t('ChangementPush'))       { body += r('CHANGEMENT PUSH',    t('ChangementPush')); }
   if(t('DebutComptageBagages') || t('FinComptageBagages'))
     body += r('COMPTAGE BAGAGES', `${t('DebutComptageBagages')||'--:--'} → ${t('FinComptageBagages')||'--:--'}`);
+  if(t('PremierScanne') || t('DernierScanne'))
+    body += r('SCAN EMBARQUEMENT', `${t('PremierScanne')||'--:--'} → ${t('DernierScanne')||'--:--'}`);
 
   // ── OPS : INAD / NAYAK ───────────────────────────────────────────────────
   const hasInad = t('ArriveeINAD') || v('ArrSI') || v('PreviSI');
