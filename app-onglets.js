@@ -163,6 +163,7 @@ function createNewTab(){
   localStorage.setItem('lastTabId', id);
 
   clearFormFields();            // reset champs
+  if(typeof evApplyOpen === 'function') evApplyOpen();
 
   // snapshot initial
   const data = {};
@@ -211,6 +212,7 @@ function switchTab(id){
   localStorage.setItem('lastTabId', id);
 
   loadTabData(id);
+  if(typeof evApplyOpen === 'function') evApplyOpen();
 
   // Recharger le bloc note pour le nouvel onglet
   window.bnReloadTab?.();
@@ -402,6 +404,7 @@ function loadTabData(id){
   }
   if(data.assistances && typeof data.assistances === 'object') _assistancesData = data.assistances;
   if(data.rza && typeof data.rza === 'object') _rzaData = data.rza;
+  { const eo = document.getElementById('EvOuverts'); if(eo && !('EvOuverts' in data)) eo.value = ''; }   // v3.41.5 : vol enregistré avant
     for(const k in data){
       // ✅ toggles globaux : jamais restaurés depuis l’onglet
       if(k === 'utcToggle' || k === 'darkToggle') continue;
@@ -721,6 +724,7 @@ function generateTimingFields(){
       </div>
     </div>
     <input id="EvCote" type="hidden">
+    <input id="EvOuverts" type="hidden"><!-- v3.41.5 : événements ouverts sur CE vol (« gpu,cx-abc ») -->
     </div>
     <button type="button" class="ev-add" id="evAddBtn" onclick="uiEvOpen('dep')"><span>+</span> Ajouter un événement</button>
 `;

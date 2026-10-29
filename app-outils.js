@@ -362,7 +362,7 @@ function confirmClearFields(){
     'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
     'ArrPNT','ArrPNC','AnnonceINAD','AppelNayak','ArriveeNayak','DepartNayak','RechercheBagDebut','RechercheBagFin',
     'MiseEnPlaceTapis','DebutDechargementBagages','FinDechargementBagages','DebutRepositionnement','FinRepositionnement','DebutChargementBagages','FinChargementBagages',
-    'DebutCleaningCabine','FinCleaningCabine','DebutVidangeToilettes','FinVidangeToilettes','DebutEauPotable','FinEauPotable','DebutDegivrage','FinDegivrage','EvCote',
+    'DebutCleaningCabine','FinCleaningCabine','DebutVidangeToilettes','FinVidangeToilettes','DebutEauPotable','FinEauPotable','DebutDegivrage','FinDegivrage','EvCote','EvOuverts',
     'ConnexionPush','ChangementPush','FermetureSouteAV','FermetureSouteAR','RetraitEchelleAV','RetraitEchelleAR','ReouverturePorteAvion','DebutComptageBagages','FinComptageBagages',
     'CommChiffresPorte', 'CommChargementPiste',
     'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
@@ -533,6 +533,14 @@ function toggleDepExtra(panel){
   if(!el) return
   const isOpen = el.style.display !== 'none'
   el.style.display = isOpen ? 'none' : 'block'
+  // v3.41.5 (Hugo : un événement ouvert s'ouvrait sur tous les vols) : on retient les événements ouverts par vol
+  const keep = document.getElementById('EvOuverts')
+  if(keep){
+    const set = new Set(keep.value.split(',').filter(Boolean))
+    isOpen ? set.delete(panel) : set.add(panel)
+    keep.value = [...set].join(',')
+    keep.dispatchEvent(new Event('input', { bubbles:true }))
+  }
   if(btn){
     if(isOpen){
       btn.classList.remove('is-info', 'is-selected')
@@ -540,6 +548,19 @@ function toggleDepExtra(panel){
       btn.classList.add('is-info', 'is-selected')
     }
   }
+}
+
+// v3.41.5 : au changement de vol, chaque événement reprend l'état de CE vol (ouvert, ou rempli), puis la règle Crew
+function evApplyOpen(){
+  const set = new Set((document.getElementById('EvOuverts')?.value || '').split(',').filter(Boolean))
+  document.querySelectorAll('.ev-panel').forEach(p => {
+    const k = p.dataset.ev, filled = [...p.querySelectorAll('input')].some(i => i.value && !/^[-–—\s0]*$/.test(i.value))
+    const open = set.has(k) || filled
+    p.style.display = open ? 'block' : 'none'
+    const btn = document.getElementById('btn-' + k)
+    if(btn) btn.classList.toggle('is-info', open), btn.classList.toggle('is-selected', open)
+  })
+  if(typeof autoOpenCrewIfNeeded === 'function') autoOpenCrewIfNeeded()
 }
 
 // v2.37 : les infos du vol se modifient dans une feuille du bas
