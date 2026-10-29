@@ -344,7 +344,7 @@ function clockMin(){
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
   /* ===== v2.47 : vols de démo (menu ⋯) ===== */
-  const DEMO_FLIGHTS = [
+  let DEMO_FLIGHTS = [
     // cie, arr, dep, from/to, immat, type, parking, escale (min), PAF
     ['FR','594','595','OPO','EIDCL','B38M','4',25,''],
     ['W4','5148','5149','TIA','9HWAU','A321','12',35,'S3'],
@@ -359,7 +359,7 @@ function clockMin(){
     ['W4','3027','3028','OTP','9HWXA','A21N','13',35,''],
   ];
   // v2.59 : extra = vols présents seulement dans la liste AK (pas d'onglet ouvert)
-  const DEMO_EXTRA = [
+  let DEMO_EXTRA = [
     ['FR','8338','8339','RAK','EIEFB','B738','6',25],
     ['FR','6512','6513','NAP','EIIHD','B38M','3',25],
     ['V7','2104','2105','BIA','EIFNH','A319','8',40],
@@ -369,18 +369,53 @@ function clockMin(){
   ];
   // v2.87 : seuls 3 vols sont ouverts en onglets (les autres restent dans la liste AK)
   // 0 = FR OPO en embarquement · 1 = W4 TIA posé, PAF S3, CTOT · 2 = FR VIE à l'arrivée, PAF S2, CTOT météo
-  const DEMO_OPEN = [0, 1, 2];
-  const DEMO_SCHED = {
+  let DEMO_OPEN = [0, 1, 2];
+  let DEMO_SCHED = {
     0: { sibt:-15 },
     1: { sibt:1, ctot:20, reg:{ regul:'LROPTA', cause:'C · ATC', reason:'ATC capacity', remark:'Expect improvements after 1030z' } },
     2: { sibt:10, ctot:28, reg:{ regul:'LFFFUTA', cause:'W · Weather', reason:'Weather', description:'Thunderstorms sector UT' } },
   };
   // v2.88 : scénarios de retard réalistes (93 retard arrivée, 32, 81 CTOT, 89, 77) sur les vols de la liste
-  const DEMO_SCEN = { 3:'late', 5:'89-77', 6:'ctot', 7:'ctot', 8:'ctot' };
+  let DEMO_SCEN = { 3:'late', 5:'89-77', 6:'ctot', 7:'ctot', 8:'ctot' };
+  // v3.39 : scénario réglé dans l'admin (démo) → remplace les vols ci-dessus
+  const DEMO_CUS = (window.CFG && window.CFG.demo && Array.isArray(window.CFG.demo.flights) && window.CFG.demo.flights.length) ? window.CFG.demo.flights : null;
+  const DEMO_KEY = DEMO_CUS ? JSON.stringify(window.CFG.demo) : '';
+  if(DEMO_CUS){
+    DEMO_FLIGHTS = DEMO_CUS.map(f => [String(f.cie || '').toUpperCase(), String(f.arr || ''), String(f.dep || ''), String(f.ap || '').toUpperCase(), String(f.reg || '').toUpperCase(), String(f.type || '').toUpperCase(), String(f.park || ''), +f.tat || 30, String(f.paf || '')]);
+    DEMO_EXTRA = []; DEMO_SCHED = {}; DEMO_SCEN = {};
+    DEMO_OPEN = DEMO_CUS.map((f, i) => f.open ? i : -1).filter(i => i >= 0);
+  }
+  // Heure de l'admin : « -20 » = 20 min avant le lancement de la démo, « 10:35 » = heure exacte, « non » = pas encore
+  function demoRel(v, T0){
+    v = String(v ?? '').trim().replace(/[−–]/g, '-');
+    if(!v) return null;
+    if(/^(non|x|pas encore)$/i.test(v)) return 'non';
+    const m = /^(\d{1,2})[:h](\d{2})$/.exec(v);
+    if(m){
+      const t = new Date(T0); if(isUTC) t.setUTCHours(+m[1], +m[2], 0, 0); else t.setHours(+m[1], +m[2], 0, 0);
+      let r = Math.round((t.getTime() - T0) / 60000); if(r > 720) r -= 1440; if(r < -720) r += 1440; return r;
+    }
+    const n = parseInt(v, 10); return isNaN(n) ? null : n;
+  }
+  function demoSchedCus(i){
+    const f = DEMO_CUS[i], cie = DEMO_FLIGHTS[i][0], tat = DEMO_FLIGHTS[i][7], T0 = +(localStorage.getItem('demoT0') || Date.now());
+    const num = (v, d) => (v === null || v === 'non') ? d : v;
+    const sibt = num(demoRel(f.sibt, T0), -60 + i*20);
+    const D = num(demoRel(f.sobt, T0), sibt + tat);
+    const a = demoRel(f.aibt, T0), A = a === 'non' ? Math.max(sibt, 5) : num(a, sibt - 2);
+    const minTurn = (cie === 'FR' || cie === 'RK') ? 25 : (cie === 'W4' || cie === 'W6') ? 30 : tat;
+    const eobt = Math.max(D, A + minTurn);
+    const c = demoRel(f.ctot, T0), ctot = typeof c === 'number' ? c : null;
+    const o = demoRel(f.aobt, T0);
+    let off = typeof o === 'number' ? o : (ctot != null ? Math.max(eobt, ctot - 12) : eobt - 1);
+    if(o === 'non') off = Math.max(off, 5);
+    return { sibt, A, D, ctot, off, eobt, sc:'ok', cus:f };
+  }
   const demoRow = i => i >= 100 ? DEMO_EXTRA[i - 100] : DEMO_FLIGHTS[i];
   // Horaires d'un vol de démo, en minutes par rapport au début de la démo (T0)
   // sibt / A (AIBT) / D (SOBT) / ctot / off (AOBT réel) / eobt (EOBT calculée)
   function demoSched(i){
+    if(DEMO_CUS && DEMO_CUS[i]) return demoSchedCus(i);
     const row = demoRow(i), cie = row[0], tat = row[7], o = DEMO_SCHED[i];
     let sibt, ctot = null, sc = DEMO_SCEN[i] || 'ok';
     if(i >= 100) sibt = 25 + (i - 100)*28;
@@ -426,6 +461,7 @@ function clockMin(){
     set('SIBT', hm(sibt)); set('SOBT', hm(D));
     const past = (id, rel) => { if(isPast(rel)) set(id, hm(rel)); };
     past('AIBT', A);
+    const bare = !!(sc.cus && sc.cus.fill === 'none');   // v3.39 : « je saisis moi-même » → horaires seulement
     const ev = [
       ['PremierDebarque', A+2], ['DernierDebarque', A + (isFR ? 9 : 11)], ['ArriveeFuel', A+3], ['DepartFuel', A + (isFR ? 14 : 20)],
       ['MiseEnPlaceTapis', A+1], ['DebutDechargementBagages', A+2], ['FinDechargementBagages', A+10],
@@ -436,10 +472,11 @@ function clockMin(){
     ];
     if(i % 3 === 1) ev.push(['ArriveeLiftArr', A+1], ['DepartLiftArr', A+11], ['ArriveeLift', off-22], ['DepartLift', off-9]);
     if(i % 4 === 2) ev.push(['DebutCleaningCabine', A+10], ['FinCleaningCabine', A+17]);
-    ev.forEach(([id, rel]) => past(id, rel));
+    if(!bare) ev.forEach(([id, rel]) => past(id, rel));
     if(sc.ctot != null){ const c = hm(sc.ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
     past('AOBT', off);
     // LOAD : arrivée dès le block, prévi pour tous, final une fois l'embarquement terminé
+    if(!bare){
     const pax = 148 + (i * 13) % 41, inf = i % 3, bags = 38 + (i * 7) % 30, kg = isFR ? 13 : 15, child = 2 + i % 5;
     if(isPast(A)){ set('ArrPAX_MAIN', String(pax - 9)); set('ArrPAX_INF', String((i + 1) % 3)); set('ArrBAGS', String(bags - 4)); set('ArrPOIDS', String((bags - 4) * kg)); set('ArrSI', DEMO_SI_ARR[k]); }
     if(isFR){ set('PreviPAX_MAIN', String(pax + 3)); set('PreviPAX_INF', String(inf)); set('PreviBAGS', String(bags + 2)); }
@@ -464,9 +501,15 @@ function clockMin(){
       else if(sc.sc === '89-77'){ set('DLcode1', '89'); set('DLduree1', '6'); set('DLcode2', '77'); set('DLduree2', '4'); }
       else if(sc.ctot != null && off > D){ set('DLcode1', '81'); set('DLduree1', String(off - D)); }
     }
+    }
+    // v3.39 : codes retard du scénario de l'admin, « 32 4, 77 4 » (code puis minutes)
+    if(sc.cus && String(sc.cus.dl || '').trim() && isPast(off)){
+      ['1','2','3'].forEach(n => { set('DLcode' + n, ''); set('DLduree' + n, ''); });
+      String(sc.cus.dl).split(/[,;]/).map(x => x.trim().split(/\s+/)).filter(x => x[0]).slice(0, 3).forEach(([c, d], j) => { set('DLcode' + (j + 1), c.toUpperCase()); if(d) set('DLduree' + (j + 1), d); });
+    }
     // Notes du Clavier, horodatées au moment des faits
     const notes = [];
-    (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
+    if(!bare) (DEMO_NOTES[k] || []).forEach(([ref, d, txt]) => { const rel = (ref === 'A' ? A : off) + d; if(isPast(rel)) notes.push(hm(rel) + ' · ' + txt); });
     if(notes.length) set('FaitsSaillants', notes.join('\n'));
     if(typeof updateAllCalculations === 'function') updateAllCalculations();
     saveCurrentTabData();
@@ -513,7 +556,6 @@ function clockMin(){
   // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
   window.demoActive = () => demoAllowed();
   const DEMO_VER = '4';                       // changer pour regénérer les vols de démo chez tout le monde
-  const DEMO_TTL = 4 * 3600e3;                // vols de démo regénérés après 4 h (horaires relatifs à l'ouverture)
   window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
     localStorage.setItem('demoMode', 'pending');
@@ -559,12 +601,15 @@ function clockMin(){
     }
     if(!demoAllowed()) return;
     const T0old = +(localStorage.getItem('demoT0') || 0);
-    const need = demoState() === 'pending' || localStorage.getItem('demoVer') !== DEMO_VER || !T0old || Date.now() - T0old > DEMO_TTL;
+    // v3.39 (Hugo) : plus de remise à zéro toutes les 4 h, les saisies restent jusqu'à « Réinitialiser » ;
+    // un nouveau scénario publié dans l'admin est rejoué au lancement suivant
+    const need = demoState() === 'pending' || localStorage.getItem('demoVer') !== DEMO_VER || !T0old || (localStorage.getItem('demoScen') || '') !== DEMO_KEY;
     if(need){
       // Les champs de timing sont créés au chargement complet de la page (initForm) : on les attend
       for(let k = 0; k < 60 && !document.getElementById('PremierDebarque'); k++) await new Promise(r => setTimeout(r, 50));
       Object.keys(localStorage).filter(k => isTabKey(k) || k.startsWith(DEMO_BK)).forEach(k => localStorage.removeItem(k));
       localStorage.setItem('demoVer', DEMO_VER);
+      localStorage.setItem('demoScen', DEMO_KEY);
       const T0 = Date.now();
       localStorage.setItem('demoT0', String(T0));
       currentTabId = null;
@@ -591,7 +636,7 @@ function clockMin(){
         const f = { id:'demo-a' + i, linkedId:'demo-d' + i, fullFlightNumber:cie + arr, callsign:(cs[cie] || cie) + arr, reg, acTypeIcao:type, pkg:'P' + park, adepIata:ap, sibt:T(sc.sibt), borderControl: row[8] || '' };
         if(past(sc.A)) f.aibt = T(sc.A); else f.eibt = T(sc.A + (extra && i % 2 ? 9 : 0));
         f.status = past(sc.A) ? 'TERMINATED' : (past(sc.A - 120) ? 'IN_FLIGHT' : 'SCHEDULED');
-        if(i === 104){ f.status = 'CANCELLED'; delete f.aibt; }
+        if(DEMO_CUS ? !!DEMO_CUS[i].cx : i === 104){ f.status = 'CANCELLED'; delete f.aibt; }
         out.push(f);
       } else {
         const f = { id:'demo-d' + i, linkedId:'demo-a' + i, fullFlightNumber:cie + dep, callsign:(cs[cie] || cie) + dep, reg, acTypeIcao:type, pkg:'P' + park, adesIata:ap, sobt:T(sc.D) };
@@ -599,7 +644,7 @@ function clockMin(){
         else if(sc.eobt > sc.D) f.eobt = T(sc.eobt);
         if(past(sc.off)){ f.aobt = T(sc.off); f.atot = T(sc.off + 8); f.status = 'IN_FLIGHT'; }
         else f.status = 'SCHEDULED';
-        if(i === 104) f.status = 'CANCELLED';   // v3.38 : un vol annulé dans la démo (FR4721/4722)
+        if(DEMO_CUS ? !!DEMO_CUS[i].cx : i === 104) f.status = 'CANCELLED';   // v3.38 : un vol annulé dans la démo (FR4721/4722)
         out.push(f);
       }
     };
