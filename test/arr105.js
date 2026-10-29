@@ -22,4 +22,8 @@ o.mention = await p.evaluate(()=>!document.getElementById('dotHelp').hidden);
 await set('SOBT', await hm(-5)); o.depPassee = await st('SOBT');
 await set('AOBT', await hm(-1)); o.depAvecAOBT = await st('SOBT');
 await p.evaluate(()=>{ ['SIBT','AIBT','SOBT','AOBT'].forEach(i=>document.getElementById(i).value=''); }); o.mentionSansPastille = await p.evaluate(()=>{ uiSyncArrDot(); return !document.getElementById('dotHelp').hidden; });
+await p.evaluate(()=>{ document.getElementById('Cie').value='FR'; document.getElementById('From').value='ZAG'; });
+await set('SIBT', await hm(-7)); await set('SOBT', await hm(23)); o.casHugo_dep = await st('SOBT'); o.casHugo_arr = await st('SIBT');
+await set('SIBT', await hm(10)); await set('SOBT', await hm(40)); o.avantSIBT_rotOK = await st('SOBT');
+await set('SIBT', await hm(10)); await set('SOBT', await hm(30)); o.avantSIBT_rotCourte = await st('SOBT');
 console.log(JSON.stringify(o)); console.log(errs.join(';')||'no errors'); await b.close(); })();

@@ -99,9 +99,24 @@ function clockMin(){
       const eo = tm(document.getElementById('timer-eobt')?.textContent || '');
       let d = eo == null ? 0 : eo - so; if(d > 720) d -= 1440; if(d < -720) d += 1440;
       lateD = d > 0 || (t != null && now >= t + 1);
+      // v3.44.1 (Hugo) : avion pas encore au bloc → arrivée estimée = max(SIBT, maintenant) + rotation mini
+      if(!lateD && t != null && si != null && !v('AIBT') && (v('From') || '').toUpperCase().trim() !== 'BVA'){
+        const sR = flightRel(si, v('Date'), so, now), arr = Math.max(sR, now);
+        lateD = arr + depMinTurn(t - sR) > t;
+      }
     }
     if(wd){ wd.classList.toggle('arr-late', onD && lateD); wd.classList.toggle('arr-ok', onD && !lateD); }
     const h = document.getElementById('dotHelp'); if(h) h.hidden = !(on || onD);
+  }
+  // Rotation mini comme updateEOBT (FR/RK 25, 35 si équipage ; W4/W6 30, 35 en A321 ; admin ; sinon rotation du programme)
+  function depMinTurn(sched){
+    const g = id => (document.getElementById(id)?.value || '').trim().toUpperCase();
+    const cie = g('Cie'), type = g('TypeAvion'), crew = !!(g('ArrPNT') || g('ArrPNC'));
+    const cfgA = (typeof cfgAl === 'function') ? cfgAl(cie) : null;
+    if(cfgA){ const x = cfgType(cie, type); return (x && x.mtt != null && x.mtt !== '') ? +((crew && x.crew) ? x.crew : x.mtt) : sched; }
+    if(cie === 'FR' || cie === 'RK') return crew ? 35 : 25;
+    if(cie === 'W4' || cie === 'W6') return (type === 'A321' || type === 'A21N' || type === 'A21NY') ? 35 : 30;
+    return sched;
   }
   window.uiSyncArrDot = syncArrDot;
   function syncHero(){
