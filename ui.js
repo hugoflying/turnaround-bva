@@ -1724,14 +1724,15 @@ function clockMin(){
     const isAndroid = /Android/i.test(navigator.userAgent);
     const keepVisible = () => {
       const el = document.activeElement; if(!isAndroid || !isField(el)) return;
-      const r = el.getBoundingClientRect(); if(!r.height) return;
+      // v3.41.4 (Hugo : « pas centré, ça coupe le texte ») : on centre la case entière, titre compris
+      const box = el.closest('.ld-stat, .ld-tile, .field, .card') || el, r = box.getBoundingClientRect(); if(!r.height) return;
       const hd = document.querySelector('.fixed-header'), hr = hd && hd.offsetHeight ? hd.getBoundingClientRect() : null;
       let top = hr ? Math.max(0, hr.bottom) : 0;
       document.querySelectorAll('.ldm-header').forEach(h => { const b = h.getBoundingClientRect(); if(b.height && h.offsetParent && b.top <= top + 2) top = Math.max(top, b.bottom); });   // onglet ARR / PREVI collé
       top += 8;
       const vv = window.visualViewport, bottom = (vv ? vv.offsetTop + vv.height : window.innerHeight) - 8;
-      if(r.top < top) window.scrollBy(0, r.top - top);
-      else if(r.bottom > bottom) window.scrollBy(0, Math.min(r.bottom - bottom, r.top - top));
+      const room = bottom - top, d = r.height >= room ? r.top - top : (r.top + r.bottom) / 2 - (top + bottom) / 2;
+      if(Math.abs(d) > 4) window.scrollBy(0, d);
     };
     window._kbKeepVisible = keepVisible;
     window.addEventListener('resize', () => setTimeout(keepVisible, 120));

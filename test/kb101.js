@@ -9,7 +9,7 @@ await p.evaluate(()=>{ const ids=JSON.parse(localStorage.flightTabs); switchTab(
 await p.waitForTimeout(600);
 await p.evaluate(()=>{ const t=[...document.querySelectorAll('.ldm-tabs *, [data-ldm], button')].find(x=>x.textContent.trim()==='PREVI'); if(t) t.click(); });
 await p.waitForTimeout(400);
-const info = () => p.evaluate(()=>{ const el=document.activeElement, r=el.getBoundingClientRect(), h=document.querySelector('.ldm-header').getBoundingClientRect(), fh=document.querySelector('.fixed-header').getBoundingClientRect(); return {id:el.id, top:Math.round(r.top), bottom:Math.round(r.bottom), headerBottom:Math.round(Math.max(fh.bottom,h.bottom)), vh:innerHeight}; });
+const info = () => p.evaluate(()=>{ const el=document.activeElement, r=(el.closest('.ld-stat')||el).getBoundingClientRect(), h=document.querySelector('.ldm-header').getBoundingClientRect(), fh=document.querySelector('.fixed-header').getBoundingClientRect(); return {id:el.id, top:Math.round(r.top), bottom:Math.round(r.bottom), headerBottom:Math.round(Math.max(fh.bottom,h.bottom)), vh:innerHeight, mid:Math.round((r.top+r.bottom)/2), zoneMid:Math.round((Math.max(fh.bottom,h.bottom)+innerHeight)/2)}; });
 await p.evaluate(()=>{ const el=document.getElementById('PreviPOIDS_OTHER'); el.focus({preventScroll:true}); const r=el.getBoundingClientRect(); window.scrollBy(0, r.top - 90); });   // Chrome Android la place sous l'en-tête
 o.before = await info();
 await p.setViewportSize({width:412,height:470}); await p.waitForTimeout(900);
