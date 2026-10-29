@@ -1,14 +1,30 @@
 /* v3.36 : réglages compagnies publiés depuis admin.html (repo démo seulement pour l'instant).
-   admin.html enregistre la configuration dans ce navigateur (localStorage 'adminCfg').
+   v3.40 : « Publier » écrit config.json dans le repo démo (visible par tous) ; copie locale 'adminCfg' sur l'appareil de l'admin,
+   copie du fichier en ligne 'adminCfgRemote'. La plus récente (champ at) gagne.
    Hors démo, ou tant que rien n'est publié, CFG reste null et l'app garde ses valeurs codées.
    Forme : { v:1, al:{ FR:{ n, icao, hle, types:{ B737:{ mtt, crew, steps:[{k, a:[ref,off], b:[ref,off]|null}] }, B738:{ mtt, crew, like:'B737' } } } } } */
 window.CFG = null;
 function cfgLoad(){
   window.CFG = null;
   if(window.APP_EDITION !== 'demo') return;
-  try{ const c = JSON.parse(localStorage.getItem('adminCfg') || 'null'); if(c && c.v === 1 && c.al) window.CFG = c; }catch(e){}
+  const rd = k => { try{ const c = JSON.parse(localStorage.getItem(k) || 'null'); return (c && c.v === 1) ? c : null; }catch(e){ return null; } };
+  const a = rd('adminCfg'), b = rd('adminCfgRemote');
+  const c = (a && b) ? ((+a.at || 0) >= (+b.at || 0) ? a : b) : (a || b);
+  if(c && c.al) window.CFG = c;            // un fichier « réinitialisé » n'a pas de al → réglages d'origine
 }
 cfgLoad();
+// Fichier en ligne : s'il a changé depuis la dernière visite, on le garde et on recharge une fois
+if(window.APP_EDITION === 'demo' && typeof fetch === 'function'){
+  fetch('./config.json?t=' + Date.now(), { cache:'no-store' }).then(r => r.ok ? r.text() : null).then(t => {
+    if(t == null) return;
+    try{ JSON.parse(t); }catch(e){ return; }
+    if(t.trim() === (localStorage.getItem('adminCfgRemote') || '').trim()) return;
+    const before = JSON.stringify(window.CFG);
+    localStorage.setItem('adminCfgRemote', t); cfgLoad();
+    const last = +(sessionStorage.getItem('cfgReloadAt') || 0);
+    if(JSON.stringify(window.CFG) !== before && Date.now() - last > 30000){ sessionStorage.setItem('cfgReloadAt', String(Date.now())); location.reload(); }
+  }).catch(() => {});
+}
 
 // Compagnie configurée, ou null (l'app reprend alors ses règles codées)
 function cfgAl(cie){

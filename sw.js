@@ -37,6 +37,7 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;           // CDN, r2.dev… : navigateur
   if (url.pathname.includes('/api/')) return;                // Keeper : toujours en direct
   if (url.pathname.endsWith('/version.json')) return;        // contrôle de version : toujours en direct
+  if (url.pathname.endsWith('/config.json')) return;         // v3.40 : réglages de l'admin (démo) : toujours en direct
 
   event.respondWith(
     fetch(req)
