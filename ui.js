@@ -84,7 +84,8 @@ function clockMin(){
     const v = id => (document.getElementById(id)?.value || '').trim();
     const tm = s => { const m = /^(\d{1,2}):(\d{2})/.exec(s); return m ? +m[1]*60 + +m[2] : null; };
     const now = clockMin();
-    const si = tm(v('SIBT')), on = si != null && !v('AIBT');
+    const dots = arrDotsOn();
+    const si = tm(v('SIBT')), on = dots && si != null && !v('AIBT');
     let late = false;
     if(on){ const t = flightRel(si, v('Date'), si, now); late = t != null && now >= t + 1; }
     w.classList.toggle('arr-late', on && late);
@@ -92,7 +93,7 @@ function clockMin(){
     /* v3.44 (Hugo) : même pastille sur SOBT tant que l'AOBT est vide.
        Rouge = EOBT calculée après la SOBT, ou SOBT dépassée. */
     const wd = document.querySelector('.time-wrap[data-id="SOBT"]');
-    const so = tm(v('SOBT')), onD = so != null && !v('AOBT');
+    const so = tm(v('SOBT')), onD = dots && so != null && !v('AOBT');
     let lateD = false;
     if(onD){
       const t = flightRel(so, v('Date'), so, now);
@@ -106,7 +107,6 @@ function clockMin(){
       }
     }
     if(wd){ wd.classList.toggle('arr-late', onD && lateD); wd.classList.toggle('arr-ok', onD && !lateD); }
-    const h = document.getElementById('dotHelp'); if(h) h.hidden = !(on || onD);
   }
   // Rotation mini comme updateEOBT (FR/RK 25, 35 si équipage ; W4/W6 30, 35 en A321 ; admin ; sinon rotation du programme)
   function depMinTurn(sched){
@@ -119,6 +119,11 @@ function clockMin(){
     return sched;
   }
   window.uiSyncArrDot = syncArrDot;
+  // v3.45 (Hugo) : pastilles désactivables dans le menu, activées par défaut (localStorage arrDots = 'off')
+  function arrDotsOn(){ try{ return localStorage.getItem('arrDots') !== 'off'; }catch(e){ return true; } }
+  window.setArrDots = function(on){ try{ localStorage.setItem('arrDots', on ? 'on' : 'off'); }catch(e){} syncArrDot(); };
+  const paintDots = () => document.querySelectorAll('.dot-toggle').forEach(x => x.checked = arrDotsOn());
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paintDots); else paintDots();
   function syncHero(){
     const fno = document.getElementById('fhFno'); if(!fno) return;
     const dep = txt('kvDepVol'), arr = txt('kvArrVol');

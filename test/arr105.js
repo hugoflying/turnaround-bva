@@ -18,12 +18,16 @@ await set('AOBT',''); await set('SOBT', await hm(40)); await p.evaluate(()=>{ do
 o.depAlheure = await st('SOBT');
 await p.evaluate(()=>{ document.getElementById('timer-eobt').textContent='23:59'; }); await set('SOBT', await hm(40)); await p.evaluate(()=>{ const s=document.getElementById('SOBT').value.split(':').map(Number); const t=(s[0]*60+s[1]+12)%1440; document.getElementById('timer-eobt').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); });
 o.depEobtApres = await st('SOBT');
-o.mention = await p.evaluate(()=>!document.getElementById('dotHelp').hidden);
+
 await set('SOBT', await hm(-5)); o.depPassee = await st('SOBT');
 await set('AOBT', await hm(-1)); o.depAvecAOBT = await st('SOBT');
-await p.evaluate(()=>{ ['SIBT','AIBT','SOBT','AOBT'].forEach(i=>document.getElementById(i).value=''); }); o.mentionSansPastille = await p.evaluate(()=>{ uiSyncArrDot(); return !document.getElementById('dotHelp').hidden; });
+await p.evaluate(()=>{ ['SIBT','AIBT','SOBT','AOBT'].forEach(i=>document.getElementById(i).value=''); }); 
 await p.evaluate(()=>{ document.getElementById('Cie').value='FR'; document.getElementById('From').value='ZAG'; });
 await set('SIBT', await hm(-7)); await set('SOBT', await hm(23)); o.casHugo_dep = await st('SOBT'); o.casHugo_arr = await st('SIBT');
 await set('SIBT', await hm(10)); await set('SOBT', await hm(40)); o.avantSIBT_rotOK = await st('SOBT');
 await set('SIBT', await hm(10)); await set('SOBT', await hm(30)); o.avantSIBT_rotCourte = await st('SOBT');
+await set('SIBT', await hm(-20)); await set('AIBT',''); o.avantOff = await st('SIBT');
+await p.evaluate(()=>{ const t=document.querySelector('.dot-toggle'); t.checked=false; t.dispatchEvent(new Event('change',{bubbles:true})); }); o.off = await st('SIBT') + '/' + await st('SOBT');
+await p.reload(); await p.waitForTimeout(4000); o.offApresReload = await p.evaluate(()=>document.querySelector('.dot-toggle').checked) + ' ' + await st('SIBT');
+await p.evaluate(()=>setArrDots(true)); o.ancienneMention = await p.evaluate(()=>!!document.getElementById('dotHelp'));
 console.log(JSON.stringify(o)); console.log(errs.join(';')||'no errors'); await b.close(); })();
