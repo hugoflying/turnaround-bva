@@ -17,7 +17,7 @@ cfgLoad();
 // Fichier en ligne : s'il a changé depuis la dernière visite, on le garde et on recharge une fois
 // v3.41.1 : relu aussi au retour dans l'app (PWA restée ouverte en arrière-plan sur le téléphone), au plus une fois par minute
 let _cfgFetchAt = 0;
-const CFG_URL = 'https://companionturnaroundapp.pages.dev/api/config';
+const CFG_URL = 'https://timing-demo.pages.dev/api/config';
 function cfgFetch(){
   if(window.APP_EDITION !== 'demo' || typeof fetch !== 'function' || Date.now() - _cfgFetchAt < 60000) return;
   _cfgFetchAt = Date.now();
