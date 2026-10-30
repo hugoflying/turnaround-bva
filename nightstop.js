@@ -5,7 +5,8 @@
    Facultative pour l'instant, comme l'auto-contrôle (NS_REQUIRED = false) :
    deviendra obligatoire avec le serveur des rapports.
    Données du vol dans le champ caché Nightstop :
-   { sv:{ toilV, toilR, eauV, eauR, men:'S'|'DC'|'DI'|'', ech, asu, tr:'BELLOVA'|'ASSISTAIR'|'', deg, dec },
+   { sv:{ toilV, toilR, eauV, eauR, men:'S'|'DC'|'DI'|'', gpu, ech, asu, tr:'BELLOVA'|'ASSISTAIR'|'', deg, dec },
+     def:'arr'|'dep' (cases par défaut posées), touched (services modifiés à la main),
      hs:{ on, ok, n, h, s },                       fouille soutes (retour basé, arrivée pays tiers)
      ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], n, h, s } }   tour avion
    Les croix sont en coordonnées relatives (0 à 1) sur la silhouette img/silhouette-b737.png.
@@ -17,17 +18,24 @@ const NS_REQUIRED = false;
   const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const IMG = './img/silhouette-b737.png';
 
-  // Services de la feuille papier (GPU, connexion / déconnexion retirés ; ménage Tidy / Full remplacé par S, DC, DI)
+  // Services de la feuille papier (connexion / déconnexion GPU retirées ; ménage Tidy / Full remplacé par S, DC, DI)
+  // tg : interrupteur Oui / Non (Non par défaut)
   const SV = [
     { k:'toil', t:'Toilettes', opts:[['toilV','Vidange'], ['toilR','Remplissage']] },
     { k:'eau',  t:'Eau potable', opts:[['eauV','Vidange'], ['eauR','Remplissage']] },
     { k:'men',  t:'Ménage', one:'men', opts:[['S','S'], ['DC','DC'], ['DI','DI']] },
-    { k:'ech',  t:'2 échelles', opts:[['ech','Fait']] },
-    { k:'asu',  t:'ASU', opts:[['asu','Fait']] },
+    { k:'gpu',  t:'GPU', tg:true, opts:[['gpu','Oui']] },
+    { k:'ech',  t:'2 échelles', tg:true, opts:[['ech','Oui']] },
+    { k:'asu',  t:'ASU', tg:true, opts:[['asu','Oui']] },
     { k:'tr',   t:'Tractage', one:'tr', opts:[['BELLOVA','Bellova'], ['ASSISTAIR','Assist\'Air']] },
-    { k:'deg',  t:'Dégivrage', opts:[['deg','Fait']] },
-    { k:'dec',  t:'Collecte déchets', opts:[['dec','Fait']] },
+    { k:'deg',  t:'Dégivrage', tg:true, opts:[['deg','Oui']] },
+    { k:'dec',  t:'Collecte déchets', tg:true, opts:[['dec','Oui']] },
   ];
+  // Cases cochées d'office à la première ouverture (Hugo) : retour basé / départ basé
+  const SV_DEF = {
+    arr:{ toilV:true, eauV:true, men:'S', gpu:true, dec:true },
+    dep:{ toilR:true, eauR:true },
+  };
 
   window.nsMode = function(){
     if(val('From') === 'BVA') return 'dep';
@@ -49,7 +57,7 @@ const NS_REQUIRED = false;
   }
   const svDone = o => SV.filter(s => s.one ? !!o.sv[s.one] : s.opts.some(([k]) => o.sv[k])).length;
   function started(o){
-    return svDone(o) > 0 || o.hs.on || o.ta.sv || o.ta.dm || o.ta.x.length || o.ta.n || o.ta.s;
+    return (o.touched && svDone(o) > 0) || o.hs.on || o.ta.sv || o.ta.dm || o.ta.x.length || o.ta.s;
   }
   function date(){
     const d = ($('Date')?.value || '').split('-');
@@ -109,8 +117,15 @@ const NS_REQUIRED = false;
       + '<div><small>Type</small><b class="ns-mode">' + (m === 'arr' ? 'Arrivée' : 'Départ') + '</b></div>'
       + '</div>';
 
+    // cases par défaut, tant que les services n'ont pas été touchés à la main
+    if(m && !o.touched && o.def !== m){ o.sv = Object.assign({}, SV_DEF[m]); o.def = m; set(o); }
     h += '<div class="ac-sec">Services</div><div class="ac-card ns-sv">';
     SV.forEach(s => {
+      if(s.tg){
+        const on = !!o.sv[s.k];
+        h += '<div class="ns-row"><span>' + s.t + '</span><button type="button" class="ns-tg' + (on ? ' on' : '') + '" data-tg="' + s.k + '" role="switch" aria-checked="' + on + '"><b>' + (on ? 'Oui' : 'Non') + '</b><i></i></button></div>';
+        return;
+      }
       h += '<div class="ns-row"><span>' + s.t + '</span><span class="ns-cs">'
         + s.opts.map(([k, t]) => chip(s.one ? o.sv[s.one] === k : !!o.sv[k], s.one ? 'data-one="' + s.one + '" data-v="' + k + '"' : 'data-sv="' + k + '"', t)).join('')
         + '</span></div>';
@@ -151,10 +166,14 @@ const NS_REQUIRED = false;
   const upd = fn => { const o = get(); fn(o); set(o); };
   function bind(){
     const body = $('nsBody');
-    body.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => { upd(o => o.sv[b.dataset.sv] = !o.sv[b.dataset.sv]); b.classList.toggle('on'); });
+    body.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => { upd(o => { o.sv[b.dataset.sv] = !o.sv[b.dataset.sv]; o.touched = 1; }); b.classList.toggle('on'); });
+    body.querySelectorAll('[data-tg]').forEach(b => b.onclick = () => {
+      const k = b.dataset.tg; upd(o => { o.sv[k] = !o.sv[k]; o.touched = 1; });
+      const on = !!get().sv[k]; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); b.querySelector('b').textContent = on ? 'Oui' : 'Non';
+    });
     body.querySelectorAll('[data-one]').forEach(b => b.onclick = () => {
       const k = b.dataset.one, v = b.dataset.v;
-      upd(o => o.sv[k] = o.sv[k] === v ? '' : v);
+      upd(o => { o.sv[k] = o.sv[k] === v ? '' : v; o.touched = 1; });
       body.querySelectorAll('[data-one="' + k + '"]').forEach(x => x.classList.toggle('on', x === b && get().sv[k] === v));
     });
     body.querySelectorAll('[data-hs]').forEach(b => b.onclick = () => { upd(o => o.hs.on = b.dataset.hs === 'on'); render(); requestAnimationFrame(() => document.querySelectorAll('#nsBody canvas[data-sig]').forEach(sigInit)); });
@@ -267,19 +286,56 @@ const NS_REQUIRED = false;
   };
   window.nsFullUndo = function(){ upd(o => o.ta.x.pop()); fullPaint(); };
   window.nsFullClear = function(){ upd(o => o.ta.x = []); fullPaint(); };
-  function fullTap(e){
-    const img = $('nsFullPlane').querySelector('img'); if(!img) return;
+  // position (u, v) de 0 à 1 sur la silhouette ; téléphone tenu en portrait : la scène est tournée de 90°
+  function fullUV(e){
+    const img = $('nsFullPlane').querySelector('img'); if(!img) return null;
     const r = img.getBoundingClientRect();
-    // téléphone tenu en portrait : la scène est tournée de 90° (coordonnées à convertir)
     let u, v;
     if($('nsFull').classList.contains('rot')){ u = (e.clientY - r.top) / r.height; v = (r.right - e.clientX) / r.width; }
     else { u = (e.clientX - r.left) / r.width; v = (e.clientY - r.top) / r.height; }
-    if(u < 0 || u > 1 || v < 0 || v > 1) return;
     const ar = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 2.33;
+    return { u, v, ar };
+  }
+  const clamp = n => Math.min(1, Math.max(0, n));
+  const nearX = (x, p) => x.findIndex(([a, b]) => Math.hypot((a - p.u) * p.ar, b - p.v) < 0.045);
+  // appui court : pose une croix, ou retire celle touchée. Appui long (0,35 s) sur une croix : on la fait glisser
+  let press = null;
+  function fullDown(e){
+    const p = fullUV(e); if(!p) return;
+    e.preventDefault();
+    $('nsFullPlane').setPointerCapture?.(e.pointerId);
+    const i = nearX(get().ta.x, p);
+    press = { id:e.pointerId, x:e.clientX, y:e.clientY, p, i, drag:false, moved:false };
+    if(i >= 0) press.t = setTimeout(() => {
+      if(!press || press.moved) return;
+      press.drag = true;
+      const el = $('nsFullPlane').querySelectorAll('.ns-x')[i]; if(el) el.classList.add('is-drag');
+      try{ navigator.vibrate && navigator.vibrate(15); }catch(err){}
+    }, 350);
+  }
+  function fullMove(e){
+    if(!press || e.pointerId !== press.id) return;
+    if(Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) press.moved = true;
+    if(!press.drag) return;
+    e.preventDefault();
+    const p = fullUV(e), el = $('nsFullPlane').querySelectorAll('.ns-x')[press.i];
+    if(p && el){ press.p = p; el.style.left = (clamp(p.u) * 100).toFixed(2) + '%'; el.style.top = (clamp(p.v) * 100).toFixed(2) + '%'; }
+  }
+  function fullUp(e){
+    if(!press || e.pointerId !== press.id) return;
+    const pr = press; press = null; clearTimeout(pr.t);
+    if(e.type === 'pointercancel') return fullPaint();
+    if(pr.drag){
+      upd(o => { if(o.ta.x[pr.i]) o.ta.x[pr.i] = [+clamp(pr.p.u).toFixed(4), +clamp(pr.p.v).toFixed(4)]; });
+      return fullPaint();
+    }
+    if(pr.moved) return;
+    const p = pr.p;
+    if(p.u < 0 || p.u > 1 || p.v < 0 || p.v > 1) return;
     upd(o => {
-      const near = o.ta.x.findIndex(([a, b]) => Math.hypot((a - u) * ar, b - v) < 0.045);
+      const near = nearX(o.ta.x, p);
       if(near >= 0) o.ta.x.splice(near, 1);
-      else { o.ta.x.push([+u.toFixed(4), +v.toFixed(4)]); o.ta.dm = 'OUI'; }
+      else { o.ta.x.push([+p.u.toFixed(4), +p.v.toFixed(4)]); o.ta.dm = 'OUI'; }
     });
     fullPaint();
   }
@@ -306,7 +362,7 @@ const NS_REQUIRED = false;
     const sec = t => { c.fillStyle = '#E9EDF3'; c.fillRect(P, y, W - 2 * P, 34); c.fillStyle = '#0B1E4F'; c.font = '800 16px Manrope, sans-serif'; c.fillText(t.toUpperCase(), P + 12, y + 17); y += 34; };
     const row = (k, v) => { c.strokeStyle = '#d5dde7'; c.lineWidth = 1; c.strokeRect(P, y, W - 2 * P, 32); c.fillStyle = '#0f1723'; c.font = '600 17px Manrope, sans-serif'; c.fillText(k, P + 12, y + 16); c.font = '700 17px Manrope, sans-serif'; c.fillText(v, W / 2, y + 16); y += 32; };
     sec('Services');
-    SV.forEach(s => row(s.t, s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', '—'])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, t]) => t).join(' + ') || '—'));
+    SV.forEach(s => row(s.t, s.tg ? (o.sv[s.k] ? 'Oui' : 'Non') : s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', '—'])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, t]) => t).join(' + ') || '—'));
     if(m === 'arr' && o.hs.on){ y += 12; sec('Fouille des soutes · arrivée pays tiers'); row('Hold security check / search', o.hs.ok ? 'Effectué' : 'Non coché'); row('Nom · heure', (o.hs.n || '—') + ' · ' + (o.hs.h || '--:--') + (o.hs.s ? '  · signé' : '')); }
     y += 12; sec('Tour avion');
     row('Soutes vidées et contrôlées', o.ta.sv || '—');
@@ -371,7 +427,10 @@ const NS_REQUIRED = false;
   function init(){
     const f = $('nsFull');
     if(f){
-      $('nsFullPlane').addEventListener('click', fullTap);
+      const fp = $('nsFullPlane');
+      fp.addEventListener('pointerdown', fullDown); fp.addEventListener('pointermove', fullMove);
+      fp.addEventListener('pointerup', fullUp); fp.addEventListener('pointercancel', fullUp);
+      fp.addEventListener('contextmenu', e => e.preventDefault());
       window.addEventListener('resize', () => {
         if(f.style.display !== 'none') fullLayout();
         if($('nsModal').style.display !== 'none') document.querySelectorAll('#nsBody canvas[data-sig]').forEach(sigInit);
