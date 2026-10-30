@@ -60,6 +60,11 @@ section li{margin:3px 0}
 .shots.wide{max-width:none}.shots.wide figure{width:100%}
 .body.wide{grid-template-columns:1fr}
 .shots img{width:100%;border-radius:12px;border:1px solid var(--line);cursor:zoom-in;display:block;background:var(--surf2)}
+.rings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 4px;max-width:460px}
+.rings figure{margin:0}
+.rings img{width:100%;max-width:220px;display:block;border-radius:12px;cursor:zoom-in}
+.rings figcaption{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+.rings figcaption b{color:var(--fg);display:block}
 .zooms{display:flex;flex-direction:column;gap:14px;margin-top:16px;max-width:460px}
 .zooms figure{margin:0}
 .zooms img{width:100%;border-radius:12px;border:1px solid var(--line);box-shadow:0 4px 16px rgba(7,15,38,.10);cursor:zoom-in;display:block}
@@ -126,6 +131,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 // Contenu du manuel : [groupe, id, titre, captures (manuel/img/*.jpg), texte HTML]
+// IMGV : à changer quand des captures sont refaites (sinon le navigateur garde les anciennes)
+const IMGV = '2';
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
@@ -175,7 +182,8 @@ const S = [
 <li><b>Le bandeau bleu</b> du vol affiché : stand, vol, route, compte à rebours et heures clés (<a href="#bandeau">détail</a>).</li>
 <li><b>Le contenu</b> de l'onglet choisi en bas.</li>
 <li><b>La barre du bas</b> : <span class="k">Récap</span>, <span class="k">Vol</span>, <span class="k">Timing</span>, <span class="k">Load</span>, <span class="k">Retard</span>, <span class="k">Notes</span>. Un glissement à gauche ou à droite passe aussi d'un écran à l'autre.</li></ol>
-<div class="tip info">L'onglet d'un vol montre le numéro <b>d'arrivée</b> et la provenance tant que le débarquement n'est pas fini, puis le numéro <b>de départ</b> et la destination.</div>`],
+<div class="tip info">L'onglet d'un vol montre le numéro <b>d'arrivée</b> et la provenance tant que le débarquement n'est pas fini, puis le numéro <b>de départ</b> et la destination.</div>
+<p><b>Couleur du cercle de l'onglet :</b></p><div class="rings"><figure><img loading="lazy" src="./manuel/img/z-onglet-attente.jpg?v=2" alt="Non commencé"><figcaption><b>Non commencé</b> cercle en pointillés : avion pas encore arrivé (pas d'AIBT)</figcaption></figure><figure><img loading="lazy" src="./manuel/img/z-onglet-encours.jpg?v=2" alt="En cours"><figcaption><b>En cours</b> bleu : se remplit de l'AIBT jusqu'à l'EOBT</figcaption></figure><figure><img loading="lazy" src="./manuel/img/z-onglet-bientot.jpg?v=2" alt="Bientôt"><figcaption><b>Bientôt</b> jaune : 5 min ou moins avant l'EOBT</figcaption></figure><figure><img loading="lazy" src="./manuel/img/z-onglet-retard.jpg?v=2" alt="En retard"><figcaption><b>En retard</b> rouge : EOBT dépassée</figcaption></figure></div>`],
 ['Prise en main','bandeau','Le bandeau bleu',[I('onglets-bandeau','Bandeau complet')],`
 <ul><li><b>STAND</b> : le parking du vol, en grand.</li>
 <li><b>Vol et route</b> : numéro, indicatif (callsign) entre parenthèses quand il diffère, provenance → destination, immatriculation et type avion.</li>
@@ -372,8 +380,8 @@ S.forEach(([grp, id, t, imgs, body]) => {
   if(grp !== g){ g = grp; html += '<div class="grp" data-g="' + esc(grp) + '">' + esc(grp) + '</div>'; th += '<h4 data-g="' + esc(grp) + '">' + esc(grp) + '</h4>'; }
   n++;
   const wide = imgs.some(x => /^adm-/.test(x[0]));
-  const sh = imgs.length ? '<div class="shots' + (wide ? ' wide' : '') + '">' + imgs.map(([f, c]) => '<figure><img loading="lazy" src="./manuel/img/' + f + '.jpg" alt="' + esc(c) + '"><figcaption>' + esc(c) + '</figcaption></figure>').join('') + '</div>' : '';
-  html += '<section id="' + id + '" data-g="' + esc(grp) + '"><h2>' + esc(t) + '</h2><div class="body' + (wide ? ' wide' : '') + '"><div class="txt">' + body + (ZM[id] ? '<div class="zooms">' + ZM[id].map(([f, c]) => '<figure><img loading="lazy" src="./manuel/img/' + f + '.jpg" alt="' + esc(c) + '"><figcaption><span class="zt">Gros plan</span> ' + esc(c) + '</figcaption></figure>').join('') + '</div>' : '') + '</div>' + sh + '</div></section>';
+  const sh = imgs.length ? '<div class="shots' + (wide ? ' wide' : '') + '">' + imgs.map(([f, c]) => '<figure><img loading="lazy" src="./manuel/img/' + f + '.jpg?v=' + IMGV + '" alt="' + esc(c) + '"><figcaption>' + esc(c) + '</figcaption></figure>').join('') + '</div>' : '';
+  html += '<section id="' + id + '" data-g="' + esc(grp) + '"><h2>' + esc(t) + '</h2><div class="body' + (wide ? ' wide' : '') + '"><div class="txt">' + body + (ZM[id] ? '<div class="zooms">' + ZM[id].map(([f, c]) => '<figure><img loading="lazy" src="./manuel/img/' + f + '.jpg?v=' + IMGV + '" alt="' + esc(c) + '"><figcaption><span class="zt">Gros plan</span> ' + esc(c) + '</figcaption></figure>').join('') + '</div>' : '') + '</div>' + sh + '</div></section>';
   th += '<a href="#' + id + '" data-id="' + id + '">' + esc(t) + '</a>';
 });
 secs.innerHTML = html; toc.innerHTML = th;
@@ -428,7 +436,7 @@ ALL.forEach(o => io.observe(o.s));
 
 // agrandir une capture
 const lb = document.getElementById('lb');
-secs.addEventListener('click', e => { const im = e.target.closest('.shots img, .zooms img'); if(!im) return; lb.querySelector('img').src = im.src; lb.classList.add('on'); });
+secs.addEventListener('click', e => { const im = e.target.closest('.shots img, .zooms img, .rings img'); if(!im) return; lb.querySelector('img').src = im.src; lb.classList.add('on'); });
 addEventListener('keydown', e => { if(e.key === 'Escape'){ lb.classList.remove('on'); tocOpen(false); } });
 const topBtn = document.getElementById('top');
 addEventListener('scroll', () => topBtn.classList.toggle('on', scrollY > 600), { passive:true });
