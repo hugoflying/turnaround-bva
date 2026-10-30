@@ -5,9 +5,13 @@
    Hors démo, ou tant que rien n'est publié, CFG reste null et l'app garde ses valeurs codées.
    Forme : { v:1, al:{ FR:{ n, icao, hle, types:{ B737:{ mtt, crew, steps:[{k, a:[ref,off], b:[ref,off]|null}] }, B738:{ mtt, crew, like:'B737' } } } } } */
 window.CFG = null;
+// v3.47 : l'admin affiche la vraie app dans un téléphone (iframe ?preview=1) avec ses réglages en brouillon (« Après »)
+// ou publiés (« Avant ») : copie posée par l'admin dans localStorage 'adminCfgPreview'
+window.CFG_PREVIEW = /[?&]preview=1\b/.test(location.search) && window.parent !== window;
 function cfgLoad(){
   window.CFG = null;
   if(window.APP_EDITION !== 'demo') return;
+  if(window.CFG_PREVIEW){ try{ const c = JSON.parse(localStorage.getItem('adminCfgPreview') || 'null'); if(c && c.v === 1 && c.al) window.CFG = c; }catch(e){} return; }
   const rd = k => { try{ const c = JSON.parse(localStorage.getItem(k) || 'null'); return (c && c.v === 1) ? c : null; }catch(e){ return null; } };
   const a = rd('adminCfg'), b = rd('adminCfgRemote');
   const c = (a && b) ? ((+a.at || 0) >= (+b.at || 0) ? a : b) : (a || b);
@@ -19,7 +23,7 @@ cfgLoad();
 let _cfgFetchAt = 0;
 const CFG_URL = 'https://timing-demo.pages.dev/api/config';
 function cfgFetch(){
-  if(window.APP_EDITION !== 'demo' || typeof fetch !== 'function' || Date.now() - _cfgFetchAt < 60000) return;
+  if(window.APP_EDITION !== 'demo' || window.CFG_PREVIEW || typeof fetch !== 'function' || Date.now() - _cfgFetchAt < 60000) return;
   _cfgFetchAt = Date.now();
   // v3.46 : d'abord Cloudflare (publication de l'admin, avec historique) ; rien publié là-bas → ancien fichier config.json
   const old = () => fetch('./config.json?t=' + Date.now(), { cache:'no-store' }).then(r => r.ok ? r.text() : null);
@@ -88,6 +92,46 @@ function cfgEvSplit(e){
 }
 function cfgEvDesc(e){ return e.d || cfgEvItems(e).map(x => x.t).join(', '); }
 function cfgEvHidden(k){ return !!(window.CFG && Array.isArray(window.CFG.evHide) && window.CFG.evHide.includes(k)); }
+// v3.47 : événements de l'app, leurs actions (champ, nom, rôle h = une heure, d = début, f = fin) ; l'admin s'en sert aussi
+const EV_BUILTIN = {
+  crew:{ t:'Crew', side:'dep', c:'#334155', it:[['ArrPNT','Arrivée PNT','h'],['ArrPNC','Arrivée PNC','h']] },
+  'recherche-bag':{ t:'Recherche bag', side:'dep', c:'#ec4899', it:[['RechercheBagDebut','Début de recherche','d'],['RechercheBagFin','Fin de recherche','f']] },
+  inad:{ t:'INAD', side:'dep', c:'#D7263D', it:[['AnnonceINAD','Annonce INAD','h'],['ArriveeINAD','Arrivée INAD','h']] },
+  gpu:{ t:'Nayak', side:'dep', c:'#FFAD00', it:[['AppelNayak','Appel Nayak','h'],['ArriveeNayak','Arrivée Nayak','d'],['DepartNayak','Départ Nayak','f']] },
+  scan:{ t:'Embarquement', side:'dep', c:'#0f766e', it:[['PremierScanne','Premier scanné','d'],['DernierScanne','Dernier scanné','f']] },
+  casque:{ t:'Connexion casque', side:'dep', c:'#7c3aed', it:[['ConnexionAgentCasque','Connexion casque','h']] },
+  push:{ t:'Push', side:'dep', c:'#3273dc', it:[['ConnexionPush','Connexion push','h'],['ChangementPush','Changement de push','h']] },
+  soutes:{ t:'Portes de soute', side:'dep', c:'#7f1d1d', it:[['FermetureSouteAV','Fermeture soute AV','h'],['FermetureSouteAR','Fermeture soute AR','h']] },
+  echelles:{ t:'Retrait échelles', side:'dep', c:'#636363', it:[['RetraitEchelleAV','Retrait échelle AV','h'],['RetraitEchelleAR','Retrait échelle AR','h']] },
+  reouverture:{ t:'Réouverture porte', side:'dep', c:'#D7263D', it:[['ReouverturePorteAvion','Réouverture porte','h']] },
+  comptage:{ t:'Comptage bagages', side:'dep', c:'#15803d', it:[['DebutComptageBagages','Début comptage','d'],['FinComptageBagages','Fin comptage','f']] },
+  chargement:{ t:'Chargement bagages', side:'dep', c:'#15803d', it:[['DebutChargementBagages','Début chargement','d'],['FinChargementBagages','Fin chargement','f']] },
+  degivrage:{ t:'Dégivrage', side:'dep', c:'#0ea5e9', it:[['DebutDegivrage','Début dégivrage','d'],['FinDegivrage','Fin dégivrage','f']] },
+  tapis:{ t:'Tapis bagages', side:'arr', c:'#0d9488', it:[['MiseEnPlaceTapis','Mise en place tapis','h']] },
+  dechargement:{ t:'Déchargement bagages', side:'arr', c:'#15803d', it:[['DebutDechargementBagages','Début déchargement','d'],['FinDechargementBagages','Fin déchargement','f']] },
+  repositionnement:{ t:'Repositionnement avion', side:'arr', c:'#3273dc', it:[['DebutRepositionnement','Début repositionnement','d'],['FinRepositionnement','Fin repositionnement','f']] },
+  cleaning:{ t:'Cleaning cabine', side:'both', c:'#0891b2', it:[['DebutCleaningCabine','Début cleaning','d'],['FinCleaningCabine','Fin cleaning','f']] },
+  vidange:{ t:'Vidange toilettes', side:'both', c:'#78716c', it:[['DebutVidangeToilettes','Début vidange','d'],['FinVidangeToilettes','Fin vidange','f']] },
+  eau:{ t:'Eau potable', side:'both', c:'#2563eb', it:[['DebutEauPotable','Début eau potable','d'],['FinEauPotable','Fin eau potable','f']] }
+};
+// Réglages de l'admin sur un événement de l'app : { t: nom, c: couleur, cies: [FR, RK] } ; nom d'une action : CFG.lbl[champ]
+function cfgEvEdit(k){ const m = window.CFG && window.CFG.evEdit; return (m && m[k]) || null; }
+function cfgLbl(id, def){ const m = window.CFG && window.CFG.lbl; return (m && typeof m[id] === 'string' && m[id].trim()) ? m[id].trim() : def; }
+// Nom d'un événement de l'app à partir d'un de ses champs (barre de la timeline), sinon def
+function cfgEvTitle(field, def){
+  for(const k in EV_BUILTIN) if(EV_BUILTIN[k].it.some(x => x[0] === field)){ const e = cfgEvEdit(k); return (e && e.t) || def; }
+  return def;
+}
+// En-têtes des cartes d'événements (nom, couleur) une fois le formulaire créé
+function cfgEvPaint(root){
+  if(!window.CFG || !root) return;
+  root.querySelectorAll('.ev-h').forEach(h => {
+    const m = /toggleDepExtra\('([^']+)'\)/.exec(h.innerHTML), e = m && cfgEvEdit(m[1]); if(!e) return;
+    const b = h.querySelector('b'), i = h.querySelector('i');
+    if(e.t && b) b.textContent = e.t;
+    if(e.c && i) i.style.background = e.c;
+  });
+}
 function cfgWords(){ return (window.CFG && Array.isArray(window.CFG.words) && window.CFG.words.length) ? window.CFG.words.map(String) : null; }
 // Liste de codes retard propre à la compagnie (ou à celle qu'elle copie), sinon null
 function cfgDl(cie){

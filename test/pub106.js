@@ -1,4 +1,4 @@
-// v3.46 : « Publier » envoie sur Cloudflare (functions/api/config.js simulé avec un KV en mémoire) : code admin, historique, retour à une version,
+// v3.46 (v3.47 : passe par la page Vérifier et publier) : « Publier » envoie sur Cloudflare (functions/api/config.js simulé avec un KV en mémoire) : code admin, historique, retour à une version,
 // et la démo lit la dernière version. Usage : node test/pub106.js (serveur statique du repo sur http://localhost:8803)
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path'), os = require('os');
 (async()=>{
@@ -16,9 +16,9 @@ await p.goto('http://localhost:8803/admin.html'); await p.waitForTimeout(500);
 await p.evaluate(() => go('publication'));
 await p.fill('#admCode', 'faux'); await p.click('text=Enregistrer'); await p.waitForTimeout(1500); o.bad = await p.evaluate(() => histErr);
 await p.fill('#admCode', 'secret42'); await p.click('text=Enregistrer'); await p.waitForTimeout(400); o.good = await p.evaluate(() => codeMsg);
-await p.evaluate(() => { go('words'); words().push('Pushback'); save(); }); await p.click('#pubBtn'); await p.waitForTimeout(400);
+await p.evaluate(() => { go('words'); words().push('Pushback'); save(); }); await p.click('#pubBtn'); await p.waitForTimeout(300); o.rv = (o.rv || []).concat(await p.evaluate(() => nChanges())); await p.click('#pubGo'); await p.waitForTimeout(400);
 o.msg = await p.textContent('#pubtxt');
-await p.evaluate(() => { const k = Object.keys(C.al)[0]; C.al[k].hle = (C.al[k].hle || 60) + 5; save(); }); await p.click('#pubBtn'); await p.waitForTimeout(400);
+await p.evaluate(() => { go('compagnies'); const k = Object.keys(C.al)[0]; C.al[k].hle = (C.al[k].hle || 60) + 5; save(); }); await p.click('#pubBtn'); await p.waitForTimeout(300); o.rv = (o.rv || []).concat(await p.evaluate(() => nChanges())); await p.click('#pubGo'); await p.waitForTimeout(400);
 await p.evaluate(() => go('publication')); await p.waitForTimeout(300);
 o.hist = await p.evaluate(() => hist.map(h => h.sum));
 const hle0 = JSON.parse(store.get('v:' + JSON.parse(store.get('hist'))[1].id)).al;

@@ -220,6 +220,8 @@ function clockMin(){
     { k:'eau',       side:'both', t:'Eau potable',       d:'Début et fin du plein d’eau',     c:'#2563eb' },
     { k:'degivrage', t:'Dégivrage', d:'Début et fin du dégivrage', c:'#0ea5e9' }
   ];
+  // v3.47 : nom, couleur et compagnies des événements de l'app réglés dans l'admin (démo)
+  if(typeof cfgEvEdit === 'function') EVENTS.forEach(e => { const x = cfgEvEdit(e.k); if(!x) return; if(x.t) e.t = x.t; if(x.c) e.c = x.c; if(Array.isArray(x.cies) && x.cies.length) e.cies = x.cies; });
   // v3.37 : événements ajoutés dans l'admin (démo)
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
     const k = 'cx-' + e.id;
@@ -1129,7 +1131,7 @@ function clockMin(){
   };
   window.uiWhatsNewMaybe = function(){
     let seen = null; try{ seen = localStorage.getItem('whatsNewSeen'); }catch(e){}
-    if(seen === WN_ID || !document.body.classList.contains('pv-authed')) return;
+    if(seen === WN_ID || window.CFG_PREVIEW || !document.body.classList.contains('pv-authed')) return;
     setTimeout(window.uiWhatsNew, 450);
   };
 

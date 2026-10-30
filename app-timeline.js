@@ -588,6 +588,10 @@ function renderTimeline(){
     ['ConnexionPush','Connexion push'], ['ChangementPush','Changement push'],
     ['AnnonceINAD','Annonce INAD'], ['AppelNayak','Appel Nayak'],
   ];
+  if(typeof cfgLbl === 'function'){   // v3.47 : noms réglés dans l'admin (démo)
+    EV_SPANS.forEach(x => { x[0] = cfgEvTitle(x[1], x[0]); });
+    EV_POINTS.forEach(x => { x[1] = cfgLbl(x[0], x[1]); });
+  }
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {   // v3.37 : événements ajoutés dans l'admin (démo)
     const { pairs, points } = cfgEvSplit(e), one = pairs.length === 1;
     pairs.forEach(([a, b]) => EV_SPANS.push([one ? e.t : a.t, a.f, b.f]));

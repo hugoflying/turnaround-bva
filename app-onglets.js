@@ -486,7 +486,7 @@ function generateTimingFields(){
   const fieldHTML = (id,label,full=false,optional=false,nowColor='is-link')=>`
     <div class="${full ? 'span-12' : 'span-6'}">
       <div class="field${optional ? ' field-optional' : ''}">
-        <label class="label"><span class="tw-dot" style="background:${colorDot[nowColor]||'#3273dc'}"></span>${label}</label>
+        <label class="label"><span class="tw-dot" style="background:${colorDot[nowColor]||'#3273dc'}"></span>${typeof cfgLbl === 'function' ? cfgLbl(id, label) : label}</label>
         <div class="control">
           <div class="time-wrap" data-id="${id}">
             <input type="time" id="${id}" class="tw-hidden-input" onchange="updateAllCalculations(); twSync('${id}')">
@@ -753,6 +753,7 @@ function generateTimingFields(){
     toggle +
     `<div id="panel-arr" style="display:none;">${arrNoHeader}</div>` +
     `<div id="panel-dep" style="display:none;">${depNoHeader}</div>`;
+  if(typeof cfgEvPaint === 'function') cfgEvPaint(container);   // v3.47 : nom et couleur réglés dans l'admin
 
   // v3.37 : événements ajoutés dans l'admin (démo), créés avant la restauration du vol
   if(typeof cfgEvents === 'function') cfgEvents().forEach(e => {
