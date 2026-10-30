@@ -1015,9 +1015,23 @@ function clockMin(){
   window.syncArrBags = syncArrBags;
   document.addEventListener('input', e => { if(e.target && (e.target.id === 'ArrPOIDS' || e.target.id === 'Cie')) syncArrBags(); });
 
+  // v3.48 (Hugo, option C, sans la phrase de rappel) : SNY à bord lus dans les notes, zone de chaque siège, total par zone
+  function syncSnyBox(){
+    const box = document.getElementById('ldSnyBox'); if(!box) return;
+    const cie = val('Cie').toUpperCase(), type = val('TypeAvion').toUpperCase();
+    const list = (cie === 'FR' || cie === 'RK') ? (val('FaitsSaillants').split('\n')
+      .map(l => { const m = /(?:^|·)\s*SNY\s*·\s*(.+)$/.exec(l); return m ? window.snyParse(m[1]).list : []; }).flat()) : [];
+    box.hidden = !list.length; if(!list.length){ box.innerHTML = ''; return; }
+    const n = { FWD:0, MID:0, AFT:0 };
+    const rows = list.map(x => { const z = (x.seat && snyZone(cie, type, x.seat)) || x.zone || ''; if(z) n[z]++;
+      return `<div class="sny-r"><span><code class="nj-cc">${escapeHtml(x.code)}</code>${x.seat ? ` <span class="nj-seat">${escapeHtml(x.seat)}</span>` : ' <small>siège ?</small>'}</span>${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}</div>`; }).join('');
+    box.innerHTML = `<div class="ld-box-h">SNY à bord · ${list.length}<span>depuis les notes</span></div>${rows}<div class="sny-zs">${Object.keys(n).map(z => `<div class="z-${z.toLowerCase()}"><small>${z}</small><b>${n[z] ? '+' + n[z] : '0'}</b></div>`).join('')}</div>`;
+  }
+  window.syncSnyBox = syncSnyBox;
   function syncLoadUI(){
     const m = document.getElementById('ldmModal');
     if(!m || m.style.display === 'none') return;
+    syncSnyBox();
     syncArrBags();
     const cie = val('Cie').toUpperCase(), frrk = cie === 'FR' || cie === 'RK';
     const elid = frrk && (typeof isELID === 'function') && isELID();
@@ -1227,7 +1241,11 @@ function clockMin(){
       if(m){ time = m[1]; rest = m[2]; }
       const parts = rest.split(/\s*·\s*/);
       let body;
-      if(parts.length > 1 && parts[0] === 'SNY') body = `<em>SNY</em> · ${parts.slice(1).join(' ').split(/\s+/).map(c => `<code class="nj-cc">${escapeHtml(c)}</code>`).join(' ')}`;
+      if(parts.length > 1 && parts[0] === 'SNY'){
+        const sp = snyParse(parts.slice(1).join(' '));
+        body = `<em>SNY</em> · ${sp.list.map(x => { const z = x.zone || (x.seat && snyZone(snyCie(), snyType(), x.seat));
+          return `<code class="nj-cc">${x.code}</code>` + (x.seat ? ` <span class="nj-seat">${x.seat}</span>` : '') + (z ? ` <span class="sny-z z-${z.toLowerCase()}">${z}</span>` : ''); }).concat(sp.bad.map(escapeHtml)).join(' ')}`;
+      }
       else if(parts.length > 1 && NJ_TAGS.includes(parts[0])) body = `<em>${escapeHtml(parts[0])}</em> · ${escapeHtml(parts.slice(1).join(' · '))}`;
       else if(NJ_TAGS.includes(rest.trim())) body = `<em>${escapeHtml(rest.trim())}</em>`;
       else body = escapeHtml(rest);
@@ -1247,20 +1265,39 @@ function clockMin(){
     inp.setAttribute('autocapitalize', sny ? 'characters' : 'sentences');
     inp.setAttribute('autocorrect', sny ? 'off' : 'on');
     inp.spellcheck = !sny;
-    inp.placeholder = sny ? 'Crew code (6 lettres)' : njTag ? 'Détail (facultatif)' : 'Écrire une note…';
+    inp.placeholder = sny ? 'Crew code + siège : DERUHU 12C' : njTag ? 'Détail (facultatif)' : 'Écrire une note…';
     inp.classList.toggle('nj-code', sny);
     njCheck();
   }
+  // v3.48 (Hugo, option C) : « DERUHU 12C » = crew code puis siège ; la zone FWD/MID/AFT (FR/RK) est ajoutée à la note
+  const SNY_Z = ['FWD', 'MID', 'AFT'];
+  const snyCie = () => (document.getElementById('Cie')?.value || '').toUpperCase().trim();
+  const snyType = () => (document.getElementById('TypeAvion')?.value || '').toUpperCase().trim();
+  function snyParse(txt){   // → [{ code, seat, zone }] ; tokens dans l'ordre : code, siège facultatif, zone facultative
+    const out = [], bad = [];
+    String(txt || '').toUpperCase().split(/[\s,;]+/).filter(Boolean).forEach(t => {
+      const last = out[out.length - 1];
+      if(/^[A-Z]{6}$/.test(t)) out.push({ code:t, seat:'', zone:'' });
+      else if(/^\d{1,2}[A-K]$/.test(t) && last && !last.seat) last.seat = t;
+      else if(SNY_Z.includes(t) && last && last.seat && !last.zone) last.zone = t;
+      else bad.push(t);
+    });
+    return { list:out, bad };
+  }
+  window.snyParse = snyParse;
   function njCheck(){
-    const inp = njEl('.nj-input'), hint = njEl('.nj-hint');
+    const inp = njEl('.nj-input'), hint = njEl('.nj-hint'), zb = njEl('.nj-zone');
     if(!inp || !hint) return true;
-    let msg = '';
+    let msg = '', zh = '';
     if(njTag === 'SNY'){
-      const codes = inp.value.trim().split(/[\s,;]+/).filter(Boolean);
-      const bad = codes.filter(c => !/^[A-Z]{6}$/.test(c));
-      if(!codes.length && inp.value) msg = 'Un crew code fait 6 lettres.';
-      else if(bad.length) msg = `Un crew code fait 6 lettres : ${bad.map(escapeHtml).join(', ')}`;
+      const { list, bad } = snyParse(inp.value);
+      if(!list.length && inp.value.trim()) msg = 'Un crew code fait 6 lettres, puis le siège : DERUHU 12C.';
+      else if(bad.length) msg = `Pas compris : ${bad.map(escapeHtml).join(', ')}. Écrire le code (6 lettres) puis le siège : DERUHU 12C.`;
+      else zh = list.filter(x => x.seat).map(x => { const z = snyZone(snyCie(), snyType(), x.seat);
+        return `Siège <span class="nj-seat">${x.seat}</span> → ${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}`; }).join(' · ');
+      if(zh && !cfgSnyZones(snyCie(), snyType())) zh = '';
     }
+    if(zb){ zb.hidden = !zh; zb.innerHTML = zh ? zh + ` <small>${escapeHtml(snyType())}</small>` : ''; }
     hint.hidden = !msg; hint.innerHTML = msg;
     inp.classList.toggle('nj-bad', !!msg);
     return !msg;
@@ -1271,7 +1308,7 @@ function clockMin(){
     if(njTag === 'SNY'){
       if(!txt){ inp.focus(); return; }
       if(!njCheck()) return;
-      txt = txt.split(/[\s,;]+/).filter(Boolean).join(' ');
+      txt = snyParse(txt).list.map(x => { const z = x.seat && snyZone(snyCie(), snyType(), x.seat); return [x.code, x.seat, z || ''].filter(Boolean).join(' '); }).join(' ');
     }
     if(!txt && !njTag) return;
     const d = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -1303,7 +1340,7 @@ function clockMin(){
       }
     });
     inp.addEventListener('input', () => {
-      if(njTag === 'SNY'){ const p = inp.selectionStart; inp.value = inp.value.toUpperCase().replace(/[^A-Z ,;]/g, ''); try{ inp.setSelectionRange(p, p); }catch(_){} }
+      if(njTag === 'SNY'){ const p = inp.selectionStart; inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9 ,;]/g, ''); try{ inp.setSelectionRange(p, p); }catch(_){} }
       njCheck();
     });
     inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); njAdd(); } });

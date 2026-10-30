@@ -5,13 +5,13 @@
 const DEMO_SI_ARR = ['2 WCHS 36B/37F + 1 WCHR 01B', '1 WCHC 02A + 1 BLND 03C', '3 WCHR 01A/01B/01C', '1 UMNR 12F', '1 WCHS 04D + 1 DEAF 05A', '2 WCHR 02B/02C', '1 MAAS 07A', ''];
 const DEMO_SI_PREVI = ['1 WCHR 01B + 1 WCHS 33F', '2 WCHC 01A/01B · 1 UMNR 14C', '1 WCHR 02C', '1 BLND 03A + 1 WCHR 03B', '1 WCHS 30A + 2 WCHR 01E/01F', '1 MEDA 06C', '1 WCHR 01A', '1 UMNR 11D + 1 WCHR 02A'];
 const DEMO_NOTES = [
-  [['A',3,'SNY · DERUHU'], ['off',-6,'BAGS OK']],
+  [['A',3,'SNY · DERUHU 14C'], ['off',-6,'BAGS OK']],
   [['A',1,'PMR · 2 WCHC, lift demandé'], ['A',6,'Nettoyage · cabine propre'], ['off',-8,'BAGS OK']],
   [['A',4,'Nettoyage · cabine sale, rangées 20 à 25'], ['off',-12,'Pax en retard · 3 pax au PIF']],
   [['A',0,'Arrivée tardive · retard en provenance, 93'], ['A',2,'Bag manquant · 1 bag sans étiquette'], ['off',-6,'Chargement · 4 bags tardifs en soute 4, code 32'], ['off',-2,'BAGS OK']],
   [['A',5,'Fuel · complément demandé par le CDB'], ['off',-5,'BAGS OK']],
   [['off',-14,'Pax en retard · 2 pax au PIF, appel fait'], ['off',-9,'Push · tracteur en retard, code 89'], ['off',-4,'Pluie forte · chargement ralenti, code 77']],
-  [['A',3,'SNY · AMIEZV'], ['off',-20,'CTOT reçu · régulation ATC, code 81'], ['off',-3,'BAGS OK']],
+  [['A',3,'SNY · AMIEZV 2A'], ['off',-20,'CTOT reçu · régulation ATC, code 81'], ['off',-3,'BAGS OK']],
   [['A',2,'PMR · 1 WCHR'], ['off',-16,'CTOT reçu · régulation météo']],
 ];
 

@@ -41,6 +41,24 @@ cfgFetch();
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') cfgFetch(); });
 
 // Compagnie configurée, ou null (l'app reprend alors ses règles codées)
+// v3.48 (Hugo, option C) : siège d'un SNY → zone FWD / MID / AFT, FR/RK seulement, selon le type avion.
+// [dernier rang FWD, dernier rang MID, dernier rang AFT], d'après les fiches avion Ryanair envoyées par Hugo (29/10) :
+// B737-800W 189 sièges FWD 1-5 / MID 6-28 / AFT 29-33 ; B737-8200 197 sièges 1-6 / 7-29 / 30-35 ; A320 180 sièges 1-10 / 11-20 / 21-30.
+// Réglables par type dans l'admin (types[t].sny), qui gagnent sur ces valeurs.
+const SNY_ZONES0 = { B737:[5,28,33], B738:[5,28,33], B38M:[6,29,35], A320:[10,20,30] };
+function cfgSnyZones(cie, type){
+  cie = String(cie || '').toUpperCase().trim(); type = String(type || '').toUpperCase().trim();
+  if(cie !== 'FR' && cie !== 'RK') return null;
+  const a = cfgAl(cie), x = a && a.types && a.types[type];
+  if(x && Array.isArray(x.sny) && x.sny.length === 3 && x.sny.every(n => +n > 0)) return x.sny.map(Number);
+  return SNY_ZONES0[type] || null;
+}
+function snyZone(cie, type, seat){
+  const m = /^(\d{1,2})[A-K]$/.exec(String(seat || '').toUpperCase()), z = cfgSnyZones(cie, type);
+  if(!m || !z) return null;
+  const r = +m[1];
+  return r < 1 ? null : r <= z[0] ? 'FWD' : r <= z[1] ? 'MID' : r <= z[2] ? 'AFT' : null;
+}
 function cfgAl(cie){
   return (window.CFG && window.CFG.al[String(cie || '').toUpperCase().trim()]) || null;
 }
