@@ -132,7 +132,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <script>
 // Contenu du manuel : [groupe, id, titre, captures (manuel/img/*.jpg), texte HTML]
 // IMGV : à changer quand des captures sont refaites (sinon le navigateur garde les anciennes)
-const IMGV = '5';
+const IMGV = '6';
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
@@ -292,10 +292,9 @@ const S = [
 ['Retard et validation','nightstop','Nightstop & tour avion',[I('nightstop','Prestations'),I('nightstop-tour','Tour avion')],`
 <p>Pour les vols basés : <b>départ basé</b> (From = BVA) et <b>retour basé</b> (To = BVA). La ligne <span class="k">Nightstop</span> apparaît alors dans l'onglet Retard, au-dessus de Valider le vol. Elle remplace la feuille papier « Checklist &amp; suivi des prestations nightstop » remise au responsable piste.</p>
 <ul><li><b>Prestations</b> : toilettes et eau potable (vidange / remplissage), ménage <b>S / DC / DI</b>, 2 échelles, ASU, tractage (Bellova / Assist'Air), dégivrage, collecte déchets. Un appui coche ou décoche.</li>
-<li><b>Équipage</b> : nom ou crew code du commandant ou du mécanicien, heure et signature.</li>
 <li><b>Fouille des soutes</b> (hold security search) : retour basé uniquement, à activer quand le vol arrive d'un pays tiers. Nom, heure et signature.</li>
 <li><b>Tour avion</b> : soutes vidées et contrôlées, dommages constatés, personnes avisées (CdB, mécanicien, opérations), nom, heure et signature.</li></ul>
-<p>Les dommages se notent par des <b>croix sur la silhouette</b>. <span class="k">Plein écran</span> passe la silhouette en grand, en paysage (si le téléphone est tenu droit, l'image pivote d'elle-même). Un appui pose une croix, un appui sur une croix l'enlève ; <span class="k">Annuler la dernière</span> et <span class="k">Tout effacer</span> sont dans la barre du haut.</p>
+<p>Les dommages se notent par des <b>croix sur la silhouette</b> : dès qu'une croix est posée, « Dommage(s) constaté(s) » passe à <b>Oui</b> et ne peut plus être mis à Non tant qu'il reste une croix. <span class="k">Plein écran</span> passe la silhouette en grand, en paysage (si le téléphone est tenu droit, l'image pivote d'elle-même). Un appui pose une croix, un appui sur une croix l'enlève ; <span class="k">Annuler la dernière</span> et <span class="k">Tout effacer</span> sont dans la barre du haut.</p>
 <p><span class="k">Feuille</span> partage ou télécharge la feuille complète en image, silhouette comprise. Le contenu est repris dans le rapport du vol.</p>
 <div class="tip info">Feuille <b>facultative</b> dans la version actuelle, comme l'auto-contrôle. Elle deviendra <b>obligatoire</b> une fois le serveur des rapports mis en place.</div>`],
 ['Retard et validation','valider','Valider le vol',[I('retard','Valider le vol')],`

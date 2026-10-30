@@ -6,7 +6,6 @@
    deviendra obligatoire avec le serveur des rapports.
    Données du vol dans le champ caché Nightstop :
    { sv:{ toilV, toilR, eauV, eauR, men:'S'|'DC'|'DI'|'', ech, asu, tr:'BELLOVA'|'ASSISTAIR'|'', deg, dec },
-     cn, cs, ct,                                   équipage : nom / crew code, signature, heure ISO
      hs:{ on, ok, n, h, s },                       fouille soutes (retour basé, arrivée pays tiers)
      ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], av:{ cdb, mec, ops }, n, h, s } }   tour avion
    Les croix sont en coordonnées relatives (0 à 1) sur la silhouette img/silhouette-b737.png.
@@ -50,7 +49,7 @@ const NS_REQUIRED = false;
   }
   const svDone = o => SV.filter(s => s.one ? !!o.sv[s.one] : s.opts.some(([k]) => o.sv[k])).length;
   function started(o){
-    return svDone(o) > 0 || o.cn || o.cs || o.hs.on || o.ta.sv || o.ta.dm || o.ta.x.length || o.ta.n || o.ta.s;
+    return svDone(o) > 0 || o.hs.on || o.ta.sv || o.ta.dm || o.ta.x.length || o.ta.n || o.ta.s;
   }
   function date(){
     const d = ($('Date')?.value || '').split('-');
@@ -70,7 +69,7 @@ const NS_REQUIRED = false;
     const row = $('nsRow'); if(!row) return;
     const m = nsMode();
     row.hidden = !m; if(!m) return;
-    const o = get(), sig = !!(o.cs && o.ta.s);
+    const o = get(), sig = !!o.ta.s;
     $('nsRowT').textContent = m === 'dep' ? 'Nightstop · départ basé' : 'Nightstop · retour basé';
     $('nsRowSub').textContent = svDone(o) + '/' + SV.length + ' services · tour avion ' + (o.ta.s ? 'signé' : 'non signé') + (o.ta.x.length ? ' · ' + o.ta.x.length + (o.ta.x.length > 1 ? ' dommages' : ' dommage') : '');
     $('nsRowSt').textContent = sig ? 'Signé' : started(o) ? 'En cours' : (NS_REQUIRED ? 'À faire' : 'Facultatif');
@@ -113,7 +112,6 @@ const NS_REQUIRED = false;
         + '</span></div>';
     });
     h += '</div>';
-    h += '<div class="ac-sec">Équipage</div><div class="ac-card ac-sign">' + sigBlock('c', o.cn || '', 'Nom ou crew code (commandant ou mécanicien)', 'Signature équipage', null) + '</div>';
 
     if(m === 'arr'){
       h += '<div class="ac-sec">Fouille des soutes</div><div class="ac-card">'
@@ -126,9 +124,10 @@ const NS_REQUIRED = false;
     }
 
     const x = o.ta.x;
+    if(x.length) o.ta.dm = 'OUI';
     h += '<div class="ac-sec">Tour avion</div><div class="ac-card">'
       + '<div class="ns-row"><span>Soutes vidées et contrôlées</span><span class="ns-cs">' + chip(o.ta.sv === 'OUI', 'data-ta="sv" data-v="OUI"', 'Oui') + chip(o.ta.sv === 'NON', 'data-ta="sv" data-v="NON"', 'Non') + '</span></div>'
-      + '<div class="ns-row"><span>Dommage(s) constaté(s)</span><span class="ns-cs">' + chip(o.ta.dm === 'OUI', 'data-ta="dm" data-v="OUI"', 'Oui') + chip(o.ta.dm === 'NON', 'data-ta="dm" data-v="NON"', 'Non') + '</span></div>'
+      + '<div class="ns-row"><span>Dommage(s) constaté(s)</span><span class="ns-cs">' + chip(o.ta.dm === 'OUI', 'data-ta="dm" data-v="OUI"', 'Oui') + chip(o.ta.dm === 'NON', 'data-ta="dm" data-v="NON"' + (x.length ? ' disabled' : ''), 'Non') + '</span></div>'
       + '<div class="ns-pl-wrap"><button type="button" class="ns-pl" id="nsPlane" aria-label="Annoter la silhouette en plein écran">' + planeHTML(x) + '</button>'
       + '<div class="ns-pl-foot"><span>' + (x.length ? x.length + (x.length > 1 ? ' croix' : ' croix') + ' sur la silhouette' : 'Repérer le(s) dommage(s) par une croix') + '</span><button type="button" class="ns-c on" id="nsFullBtn">Plein écran</button></div></div>'
       + '<div class="ns-row"><span>Personne(s) avisée(s)</span><span class="ns-cs">' + chip(o.ta.av.cdb, 'data-av="cdb"', 'CdB') + chip(o.ta.av.mec, 'data-av="mec"', 'Mécanicien') + chip(o.ta.av.ops, 'data-av="ops"', 'Opérations') + '</span></div>'
@@ -143,7 +142,7 @@ const NS_REQUIRED = false;
       + x.map(([u, v]) => '<i class="ns-x" style="left:' + (u * 100).toFixed(2) + '%;top:' + (v * 100).toFixed(2) + '%"></i>').join('');
   }
   function paintPh(){
-    const o = get(), s = { c:o.cs, h:o.hs.s, t:o.ta.s };
+    const o = get(), s = { h:o.hs.s, t:o.ta.s };
     document.querySelectorAll('#nsBody [data-ph]').forEach(p => p.hidden = !!s[p.dataset.ph]);
   }
   const upd = fn => { const o = get(); fn(o); set(o); };
@@ -160,14 +159,16 @@ const NS_REQUIRED = false;
     if(ok) ok.onchange = () => { upd(o => o.hs.ok = ok.checked); ok.closest('.ac-it').classList.toggle('on', ok.checked); };
     body.querySelectorAll('[data-ta]').forEach(b => b.onclick = () => {
       const k = b.dataset.ta, v = b.dataset.v;
+      // une croix sur la silhouette = dommage constaté (Oui imposé tant qu'il reste une croix)
+      if(k === 'dm' && get().ta.x.length) return;
       upd(o => o.ta[k] = o.ta[k] === v ? '' : v);
       body.querySelectorAll('[data-ta="' + k + '"]').forEach(x => x.classList.toggle('on', get().ta[k] === x.dataset.v));
     });
     body.querySelectorAll('[data-av]').forEach(b => b.onclick = () => { upd(o => o.ta.av[b.dataset.av] = !o.ta.av[b.dataset.av]); b.classList.toggle('on'); });
     body.querySelectorAll('[data-name]').forEach(i => i.oninput = () => upd(o => {
       const k = i.dataset.name, v = i.value.trim();
-      if(k === 'c') o.cn = v; else if(k === 'h') o.hs.n = v; else o.ta.n = v;
-      if(k !== 'c') try{ if(v) localStorage.setItem('nsNom', v); }catch(e){}
+      if(k === 'h') o.hs.n = v; else o.ta.n = v;
+      try{ if(v) localStorage.setItem('nsNom', v); }catch(e){}
     }));
     // nom du responsable piste repris du dernier vol
     body.querySelectorAll('[data-name="t"],[data-name="h"]').forEach(i => { if(!i.value){ try{ i.value = localStorage.getItem('nsNom') || ''; }catch(e){} if(i.value) i.oninput(); } });
@@ -177,7 +178,7 @@ const NS_REQUIRED = false;
     });
     body.querySelectorAll('[data-sigclr]').forEach(b => b.onclick = () => {
       const k = b.dataset.sigclr;
-      upd(o => { if(k === 'c'){ o.cs = ''; o.ct = ''; } else if(k === 'h') o.hs.s = ''; else o.ta.s = ''; });
+      upd(o => { if(k === 'h') o.hs.s = ''; else o.ta.s = ''; });
       const cv = body.querySelector('canvas[data-sig="' + k + '"]'); delete cv.dataset.bound; sigInit(cv); paintPh();
     });
     $('nsPlane').onclick = fullOpen; $('nsFullBtn').onclick = fullOpen;
@@ -193,7 +194,7 @@ const NS_REQUIRED = false;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 2.4;
     ctx.strokeStyle = getComputedStyle(cv).color || '#0B1E4F';
-    const o = get(), src = k === 'c' ? o.cs : k === 'h' ? o.hs.s : o.ta.s;
+    const o = get(), src = k === 'h' ? o.hs.s : o.ta.s;
     if(src){
       const img = new Image();
       img.onload = () => {
@@ -208,6 +209,8 @@ const NS_REQUIRED = false;
     const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     cv.addEventListener('pointerdown', e => {
       e.preventDefault(); cv.setPointerCapture?.(e.pointerId);
+      // taille changée depuis l'ouverture (rotation, clavier) : recaler le canevas avant de dessiner
+      if(cv.width !== Math.round(cv.clientWidth * (window.devicePixelRatio || 1))) sigInit(cv);
       drawing = true; last = pt(e);
       const c = cv.getContext('2d'); c.beginPath(); c.arc(last[0], last[1], 1.1, 0, 7); c.fillStyle = c.strokeStyle; c.fill();
       const ph = document.querySelector('#nsBody [data-ph="' + k + '"]'); if(ph) ph.hidden = true;
@@ -223,10 +226,9 @@ const NS_REQUIRED = false;
       t.width = w1; t.height = h1;
       const tc = t.getContext('2d'); tc.drawImage(cv, 0, 0, w1, h1);
       tc.globalCompositeOperation = 'source-in'; tc.fillStyle = '#0B1E4F'; tc.fillRect(0, 0, w1, h1);
-      const png = t.toDataURL('image/png'), iso = new Date().toISOString();
+      const png = t.toDataURL('image/png');
       upd(o => {
-        if(k === 'c'){ o.cs = png; o.ct = iso; }
-        else if(k === 'h'){ o.hs.s = png; if(!o.hs.h) o.hs.h = nowHM(); }
+        if(k === 'h'){ o.hs.s = png; if(!o.hs.h) o.hs.h = nowHM(); }
         else { o.ta.s = png; if(!o.ta.h) o.ta.h = nowHM(); }
       });
       const hi = document.querySelector('#nsBody [data-hour="' + k + '"]'); if(hi && !hi.value) hi.value = nowHM();
@@ -245,18 +247,15 @@ const NS_REQUIRED = false;
     $('nsFullUndo').disabled = !x.length; $('nsFullClr').disabled = !x.length;
   }
   function fullLayout(){ $('nsFull').classList.toggle('rot', portrait()); fullPaint(); }
-  async function fullOpen(){
+  function fullOpen(){
     const f = $('nsFull');
     f.style.display = 'block';
     fullLayout();
-    try{ if(f.requestFullscreen) await f.requestFullscreen({ navigationUI:'hide' }); }catch(e){}
-    try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
+    // pas de requestFullscreen : Android affiche alors un message noir par-dessus la silhouette
     setTimeout(fullLayout, 300);
   }
   window.nsFullClose = function(){
     $('nsFull').style.display = 'none';
-    try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
-    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
     const p = $('nsPlane'); if(p){ render(); requestAnimationFrame(() => document.querySelectorAll('#nsBody canvas[data-sig]').forEach(sigInit)); }
   };
   window.nsFullUndo = function(){ upd(o => o.ta.x.pop()); fullPaint(); };
@@ -273,7 +272,7 @@ const NS_REQUIRED = false;
     upd(o => {
       const near = o.ta.x.findIndex(([a, b]) => Math.hypot((a - u) * ar, b - v) < 0.045);
       if(near >= 0) o.ta.x.splice(near, 1);
-      else { o.ta.x.push([+u.toFixed(4), +v.toFixed(4)]); if(!o.ta.dm) o.ta.dm = 'OUI'; }
+      else { o.ta.x.push([+u.toFixed(4), +v.toFixed(4)]); o.ta.dm = 'OUI'; }
     });
     fullPaint();
   }
@@ -301,7 +300,6 @@ const NS_REQUIRED = false;
     const row = (k, v) => { c.strokeStyle = '#d5dde7'; c.lineWidth = 1; c.strokeRect(P, y, W - 2 * P, 32); c.fillStyle = '#0f1723'; c.font = '600 17px Manrope, sans-serif'; c.fillText(k, P + 12, y + 16); c.font = '700 17px Manrope, sans-serif'; c.fillText(v, W / 2, y + 16); y += 32; };
     sec('Services');
     SV.forEach(s => row(s.t, s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', '—'])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, t]) => t).join(' + ') || '—'));
-    row('Équipage (nom ou crew code)', (o.cn || '—') + (o.cs ? '  · signé' : ''));
     if(m === 'arr' && o.hs.on){ y += 12; sec('Fouille des soutes · arrivée pays tiers'); row('Hold security check / search', o.hs.ok ? 'Effectué' : 'Non coché'); row('Nom · heure', (o.hs.n || '—') + ' · ' + (o.hs.h || '--:--') + (o.hs.s ? '  · signé' : '')); }
     y += 12; sec('Tour avion');
     row('Soutes vidées et contrôlées', o.ta.sv || '—');
@@ -309,7 +307,7 @@ const NS_REQUIRED = false;
     row('Personne(s) avisée(s)', [o.ta.av.cdb && 'Commandant de bord', o.ta.av.mec && 'Mécanicien', o.ta.av.ops && 'Opérations'].filter(Boolean).join(', ') || '—');
     row('Nom · heure', (o.ta.n || '—') + ' · ' + (o.ta.h || '--:--') + (o.ta.s ? '  · signé' : ''));
     const load = src => new Promise(res => { if(!src) return res(null); const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
-    return Promise.all([load(IMG), load(o.cs), load(o.ta.s)]).then(([pl, sc, st]) => {
+    return Promise.all([load(IMG), load(m === 'arr' && o.hs.on ? o.hs.s : ''), load(o.ta.s)]).then(([pl, sh, st]) => {
       y += 20;
       if(pl){
         const pw = W - 2 * P, ph = pw * pl.height / pl.width;
@@ -319,10 +317,11 @@ const NS_REQUIRED = false;
         y += ph + 20;
       }
       c.fillStyle = '#8A93A6'; c.font = '700 14px Manrope, sans-serif';
-      c.fillText('SIGNATURE ÉQUIPAGE', P, y + 10); c.fillText('SIGNATURE TOUR AVION', W / 2, y + 10);
-      c.strokeStyle = '#d5dde7'; c.lineWidth = 1; c.strokeRect(P, y + 24, W / 2 - P - 20, 140); c.strokeRect(W / 2, y + 24, W / 2 - P, 140);
+      const fouille = m === 'arr' && o.hs.on;
+      c.fillText('SIGNATURE TOUR AVION', P, y + 10); if(fouille) c.fillText('SIGNATURE FOUILLE DES SOUTES', W / 2, y + 10);
+      c.strokeStyle = '#d5dde7'; c.lineWidth = 1; c.strokeRect(P, y + 24, W / 2 - P - 20, 140); if(fouille) c.strokeRect(W / 2, y + 24, W / 2 - P, 140);
       const fit = (im, x, w) => { if(!im) return; const k = Math.min((w - 20) / im.width, 120 / im.height); c.drawImage(im, x + 10, y + 34, im.width * k, im.height * k); };
-      fit(sc, P, W / 2 - P - 20); fit(st, W / 2, W / 2 - P);
+      fit(st, P, W / 2 - P - 20); if(fouille) fit(sh, W / 2, W / 2 - P);
       y += 190;
       const out = document.createElement('canvas'); out.width = W; out.height = y;
       out.getContext('2d').drawImage(cv, 0, 0);
@@ -355,7 +354,6 @@ const NS_REQUIRED = false;
       const v = s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', ''])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, x]) => x).join(' + ');
       if(v) t += s.t.toUpperCase() + ' : ' + v.toUpperCase() + '\n';
     });
-    t += 'EQUIPAGE : ' + (o.cn || '-') + ' · SIGNATURE ' + (o.cs ? 'OUI' : 'NON') + '\n';
     if(m === 'arr' && o.hs.on) t += 'FOUILLE SOUTES (PAYS TIERS) : ' + (o.hs.ok ? 'EFFECTUEE' : 'NON COCHEE') + ' · ' + (o.hs.n || '-') + ' ' + (o.hs.h || '') + ' · SIGNATURE ' + (o.hs.s ? 'OUI' : 'NON') + '\n';
     t += '\nTOUR AVION\n';
     t += 'SOUTES VIDEES ET CONTROLEES : ' + (o.ta.sv || '-') + '\n';
@@ -370,7 +368,10 @@ const NS_REQUIRED = false;
     const f = $('nsFull');
     if(f){
       $('nsFullPlane').addEventListener('click', fullTap);
-      window.addEventListener('resize', () => { if(f.style.display !== 'none') fullLayout(); });
+      window.addEventListener('resize', () => {
+        if(f.style.display !== 'none') fullLayout();
+        if($('nsModal').style.display !== 'none') document.querySelectorAll('#nsBody canvas[data-sig]').forEach(sigInit);
+      });
       document.addEventListener('fullscreenchange', () => { if(f.style.display !== 'none') setTimeout(fullLayout, 200); });
     }
     syncRow(); setInterval(syncRow, 1000);
