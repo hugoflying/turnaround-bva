@@ -1204,7 +1204,7 @@ function cdWallMs(refDayMs, min){
 /* v3.34 (Hugo) : compagnie d'un vol. Numéro IATA (FR1234, W45149) → 2 premiers caractères.
    Sans numéro, AK ne donne que l'indicatif OACI (RYR2LT, WZZ12AB) : on le traduit (RYR → FR, WMT → W4…).
    Indicatif inconnu (vol privé SUZ9, immatriculation) → pas de compagnie, au lieu de « SU ». */
-const CS_TO_IATA = { RYR:'FR', RUK:'RK', MAY:'AL', RYS:'RR', LDM:'OE', WZZ:'W6', WMT:'W4', WUK:'W9', WAZ:'5W',
+const CS_TO_IATA = { RYR:'FR', RUK:'RK', MAY:'AL', RYS:'RR', LDM:'OE', WZZ:'W6', WMT:'W4', WUK:'W9', WAZ:'5W', HYS:'H4',
   EZY:'U2', EJU:'EC', EZS:'DS', VLG:'VY', VOE:'V7', TVF:'TO', TRA:'HV', AFR:'AF', MAC:'3O', PGT:'PC', SXS:'XQ',
   TAP:'TP', IBE:'IB', DLH:'LH', BEL:'SN', KLM:'KL', BAW:'BA', AEE:'A3', ROT:'RO', LOT:'LO', TAR:'TU', RAM:'AT', DAH:'AH', THY:'TK', AUA:'OS', SWR:'LX' };
 function cieFromFF(ff){

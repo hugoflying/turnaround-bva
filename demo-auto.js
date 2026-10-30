@@ -15,8 +15,9 @@ const DEMO_NOTES = [
   [['A',2,'PMR · 1 WCHR'], ['off',-16,'CTOT reçu · régulation météo']],
 ];
 
-window.demoAutoPlan = function(i, cie, sc){
-  const { A, off } = sc, isFR = cie === 'FR' || cie === 'RK', k = i % 8, S = String;
+// v3.47.1 (Hugo) : FR/RK en eLID (défaut) = ADULT+CHILD dans un seul champ, pas de zones ; en Paper LID = adultes, enfants et zones séparés
+window.demoAutoPlan = function(i, cie, sc, lid){
+  const { A, off } = sc, isFR = cie === 'FR' || cie === 'RK', k = i % 8, S = String, elid = isFR && lid !== 'LID';
   const tm = [
     ['PremierDebarque', A+2], ['DernierDebarque', A + (isFR ? 9 : 11)], ['ArriveeFuel', A+3], ['DepartFuel', A + (isFR ? 14 : 20)],
     ['MiseEnPlaceTapis', A+1], ['DebutDechargementBagages', A+2], ['FinDechargementBagages', A+10],
@@ -35,9 +36,11 @@ window.demoAutoPlan = function(i, cie, sc){
   else v(null, [['PreviMALE', Math.round(pax*0.52)], ['PreviFEMALE', pax - Math.round(pax*0.52) - child], ['PreviCHILD', child], ['PreviINFANT', inf], ['PreviBAGS_OTHER', bags + 2], ['PreviPOIDS_OTHER', (bags + 2) * kg]]);
   v(null, [['PreviSI', DEMO_SI_PREVI[k]], ['PreviPoussettesPorte', 1 + i % 3], ['PreviPoussettesCBS', i % 2]]);
   const z = Math.floor(pax / 4), h = Math.floor(bags / 4), F = off - 4;
-  if(isFR) v(F, [['FinalADULT', pax - child], ['FinalCHILD', child]]);
+  if(elid) v(F, [['FinalADULT', pax]]);
+  else if(isFR) v(F, [['FinalADULT', pax - child], ['FinalCHILD', child]]);
   else v(F, [['FinalMALE', Math.round(pax*0.52)], ['FinalFEMALE', pax - Math.round(pax*0.52) - child], ['FinalCHILD', child]]);
-  v(F, [['FinalINFANT', inf], ['FinalOA', z - 2], ['FinalOB', z + 3], ['FinalOC', z + 1], ['FinalOD', pax - 3*z - 2],
+  if(!elid) v(F, [['FinalOA', z - 2], ['FinalOB', z + 3], ['FinalOC', z + 1], ['FinalOD', pax - 3*z - 2]]);
+  v(F, [['FinalINFANT', inf],
     ['FinalBAGS', bags], ['FinalPOIDS', bags * kg], ['FinalH1', h - 3], ['FinalH2', h + 2], ['FinalH3', h + 4], ['FinalH4', bags - 3*h - 3], ['FinalSI', DEMO_SI_PREVI[k]],
     ['BlockFuel', isFR ? 7600 + i*150 : 8200 + i*120], ['TripFuel', isFR ? 5900 + i*140 : 6400 + i*110], ['TaxiFuel', 200], ['FuelUplift', isFR ? 3200 + i*90 : 3900 + i*80]]);
   const notes = (DEMO_NOTES[k] || []).map(([ref, d, txt]) => [(ref === 'A' ? A : off) + d, txt]);

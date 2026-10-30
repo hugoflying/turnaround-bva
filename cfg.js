@@ -160,7 +160,7 @@ function cfgPatchUI(){
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('adminBtn'); if(btn) btn.hidden = window.APP_EDITION !== 'demo';
+  // v3.47.1 (Hugo) : plus d'entrée « Admin compagnies » dans le menu de l'app, l'admin s'ouvre seulement par son lien (PC)
   cfgPatchUI();
 });
 // Publication depuis l'admin dans un autre onglet : on relit tout de suite

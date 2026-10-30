@@ -450,13 +450,17 @@ function clockMin(){
     }
     const n = parseInt(v, 10); return isNaN(n) ? null : n;
   }
+  // v3.47.1 (Hugo) : les heures prévues tombent sur 0 ou 5 et la SOBT respecte la rotation mini
+  const demoT0 = () => Math.floor(+(localStorage.getItem('demoT0') || Date.now()) / 60000) * 60000;
+  const demoR5 = (rel, T0, up) => { const m = T0 / 60000 + rel; return (up ? Math.ceil(m / 5) : Math.round(m / 5)) * 5 - T0 / 60000; };
+  const demoMinTurn = (cie, tat) => (cie === 'FR' || cie === 'RK') ? 25 : (cie === 'W4' || cie === 'W6') ? 30 : tat;
   function demoSchedCus(i){
-    const f = DEMO_CUS[i], cie = DEMO_FLIGHTS[i][0], tat = DEMO_FLIGHTS[i][7], T0 = +(localStorage.getItem('demoT0') || Date.now());
+    const f = DEMO_CUS[i], cie = DEMO_FLIGHTS[i][0], tat = DEMO_FLIGHTS[i][7], T0 = demoT0();
     const num = (v, d) => (v === null || v === 'non') ? d : v;
-    const sibt = num(demoRel(f.sibt, T0), -60 + i*20);
-    const D = num(demoRel(f.sobt, T0), sibt + tat);
+    const minTurn = demoMinTurn(cie, tat);
+    const sibt = demoR5(num(demoRel(f.sibt, T0), -60 + i*20), T0);
+    const D = demoR5(Math.max(num(demoRel(f.sobt, T0), sibt + tat), sibt + minTurn), T0, true);
     const a = demoRel(f.aibt, T0), A = a === 'non' ? Math.max(sibt, 5) : num(a, sibt - 2);
-    const minTurn = (cie === 'FR' || cie === 'RK') ? 25 : (cie === 'W4' || cie === 'W6') ? 30 : tat;
     const eobt = Math.max(D, A + minTurn);
     const c = demoRel(f.ctot, T0), ctot = typeof c === 'number' ? c : null;
     const o = demoRel(f.aobt, T0);
@@ -469,14 +473,15 @@ function clockMin(){
   // sibt / A (AIBT) / D (SOBT) / ctot / off (AOBT réel) / eobt (EOBT calculée)
   function demoSched(i){
     if(DEMO_CUS && DEMO_CUS[i]) return demoSchedCus(i);
-    const row = demoRow(i), cie = row[0], tat = row[7], o = DEMO_SCHED[i];
+    const row = demoRow(i), cie = row[0], tat = row[7], o = DEMO_SCHED[i], T0 = demoT0();
     let sibt, ctot = null, sc = DEMO_SCEN[i] || 'ok';
     if(i >= 100) sibt = 25 + (i - 100)*28;
     else if(o) sibt = o.sibt;
     else sibt = -150 + i*17;
-    const D = sibt + tat;
+    const minTurn = demoMinTurn(cie, tat);
+    sibt = demoR5(sibt, T0);
+    const D = demoR5(sibt + Math.max(tat, minTurn), T0, true);
     const A = sc === 'late' ? sibt + 14 : sibt - 2;
-    const minTurn = (cie === 'FR' || cie === 'RK') ? 25 : (cie === 'W4' || cie === 'W6') ? 30 : tat;
     const eobt = Math.max(D, A + minTurn);
     if(o && o.ctot != null) ctot = D + o.ctot;
     else if(sc === 'ctot') ctot = D + (i === 6 ? 20 : i === 7 ? 33 : 27);
@@ -503,7 +508,10 @@ function clockMin(){
     const past = (id, rel) => { if(isPast(rel)) set(id, hm(rel)); };
     past('AIBT', A);
     const bare = !!(sc.cus && sc.cus.fill === 'none');   // v3.39 : « je saisis moi-même » → horaires seulement
-    const plan = demoAutoPlan(i, cie, sc);               // v3.41.2 : même plan que l'aperçu de l'admin (demo-auto.js)
+    // v3.47.1 : FR/RK en eLID ou Paper LID selon le scénario de l'admin (eLID par défaut, comme l'app)
+    const lid = isFR ? ((sc.cus && sc.cus.lid === 'LID') ? 'LID' : 'ELID') : null;
+    if(lid && typeof setLidMode === 'function') setLidMode(lid);
+    const plan = demoAutoPlan(i, cie, sc, lid);          // v3.41.2 : même plan que l'aperçu de l'admin (demo-auto.js)
     if(!bare) plan.tm.forEach(([id, rel]) => past(id, rel));
     if(sc.ctot != null){ const c = hm(sc.ctot); set('CTOT', c); const tc = document.getElementById('timer-ctot'); if(tc) tc.textContent = c; }
     past('AOBT', off);
@@ -585,7 +593,7 @@ function clockMin(){
   const demoAllowed = () => (window.APP_EDITION || 'demo') === 'demo';
   // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
   window.demoActive = () => demoAllowed();
-  const DEMO_VER = '4';                       // changer pour regénérer les vols de démo chez tout le monde
+  const DEMO_VER = '5';                       // changer pour regénérer les vols de démo chez tout le monde
   window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
     localStorage.setItem('demoMode', 'pending');
@@ -640,7 +648,7 @@ function clockMin(){
       Object.keys(localStorage).filter(k => isTabKey(k) || k.startsWith(DEMO_BK)).forEach(k => localStorage.removeItem(k));
       localStorage.setItem('demoVer', DEMO_VER);
       localStorage.setItem('demoScen', DEMO_KEY);
-      const T0 = Date.now();
+      const T0 = Math.floor(Date.now() / 60000) * 60000;   // v3.47.1 : à la minute pile, sinon 11:13 saisi devenait 11:12
       localStorage.setItem('demoT0', String(T0));
       currentTabId = null;
       await demoBuild(T0);
