@@ -1027,7 +1027,7 @@ function showCtotRegulation(){
     + '</div>';
 
   if(!ctot){
-    body.innerHTML = '<p class="ct-none">Aucun CTOT actif sur ce vol. Tu peux en saisir un à la main.</p>' + editHtml;
+    body.innerHTML = '<p class="ct-none">Aucun CTOT actif sur ce vol. Saisie manuelle possible.</p>' + editHtml;
     if(hEl) hEl.textContent = '';
     modal.style.display = 'flex';
     return;

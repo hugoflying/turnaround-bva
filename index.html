@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261030r222';
+window.APP_VERSION = '20261030r223';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261030r222';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r222" />
-<link rel="stylesheet" href="./css/app.css?v=20261030r222" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r223" />
+<link rel="stylesheet" href="./css/app.css?v=20261030r223" />
 </head>
 <body>
 
@@ -815,7 +815,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       <button class="iconbtn" type="button" aria-label="Fermer" onclick="document.getElementById('annuaireModal').style.display='none'"><svg class="ico"><use href="#i-x"/></svg></button>
     </div>
     <div class="sh-body ie">
-      <div class="ie-k">Appuie sur un contact pour appeler</div>
+      <div class="ie-k">Appui sur un contact pour appeler</div>
       <div class="ie-list" id="annList"></div>
     </div>
   </div>
@@ -883,7 +883,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
       <button class="iconbtn" type="button" aria-label="Fermer" onclick="document.getElementById('signModal').style.display='none'"><svg class="ico"><use href="#i-x"/></svg></button>
     </div>
     <div class="sh-body sign">
-      <textarea class="sign-input" rows="3" placeholder="Écris ton message…" autocapitalize="characters" spellcheck="false"></textarea>
+      <textarea class="sign-input" rows="3" placeholder="Message…" autocapitalize="characters" spellcheck="false"></textarea>
       <div class="ie-k">Couleurs</div>
       <div class="sign-themes" id="signThemes"></div>
       <div class="ie-k" id="signRecentK" hidden>Derniers messages</div>
@@ -894,7 +894,7 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
     </div>
   </div>
 </div>
-<div id="signFull" style="display:none;" onclick="signHide()"><div id="signFullText"></div><span class="sign-hint">Touche l'écran pour fermer</span></div>
+<div id="signFull" style="display:none;" onclick="signHide()"><div id="signFullText"></div><span class="sign-hint">Toucher l'écran pour fermer</span></div>
 
 <!-- v2.65 : menu Dégivrage -->
 <div id="degivrageModal" class="sheet-modal" style="display:none;" onclick="if(event.target===this) this.style.display='none'">
@@ -1077,19 +1077,19 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
         <svg class="ico"><use href="#i-snow"/></svg><span><b>Dégivrage</b><small>Produit ABAX et holdover times</small></span><span></span>
       </button>
       <button class="li" type="button" id="demoFlightsBtn" onclick="uiDemoToggle()">
-        <svg class="ico"><use href="#i-refresh"/></svg><span><b>Mode démo</b><small>Vols fictifs remplis, tes vols sont mis de côté</small></span><span></span>
+        <svg class="ico"><use href="#i-refresh"/></svg><span><b>Mode démo</b><small>Vols fictifs remplis, les vols en cours sont mis de côté</small></span><span></span>
       </button>
       <button class="li" type="button" id="whatsNewBtn" onclick="closeSettingsMenu(); uiWhatsNew()">
         <svg class="ico"><use href="#i-info"/></svg><span><b>Nouveautés</b><small>Ce qui change dans cette version</small></span><span></span>
       </button>
       <button class="li" type="button" id="clearFields" onclick="closeSettingsMenu(); openClearFieldsModal()">
-        <svg class="ico"><use href="#i-erase"/></svg><span><b>Effacer les données du vol</b><small>Garde le vol ouvert</small></span><span></span>
+        <svg class="ico"><use href="#i-erase"/></svg><span><b>Effacer les données du vol</b><small>Le vol reste ouvert</small></span><span></span>
       </button>
       <button class="li danger" type="button" id="closeTabBtn" onclick="closeSettingsMenu(); if(currentTabId) openTabCloseModal(currentTabId)">
         <svg class="ico"><use href="#i-close"/></svg><span><b>Fermer ce vol</b><small>Ou double-clic sur son onglet</small></span><span></span>
       </button>
       <button class="li danger" type="button" id="reset" onclick="closeSettingsMenu(); openCloseAllModal()">
-        <svg class="ico"><use href="#i-trash"/></svg><span><b>Tout fermer</b><small>Ferme tous les vols ouverts</small></span><span></span>
+        <svg class="ico"><use href="#i-trash"/></svg><span><b>Tout fermer</b><small>Fermeture de tous les vols ouverts</small></span><span></span>
       </button>
       <button class="li" type="button" id="logoutBtn" onclick="closeSettingsMenu(); pvLogout()">
         <svg class="ico"><use href="#i-logout"/></svg><span><b>Déconnexion</b><small>Redemande le code, vols gardés</small></span><span></span>
@@ -1191,20 +1191,20 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261030r222"></script>
-<script src="./cfg.js?v=20261030r222"></script>
-<script src="./contacts.js?v=20261030r222"></script>
-<script src="./app.js?v=20261030r222"></script>
-<script src="./app-load.js?v=20261030r222"></script>
-<script src="./app-onglets.js?v=20261030r222"></script>
-<script src="./app-retard.js?v=20261030r222"></script>
-<script src="./app-timeline.js?v=20261030r222"></script>
-<script src="./app-keeper.js?v=20261030r222"></script>
-<script src="./app-outils.js?v=20261030r222"></script>
-<script src="./demo-auto.js?v=20261030r222"></script>
-<script src="./ui.js?v=20261030r222"></script>
-<script src="./tools.js?v=20261030r222"></script>
-<script src="./nightstop.js?v=20261030r222"></script>
-<script src="./dlcodes.js?v=20261030r222"></script>
+<script src="./edition.js?v=20261030r223"></script>
+<script src="./cfg.js?v=20261030r223"></script>
+<script src="./contacts.js?v=20261030r223"></script>
+<script src="./app.js?v=20261030r223"></script>
+<script src="./app-load.js?v=20261030r223"></script>
+<script src="./app-onglets.js?v=20261030r223"></script>
+<script src="./app-retard.js?v=20261030r223"></script>
+<script src="./app-timeline.js?v=20261030r223"></script>
+<script src="./app-keeper.js?v=20261030r223"></script>
+<script src="./app-outils.js?v=20261030r223"></script>
+<script src="./demo-auto.js?v=20261030r223"></script>
+<script src="./ui.js?v=20261030r223"></script>
+<script src="./tools.js?v=20261030r223"></script>
+<script src="./nightstop.js?v=20261030r223"></script>
+<script src="./dlcodes.js?v=20261030r223"></script>
 </body>
 </html>

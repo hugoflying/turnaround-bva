@@ -921,7 +921,7 @@ function clockMin(){
     document.querySelectorAll('.rc-seg button').forEach(b => b.classList.toggle('is-on', b.dataset.view === view));
     document.getElementById('rcSub').textContent = F.length ? F.length + ' vol' + (F.length > 1 ? 's' : '') + ' · ' + fmtHM(nowMin()) + (lateN ? ' · ' + lateN + ' en retard' : '') : '';
     const sortRow = document.querySelector('.rc-sort'); if(sortRow) sortRow.hidden = F.length < 2;
-    if(!F.length){ list.innerHTML = '<div class="rc-empty">Aucun vol ouvert. Touche le « + » en haut pour en ajouter un.</div>'; return; }
+    if(!F.length){ list.innerHTML = '<div class="rc-empty">Aucun vol ouvert. Toucher le « + » en haut pour en ajouter un.</div>'; return; }
     // v2.90 (Hugo) : tri au choix EOBT / Parking / Ordre d'ajout (vides à la fin, puis EOBT)
     const sortBy = recapSort();
     document.querySelectorAll('.rc-sort button').forEach(b => b.classList.toggle('is-on', b.dataset.sort === sortBy));
@@ -1122,10 +1122,10 @@ function clockMin(){
   const WN_ED = window.APP_EDITION || 'demo';
   const WN_ITEMS = [
     ['i-grid',   '#0B1E4F', 'Bandeau qui se réduit', 'Un tap sur le bandeau bleu le réduit à une ligne : stand, route, EOBT, compte à rebours et barre. Un tap pour le rouvrir.'],
-    ['i-bag',    '#3D6BE0', 'SNY : siège et zone', 'Sur FR/RK, tape le crew code puis le siège (DERUHU 12C) : l\'app donne la zone FWD, MID ou AFT selon l\'avion. LOAD FINAL compte les SNY par zone.'],
+    ['i-bag',    '#3D6BE0', 'SNY : siège et zone', 'Sur FR/RK, crew code puis siège (DERUHU 12C) : l\'app donne la zone FWD, MID ou AFT selon l\'avion. LOAD FINAL compte les SNY par zone.'],
     ['i-clock',  '#D93636', 'Pastilles retard', 'Un point sur SIBT et SOBT : vert à l\'heure, rouge en retard estimé. Désactivable dans le menu.'],
-    ['i-list',   '#F59E0B', 'Récap et vols de la veille', 'Les vols terminés restent dans Récap jusqu\'à ce que tu les retires. À l\'ouverture, l\'app propose de fermer les vols de la veille et signale ceux non validés.'],
-    ['i-check',  '#0d9488', 'Guide LID', 'En Paper LID, le guide Ryanair à l\'écran : choisis le cas, l\'app montre quoi cocher dans chaque case.'],
+    ['i-list',   '#F59E0B', 'Récap et vols de la veille', 'Les vols terminés restent dans Récap jusqu\'à leur retrait. À l\'ouverture, l\'app propose de fermer les vols de la veille et signale ceux non validés.'],
+    ['i-check',  '#0d9488', 'Guide LID', 'En Paper LID, le guide Ryanair à l\'écran : au choix du cas, l\'app montre quoi cocher dans chaque case.'],
     ['i-plane',  '#7c3aed', 'Onglets et bandeau plus clairs', 'Le stand en grand dans le bandeau. L\'onglet montre l\'arrivée jusqu\'au débarquement, puis le départ. Vol annulé signalé.'],
     ['i-delay',  '#1F9D57', 'Événements', 'Nouvel événement Scan embarquement. Les panneaux ouverts restent ouverts pour chaque vol.'],
     ['i-snow',   '#0891b2', 'Fuel', 'Jusqu\'à 4 uplifts, avec le total.'],
@@ -1647,7 +1647,7 @@ function clockMin(){
        + '<div class="ac-card ac-sign">'
        + '<div class="field"><label class="label">Nom &amp; prénom du RZA</label><input class="input ac-nom" type="text" autocomplete="off" placeholder="DUPONT Jean" value="' + (o.n || acDefNom()).replace(/"/g, '&quot;') + '"></div>'
        + '<div class="ac-sig-h"><span class="label">Signature</span><button type="button" class="ac-all" id="acSigClear">Effacer</button></div>'
-       + '<div class="ac-sig-wrap"><canvas id="acSig"></canvas><span class="ac-sig-ph" id="acSigPh">Signe ici avec le doigt</span></div>'
+       + '<div class="ac-sig-wrap"><canvas id="acSig"></canvas><span class="ac-sig-ph" id="acSigPh">Signature au doigt ou au stylet</span></div>'
        + '</div>';
     body.innerHTML = h;
     document.getElementById('acMiss').hidden = true;

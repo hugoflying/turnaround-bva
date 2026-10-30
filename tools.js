@@ -296,7 +296,7 @@
     // v3.13.1 (Hugo) : « Équipage de TSF (FR1539)      AIBT 12:05 › »
     $('ivCrewVal').textContent = !cl ? '' : cl.closed ? 'Vol fermé' : cl.t ? 'AIBT ' + cl.t : 'Pas au bloc';
     $('ivCrewT').textContent = cl ? 'Équipage de' + (cl.from ? ' ' + cl.from : '') + (cl.label ? ' (' + cl.label + ')' : '') : 'Même équipage';
-    row.title = !cl ? 'Appuie si l\'équipage arrive sur un autre vol'
+    row.title = !cl ? 'Appuyer si l\'équipage arrive sur un autre vol'
       : cl.t ? 'AIBT ' + cl.t + ' · EOBT ' + addMin(cl.t, 35) : 'En attente de l\'AIBT' + (cl.sibt ? ' (SIBT ' + cl.sibt + ')' : '');
     $('ivCrewWhy').textContent = '';
   }
@@ -343,7 +343,7 @@
       try{ await loadArr(); renderAK(cur); return; }
       catch(e){ $('crewList').innerHTML = head(cur) + '<p class="dmg-empty">Keeper indisponible, vols ouverts :</p>' + openRows(cur); return; }
     }
-    $('crewList').innerHTML = head(cur) + (openRows(cur) || '<p class="dmg-empty">Aucun autre vol Ryanair ouvert. Ouvre d\'abord le vol de l\'équipage avec +.</p>');
+    $('crewList').innerHTML = head(cur) + (openRows(cur) || '<p class="dmg-empty">Aucun autre vol Ryanair ouvert. Ouvrir d\'abord le vol de l\'équipage avec +.</p>');
   };
   function openRows(cur){
     let ids = []; try{ ids = JSON.parse(localStorage.getItem('flightTabs') || '[]').map(String); }catch(e){}
