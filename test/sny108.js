@@ -23,5 +23,5 @@ await p.evaluate(() => { const e = document.getElementById('Cie'); e.value = 'W6
 o.boxW6 = await p.evaluate(() => document.getElementById('ldSnyBox').hidden);
 o.pass = /B738 5C=FWD B738 6A=MID B738 29F=AFT B38M 6A=FWD B38M 7A=MID B38M 35F=AFT A320 10A=FWD A320 21C=AFT B738 40A=null \| W6=null/.test(o.zones)
   && /SNY · DERUHU 12C MID$/m.test(o.add.notes) && /SNY · AMIEZV 3A FWD XYZABC$/m.test(o.add.notes) && /MID/.test(o.add.hint)
-  && /^SNY FWD MID zone \?$/.test(o.box) && o.boxW6 === true;
+  && /^SNY 1× FWD 1× MID 1× zone \?$/.test(o.box) && o.boxW6 === true;
 console.log(JSON.stringify(o, null, 1)); console.log(errs.join(';') || 'no errors'); await b.close(); })();

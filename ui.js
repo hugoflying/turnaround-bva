@@ -1023,10 +1023,10 @@ function clockMin(){
     const list = (cie === 'FR' || cie === 'RK') ? (val('FaitsSaillants').split('\n')
       .map(l => { const m = /(?:^|·)\s*SNY\s*·\s*(.+)$/.exec(l); return m ? window.snyParse(m[1]).list : []; }).flat()) : [];
     box.hidden = !list.length; if(!list.length){ box.innerHTML = ''; return; }
-    // v3.48.3 (Hugo) : une seule ligne compacte, seulement la zone (nombre de SNY par zone)
+    // v3.48.3 (Hugo) : une seule ligne compacte, seulement la zone ; v3.49.2 : toujours le nombre devant (1× FWD)
     const n = { FWD:0, MID:0, AFT:0, '?':0 };
     list.forEach(x => { n[(x.seat && snyZone(cie, type, x.seat)) || x.zone || '?']++; });
-    box.innerHTML = `<b class="sny-t">SNY</b>${Object.keys(n).filter(z => n[z]).map(z => `<span class="sny-z${z === '?' ? '' : ' z-' + z.toLowerCase()}">${n[z] > 1 ? n[z] + '× ' : ''}${z === '?' ? 'zone ?' : z}</span>`).join('')}`;
+    box.innerHTML = `<b class="sny-t">SNY</b>${Object.keys(n).filter(z => n[z]).map(z => `<span class="sny-z${z === '?' ? '' : ' z-' + z.toLowerCase()}">${n[z]}× ${z === '?' ? 'zone ?' : z}</span>`).join('')}`;
   }
   window.syncSnyBox = syncSnyBox;
   function syncLoadUI(){
