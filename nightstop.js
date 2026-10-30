@@ -7,7 +7,7 @@
    Données du vol dans le champ caché Nightstop :
    { sv:{ toilV, toilR, eauV, eauR, men:'S'|'DC'|'DI'|'', ech, asu, tr:'BELLOVA'|'ASSISTAIR'|'', deg, dec },
      hs:{ on, ok, n, h, s },                       fouille soutes (retour basé, arrivée pays tiers)
-     ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], av:{ cdb, mec, ops }, n, h, s } }   tour avion
+     ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], n, h, s } }   tour avion
    Les croix sont en coordonnées relatives (0 à 1) sur la silhouette img/silhouette-b737.png.
    ===================================================================== */
 const NS_REQUIRED = false;
@@ -39,7 +39,7 @@ const NS_REQUIRED = false;
   function get(){
     let o = {};
     try{ o = JSON.parse($('Nightstop')?.value || '{}') || {}; }catch(e){}
-    o.sv = o.sv || {}; o.hs = o.hs || {}; o.ta = o.ta || {}; o.ta.x = o.ta.x || []; o.ta.av = o.ta.av || {};
+    o.sv = o.sv || {}; o.hs = o.hs || {}; o.ta = o.ta || {}; o.ta.x = o.ta.x || [];
     return o;
   }
   function set(o){
@@ -86,8 +86,12 @@ const NS_REQUIRED = false;
   window.uiNightstopClose = function(){ $('nsModal').style.display = 'none'; syncRow(); };
 
   const chip = (on, attrs, txt) => '<button type="button" class="ns-c' + (on ? ' on' : '') + '" ' + attrs + '>' + txt + '</button>';
+  // noms déjà saisis, proposés en suggestion (liste #nsNoms)
+  const nomsGet = () => { try{ const a = JSON.parse(localStorage.getItem('nsNoms') || '[]'); if(a.length) return a; const v = localStorage.getItem('nsNom'); return v ? [v] : []; }catch(e){ return []; } };
+  function nomsAdd(v){ try{ localStorage.setItem('nsNoms', JSON.stringify([v, ...nomsGet().filter(x => x.toLowerCase() !== v.toLowerCase())].slice(0, 8))); }catch(e){} }
+  const nomsList = () => '<datalist id="nsNoms">' + nomsGet().map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>';
   const sigBlock = (key, name, nameLbl, ph, hour) =>
-      '<div class="field"><label class="label">' + nameLbl + '</label><input class="input" type="text" autocomplete="off" data-name="' + key + '" value="' + esc(name) + '"></div>'
+      '<div class="field"><label class="label">' + nameLbl + '</label><input class="input" type="text" autocomplete="off" list="nsNoms" data-name="' + key + '" value="' + esc(name) + '"></div>'
     + (hour != null ? '<div class="field ns-h"><label class="label">Heure locale</label><div class="ns-hrow"><input class="input" type="time" data-hour="' + key + '" value="' + esc(hour) + '"><button type="button" class="ns-c" data-now="' + key + '">Now</button></div></div>' : '')
     + '<div class="ac-sig-h"><span class="label">Signature</span><button type="button" class="ac-all" data-sigclr="' + key + '">Effacer</button></div>'
     + '<div class="ac-sig-wrap"><canvas class="ns-sig" data-sig="' + key + '"></canvas><span class="ac-sig-ph" data-ph="' + key + '">' + ph + '</span></div>';
@@ -130,10 +134,9 @@ const NS_REQUIRED = false;
       + '<div class="ns-row"><span>Dommage(s) constaté(s)</span><span class="ns-cs">' + chip(o.ta.dm === 'OUI', 'data-ta="dm" data-v="OUI"', 'Oui') + chip(o.ta.dm === 'NON', 'data-ta="dm" data-v="NON"' + (x.length ? ' disabled' : ''), 'Non') + '</span></div>'
       + '<div class="ns-pl-wrap"><button type="button" class="ns-pl" id="nsPlane" aria-label="Annoter la silhouette en plein écran">' + planeHTML(x) + '</button>'
       + '<div class="ns-pl-foot"><span>' + (x.length ? x.length + (x.length > 1 ? ' croix' : ' croix') + ' sur la silhouette' : 'Repérer le(s) dommage(s) par une croix') + '</span><button type="button" class="ns-c on" id="nsFullBtn">Plein écran</button></div></div>'
-      + '<div class="ns-row"><span>Personne(s) avisée(s)</span><span class="ns-cs">' + chip(o.ta.av.cdb, 'data-av="cdb"', 'CdB') + chip(o.ta.av.mec, 'data-av="mec"', 'Mécanicien') + chip(o.ta.av.ops, 'data-av="ops"', 'Opérations') + '</span></div>'
       + '<div class="ac-sign">' + sigBlock('t', o.ta.n || '', 'Nom', 'Signature', o.ta.h || '') + '</div>'
       + '</div>';
-    body.innerHTML = h;
+    body.innerHTML = h + nomsList();
     bind();
     paintPh();
   }
@@ -164,14 +167,16 @@ const NS_REQUIRED = false;
       upd(o => o.ta[k] = o.ta[k] === v ? '' : v);
       body.querySelectorAll('[data-ta="' + k + '"]').forEach(x => x.classList.toggle('on', get().ta[k] === x.dataset.v));
     });
-    body.querySelectorAll('[data-av]').forEach(b => b.onclick = () => { upd(o => o.ta.av[b.dataset.av] = !o.ta.av[b.dataset.av]); b.classList.toggle('on'); });
-    body.querySelectorAll('[data-name]').forEach(i => i.oninput = () => upd(o => {
-      const k = i.dataset.name, v = i.value.trim();
-      if(k === 'h') o.hs.n = v; else o.ta.n = v;
-      try{ if(v) localStorage.setItem('nsNom', v); }catch(e){}
-    }));
-    // nom du responsable piste repris du dernier vol
-    body.querySelectorAll('[data-name="t"],[data-name="h"]').forEach(i => { if(!i.value){ try{ i.value = localStorage.getItem('nsNom') || ''; }catch(e){} if(i.value) i.oninput(); } });
+    // nom : fouille des soutes <-> tour avion, l'un remplit l'autre tant que l'autre n'a pas été saisi à la main
+    const names = [...body.querySelectorAll('[data-name]')];
+    const saveName = i => upd(o => { const v = i.value.trim(); if(i.dataset.name === 'h') o.hs.n = v; else o.ta.n = v; });
+    names.forEach(i => i.oninput = () => {
+      delete i.dataset.auto; saveName(i);
+      names.forEach(j => { if(j !== i && (!j.value || j.dataset.auto)){ j.value = i.value; j.dataset.auto = '1'; saveName(j); } });
+    });
+    names.forEach(i => i.onchange = () => { const v = i.value.trim(); if(v) nomsAdd(v); });
+    // nom vide : repris de l'autre signature, sinon du dernier nom saisi
+    names.forEach(i => { if(!i.value){ const v = (names.find(j => j !== i && j.value.trim()) || {}).value || nomsGet()[0] || ''; if(v){ i.value = v; i.dataset.auto = '1'; saveName(i); } } });
     body.querySelectorAll('[data-hour]').forEach(i => i.onchange = () => upd(o => { if(i.dataset.hour === 'h') o.hs.h = i.value; else o.ta.h = i.value; }));
     body.querySelectorAll('[data-now]').forEach(b => b.onclick = () => {
       const i = body.querySelector('[data-hour="' + b.dataset.now + '"]'); i.value = nowHM(); i.onchange();
@@ -205,13 +210,14 @@ const NS_REQUIRED = false;
     }
     if(cv.dataset.bound) return;
     cv.dataset.bound = '1';
-    let drawing = false, last = null;
+    let drawing = false, last = null, fresh = false;
     const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     cv.addEventListener('pointerdown', e => {
       e.preventDefault(); cv.setPointerCapture?.(e.pointerId);
       // taille changée depuis l'ouverture (rotation, clavier) : recaler le canevas avant de dessiner
       if(cv.width !== Math.round(cv.clientWidth * (window.devicePixelRatio || 1))) sigInit(cv);
       drawing = true; last = pt(e);
+      const o0 = get(); fresh = !(k === 'h' ? o0.hs.s : o0.ta.s);
       const c = cv.getContext('2d'); c.beginPath(); c.arc(last[0], last[1], 1.1, 0, 7); c.fillStyle = c.strokeStyle; c.fill();
       const ph = document.querySelector('#nsBody [data-ph="' + k + '"]'); if(ph) ph.hidden = true;
     });
@@ -227,11 +233,12 @@ const NS_REQUIRED = false;
       const tc = t.getContext('2d'); tc.drawImage(cv, 0, 0, w1, h1);
       tc.globalCompositeOperation = 'source-in'; tc.fillStyle = '#0B1E4F'; tc.fillRect(0, 0, w1, h1);
       const png = t.toDataURL('image/png');
-      upd(o => {
-        if(k === 'h'){ o.hs.s = png; if(!o.hs.h) o.hs.h = nowHM(); }
-        else { o.ta.s = png; if(!o.ta.h) o.ta.h = nowHM(); }
-      });
-      const hi = document.querySelector('#nsBody [data-hour="' + k + '"]'); if(hi && !hi.value) hi.value = nowHM();
+      // heure de signature prise automatiquement (premier trait d'une signature vide)
+      const hi = document.querySelector('#nsBody [data-hour="' + k + '"]');
+      const hh = fresh || !(hi && hi.value) ? nowHM() : hi.value;
+      upd(o => { if(k === 'h'){ o.hs.s = png; o.hs.h = hh; } else { o.ta.s = png; o.ta.h = hh; } });
+      if(hi) hi.value = hh;
+      const ni = document.querySelector('#nsBody [data-name="' + k + '"]'); if(ni && ni.value.trim()) nomsAdd(ni.value.trim());
     };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
   }
@@ -304,7 +311,6 @@ const NS_REQUIRED = false;
     y += 12; sec('Tour avion');
     row('Soutes vidées et contrôlées', o.ta.sv || '—');
     row('Dommage(s) constaté(s)', (o.ta.dm || '—') + (o.ta.x.length ? ' · ' + o.ta.x.length + ' croix' : ''));
-    row('Personne(s) avisée(s)', [o.ta.av.cdb && 'Commandant de bord', o.ta.av.mec && 'Mécanicien', o.ta.av.ops && 'Opérations'].filter(Boolean).join(', ') || '—');
     row('Nom · heure', (o.ta.n || '—') + ' · ' + (o.ta.h || '--:--') + (o.ta.s ? '  · signé' : ''));
     const load = src => new Promise(res => { if(!src) return res(null); const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
     return Promise.all([load(IMG), load(m === 'arr' && o.hs.on ? o.hs.s : ''), load(o.ta.s)]).then(([pl, sh, st]) => {
@@ -358,8 +364,6 @@ const NS_REQUIRED = false;
     t += '\nTOUR AVION\n';
     t += 'SOUTES VIDEES ET CONTROLEES : ' + (o.ta.sv || '-') + '\n';
     t += 'DOMMAGES CONSTATES : ' + (o.ta.dm || '-') + (o.ta.x.length ? ' (' + o.ta.x.length + ' croix sur la silhouette)' : '') + '\n';
-    const av = [o.ta.av.cdb && 'CDB', o.ta.av.mec && 'MECANICIEN', o.ta.av.ops && 'OPERATIONS'].filter(Boolean).join(', ');
-    if(av) t += 'AVISE(S) : ' + av + '\n';
     t += 'RESPONSABLE : ' + (o.ta.n || '-') + ' ' + (o.ta.h || '') + ' · SIGNATURE ' + (o.ta.s ? 'OUI' : 'NON') + '\n';
     return t;
   };
