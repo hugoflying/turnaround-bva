@@ -43,6 +43,7 @@ main{min-width:0}
 .grp{margin:30px 0 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:800;display:flex;align-items:center;gap:10px}
 .grp::after{content:"";flex:1;height:1px;background:var(--line)}
 section{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px}
+section{scroll-margin-top:150px}
 section[hidden],.grp[hidden],.intro[hidden]{display:none}
 input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 @media (max-width:600px){.htitle small{display:none}.htitle .full{display:none}}
@@ -113,11 +114,11 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   <main id="main">
     <div class="intro">
       <h1>Tout savoir sur l'app</h1>
-      <p>Chaque écran, chaque menu et chaque réglage, avec une capture. Utilise la recherche en haut ou le sommaire pour aller droit au but. Touche une capture pour l'agrandir.</p>
+      <p>Chaque écran, chaque menu et chaque réglage, avec captures et gros plans. Recherche en haut ou sommaire pour aller droit au but. Un appui sur une capture l'agrandit.</p>
       <div class="chips"><a href="#bandeau">Le bandeau</a><a href="#horaires">Saisir une heure</a><a href="#final">LOAD FINAL</a><a href="#sny">SNY</a><a href="#valider">Valider le vol</a><a href="#adm-acces">Admin</a></div>
     </div>
     <div id="secs"></div>
-    <div class="empty" id="empty">Rien trouvé. Essaie un autre mot : EOBT, Paper LID, dommages, publier…</div>
+    <div class="empty" id="empty">Aucun résultat. Autres mots possibles : EOBT, Paper LID, dommages, publier…</div>
   </main>
 </div>
 <div class="lb" id="lb" onclick="this.classList.remove('on')"><img alt=""></div>
@@ -128,62 +129,84 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
+  connexion:[['z-connexion','Heures locale et Zulu, mot de passe']],
+  veille:[['z-veille','Vols non terminés des jours précédents']],
   ecran:[['z-onglets','Les onglets des vols'],['z-tabbar','La barre du bas']],
   bandeau:[['z-bandeau','Le bandeau bleu']],
   'bandeau-reduit':[['z-bandeau-reduit','Le bandeau réduit']],
-  recap:[['z-recap-carte','Une carte du Récap']],
   ouvrir:[['z-ak-ligne','Une ligne de la liste des vols']],
+  recap:[['z-recap-carte','Une carte du Récap']],
+  vol:[['z-carte-vol','La carte du vol'],['z-horaires','Les horaires']],
   horaires:[['z-horaires','Heures prévues et réelles, bouton Now, −1 / +1']],
   pastilles:[['z-pastille','Pastille verte : à l\'heure. Pastille rouge : retard probable']],
+  modifier:[['z-modifier-haut','Compagnie, n° de vol, date, From / To'],['z-modifier-bas','Type avion et parking']],
   ctot:[['z-ctot','Le bandeau CTOT']],
+  'timing-arr':[['z-timing-arr','Étapes : heure saisie, coche verte, Now']],
+  'timing-dep':[['z-timing-dep','Un groupe avec sa durée en cours']],
+  evenements:[['z-evenements','Liste des événements à ajouter']],
   timeline:[['z-timeline','La timeline']],
+  'load-arr':[['z-load-arr','Load ARR']],
+  'load-previ':[['z-load-previ','Load PREVI et TOB PRÉVI']],
+  final:[['z-load-final','FINAL rempli : écarts avec le prévi, poids corrigé, soutes']],
   sny:[['z-sny-note','Code + siège : la zone s\'affiche'],['z-sny-final','La ligne SNY dans FINAL']],
-  retard:[['z-codes-retard','Code 93 mis automatiquement']]
+  fuel:[['z-load-fuel','Load FUEL']],
+  retard:[['z-codes-retard','Code 93 mis automatiquement']],
+  'auto-controle':[['z-ac-tete','En-tête et premier bloc à cocher']],
+  valider:[['z-valider','Auto-contrôle et Valider le vol']],
+  notes:[['z-notes-journal','Ajout rapide et journal des notes']],
+  'menu-reglages':[['z-reglages','Les réglages du menu']],
+  annuaire:[['z-annuaire','Contacts : un appui pour appeler']],
+  dommages:[['z-dommages','Type de dommage et photo']],
+  panneau:[['z-panneau-saisie','Message et couleurs'],['z-panneau-plein-ecran','Rendu plein écran, téléphone à l\'horizontale'],['z-panneau-plein-ecran-2','Autre couleur']],
+  frequences:[['z-frequences','Les fréquences']],
+  degivrage:[['z-degivrage','Holdover times selon température et concentration']],
+  demo:[['z-nouveautes','La fenêtre Nouveautés']],
+  'menu-fin':[['z-effacer','Effacer les données du vol'],['z-fermer','Fermer le vol']]
 };
 const S = [
 // ───────── Prise en main
 ['Prise en main','connexion','Connexion',[I('connexion','Écran de connexion')],`
-<p>À l'ouverture, l'app affiche l'heure locale et l'heure Zulu, puis demande le <b>mot de passe</b> de l'escale. Tape-le et touche <span class="k">Entrer</span>.</p>
-<ul><li>Le code est demandé <b>une fois par journée d'exploitation</b>, de 03:00 à 03:00. Tu peux fermer et rouvrir l'app sans le retaper.</li>
+<p>À l'ouverture, l'app affiche l'heure locale et l'heure Zulu, puis demande le <b>mot de passe de connexion</b>. Saisie du code, puis <span class="k">Entrer</span>.</p>
+<ul><li>Le code est demandé <b>une fois par journée d'exploitation</b>, de 03:00 à 03:00. L'app peut être fermée et rouverte sans le ressaisir.</li>
 <li>Pour le redemander (téléphone prêté, fin de vacation) : <a href="#menu-fin">Menu › Déconnexion</a>. Les vols ouverts sont gardés.</li></ul>`],
 ['Prise en main','ecran','L\'écran en un coup d\'œil',[I('onglets-bandeau','Bandeau, onglets et barre du bas')],`
 <p>De haut en bas :</p>
 <ol><li><b>Les onglets de vols</b> : un rond par vol ouvert, avec la compagnie, le numéro et l'escale. Le cercle autour se remplit avec l'avancement de l'escale. Le bouton <span class="k">+</span> ouvre un nouveau vol, <span class="k">•••</span> ouvre le <a href="#menu-reglages">menu</a>.</li>
 <li><b>Le bandeau bleu</b> du vol affiché : stand, vol, route, compte à rebours et heures clés (<a href="#bandeau">détail</a>).</li>
 <li><b>Le contenu</b> de l'onglet choisi en bas.</li>
-<li><b>La barre du bas</b> : <span class="k">Récap</span>, <span class="k">Vol</span>, <span class="k">Timing</span>, <span class="k">Load</span>, <span class="k">Retard</span>, <span class="k">Notes</span>. Tu peux aussi glisser à gauche ou à droite pour passer d'un écran à l'autre.</li></ol>
+<li><b>La barre du bas</b> : <span class="k">Récap</span>, <span class="k">Vol</span>, <span class="k">Timing</span>, <span class="k">Load</span>, <span class="k">Retard</span>, <span class="k">Notes</span>. Un glissement à gauche ou à droite passe aussi d'un écran à l'autre.</li></ol>
 <div class="tip info">L'onglet d'un vol montre le numéro <b>d'arrivée</b> et la provenance tant que le débarquement n'est pas fini, puis le numéro <b>de départ</b> et la destination.</div>`],
 ['Prise en main','bandeau','Le bandeau bleu',[I('onglets-bandeau','Bandeau complet')],`
 <ul><li><b>STAND</b> : le parking du vol, en grand.</li>
 <li><b>Vol et route</b> : numéro, indicatif (callsign) entre parenthèses quand il diffère, provenance → destination, immatriculation et type avion.</li>
 <li><b>CD</b> : le compte à rebours jusqu'au départ (EOBT). Il passe en rouge quand l'heure est dépassée.</li>
-<li><b>LT / UTC</b> : touche la pastille pour passer toutes les heures de l'app en heure locale ou en UTC.</li>
+<li><b>LT / UTC</b> : un appui sur la pastille passe toutes les heures de l'app en heure locale ou en UTC.</li>
 <li><b>La barre jaune</b> avance de l'arrivée (AIBT) jusqu'au départ. Hachurée : l'avion n'est pas encore arrivé. Rouge : retard. Elle s'arrête à l'AOBT quand le vol est parti.</li>
 <li><b>HLE, H-15, eLID / LID / LDS, EOBT, CTOT</b> : les heures clés calculées. Elles passent en jaune quand elles approchent et en rouge une fois dépassées. HLE = SOBT −60 pour FR/RK, −40 pour les autres.</li></ul>
 <div class="tip">EOBT = SOBT si l'avion est à l'heure. FR/RK : EOBT = max(SOBT, AIBT + 25 min), 35 min avec changement d'équipage. W4/W6 : 30 min (35 sur A321).</div>`],
 ['Prise en main','bandeau-reduit','Réduire le bandeau',[I('bandeau-reduit','Bandeau réduit')],`
 <p><b>Un tap sur le bandeau bleu</b> le réduit à une seule ligne : stand, route centrée avec l'EOBT (et le CTOT s'il y en a un), compte à rebours et barre de progression. <b>Un tap sur la ligne</b> le rouvre.</p>
-<p>Les boutons du bandeau (LT/UTC, CTOT) gardent leur rôle. L'app garde ton choix d'une ouverture à l'autre.</p>`],
+<p>Les boutons du bandeau (LT/UTC, CTOT) gardent leur rôle. Le choix est conservé d'une ouverture à l'autre.</p>`],
 // ───────── Vols
 ['Les vols','ouvrir','Ouvrir un vol',[I('ouvrir-vol','Liste des vols')],`
-<p>Touche <span class="k">+</span> en haut à gauche. La liste des vols de la journée s'affiche :</p>
+<p>Bouton <span class="k">+</span> en haut à gauche. La liste des vols de la journée s'affiche :</p>
 <ul><li><b>Filtres</b> par compagnie en haut, et la loupe pour chercher un numéro.</li>
 <li>Groupes <b>En cours</b> et <b>À venir</b>. Chaque ligne montre l'arrivée à gauche et le départ à droite, avec l'heure prévue en grand et l'écart en couleur.</li>
 <li>La pastille indique l'état : <b>AU SOL</b>, <b>EN APPROCHE</b>… Un vol <b>annulé</b> est barré et l'app demande confirmation avant de l'ouvrir.</li>
-<li>Touche une ligne : le vol s'ouvre avec ses horaires, stand, immatriculation, type et PAF déjà remplis.</li></ul>
+<li>Appui sur une ligne : le vol s'ouvre avec ses horaires, stand, immatriculation, type et PAF déjà remplis.</li></ul>
 <p>Le bouton ↻ d'un onglet de vol recharge ses infos. L'app le fait aussi seule à l'AIBT et au premier embarqué.</p>
 <div class="tip info">Version sans liste (BVA) : <span class="k">+</span> ouvre un vol vide à remplir dans <a href="#modifier">Modifier le vol</a>.</div>`],
-['Les vols','recap','Récap : tous tes vols',[I('recap-detail','Vue détaillée'),I('recap-compact','Vue compacte')],`
+['Les vols','recap','Récap : tous les vols',[I('recap-detail','Vue détaillée'),I('recap-compact','Vue compacte')],`
 <p>L'onglet <span class="k">Récap</span> liste les vols ouverts, <b>En cours</b> puis <b>Terminés</b>.</p>
 <ul><li><b>Détaillée / Compacte</b> : une carte par vol, ou une ligne par vol.</li>
 <li><b>Trier par</b> : EOBT, parking ou ordre d'ajout.</li>
 <li>Chaque carte montre l'état actuel (Arrivée prévue, Arrivé au block, Débarquement en cours, Embarquement terminé, Porte fermée, Repoussé, Décollé), SOBT / EOBT / CTOT, et le temps restant à droite.</li>
-<li>Touche une carte pour ouvrir le vol.</li>
-<li>Un vol parti reste dans <b>Terminés</b> jusqu'à ce que tu le retires avec <span class="k">×</span> ou <span class="k">Tout retirer</span>. 30 min après l'AOBT, il quitte la barre d'onglets.</li></ul>`],
+<li>Appui sur une carte : ouverture du vol.</li>
+<li>Un vol parti reste dans <b>Terminés</b> jusqu'à son retrait avec <span class="k">×</span> ou <span class="k">Tout retirer</span>. 30 min après l'AOBT, il quitte la barre d'onglets.</li></ul>`],
 ['Les vols','veille','Vols de la veille',[I('vols-veille','Vols de la veille')],`
 <p>À l'ouverture, s'il reste des vols d'une journée précédente, l'app propose de les fermer. Elle signale ceux qui n'ont <b>pas été validés</b> ou à qui il manque l'<b>AIBT</b> ou l'<b>AOBT</b>.</p>
 <ul><li><span class="k">Garder</span> : rien ne change, la question revient le lendemain.</li>
-<li><span class="k">Tout fermer</span> : ferme ces vols. Touche une ligne pour ouvrir le vol et le terminer d'abord.</li></ul>`],
+<li><span class="k">Tout fermer</span> : ferme ces vols. Un appui sur une ligne ouvre le vol pour le terminer d'abord.</li></ul>`],
 // ───────── Vol
 ['Onglet Vol','vol','La fiche du vol',[I('vol','Onglet Vol')],`
 <p>En haut, la carte du vol : numéros d'arrivée → départ, provenance → destination, immatriculation, type et parking. <span class="k">Modifier</span> ouvre la fiche complète.</p>
@@ -198,16 +221,16 @@ const S = [
 ['Onglet Vol','pastilles','Pastilles retard',[I('vol','Pastille sur la SOBT')],`
 <p>Un petit point sur <b>SIBT</b> (tant que l'AIBT est vide) et sur <b>SOBT</b> (tant que l'AOBT est vide) :</p>
 <ul><li><b>Vert</b> : à l'heure.</li><li><b>Rouge</b> (qui clignote doucement sur la SIBT) : retard estimé. Côté départ : EOBT après la SOBT, CTOT −15 après la SOBT, ou rotation minimum impossible.</li></ul>
-<p>C'est une simple estimation. Tu peux l'enlever dans <a href="#menu-reglages">Menu › Pastilles retard</a>.</p>`],
+<p>Simple estimation. Option activable / désactivable dans <a href="#menu-reglages">Menu › Pastilles retard</a>.</p>`],
 ['Onglet Vol','modifier','Modifier le vol',[I('vol-modifier','Modifier le vol')],`
-<p>Touche <span class="k">Modifier</span> sur la carte du vol :</p>
+<p>Bouton <span class="k">Modifier</span> sur la carte du vol :</p>
 <ul><li><b>Compagnie</b> en pastilles (FR, RK, W4, W6, V7, H4, U5…).</li>
-<li><b>N° de vol</b> : il commence toujours par un chiffre. Si tu tapes FR5595, l'app range FR dans la compagnie.</li>
-<li><b>Date</b> du vol, <b>From</b> / <b>To</b> (la destination est proposée en gris, touche pour l'accepter), <b>immatriculation</b>, <b>type avion</b> (types proposés selon la compagnie) et <b>parking</b> (1 à 12, ou Autre).</li></ul>
+<li><b>N° de vol</b> : il commence toujours par un chiffre. Saisi FR5595, FR est rangé automatiquement dans la compagnie.</li>
+<li><b>Date</b> du vol, <b>From</b> / <b>To</b> (la destination est proposée en gris, un appui l'accepte), <b>immatriculation</b>, <b>type avion</b> (types proposés selon la compagnie) et <b>parking</b> (1 à 12, ou Autre).</li></ul>
 <p><span class="k">Terminé</span> referme la fiche.</p>`],
 ['Onglet Vol','ctot','CTOT et régulation',[I('vol-ctot','Bandeau CTOT'),I('ctot-regulation','Détail de la régulation')],`
 <p>Quand le vol a un CTOT, un bandeau apparaît : le <b>créneau</b> (−5 / +10 min), le <b>push estimé</b> (max(EOBT, CTOT −15)) et le <b>retard estimé</b>.</p>
-<p>Touche-le (ou la case CTOT du bandeau bleu) pour voir le détail : frise EOBT / push / créneau, cause de la régulation, slots reçus. Tu peux y corriger le CTOT avec <span class="k">Appliquer</span> ou le supprimer.</p>
+<p>Un appui sur ce bandeau (ou sur la case CTOT du bandeau bleu) ouvre le détail : frise EOBT / push / créneau, cause de la régulation, slots reçus. Le CTOT peut y être corrigé avec <span class="k">Appliquer</span> ou le supprimer.</p>
 <p>Où l'afficher : <a href="#menu-reglages">Menu › Bandeau CTOT</a> (Partout, Vol seulement, Jamais).</p>`],
 // ───────── Timing
 ['Onglet Timing','timing-arr','Arrivée',[I('timing-arrivee','Timing › Arrivée')],`
@@ -221,7 +244,7 @@ const S = [
 <p>Chaque événement contient une ou plusieurs actions : une <b>heure</b> seule (ex. Appel Nayak), ou un <b>début</b> et une <b>fin</b> qui dessinent une barre sur la timeline.</p>`],
 ['Onglet Timing','timeline','Timeline',[I('timing-timeline','Timeline')],`
 <p>Le déroulé de l'escale sur une frise : les barres réelles, les fenêtres <b>cibles</b> de la compagnie (en pointillés), la ligne <b>NOW</b>, l'AIBT, la SOBT et l'EOBT.</p>
-<ul><li><span class="k">Suivre Now</span> recentre la frise sur l'heure actuelle quand Now est dans l'escale. Si tu fais défiler toi-même, elle reste où tu l'as mise pendant 8 s.</li>
+<ul><li><span class="k">Suivre Now</span> recentre la frise sur l'heure actuelle quand Now est dans l'escale. Après un défilement manuel, elle reste en place pendant 8 s.</li>
 <li><span class="k">−</span> / <span class="k">+</span> / <span class="k">Reset</span> : zoom.</li>
 <li>Couleurs : à l'heure, en retard, hors cible.</li></ul>`],
 ['Onglet Timing','paf','Contrôle transfrontalier',[],`
@@ -241,9 +264,9 @@ const S = [
 <li><b>Autres compagnies</b> : MALE, FEMALE, CHILD, INFANT, zones, bags, poids.</li>
 <li><b>Soutes</b> H1 à H4 (CP1 à CP5 sur A320) : la consigne de chargement du type avion est écrite en gris dans chaque case. Le total des soutes doit égaler BAGS + GB.</li>
 <li><b>POIDS CORRIGÉ</b> n'apparaît que s'il y a des GB.</li></ul>
-<p><b>Guide LID</b> (Paper LID) : choisis le cas (Item Seat, Comfort Seat, SNY sur jumpseat…), l'app montre quoi mettre dans chaque case du LID. <span class="k">Voir tout le tableau</span> déplie la grille complète.</p>`],
+<p><b>Guide LID</b> (Paper LID) : selon le cas choisi (Item Seat, Comfort Seat, SNY sur jumpseat…), l'app indique quoi mettre dans chaque case du LID. <span class="k">Voir tout le tableau</span> déplie la grille complète.</p>`],
 ['Onglet Load','sny','SNY : siège et zone',[I('notes-sny','Saisie dans les notes'),I('load-final','Ligne SNY dans FINAL')],`
-<p><span class="tag t-fr">FR/RK</span> Dans <a href="#notes">Notes › Clavier</a>, touche <span class="k">SNY</span>, puis tape le <b>crew code</b> (6 lettres) et le <b>siège</b> : <kbd>DERUHU 12C</kbd>. Tu peux en mettre plusieurs à la suite : <kbd>DERUHU 12C AMIEZV 3A</kbd>.</p>
+<p><span class="tag t-fr">FR/RK</span> Dans <a href="#notes">Notes › Clavier</a>, bouton <span class="k">SNY</span>, puis saisie du <b>crew code</b> (6 lettres) et le <b>siège</b> : <kbd>DERUHU 12C</kbd>. Plusieurs SNY possibles à la suite : <kbd>DERUHU 12C AMIEZV 3A</kbd>.</p>
 <ul><li>L'app affiche la zone pendant la saisie et l'ajoute à la note : <b>12C MID</b>.</li>
 <li>Le code s'arrête à 6 lettres, et seules les lettres A à F passent pour le siège.</li>
 <li>LOAD FINAL affiche une ligne <b>SNY</b> avec le nombre par zone : <b>1× FWD</b>, <b>2× MID</b>, <b>1× zone ?</b> (siège manquant).</li></ul>
@@ -254,9 +277,9 @@ const S = [
 ['Retard et validation','retard','Codes retard',[I('retard','Onglet Retard'),I('retard-codes','Code saisi')],`
 <p>Trois lignes code + minutes. Les cases n'apparaissent que si le vol est en retard. <span class="k">Liste Ryanair</span> (ou la liste de la compagnie) ouvre tous les codes avec leur libellé.</p>
 <ul><li>Arrivée en retard : l'app met toute seule le <b>93</b> (93A selon les cas) avec les minutes.</li>
-<li>Vol régulé : pense au 81 / 89 selon la cause affichée dans le <a href="#ctot">détail CTOT</a>.</li></ul>`],
+<li>Vol régulé : prévoir le 81 / 89 selon la cause affichée dans le <a href="#ctot">détail CTOT</a>.</li></ul>`],
 ['Retard et validation','auto-controle','Auto-contrôle Ryanair',[I('auto-controle','Auto-contrôle')],`
-<p><span class="tag t-fr">FR/RK</span> La feuille d'auto-contrôle en version numérique : préparation et vérification LIR / LID, post vol, avec <span class="k">Tout cocher</span> par bloc, ton nom et ta signature au doigt.</p>
+<p><span class="tag t-fr">FR/RK</span> La feuille d'auto-contrôle en version numérique : préparation et vérification LIR / LID, post vol, avec <span class="k">Tout cocher</span> par bloc, nom de l'agent et signature au doigt.</p>
 <p><span class="k">Feuille</span> partage ou télécharge la feuille en image. Elle est pour l'instant <b>facultative</b> pour valider.</p>`],
 ['Retard et validation','valider','Valider le vol',[I('retard','Valider le vol')],`
 <p><span class="k">Valider le vol</span> en bas de l'onglet Retard :</p>
@@ -264,9 +287,9 @@ const S = [
 <p>Le vol est marqué validé (utile pour les <a href="#veille">vols de la veille</a>).</p>`],
 // ───────── Notes
 ['Notes','notes','Notes : stylet et clavier',[I('notes-clavier','Clavier'),I('notes-stylet','Stylet')],`
-<ul><li><b>Stylet</b> : écris ou dessine au doigt, comme sur un bloc-notes.</li>
+<ul><li><b>Stylet</b> : écriture ou dessin au doigt, comme sur un bloc-notes.</li>
 <li><b>Clavier</b> : un journal horodaté. Chaque note prend l'heure de saisie.</li>
-<li><b>Ajout rapide</b> : SNY, BAGS OK, PMR, Bag manquant, Pax en retard, Nettoyage, Fuel… Touche un mot puis ajoute un détail si besoin.</li>
+<li><b>Ajout rapide</b> : SNY, BAGS OK, PMR, Bag manquant, Pax en retard, Nettoyage, Fuel… Un appui sur un mot, puis un détail si besoin.</li>
 <li><span class="k">×</span> sur une note, puis <b>Supprimer ?</b> pour l'effacer. <span class="k">Modifier le texte</span> ouvre tout le journal en texte libre.</li></ul>
 <p>Pour les SNY, voir <a href="#sny">SNY : siège et zone</a>.</p>`],
 // ───────── Menu
@@ -279,19 +302,19 @@ const S = [
 ['Menu','annuaire','Annuaire',[I('annuaire','Annuaire')],`<p>Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP, RYR OCC.</p>`],
 ['Menu','manuel','Manuel',[],`<p>Cette page. Elle s'ouvre depuis le menu, juste sous l'Annuaire.</p>`],
 ['Menu','dommages','Dommages',[I('dommages','Dommages')],`
-<p>Choisis le type (rayure, bosse, birdstrike, impact, fuite, autre), puis <span class="k">Prendre une photo</span> ou <span class="k">Galerie</span>. Les photos sont rangées par vol, se partagent d'un appui et partent dans le rapport. Elles sont effacées quand le vol est fermé.</p>`],
-['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Écris un message, choisis les couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p>`],
+<p>Choix du type (rayure, bosse, birdstrike, impact, fuite, autre), puis <span class="k">Prendre une photo</span> ou <span class="k">Galerie</span>. Les photos sont rangées par vol, se partagent d'un appui et partent dans le rapport. Elles sont effacées quand le vol est fermé.</p>`],
+['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Saisie du message, choix des couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p>`],
 ['Menu','frequences','Fréquences',[I('frequences','Fréquences')],`<p>TWR, APP et OPS de LFOB.</p>`],
-['Menu','degivrage','Dégivrage',[I('degivrage','Dégivrage')],`<p>Le produit utilisé (ABAX Ecowing AD-2 Type II) et les <b>holdover times</b> : choisis la température et la concentration, l'app affiche les durées par condition météo.</p>`],
+['Menu','degivrage','Dégivrage',[I('degivrage','Dégivrage')],`<p>Le produit utilisé (ABAX Ecowing AD-2 Type II) et les <b>holdover times</b> : selon la température et la concentration choisies, l'app affiche les durées par condition météo.</p>`],
 ['Menu','demo','Mode démo et Nouveautés',[I('nouveautes','Nouveautés')],`
-<p><b>Mode démo</b> : des vols fictifs déjà remplis pour tout essayer. Tes vrais vols sont mis de côté et reviennent en quittant la démo. <span class="k">Réinitialiser</span> repart à l'heure actuelle.</p>
+<p><b>Mode démo</b> : des vols fictifs déjà remplis pour tout essayer. Les vrais vols sont mis de côté et reviennent en quittant la démo. <span class="k">Réinitialiser</span> repart à l'heure actuelle.</p>
 <p><b>Nouveautés</b> : la liste des changements de la version. Elle s'affiche une fois après chaque mise à jour.</p>`],
 ['Menu','menu-fin','Effacer, fermer, déconnexion',[I('effacer','Effacer les données'),I('fermer-vol','Fermer le vol')],`
 <ul><li><b>Effacer les données du vol</b> : vide tout ce qui a été saisi, le vol reste ouvert.</li>
 <li><b>Fermer ce vol</b> (ou double appui sur son onglet) : le retire de l'app.</li>
 <li><b>Tout fermer</b> : ferme tous les vols ouverts.</li>
 <li><b>Déconnexion</b> : redemande le code, les vols sont gardés.</li></ul>
-<div class="tip warn">Effacer et fermer ne se rattrapent pas. Valide le vol avant de le fermer.</div>`],
+<div class="tip warn">Effacer et fermer ne se rattrapent pas. Valider le vol avant de le fermer.</div>`],
 ['Menu','maj','Mises à jour et hors ligne',[],`
 <p>L'app se met à jour toute seule : à l'ouverture, elle vérifie s'il y a une nouvelle version et se recharge une fois. Elle fonctionne aussi sans réseau : les vols et saisies sont gardés sur le téléphone. Seule la liste des vols et son actualisation ont besoin du réseau.</p>`],
 // ───────── Admin
@@ -301,9 +324,9 @@ const S = [
 <li><b>Au centre</b> : la page à régler.</li>
 <li><b>À droite</b> : l'<b>aperçu dans l'app</b>, la vraie app qui s'ouvre directement sur l'écran concerné. <span class="k">Avant</span> / <span class="k">Après</span> compare avec la version publiée.</li>
 <li><b>En haut</b> : BROUILLON ou À JOUR, <span class="k">Annuler les modifs</span> et <span class="k">Vérifier et publier</span>.</li></ul>
-<p>Tant que tu n'as pas publié, rien ne change pour les autres.</p>`],
+<p>Tant que rien n'est publié, rien ne change pour les autres.</p>`],
 ['Admin','adm-compagnies','Compagnies',[I('adm-compagnies','Liste'),I('adm-general','Fiche › Général')],`
-<p>La liste montre pour chaque compagnie ses types avion, sa rotation mini, le début HLE et l'état des cibles timeline. Touche une ligne pour ouvrir sa fiche.</p>
+<p>La liste montre pour chaque compagnie ses types avion, sa rotation mini, le début HLE et l'état des cibles timeline. Un appui sur une ligne ouvre sa fiche.</p>
 <p><b>Général</b> : nom, indicatif OACI (callsign, ex. RYR, HYS) qui sert à reconnaître la compagnie dans la liste des vols, et début HLE (SOBT −60, −40…).</p>`],
 ['Admin','adm-types','Types avion, rotations et zones SNY',[I('adm-types','Types avion & rotations')],`
 <ul><li><b>Rotation mini</b> : EOBT = max(SOBT, AIBT + rotation). Vide = rotation du programme.</li>
@@ -320,11 +343,11 @@ const S = [
 <p><span class="k">+ Ajouter une compagnie</span> : code IATA, nom, OACI, puis les types et les cibles à copier d'une compagnie existante.</p>`],
 ['Admin','adm-evenements','Événements',[I('adm-evenements','Liste des événements'),I('adm-evenement-detail','Réglage d\'un événement')],`
 <p>Un seul tableau avec tous les événements, connus ou ajoutés. Pour chacun : le côté (arrivée / départ), ses <b>actions</b> avec une pastille <b>Heure</b>, <b>Début</b> ou <b>Fin</b>, s'il dessine une barre sur la timeline, et les compagnies concernées.</p>
-<p><span class="k">Régler</span> : renommer l'événement ou ses actions, changer la couleur, le limiter à certaines compagnies, ou le masquer dans « Ajouter un événement ». <span class="k">+ Nouvel événement</span> crée le tien.</p>`],
-['Admin','adm-mots','Mots rapides',[I('adm-mots','Mots rapides')],`<p>Les boutons d'ajout rapide des notes (SNY, BAGS OK, PMR…) : renomme, range ↑ ↓, retire ou ajoute. L'aperçu montre le clavier des notes.</p>`],
+<p><span class="k">Régler</span> : renommer l'événement ou ses actions, changer la couleur, le limiter à certaines compagnies, ou le masquer dans « Ajouter un événement ». <span class="k">+ Nouvel événement</span> en crée un nouveau.</p>`],
+['Admin','adm-mots','Mots rapides',[I('adm-mots','Mots rapides')],`<p>Les boutons d'ajout rapide des notes (SNY, BAGS OK, PMR…) : renommer, ranger ↑ ↓, retirer ou ajouter. L'aperçu montre le clavier des notes.</p>`],
 ['Admin','adm-demo','Vols de démo',[I('adm-demo','Frise du scénario'),I('adm-demo-load','Fiche d\'un vol › Load')],`
 <p>Le scénario rejoué au lancement de la démo et à chaque <span class="k">Réinitialiser</span>.</p>
-<ul><li><b>La frise</b> : une barre par vol, de l'arrivée au départ, autour du LANCEMENT (Au sol, En approche, Prévu, Parti, Annulé). Touche un vol pour le régler.</li>
+<ul><li><b>La frise</b> : une barre par vol, de l'arrivée au départ, autour du LANCEMENT (Au sol, En approche, Prévu, Parti, Annulé). Un appui sur un vol ouvre son réglage.</li>
 <li><b>Heures</b> : <kbd>10:35</kbd> heure exacte, <kbd>-20</kbd> 20 min avant le lancement, <kbd>+15</kbd> après, <kbd>non</kbd> pas encore. Les SIBT / SOBT tombent toujours sur 0 ou 5 et respectent la rotation mini.</li>
 <li><b>Onglet ouvert</b> ou dans « Ouvrir un vol », <b>Dupliquer</b>, <b>Retirer</b>, <b>Vol annulé</b>.</li>
 <li><b>Remplissage</b> : « Comme un vrai vol » (l'app remplit ce qui est passé, en gris dans l'admin) ou « Je saisis moi-même ».</li>
@@ -354,6 +377,8 @@ S.forEach(([grp, id, t, imgs, body]) => {
   th += '<a href="#' + id + '" data-id="' + id + '">' + esc(t) + '</a>';
 });
 secs.innerHTML = html; toc.innerHTML = th;
+// lien direct (#rubrique) : les captures se chargent après coup et décalent la page, on recale
+if(location.hash){ const go = () => { const t = document.getElementById(location.hash.slice(1)); if(t) t.scrollIntoView(); }; go(); [400, 1200, 2500].forEach(ms => setTimeout(go, ms)); }
 const ALL = [...secs.querySelectorAll('section')].map(s => ({ s, txt: s.querySelector('.txt'), orig: s.querySelector('.txt').innerHTML, key: norm(s.textContent) }));
 
 // recherche : filtre les sections, surligne les mots trouvés
