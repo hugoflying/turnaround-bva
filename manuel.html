@@ -132,7 +132,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <script>
 // Contenu du manuel : [groupe, id, titre, captures (manuel/img/*.jpg), texte HTML]
 // IMGV : à changer quand des captures sont refaites (sinon le navigateur garde les anciennes)
-const IMGV = '2';
+const IMGV = '3';
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
@@ -164,7 +164,7 @@ const ZM = {
   'menu-reglages':[['z-reglages','Les réglages du menu']],
   annuaire:[['z-annuaire','Contacts : un appui pour appeler']],
   dommages:[['z-dommages','Type de dommage et photo']],
-  panneau:[['z-panneau-saisie','Message et couleurs'],['z-panneau-plein-ecran','Rendu plein écran, téléphone à l\'horizontale'],['z-panneau-plein-ecran-2','Autre couleur']],
+  panneau:[['z-panneau-saisie','Message et couleurs'],['z-panneau-plein-ecran','Rendu plein écran, téléphone à l\'horizontale']],
   frequences:[['z-frequences','Les fréquences']],
   degivrage:[['z-degivrage','Holdover times selon température et concentration']],
   demo:[['z-nouveautes','La fenêtre Nouveautés']],
@@ -311,7 +311,7 @@ const S = [
 ['Menu','manuel','Manuel',[],`<p>Cette page. Elle s'ouvre depuis le menu, juste sous l'Annuaire.</p>`],
 ['Menu','dommages','Dommages',[I('dommages','Dommages')],`
 <p>Choix du type (rayure, bosse, birdstrike, impact, fuite, autre), puis <span class="k">Prendre une photo</span> ou <span class="k">Galerie</span>. Les photos sont rangées par vol, se partagent d'un appui et partent dans le rapport. Elles sont effacées quand le vol est fermé.</p>`],
-['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Saisie du message, choix des couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p>`],
+['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Saisie du message, choix des couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p><div class="tip info">Utile pour passer une information au pilote <b>sans prendre le casque</b>, en contact visuel : NEW eLID, PORTE 4, BAGS OK…</div>`],
 ['Menu','frequences','Fréquences',[I('frequences','Fréquences')],`<p>TWR, APP et OPS de LFOB.</p>`],
 ['Menu','degivrage','Dégivrage',[I('degivrage','Dégivrage')],`<p>Le produit utilisé (ABAX Ecowing AD-2 Type II) et les <b>holdover times</b> : selon la température et la concentration choisies, l'app affiche les durées par condition météo.</p>`],
 ['Menu','demo','Mode démo et Nouveautés',[I('nouveautes','Nouveautés')],`
