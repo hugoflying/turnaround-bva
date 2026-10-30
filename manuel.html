@@ -150,7 +150,7 @@ const ZM = {
   'timing-arr':[['z-timing-arr','Étapes : heure saisie, coche verte, Now']],
   'timing-dep':[['z-timing-dep','Un groupe avec sa durée en cours']],
   evenements:[['z-evenements','Liste des événements à ajouter']],
-  timeline:[['z-timeline','La timeline']],
+  timeline:[['z-timeline','La timeline (Gantt)']],
   'load-arr':[['z-load-arr','Load ARR']],
   'load-previ':[['z-load-previ','Load PREVI et TOB PRÉVI']],
   final:[['z-load-final','FINAL rempli : écarts avec le prévi, poids corrigé, soutes']],
@@ -249,8 +249,8 @@ const S = [
 ['Onglet Timing','evenements','Événements',[I('evenements','Ajouter un événement')],`
 <p>Les événements qui n'arrivent pas sur tous les vols : Crew, Recherche bag, INAD, Nayak, Embarquement (scan), Connexion casque, Push, Portes de soute, Retrait échelles, Réouverture porte, Comptage bagages, Cleaning, Vidange, Eau potable, Dégivrage…</p>
 <p>Chaque événement contient une ou plusieurs actions : une <b>heure</b> seule (ex. Appel Nayak), ou un <b>début</b> et une <b>fin</b> qui dessinent une barre sur la timeline.</p>`],
-['Onglet Timing','timeline','Timeline',[I('timing-timeline','Timeline')],`
-<p>Le déroulé de l'escale sur une frise : les barres réelles, les fenêtres <b>cibles</b> de la compagnie (en pointillés), la ligne <b>NOW</b>, l'AIBT, la SOBT et l'EOBT.</p>
+['Onglet Timing','timeline','Timeline (diagramme de Gantt)',[I('timing-timeline','Timeline / Gantt')],`
+<p>La <b>timeline</b>, aussi appelée <b>diagramme de Gantt</b> : le déroulé de l'escale sur une frise, une ligne par étape : les barres réelles, les fenêtres <b>cibles</b> de la compagnie (en pointillés), la ligne <b>NOW</b>, l'AIBT, la SOBT et l'EOBT.</p>
 <ul><li><span class="k">Suivre Now</span> recentre la frise sur l'heure actuelle quand Now est dans l'escale. Après un défilement manuel, elle reste en place pendant 8 s.</li>
 <li><span class="k">−</span> / <span class="k">+</span> / <span class="k">Reset</span> : zoom.</li>
 <li>Couleurs : à l'heure, en retard, hors cible.</li></ul>`],
