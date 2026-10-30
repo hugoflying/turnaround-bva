@@ -6,7 +6,7 @@ const out = process.argv[2] || '/tmp';
   for (const [w, h, name, dark] of [[400, 860, 'ph', false], [800, 1280, 'tab', false], [400, 860, 'ph-dark', true]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     await p.route(/\/api\/ak/, r => r.fulfill({ json: [] }));
-    await p.goto('http://localhost:8803/'); await p.evaluate(d => { localStorage.clear(); localStorage.setItem('whatsNewSeen', 'maj-2026-10-18c'); sessionStorage.setItem('pv_auth', '1'); if (d) localStorage.setItem('theme', 'dark'); }, dark);
+    await p.goto('http://localhost:8803/'); await p.evaluate(d => { localStorage.clear(); localStorage.setItem('whatsNewSeen', 'maj-2026-10-30'); sessionStorage.setItem('pv_auth', '1'); if (d) localStorage.setItem('theme', 'dark'); }, dark);
     await p.reload(); await p.waitForTimeout(6000);
     const r = await p.evaluate(async d => {
       const W = ms => new Promise(r => setTimeout(r, ms));

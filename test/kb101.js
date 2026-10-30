@@ -2,8 +2,8 @@
 const { chromium, devices } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const ctx=await b.newContext({...devices['Galaxy S9+'], viewport:{width:412,height:880}, userAgent:'Mozilla/5.0 (Linux; Android 14; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'}); const p=await ctx.newPage();
 const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
-await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); }); await p.reload(); await p.waitForTimeout(4500);
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-30'); }); await p.reload(); await p.waitForTimeout(4500);
 const o={};
 await p.evaluate(()=>{ const ids=JSON.parse(localStorage.flightTabs); switchTab(ids[1]); uiTab('load'); });   // W4 : champs PreviPOIDS_OTHER
 await p.waitForTimeout(600);

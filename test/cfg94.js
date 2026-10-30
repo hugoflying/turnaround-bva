@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
 const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
 await p.goto('http://localhost:8803/admin.html'); await p.waitForTimeout(400);
 const DEF = await p.evaluate(()=>JSON.stringify(DEFAULTS));
 await p.evaluate(()=>{ localStorage.removeItem('adminCfg'); localStorage.removeItem('adminCfgDraft'); });

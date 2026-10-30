@@ -1,7 +1,7 @@
 // v3.30/v3.31 : temps depuis l'AOBT, avec la date du vol (sinon modulo 24 h) ; parti depuis 30 min = quitte la bande
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
 await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
 console.log(await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const o=[];
  const ids=JSON.parse(localStorage.flightTabs); const A=ids[0], B=ids[1];

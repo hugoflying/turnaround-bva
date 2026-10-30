@@ -2,7 +2,7 @@
 const { chromium, devices } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const c=await b.newContext({...devices['iPhone 13'], viewport:{width:390,height:500}}); const p=await c.newPage();
 const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
 await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
 const r=await p.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const o=[];
  uiTab('load'); ldmSwitch('final'); await W(300);

@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
 const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); localStorage.setItem('oldAskDay', new Date(Date.now()-3*36e5).toDateString()); });
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); localStorage.setItem('oldAskDay', new Date(Date.now()-3*36e5).toDateString()); });
 await p.goto('http://localhost:8803/'); await p.waitForTimeout(2500);
 await p.evaluate(()=>openAKPicker()); await p.waitForTimeout(1500);
 const o = await p.evaluate(()=>({ rows:[...document.querySelectorAll('.akc-cx .akc-fn')].map(x=>x.textContent).join(','), tabs:JSON.parse(localStorage.flightTabs).length }));

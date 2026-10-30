@@ -1115,21 +1115,21 @@ function clockMin(){
 
 
   /* ===== Nouveautés : popup animé à la première connexion sur la nouvelle version ===== */
-  // v2.51 : contenu de la mise à jour du 17 octobre (changer WN_ID pour réafficher le popup une fois)
-  const WN_ID = 'maj-2026-10-18c';
-  const WN_VER = 'Version 2.86';
+  // v2.51 : contenu de la mise à jour (changer WN_ID pour réafficher le popup une fois)
+  // v3.49.3 (Hugo) : nouveautés depuis la v2.86, seulement ce qui se voit côté agent
+  const WN_ID = 'maj-2026-10-30';
+  const WN_VER = 'Version 3.49';
   const WN_ED = window.APP_EDITION || 'demo';
   const WN_ITEMS = [
-    ['i-grid',   '#0B1E4F', 'Interface repensée', 'Plus claire et plus fluide : onglets en bas, glisse d\'un écran à l\'autre, chronos toujours visibles.'],
-    ['i-list',   '#3D6BE0', 'Onglet Récap', 'Tous tes vols d\'un coup d\'œil : où en est chaque vol et combien de temps il reste.'],
-    ['i-clock',  '#F59E0B', 'CTOT repensé', 'Bandeau avec le créneau, le push estimé et le retard. Un appui ouvre le détail de la régulation. Dans le menu, choisis où l\'afficher : partout, sur Vol ou jamais.'],
-    WN_ED !== 'bva' ? ['i-info', '#D93636', 'Contrôle transfrontalier', 'Sur un vol contrôlé, l\'app te demande de confirmer la salle PAF au 1er débarqué, et la fin des contrôles à la fermeture porte.'] : null,
-    ['i-camera', '#0d9488', 'Dommages', 'Photos de rayures, bosses ou birdstrike prises depuis l\'app, rangées par vol et faciles à partager.'],
-    ['i-board',  '#0B1E4F', 'Panneau', 'Écris un message et affiche-le en très grand, plein écran, comme un panneau d\'accueil.'],
-    ['i-phone',  '#1F9D57', 'Annuaire', 'Appel direct en un appui : NAYAK, Sup OPS, PCE, OPS T2, CEP' + (WN_ED === 'demo' ? '.' : ', RYR OCC.')],
-    ['i-radio',  '#0891b2', 'Fréquences et dégivrage', 'Dans le menu : fréquences LFOB, produit ABAX et holdover times.'],
-    ['i-check',  '#7c3aed', 'Auto-contrôle Ryanair', 'La feuille FR/RK en version numérique, signature au doigt. En test, pas obligatoire.'],
-    WN_ED === 'demo' ? ['i-plane', '#D93636', 'Version démo', 'Des vols fictifs pour tout essayer : 3 ouverts, les autres dans « Ouvrir un vol ». Menu › Réinitialiser la démo pour repartir à l\'heure actuelle.'] : null,
+    ['i-grid',   '#0B1E4F', 'Bandeau qui se réduit', 'Un tap sur le bandeau bleu le réduit à une ligne : stand, route, EOBT, compte à rebours et barre. Un tap pour le rouvrir.'],
+    ['i-bag',    '#3D6BE0', 'SNY : siège et zone', 'Sur FR/RK, tape le crew code puis le siège (DERUHU 12C) : l\'app donne la zone FWD, MID ou AFT selon l\'avion. LOAD FINAL compte les SNY par zone.'],
+    ['i-clock',  '#D93636', 'Pastilles retard', 'Un point sur SIBT et SOBT : vert à l\'heure, rouge en retard estimé. Désactivable dans le menu.'],
+    ['i-list',   '#F59E0B', 'Récap et vols de la veille', 'Les vols terminés restent dans Récap jusqu\'à ce que tu les retires. À l\'ouverture, l\'app propose de fermer les vols de la veille et signale ceux non validés.'],
+    ['i-check',  '#0d9488', 'Guide LID', 'En Paper LID, le guide Ryanair à l\'écran : choisis le cas, l\'app montre quoi cocher dans chaque case.'],
+    ['i-plane',  '#7c3aed', 'Onglets et bandeau plus clairs', 'Le stand en grand dans le bandeau. L\'onglet montre l\'arrivée jusqu\'au débarquement, puis le départ. Vol annulé signalé.'],
+    ['i-delay',  '#1F9D57', 'Événements', 'Nouvel événement Scan embarquement. Les panneaux ouverts restent ouverts pour chaque vol.'],
+    ['i-snow',   '#0891b2', 'Fuel', 'Jusqu\'à 4 uplifts, avec le total.'],
+    WN_ED === 'demo' ? ['i-refresh', '#D93636', 'Version démo', 'Des vols fictifs pour tout essayer. Menu › Réinitialiser la démo pour repartir à l\'heure actuelle.'] : null,
   ].filter(Boolean);
   window.uiWhatsNew = function(){
     let m = document.getElementById('wnModal');

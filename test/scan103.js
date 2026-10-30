@@ -1,8 +1,8 @@
 // v3.41.6 : événement Embarquement (premier / dernier scanné) sous Nayak
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
-await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); }); await p.reload(); await p.waitForTimeout(4500);
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-30'); }); await p.reload(); await p.waitForTimeout(4500);
 const o={};
 o.list = await p.evaluate(async()=>{ uiTab('timing'); switchTimingPanel('dep'); uiEvOpen('dep'); await new Promise(r=>setTimeout(r,400)); return [...document.querySelectorAll('.ev-list [data-k]')].map(x=>x.dataset.k).join(','); });
 await p.screenshot({path:'../s41/scan-sheet.png'});

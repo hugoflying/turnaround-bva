@@ -4,7 +4,7 @@ const out = process.argv[2] || '/tmp';
 (async () => {
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 400, height: 860 } });
   await p.route(/\/api\/ak/, r => r.fulfill({ json: [] }));
-  await p.goto('http://localhost:8803/'); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('whatsNewSeen', 'maj-2026-10-18c'); sessionStorage.setItem('pv_auth', '1'); });
+  await p.goto('http://localhost:8803/'); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('whatsNewSeen', 'maj-2026-10-30'); sessionStorage.setItem('pv_auth', '1'); });
   await p.reload(); await p.waitForTimeout(6000);
   const r = await p.evaluate(async () => {
     const W = ms => new Promise(r => setTimeout(r, ms));

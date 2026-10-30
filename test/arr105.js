@@ -1,8 +1,8 @@
 // v3.43 : pastille SIBT (rouge = SIBT dépassée sans AIBT, vert = avant, rien avec AIBT)
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
-await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); }); await p.reload(); await p.waitForTimeout(4500);
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
+await p.goto('http://localhost:8803/'); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('whatsNewSeen','maj-2026-10-30'); }); await p.reload(); await p.waitForTimeout(4500);
 const st = (k='SIBT') => p.evaluate(k=>{ uiSyncArrDot(); const w=document.querySelector('.time-wrap[data-id="'+k+'"]'); return w.classList.contains('arr-late')?'rouge':w.classList.contains('arr-ok')?'vert':'rien'; }, k);
 const set = (id,v) => p.evaluate(([id,v])=>{ const e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('change',{bubbles:true})); },[id,v]);
 const hm = d => p.evaluate(d=>{ const n=new Date(Date.now()+d*60000), u=isUTC; const h=u?n.getUTCHours():n.getHours(), m=u?n.getUTCMinutes():n.getMinutes(); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }, d);

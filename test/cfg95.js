@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844}});
 const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
-await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-18c'); sessionStorage.setItem('pv_auth','1'); });
+await p.addInitScript(()=>{ localStorage.setItem('whatsNewSeen','maj-2026-10-30'); sessionStorage.setItem('pv_auth','1'); });
 await p.goto('http://localhost:8803/admin.html'); await p.waitForTimeout(800);
 await p.evaluate(()=>{ localStorage.removeItem('adminCfg'); localStorage.removeItem('adminCfgDraft'); C=clone(DEFAULTS);
   C.events=[{id:'nav1',t:'Navette équipage',side:'arr',kind:'span',c:'#db2777',cies:[]},{id:'pmr2',t:'Arrivée ambulift',side:'dep',kind:'point',c:'#7c3aed',cies:['FR']}];

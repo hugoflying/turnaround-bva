@@ -10,7 +10,7 @@ const ctx = await b.newContext({ viewport:{ width:1280, height:860 } });
 await ctx.route('https://timing-demo.pages.dev/api/config**', async r => { const q = r.request();
   const res = await onRequest({ env, request: new Request(q.url(), { method:q.method(), headers:q.headers(), body: ['GET','OPTIONS'].includes(q.method()) ? undefined : q.postData() }) });
   r.fulfill({ status:res.status, headers:Object.fromEntries(res.headers), body:await res.text() }); });
-await ctx.addInitScript(() => { sessionStorage.setItem('pv_auth', '1'); localStorage.setItem('whatsNewSeen', 'maj-2026-10-18c'); });
+await ctx.addInitScript(() => { sessionStorage.setItem('pv_auth', '1'); localStorage.setItem('whatsNewSeen', 'maj-2026-10-30'); });
 const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
 await p.goto('http://localhost:8803/admin.html'); await p.waitForTimeout(500);
 await p.evaluate(() => go('publication'));
@@ -26,7 +26,7 @@ await p.locator('button:has-text("Revenir à cette version")').first().click(); 
 o.after = await p.evaluate(() => hist.map(h => h.sum)); o.rolledBack = JSON.stringify(JSON.parse(store.get('latest')).cfg.al) === JSON.stringify(hle0);
 // visiteur de la démo : rien en local, reçoit la dernière version
 const q = await ctx.browser().newContext({ viewport:{ width:390, height:844 } }); await q.route('https://timing-demo.pages.dev/api/config**', r => r.fulfill({ status:200, contentType:'application/json', body:store.get('latest') }));
-await q.addInitScript(() => { sessionStorage.setItem('pv_auth', '1'); localStorage.setItem('whatsNewSeen', 'maj-2026-10-18c'); });
+await q.addInitScript(() => { sessionStorage.setItem('pv_auth', '1'); localStorage.setItem('whatsNewSeen', 'maj-2026-10-30'); });
 const v = await q.newPage(); v.on('pageerror', e => errs.push(e.message)); await v.goto('http://localhost:8803/'); await v.waitForTimeout(4000);
 o.visitor = await v.evaluate(() => ({ cfg: !!window.CFG, words: (window.CFG && window.CFG.words || []).slice(-1) }));
 console.log(JSON.stringify(o, null, 1)); console.log(errs.join(';') || 'no errors'); await b.close();
