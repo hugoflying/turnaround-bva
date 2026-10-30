@@ -662,7 +662,7 @@ function renderTabs(){
       finally { r.classList.remove('is-loading'); }
     };
 
-    if (!data.akMeta) {
+    if (!akLinked(data.akMeta)) {
       r.disabled = true;
       r.title = "Pas de vol AK associé";
     }

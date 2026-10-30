@@ -593,10 +593,12 @@ function findBestAKMatch(list, meta, flow){
   return best;
 }
 
+function akLinked(meta){ return !!(meta && (meta.id || meta.linkedId)); }
 async function refreshAKTab(tabId){
   const data = JSON.parse(localStorage.getItem('tab-'+tabId) || '{}');
   const meta = data.akMeta;
-  if(!meta){
+  // v3.51.9 (Hugo) : vol ajouté à la main = pas de vol AK (akMeta peut exister pour le CTOT ou le n° d'arrivée saisis)
+  if(!akLinked(meta)){
     showPopup("Pas de données AK à rafraîchir", "#ef4444", 1600);
     return;
   }

@@ -1054,7 +1054,7 @@ document.addEventListener('change', function(e){
   if(fid === 'AvionPremierEmbarque' && !_akAutoRotLong()) return;
   const id = currentTabId;
   let d = null; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || 'null'); }catch(_){}
-  if(!d || !d.akMeta) return;
+  if(!d || !akLinked(d.akMeta)) return;   // v3.51.9 (Hugo) : jamais pour un vol ajouté à la main
   if(Date.now() - (_peRefreshAt[id] || 0) < 60000) return; // un seul refresh par minute
   _peRefreshAt[id] = Date.now();
   setTimeout(async () => {
