@@ -762,7 +762,9 @@ function clockMin(){
     let d = {}; try{ d = JSON.parse(localStorage.getItem('tab-' + id) || '{}'); }catch(e){}
     const g = k => (cur ? val(k) : String(d[k] || '')).trim();
     const cie = g('Cie').toUpperCase();
-    const depFF = (d.akMeta?.depFF || '').toUpperCase(), arrFF = (d.akMeta?.arrFF || '').toUpperCase();
+    const arrFF = (d.akMeta?.arrFF || '').toUpperCase();
+    // v3.51.10 : vol manuel avec n° d'arrivée → Cie + N° vol est le départ (si To ≠ BVA)
+    const depFF = (d.akMeta?.depFF || (arrFF && g('To').toUpperCase() !== 'BVA' ? cie + g('NVol').toUpperCase() : '')).toUpperCase();
     const fno = depFF || arrFF || (cie + g('NVol').toUpperCase()) || 'VOL';
     const place = (depFF || !arrFF ? g('To') : g('From')).toUpperCase();
     const now = nowMin();

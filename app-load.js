@@ -614,9 +614,10 @@ function renderTabs(){
     // Libellé : n° du départ | destination,
     // ou n° de l'arrivée | provenance s'il n'y a pas de départ lié,
     // à défaut (vol manuel) Cie+N° | destination.
-    const depFF = (data?.akMeta?.depFF || '').toUpperCase().trim();
     const arrFF = (data?.akMeta?.arrFF || '').toUpperCase().trim();
     const manual = `${cie}${nvol}`.trim();
+    // v3.51.10 (Hugo) : vol manuel avec n° d'arrivée saisi → le n° de vol (To ≠ BVA) est le départ, l'onglet suit aussi la phase
+    const depFF = (data?.akMeta?.depFF || (arrFF && to !== 'BVA' ? manual : '')).toUpperCase().trim();
     let volRef, place;
     // v3.42 (Hugo, choix « Suit la phase ») : rotation = l'arrivée tant qu'elle n'est pas finie, puis le départ
     if(depFF && arrFF && window.uiTabPhase && window.uiTabPhase(id) === 'arr') { volRef = arrFF; place = from; }
