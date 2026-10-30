@@ -1568,17 +1568,17 @@ html.dark .z-fwd{background:#1B2B55;color:#9DB8FF}html.dark .z-mid{background:#3
 #ldSnyBox .sny-t{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-right:4px}
 #ldSnyBox .sny-z{font-size:12.5px;padding:3px 9px}
 
-/* v3.49 (Hugo, option A) : bandeau réduit + petite flèche discrète */
-.fh-band{position:relative}
-.fh-fold{position:absolute;right:2px;bottom:0;width:26px;height:14px;padding:0;border:0;background:none;color:rgba(255,255,255,.4);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.fh-fold svg{width:11px;height:7px;transition:transform .2s}
-.fh-fold::before{content:"";position:absolute;inset:-10px -4px -4px -10px}
+/* v3.49.1 (Hugo, option B) : bandeau réduit d'un tap */
+.fh-band{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fh-mini{display:none}
-#fixedHeader.is-fold .fh-band{padding:7px 14px 10px;gap:0}
-#fixedHeader.is-fold .fh-band > :not(.fh-mini):not(.fh-fold){display:none!important}
-#fixedHeader.is-fold .fh-mini{display:flex;align-items:center;gap:10px;position:relative;padding-bottom:7px;cursor:pointer}
-#fixedHeader.is-fold .fh-fold svg{transform:rotate(180deg)}
-.fh-mini b{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fh-mini .num{margin-left:auto;margin-right:14px;font-family:var(--f-num);font-weight:300;font-size:21px;letter-spacing:.02em}
-.fh-mini .fh-prog{position:absolute;left:0;right:20px;bottom:0}
+#fixedHeader.is-fold .fh-band{padding:8px 14px 10px;gap:0}
+#fixedHeader.is-fold .fh-band > :not(.fh-mini){display:none!important}
+#fixedHeader.is-fold .fh-mini{display:grid;grid-template-columns:76px 1fr 76px;align-items:center;gap:6px;position:relative;padding-bottom:9px}
+.fh-mini .fh-pkb{width:40px;min-width:0;height:40px;margin:0;padding:2px 0 0;border-radius:8px}.fh-mini .fh-pkb[hidden]{visibility:hidden;display:block}
+.fh-mini .fh-pkb small{font-size:7.5px}.fh-mini .fh-pkb b{font-size:17px}
+.fh-mini-c{text-align:center;line-height:1.15;min-width:0}
+.fh-mini-c b{display:block;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fh-mini-c b i{font-style:normal;opacity:.6;font-weight:600;margin:0 6px}
+.fh-mini-c small{display:block;font-size:11.5px;font-weight:600;opacity:.72;white-space:pre;font-family:var(--f-num)}
+.fh-mini .num{justify-self:end;font-family:var(--f-num);font-weight:300;font-size:24px;letter-spacing:.02em;white-space:nowrap}
 .fh-mini .num.cd-over{color:var(--red-on-navy)}
+.fh-mini .fh-prog{position:absolute;left:0;right:0;bottom:0}

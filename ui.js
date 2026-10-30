@@ -1861,30 +1861,34 @@ function clockMin(){
 
 })();
 
-/* v3.49 (Hugo, option A) : petite flèche pour réduire le bandeau bleu en une ligne (vol · route, compte à rebours, barre).
-   Le choix reste d'une ouverture à l'autre (localStorage hdrFold). */
+/* v3.49.1 (Hugo, option B) : un tap sur le bandeau bleu le réduit en une ligne (stand, route + EOBT/CTOT, compte à rebours, barre),
+   un tap sur la ligne le rouvre ; les boutons du bandeau (LT/UTC, CTOT…) gardent leur rôle. Choix gardé (localStorage hdrFold). */
 function uiFoldHeader(on){
   const h = document.getElementById('fixedHeader'); if(!h) return;
   if(on === undefined) on = !h.classList.contains('is-fold');
   h.classList.toggle('is-fold', !!on);
   try{ localStorage.setItem('hdrFold', on ? '1' : '0'); }catch(e){}
-  const b = document.getElementById('fhFold'); if(b) b.setAttribute('aria-label', on ? 'Agrandir le bandeau' : 'Réduire le bandeau');
   uiFoldSync();
   try{ updateHeaderOffset(); }catch(e){}
 }
 function uiFoldSync(){
   const h = document.getElementById('fixedHeader'); if(!h || !h.classList.contains('is-fold')) return;
-  const t = id => (document.getElementById(id)?.textContent || '').trim();
-  const route = t('fhSub').split('·')[0].trim(), fno = t('fhFno');
-  const r = document.getElementById('fhMiniR'); if(r) r.textContent = [fno, route].filter(x => x && x !== '----').join(' · ');
+  const t = id => (document.getElementById(id)?.textContent || '').trim(), hm = v => /^\d{1,2}:\d{2}$/.test(v);
+  const r = document.getElementById('fhMiniR'); if(r) r.innerHTML = (t('fhSub').split('·')[0].trim() || t('fhFno')).replace(/</g, '&lt;').replace('→', '<i>→</i>');
+  const k = document.getElementById('fhMiniK'), e = t('timer-eobt'), c = t('timer-ctot');
+  if(k) k.textContent = [hm(e) ? 'EOBT ' + e : '', hm(c) ? 'CTOT ' + c : ''].filter(Boolean).join('   ');
+  const pk = document.getElementById('fhMiniPk'), pkB = document.getElementById('fhPkB');
+  if(pk){ pk.hidden = !pkB || pkB.hidden; pk.querySelector('b').textContent = t('fhPkBn'); }
   const cd = document.getElementById('timer-cd'), m = document.getElementById('fhMiniT');
-  if(m && cd){ m.textContent = cd.textContent; m.className = 'num ' + cd.className; m.style.color = cd.style.color; }
+  if(m && cd){ m.textContent = cd.textContent; m.className = 'num ' + cd.className; }
   const src = document.getElementById('fhProgWrap'), p = document.getElementById('fhMiniP');
   if(src && p){ p.className = src.className; p.firstElementChild.style.width = document.getElementById('fhProg').style.width; }
 }
 window.uiFoldHeader = uiFoldHeader; window.uiFoldSync = uiFoldSync;
 document.addEventListener('DOMContentLoaded', () => {
   try{ if(localStorage.getItem('hdrFold') === '1') uiFoldHeader(true); }catch(e){}
+  const band = document.querySelector('#fixedHeader .fh-band');
+  if(band) band.addEventListener('click', e => { if(e.target.closest('button, a, input, select, textarea, .chip-ctot')) return; uiFoldHeader(); });
   const cd = document.getElementById('timer-cd');
   if(cd && window.MutationObserver) new MutationObserver(uiFoldSync).observe(cd, { childList:true, characterData:true, subtree:true, attributes:true });
 });

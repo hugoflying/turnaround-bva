@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261030r210';
+window.APP_VERSION = '20261030r211';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261030r210';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r210" />
-<link rel="stylesheet" href="./css/app.css?v=20261030r210" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r211" />
+<link rel="stylesheet" href="./css/app.css?v=20261030r211" />
 </head>
 <body>
 
@@ -384,9 +384,8 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
   </div>
 
   <div class="fh-band">
-  <!-- v3.49 (Hugo, option A) : bandeau réduit = vol · route, compte à rebours en petit, barre de progression -->
-  <div class="fh-mini" id="fhMini" role="button" tabindex="0" aria-label="Agrandir le bandeau" onclick="uiFoldHeader(false)"><b id="fhMiniR"></b><span class="num" id="fhMiniT"></span><div class="fh-prog" id="fhMiniP"><i></i></div></div>
-  <button type="button" class="fh-fold" id="fhFold" onclick="uiFoldHeader()" aria-label="Réduire le bandeau"><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 6.5 6 2l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <!-- v3.49.1 (Hugo, option B) : bandeau réduit = stand, route centrée avec EOBT (et CTOT), compte à rebours, barre. Tap pour réduire / agrandir -->
+  <div class="fh-mini" id="fhMini" aria-label="Bandeau réduit, toucher pour l'agrandir"><div class="fh-pkb" id="fhMiniPk"><small>STAND</small><b></b></div><div class="fh-mini-c"><b id="fhMiniR"></b><small id="fhMiniK"></small></div><span class="num" id="fhMiniT"></span><div class="fh-prog" id="fhMiniP"><i></i></div></div>
   <div class="fh-hero">
     <div class="fh-pkb" id="fhPkB" hidden><small>STAND</small><b id="fhPkBn"></b></div>
     <div class="fh-id"><div class="fh-fno"><span id="fhFno">----</span><small class="fh-cs" id="fhCs" hidden></small><small class="fh-cx" id="fhCx" hidden>ANNULÉ</small></div><div class="fh-sub" id="fhSub"></div></div>
@@ -1156,19 +1155,19 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261030r210"></script>
-<script src="./cfg.js?v=20261030r210"></script>
-<script src="./contacts.js?v=20261030r210"></script>
-<script src="./app.js?v=20261030r210"></script>
-<script src="./app-load.js?v=20261030r210"></script>
-<script src="./app-onglets.js?v=20261030r210"></script>
-<script src="./app-retard.js?v=20261030r210"></script>
-<script src="./app-timeline.js?v=20261030r210"></script>
-<script src="./app-keeper.js?v=20261030r210"></script>
-<script src="./app-outils.js?v=20261030r210"></script>
-<script src="./demo-auto.js?v=20261030r210"></script>
-<script src="./ui.js?v=20261030r210"></script>
-<script src="./tools.js?v=20261030r210"></script>
-<script src="./dlcodes.js?v=20261030r210"></script>
+<script src="./edition.js?v=20261030r211"></script>
+<script src="./cfg.js?v=20261030r211"></script>
+<script src="./contacts.js?v=20261030r211"></script>
+<script src="./app.js?v=20261030r211"></script>
+<script src="./app-load.js?v=20261030r211"></script>
+<script src="./app-onglets.js?v=20261030r211"></script>
+<script src="./app-retard.js?v=20261030r211"></script>
+<script src="./app-timeline.js?v=20261030r211"></script>
+<script src="./app-keeper.js?v=20261030r211"></script>
+<script src="./app-outils.js?v=20261030r211"></script>
+<script src="./demo-auto.js?v=20261030r211"></script>
+<script src="./ui.js?v=20261030r211"></script>
+<script src="./tools.js?v=20261030r211"></script>
+<script src="./dlcodes.js?v=20261030r211"></script>
 </body>
 </html>
