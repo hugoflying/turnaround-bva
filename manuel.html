@@ -310,7 +310,7 @@ const S = [
 ['Menu','manuel','Manuel',[],`<p>Cette page. Elle s'ouvre depuis le menu, juste sous l'Annuaire.</p>`],
 ['Menu','dommages','Dommages',[I('dommages','Dommages')],`
 <p>Choix du type (rayure, bosse, birdstrike, impact, fuite, autre), puis <span class="k">Prendre une photo</span> ou <span class="k">Galerie</span>. Les photos sont rangées par vol, se partagent d'un appui et partent dans le rapport. Elles sont effacées quand le vol est fermé.</p>`],
-['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Saisie du message, choix des couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p><div class="tip info">Utile pour passer une information au pilote <b>sans prendre le casque</b>, en contact visuel : NEW eLID, PORTE 4, BAGS OK…</div>`],
+['Menu','panneau','Panneau',[I('panneau','Panneau')],`<p>Saisie du message, choix des couleurs, puis <span class="k">Afficher en plein écran</span> : le texte s'affiche en très grand, téléphone à l'horizontale, écran toujours allumé. Les derniers messages sont gardés (× pour en retirer un).</p><div class="tip info">Utile pour passer une information au pilote <b>sans prendre le casque</b>, en contact visuel. Exemples : NEW eLID, NEW CTOT…</div>`],
 ['Menu','frequences','Fréquences',[I('frequences','Fréquences')],`<p>TWR, APP et OPS de LFOB.</p>`],
 ['Menu','degivrage','Dégivrage',[I('degivrage','Dégivrage')],`<p>Le produit utilisé (ABAX Ecowing AD-2 Type II) et les <b>holdover times</b> : selon la température et la concentration choisies, l'app affiche les durées par condition météo.</p>`],
 ['Menu','demo','Mode démo et Nouveautés',[I('nouveautes','Nouveautés')],`
@@ -326,7 +326,9 @@ const S = [
 <p>L'app se met à jour toute seule : à l'ouverture, elle vérifie s'il y a une nouvelle version et se recharge une fois. Elle fonctionne aussi sans réseau : les vols et saisies sont gardés sur le téléphone. Seule la liste des vols et son actualisation ont besoin du réseau.</p>`],
 // ───────── Admin
 ['Admin','adm-acces','Accès et organisation',[I('adm-compagnies','Admin › Compagnies')],`
-<p><span class="tag t-pc">PC</span> <span class="tag t-demo">Démo</span> L'admin règle la <b>version démo</b> sans toucher au code. Elle s'ouvre par son lien (<b>admin.html</b> à côté de l'app démo), sur ordinateur. Elle n'apparaît pas dans le menu de l'app.</p>
+<p><span class="tag t-pc">PC</span> <span class="tag t-demo">Démo</span> L'admin agit <b>uniquement sur la version démo</b>. Elle permet au service informatique de garder la maîtrise de l'interface <b>sans toucher au code</b>, pour des modifications basiques : valeurs et variables (temps de rotation, cibles, codes retard, noms d'événements, mots rapides, vols de démo…).</p>
+<div class="tip warn">Ajouter, retirer ou réorganiser une section, un écran ou une fonction demandera <b>toujours du code</b>. L'admin offre une possibilité de modification sur ce qui existe déjà, pas plus.</div>
+<p>Elle s'ouvre par son lien (<b>admin.html</b> à côté de l'app démo), sur ordinateur. Elle n'apparaît pas dans le menu de l'app.</p>
 <ul><li><b>À gauche</b> : le menu (Opérations, Pendant le vol, Démo, Publier) et le choix <b>Jour / Nuit</b>.</li>
 <li><b>Au centre</b> : la page à régler.</li>
 <li><b>À droite</b> : l'<b>aperçu dans l'app</b>, la vraie app qui s'ouvre directement sur l'écran concerné. <span class="k">Avant</span> / <span class="k">Après</span> compare avec la version publiée.</li>
