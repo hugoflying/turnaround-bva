@@ -1857,6 +1857,14 @@ function clockMin(){
     if(window.visualViewport){ window.visualViewport.addEventListener('resize', sync); window.visualViewport.addEventListener('scroll', () => fitHome(document.body.classList.contains('kb-open'))); }
     document.addEventListener('focusin', () => setTimeout(sync, 300));
     document.addEventListener('focusout', () => setTimeout(sync, 50));
+    // v3.51.5 (Hugo, iPhone : en passant d'une case LOAD à l'autre, retour en haut de l'écran) : la marge du bas qui permet
+    // de remonter la case au-dessus du clavier reste en place pendant le changement de case (sinon la page raccourcit d'un coup).
+    let padT = 0;
+    document.addEventListener('focusin', e => { if(isField(e.target)){ clearTimeout(padT); document.body.classList.add('kb-pad'); } });
+    document.addEventListener('focusout', () => {
+      clearTimeout(padT);
+      padT = setTimeout(() => { if(!isField(document.activeElement)) document.body.classList.remove('kb-pad'); }, 700);
+    });
   }
 
 })();

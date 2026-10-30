@@ -335,7 +335,9 @@ body:has(#ldmModal[style*="flex"]) .app-wrap{display:none}
 .lm-seg .button.is-active{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.18),0 0 0 1px var(--line)}
 .ldm-body{padding:8px var(--pad-x) 24px}
 /* Case en cours de saisie : place sous le contenu pour que la page puisse toujours remonter la case au-dessus du clavier */
-.app-wrap:has(input:not([type=checkbox]):not([type=radio]):focus,textarea:focus),.ldm-body:has(input:not([type=checkbox]):not([type=radio]):focus,textarea:focus){padding-bottom:max(calc(var(--tabbar-h) + 24px),55vh)}
+/* v3.51.5 : marge du bas posée par ui.js (body.kb-pad) et gardée entre deux cases : avec :has(:focus) elle disparaissait
+   le temps du changement de case, la page raccourcissait et iOS remontait tout en haut */
+body.kb-pad .app-wrap,body.kb-pad .ldm-body{padding-bottom:max(calc(var(--tabbar-h) + 24px),55vh)}
 .ldm-card{max-width:720px;margin:0 auto}
 .ldm-grid{display:flex;flex-direction:column;gap:12px}
 .ld-row-4,.ld-row-3,.ld-row-2,#finalPaxRow{display:grid;gap:8px}
