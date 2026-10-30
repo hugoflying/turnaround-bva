@@ -1294,7 +1294,7 @@ function clockMin(){
       if(!list.length && inp.value.trim()) msg = 'Un crew code fait 6 lettres, puis le siège : DERUHU 12C.';
       else if(bad.length) msg = `Pas compris : ${bad.map(escapeHtml).join(', ')}. Écrire le code (6 lettres) puis le siège : DERUHU 12C.`;
       else zh = list.filter(x => x.seat).map(x => { const z = snyZone(snyCie(), snyType(), x.seat);
-        return `Siège <span class="nj-seat">${x.seat}</span> → ${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}`; }).join(' · ');
+        return `<code class="nj-cc">${x.code}</code> <span class="nj-seat">${x.seat}</span> → ${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}`; }).join(' · ');
       if(zh && !cfgSnyZones(snyCie(), snyType())) zh = '';
     }
     if(zb){ zb.hidden = !zh; zb.innerHTML = zh ? zh + ` <small>${escapeHtml(snyType())}</small>` : ''; }
