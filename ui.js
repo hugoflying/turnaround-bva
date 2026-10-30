@@ -100,6 +100,9 @@ function clockMin(){
       const eo = tm(document.getElementById('timer-eobt')?.textContent || '');
       let d = eo == null ? 0 : eo - so; if(d > 720) d -= 1440; if(d < -720) d += 1440;
       lateD = d > 0 || (t != null && now >= t + 1);
+      // v3.45.1 (Hugo) : CTOT → push estimé = CTOT − 15 (comme le bandeau CTOT) ; après la SOBT = rouge
+      const ct = tm(v('CTOT'));
+      if(!lateD && ct != null && t != null){ const cR = flightRel(ct, v('Date'), so, now); lateD = cR - 15 > t; }
       // v3.44.1 (Hugo) : avion pas encore au bloc → arrivée estimée = max(SIBT, maintenant) + rotation mini
       if(!lateD && t != null && si != null && !v('AIBT') && (v('From') || '').toUpperCase().trim() !== 'BVA'){
         const sR = flightRel(si, v('Date'), so, now), arr = Math.max(sR, now);

@@ -30,4 +30,7 @@ await set('SIBT', await hm(-20)); await set('AIBT',''); o.avantOff = await st('S
 await p.evaluate(()=>{ const t=document.querySelector('.dot-toggle'); t.checked=false; t.dispatchEvent(new Event('change',{bubbles:true})); }); o.off = await st('SIBT') + '/' + await st('SOBT');
 await p.reload(); await p.waitForTimeout(4000); o.offApresReload = await p.evaluate(()=>document.querySelector('.dot-toggle').checked) + ' ' + await st('SIBT');
 await p.evaluate(()=>setArrDots(true)); o.ancienneMention = await p.evaluate(()=>!!document.getElementById('dotHelp'));
+await p.evaluate(()=>setArrDots(true)); await set('AOBT',''); await set('SIBT', await hm(33)); await set('SOBT', await hm(58)); o.sansCtot = await st('SOBT');
+await set('CTOT', await hm(89)); o.casHugoCtot = await st('SOBT');
+await set('CTOT', await hm(70)); o.ctotSansImpact = await st('SOBT'); await set('CTOT','');
 console.log(JSON.stringify(o)); console.log(errs.join(';')||'no errors'); await b.close(); })();
