@@ -1507,6 +1507,10 @@ function doValidate() {
     body += `SIGNATURE : ${ac.signe ? 'OUI' : 'NON'}\n`;
   }
 
+  // ── NIGHTSTOP & TOUR AVION (v3.51, vols basés) ────────────────────────────
+  const nsTxt = typeof nsReport === 'function' ? nsReport() : '';
+  if(nsTxt){ body += s(); body += nsTxt; }
+
   // ── DOMMAGES (photos à envoyer à part depuis le menu Dommages) ─────────────
   const dmgTxt = v('Dommages');
   if(dmgTxt){

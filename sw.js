@@ -11,9 +11,9 @@ const CACHE_NAME = 'ct-' + VER;
 const PRECACHE = [
   './', './index.html', './manifest.json', './version.json',
   './css/app.css', './fonts/fonts.css', './fonts/manrope-var.woff2',
-  './edition.js', './cfg.js', './contacts.js', './app.js', './app-load.js', './app-onglets.js', './app-retard.js', './app-timeline.js', './app-keeper.js', './app-outils.js', './demo-auto.js', './ui.js', './tools.js', './dlcodes.js',
+  './edition.js', './cfg.js', './contacts.js', './app.js', './app-load.js', './app-onglets.js', './app-retard.js', './app-timeline.js', './app-keeper.js', './app-outils.js', './demo-auto.js', './ui.js', './tools.js', './nightstop.js', './dlcodes.js',
   './icon-180.png', './icon-192.png', './icon-512.png',
-  './home-bg-1.jpg', './home-bg-2.jpg', './home-bg-3.jpg', './home-bg-4.jpg', './manuel.html'
+  './home-bg-1.jpg', './home-bg-2.jpg', './home-bg-3.jpg', './home-bg-4.jpg', './manuel.html', './img/silhouette-b737.png'
 ];
 
 self.addEventListener('install', event => {
