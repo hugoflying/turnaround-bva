@@ -1,6 +1,7 @@
 /* v3.36 : réglages compagnies publiés depuis admin.html (repo démo seulement pour l'instant).
    v3.40 : « Publier » écrit config.json dans le repo démo (visible par tous) ; copie locale 'adminCfg' sur l'appareil de l'admin,
    copie du fichier en ligne 'adminCfgRemote'. La plus récente (champ at) gagne.
+   v3.46 : publication sur Cloudflare (functions/api/config.js, KV) avec historique ; config.json reste lu si rien n'y est publié.
    Hors démo, ou tant que rien n'est publié, CFG reste null et l'app garde ses valeurs codées.
    Forme : { v:1, al:{ FR:{ n, icao, hle, types:{ B737:{ mtt, crew, steps:[{k, a:[ref,off], b:[ref,off]|null}] }, B738:{ mtt, crew, like:'B737' } } } } } */
 window.CFG = null;
@@ -16,10 +17,13 @@ cfgLoad();
 // Fichier en ligne : s'il a changé depuis la dernière visite, on le garde et on recharge une fois
 // v3.41.1 : relu aussi au retour dans l'app (PWA restée ouverte en arrière-plan sur le téléphone), au plus une fois par minute
 let _cfgFetchAt = 0;
+const CFG_URL = 'https://companionturnaroundapp.pages.dev/api/config';
 function cfgFetch(){
   if(window.APP_EDITION !== 'demo' || typeof fetch !== 'function' || Date.now() - _cfgFetchAt < 60000) return;
   _cfgFetchAt = Date.now();
-  fetch('./config.json?t=' + Date.now(), { cache:'no-store' }).then(r => r.ok ? r.text() : null).then(t => {
+  // v3.46 : d'abord Cloudflare (publication de l'admin, avec historique) ; rien publié là-bas → ancien fichier config.json
+  const old = () => fetch('./config.json?t=' + Date.now(), { cache:'no-store' }).then(r => r.ok ? r.text() : null);
+  fetch(CFG_URL, { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => j && j.cfg ? JSON.stringify(j.cfg) : old(), old).then(t => {
     if(t == null) return;
     try{ JSON.parse(t); }catch(e){ return; }
     if(t.trim() === (localStorage.getItem('adminCfgRemote') || '').trim()) return;
