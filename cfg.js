@@ -54,7 +54,7 @@ function cfgSnyZones(cie, type){
   return SNY_ZONES0[type] || null;
 }
 function snyZone(cie, type, seat){
-  const m = /^(\d{1,2})[A-K]$/.exec(String(seat || '').toUpperCase()), z = cfgSnyZones(cie, type);
+  const m = /^(\d{1,2})[A-F]$/.exec(String(seat || '').toUpperCase()), z = cfgSnyZones(cie, type);
   if(!m || !z) return null;
   const r = +m[1];
   return r < 1 ? null : r <= z[0] ? 'FWD' : r <= z[1] ? 'MID' : r <= z[2] ? 'AFT' : null;

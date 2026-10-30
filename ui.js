@@ -1278,7 +1278,7 @@ function clockMin(){
     String(txt || '').toUpperCase().split(/[\s,;]+/).filter(Boolean).forEach(t => {
       const last = out[out.length - 1];
       if(/^[A-Z]{6}$/.test(t)) out.push({ code:t, seat:'', zone:'' });
-      else if(/^\d{1,2}[A-K]$/.test(t) && last && !last.seat) last.seat = t;
+      else if(/^\d{1,2}[A-F]$/.test(t) && last && !last.seat) last.seat = t;
       else if(SNY_Z.includes(t) && last && last.seat && !last.zone) last.zone = t;
       else bad.push(t);
     });
@@ -1292,7 +1292,7 @@ function clockMin(){
     if(njTag === 'SNY'){
       const { list, bad } = snyParse(inp.value);
       if(!list.length && inp.value.trim()) msg = 'Un crew code fait 6 lettres, puis le siège : DERUHU 12C.';
-      else if(bad.length) msg = `Pas compris : ${bad.map(escapeHtml).join(', ')}. Écrire le code (6 lettres) puis le siège : DERUHU 12C.`;
+      else if(bad.length) msg = `Pas compris : ${bad.map(escapeHtml).join(', ')}. Écrire le code (6 lettres) puis le siège, rang et lettre de A à F : DERUHU 12C.`;
       else zh = list.filter(x => x.seat).map(x => { const z = snyZone(snyCie(), snyType(), x.seat);
         return `<code class="nj-cc">${x.code}</code> <span class="nj-seat">${x.seat}</span> → ${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}`; }).join(' · ');
       if(zh && !cfgSnyZones(snyCie(), snyType())) zh = '';
@@ -1343,7 +1343,7 @@ function clockMin(){
       if(njTag === 'SNY'){
         // v3.48.2 (Hugo) : un crew code fait 6 lettres → 7e lettre refusée ; un chiffre juste après le code = début du siège, espace ajouté
         const p = inp.selectionStart, old = inp.value;
-        const v = old.toUpperCase().replace(/[^A-Z0-9 ,;]/g, '').replace(/(^|[^A-Z])([A-Z]{6})[A-Z]+/g, '$1$2').replace(/([A-Z]{6})(\d)/g, '$1 $2');
+        const v = old.toUpperCase().replace(/[^A-Z0-9 ,;]/g, '').replace(/(^|[^A-Z])([A-Z]{6})[A-Z]+/g, '$1$2').replace(/([A-Z]{6})(\d)/g, '$1 $2').replace(/(\d)[G-Z]/g, '$1');   // v3.48.4 (Hugo) : sièges de A à F seulement
         inp.value = v; const q = p + v.length - old.length; try{ inp.setSelectionRange(q, q); }catch(_){}
       }
       njCheck();
