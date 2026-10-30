@@ -132,22 +132,21 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <script>
 // Contenu du manuel : [groupe, id, titre, captures (manuel/img/*.jpg), texte HTML]
 // IMGV : à changer quand des captures sont refaites (sinon le navigateur garde les anciennes)
-const IMGV = '3';
+const IMGV = '4';
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
   connexion:[['z-connexion','Heures locale et Zulu, mot de passe']],
   veille:[['z-veille','Vols non terminés des jours précédents']],
-  ecran:[['z-onglets','Les onglets des vols'],['z-tabbar','La barre du bas']],
+  ecran:[['z-onglets','Les onglets des vols']],
   bandeau:[['z-bandeau','Le bandeau bleu']],
   'bandeau-reduit':[['z-bandeau-reduit','Le bandeau réduit']],
   ouvrir:[['z-ak-ligne','Une ligne de la liste des vols']],
   recap:[['z-recap-carte','Une carte du Récap']],
-  vol:[['z-carte-vol','La carte du vol'],['z-modifier-fiche','Le menu Modifier (fiche complète du vol)'],['z-horaires','Les horaires']],
   horaires:[['z-horaires','Heures prévues et réelles, bouton Now, −1 / +1']],
   pastilles:[['z-pastille','Pastille verte : à l\'heure. Pastille rouge : retard probable']],
   modifier:[['z-modifier-haut','Compagnie, n° de vol, date, From / To'],['z-modifier-bas','Type avion et parking']],
-  ctot:[['z-ctot','Le bandeau CTOT']],
+  ctot:[['z-ctot','Le bandeau CTOT'],['z-ctot-petit','Sans bandeau : le CTOT reste dans le bandeau bleu'],['z-ctot-detail','Le détail de la régulation']],
   'timing-arr':[['z-timing-arr','Étapes : heure saisie, coche verte, Now']],
   'timing-dep':[['z-timing-dep','Un groupe avec sa durée en cours']],
   evenements:[['z-evenements','Liste des événements à ajouter']],
@@ -236,10 +235,10 @@ const S = [
 <li><b>N° de vol</b> : il commence toujours par un chiffre. Saisi FR5595, FR est rangé automatiquement dans la compagnie.</li>
 <li><b>Date</b> du vol, <b>From</b> / <b>To</b> (la destination est proposée en gris, un appui l'accepte), <b>immatriculation</b>, <b>type avion</b> (types proposés selon la compagnie) et <b>parking</b> (1 à 12, ou Autre).</li></ul>
 <p><span class="k">Terminé</span> referme la fiche.</p>`],
-['Onglet Vol','ctot','CTOT et régulation',[I('vol-ctot','Bandeau CTOT'),I('ctot-regulation','Détail de la régulation')],`
+['Onglet Vol','ctot','CTOT et régulation',[I('vol-ctot','Avec le bandeau CTOT'),I('vol-ctot-petit','Sans le bandeau CTOT (option Jamais)')],`
 <p>Quand le vol a un CTOT, un bandeau apparaît : le <b>créneau</b> (−5 / +10 min), le <b>push estimé</b> (max(EOBT, CTOT −15)) et le <b>retard estimé</b>.</p>
 <p>Un appui sur ce bandeau (ou sur la case CTOT du bandeau bleu) ouvre le détail : frise EOBT / push / créneau, cause de la régulation, slots reçus. Le CTOT peut y être corrigé avec <span class="k">Appliquer</span> ou le supprimer.</p>
-<p>Où l'afficher : <a href="#menu-reglages">Menu › Bandeau CTOT</a> (Partout, Vol seulement, Jamais).</p>`],
+<p>Affichage réglable dans <a href="#menu-reglages">Menu › Bandeau CTOT</a> : <b>Vol</b> (bandeau dans l'onglet Vol seulement), <b>Partout</b> (dans tous les onglets) ou <b>Jamais</b>. Sans bandeau, le CTOT reste affiché en petit dans le bandeau bleu, à côté de l'EOBT, et s'ouvre aussi d'un appui.</p>`],
 // ───────── Timing
 ['Onglet Timing','timing-arr','Arrivée',[I('timing-arrivee','Timing › Arrivée')],`
 <p>Toutes les étapes de l'arrivée en cartes : 1er débarqué AV / AR, dernier débarqué, Avitair, lift, tapis bagages, déchargement… Même saisie que les <a href="#horaires">horaires</a>.</p>
