@@ -1340,7 +1340,12 @@ function clockMin(){
       }
     });
     inp.addEventListener('input', () => {
-      if(njTag === 'SNY'){ const p = inp.selectionStart; inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9 ,;]/g, ''); try{ inp.setSelectionRange(p, p); }catch(_){} }
+      if(njTag === 'SNY'){
+        // v3.48.2 (Hugo) : un crew code fait 6 lettres → 7e lettre refusée ; un chiffre juste après le code = début du siège, espace ajouté
+        const p = inp.selectionStart, old = inp.value;
+        const v = old.toUpperCase().replace(/[^A-Z0-9 ,;]/g, '').replace(/(^|[^A-Z])([A-Z]{6})[A-Z]+/g, '$1$2').replace(/([A-Z]{6})(\d)/g, '$1 $2');
+        inp.value = v; const q = p + v.length - old.length; try{ inp.setSelectionRange(q, q); }catch(_){}
+      }
       njCheck();
     });
     inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); njAdd(); } });
