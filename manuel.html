@@ -290,8 +290,9 @@ const S = [
 <p><span class="k">Feuille</span> partage ou télécharge la feuille en image. Elle est pour l'instant <b>facultative</b> pour valider.</p>`],
 ['Retard et validation','valider','Valider le vol',[I('retard','Valider le vol')],`
 <p><span class="k">Valider le vol</span> en bas de l'onglet Retard :</p>
-<ol><li>auto-contrôle (FR/RK, si commencé) ;</li><li>prestations (ménage GSF N / S / DC / DI, assistances…) ;</li><li>récap puis envoi du rapport par mail, avec tous les horaires, loads, retards, notes, dommages et auto-contrôle.</li></ol>
-<p>Le vol est marqué validé (utile pour les <a href="#veille">vols de la veille</a>).</p>`],
+<ol><li>auto-contrôle (FR/RK, si commencé) ;</li><li>prestations (ménage GSF N / S / DC / DI, assistances…) ;</li><li>récap puis envoi du rapport, avec tous les horaires, loads, retards, notes, dommages et auto-contrôle.</li></ol>
+<p>Le vol est marqué validé (utile pour les <a href="#veille">vols de la veille</a>).</p>
+<div class="tip info">À terme, le rapport sera enregistré sur un <b>serveur</b> : consultable et modifiable depuis un PC, il alimentera des <b>indicateurs (KPI)</b> de performance.</div>`],
 // ───────── Notes
 ['Notes','notes','Notes : stylet et clavier',[I('notes-clavier','Clavier'),I('notes-stylet','Stylet')],`
 <ul><li><b>Stylet</b> : écriture ou dessin au doigt, comme sur un bloc-notes.</li>
@@ -330,7 +331,7 @@ const S = [
 <p>L'app est <b>entièrement autonome</b>, un point important pour la sécurité de l'entreprise :</p>
 <ul><li><b>Aucune ressource externe</b> : polices, styles (CSS), scripts et icônes sont tous hébergés avec l'app. Pas de CDN, pas de police en ligne, pas d'outil de statistiques ou de suivi, pas de publicité.</li>
 <li>Le navigateur <b>ne contacte que le site de l'app lui-même</b>. La liste des vols passe par le serveur du site : la clé d'accès reste sur le serveur et n'est jamais présente sur l'appareil.</li>
-<li>Les saisies restent <b>sur l'appareil</b>. Le rapport part par la messagerie de l'appareil, les appels de l'Annuaire par le téléphone.</li></ul>
+<li>Les saisies restent <b>sur l'appareil</b>. Les appels de l'Annuaire passent par le téléphone.</li></ul>
 <div class="tip info">Seule exception, <b>en version démo uniquement</b> : l'app lit les réglages publiés depuis l'admin sur un serveur dédié à la démo. La version en production n'en dépend pas.</div>`],
 // ───────── Admin
 ['Admin','adm-acces','Accès et organisation',[I('adm-compagnies','Admin › Compagnies')],`
