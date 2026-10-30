@@ -157,6 +157,7 @@ function clockMin(){
     // Avancement : de l'arrivée (AIBT, sinon HLE si pas d'arrivée) au départ (EOBT, sinon SOBT)
     // v3.28 (Hugo) : vol pas encore arrivé (SIBT sans AIBT) = barre en attente, elle ne part qu'à l'AIBT
     const wrap = document.getElementById('fhProgWrap'), bar = document.getElementById('fhProg');
+    try{ queueMicrotask(uiFoldSync); }catch(e){}
     // v3.33 : heures rattachées à la date du vol (sinon ancien calcul à ±12 h)
     const nowC = clockMin(), anc = toMin(val('SOBT')) ?? toMin(val('SIBT')), dated = flightDayMs(val('Date')) != null;
     const R = t => dated ? flightRel(t, val('Date'), anc, nowC) : t;
@@ -1859,3 +1860,31 @@ function clockMin(){
   }
 
 })();
+
+/* v3.49 (Hugo, option A) : petite flèche pour réduire le bandeau bleu en une ligne (vol · route, compte à rebours, barre).
+   Le choix reste d'une ouverture à l'autre (localStorage hdrFold). */
+function uiFoldHeader(on){
+  const h = document.getElementById('fixedHeader'); if(!h) return;
+  if(on === undefined) on = !h.classList.contains('is-fold');
+  h.classList.toggle('is-fold', !!on);
+  try{ localStorage.setItem('hdrFold', on ? '1' : '0'); }catch(e){}
+  const b = document.getElementById('fhFold'); if(b) b.setAttribute('aria-label', on ? 'Agrandir le bandeau' : 'Réduire le bandeau');
+  uiFoldSync();
+  try{ updateHeaderOffset(); }catch(e){}
+}
+function uiFoldSync(){
+  const h = document.getElementById('fixedHeader'); if(!h || !h.classList.contains('is-fold')) return;
+  const t = id => (document.getElementById(id)?.textContent || '').trim();
+  const route = t('fhSub').split('·')[0].trim(), fno = t('fhFno');
+  const r = document.getElementById('fhMiniR'); if(r) r.textContent = [fno, route].filter(x => x && x !== '----').join(' · ');
+  const cd = document.getElementById('timer-cd'), m = document.getElementById('fhMiniT');
+  if(m && cd){ m.textContent = cd.textContent; m.className = 'num ' + cd.className; m.style.color = cd.style.color; }
+  const src = document.getElementById('fhProgWrap'), p = document.getElementById('fhMiniP');
+  if(src && p){ p.className = src.className; p.firstElementChild.style.width = document.getElementById('fhProg').style.width; }
+}
+window.uiFoldHeader = uiFoldHeader; window.uiFoldSync = uiFoldSync;
+document.addEventListener('DOMContentLoaded', () => {
+  try{ if(localStorage.getItem('hdrFold') === '1') uiFoldHeader(true); }catch(e){}
+  const cd = document.getElementById('timer-cd');
+  if(cd && window.MutationObserver) new MutationObserver(uiFoldSync).observe(cd, { childList:true, characterData:true, subtree:true, attributes:true });
+});
