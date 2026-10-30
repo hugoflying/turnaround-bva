@@ -1404,7 +1404,7 @@ function clockMin(){
   function syncIvRoute(){
     const from = val('From').toUpperCase(), to = val('To').toUpperCase();
     const lbl = document.getElementById('ivNVolLbl');
-    if(lbl) lbl.textContent = to === 'BVA' ? 'N° vol arrivée' : 'N° vol départ';
+    if(lbl) lbl.textContent = to === 'BVA' ? 'N° vol arr.' : 'N° vol dép.';
     ivArrSync(to);
     // v2.57 : la suggestion s'affiche dans le champ To (un appui la valide)
     const toEl = document.getElementById('To'); if(!toEl) return;

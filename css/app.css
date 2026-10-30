@@ -1633,3 +1633,10 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .ns-np{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ns-np .field{min-width:0}
 .ns-up{text-transform:uppercase}
+/* v3.51.8 · Modifier le vol : n° arrivée, n° départ et date sur une ligne */
+.iv-three{display:flex;gap:8px}
+.iv-three > .iv-f{flex:1 1 0;min-width:0}
+.iv-three > .iv-date{flex:1.45 1 0}
+.iv-three .input{padding-left:10px;padding-right:6px}
+.iv-three small{left:10px}
+.iv-three .iv-date .input{font-size:15px}
