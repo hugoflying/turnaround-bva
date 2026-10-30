@@ -1022,10 +1022,10 @@ function clockMin(){
     const list = (cie === 'FR' || cie === 'RK') ? (val('FaitsSaillants').split('\n')
       .map(l => { const m = /(?:^|·)\s*SNY\s*·\s*(.+)$/.exec(l); return m ? window.snyParse(m[1]).list : []; }).flat()) : [];
     box.hidden = !list.length; if(!list.length){ box.innerHTML = ''; return; }
-    const n = { FWD:0, MID:0, AFT:0 };
-    const rows = list.map(x => { const z = (x.seat && snyZone(cie, type, x.seat)) || x.zone || ''; if(z) n[z]++;
-      return `<div class="sny-r"><span><code class="nj-cc">${escapeHtml(x.code)}</code>${x.seat ? ` <span class="nj-seat">${escapeHtml(x.seat)}</span>` : ' <small>siège ?</small>'}</span>${z ? `<span class="sny-z z-${z.toLowerCase()}">${z}</span>` : '<span class="sny-z">zone ?</span>'}</div>`; }).join('');
-    box.innerHTML = `<div class="ld-box-h">SNY à bord · ${list.length}<span>depuis les notes</span></div>${rows}<div class="sny-zs">${Object.keys(n).map(z => `<div class="z-${z.toLowerCase()}"><small>${z}</small><b>${n[z] ? '+' + n[z] : '0'}</b></div>`).join('')}</div>`;
+    // v3.48.3 (Hugo) : une seule ligne compacte, seulement la zone (nombre de SNY par zone)
+    const n = { FWD:0, MID:0, AFT:0, '?':0 };
+    list.forEach(x => { n[(x.seat && snyZone(cie, type, x.seat)) || x.zone || '?']++; });
+    box.innerHTML = `<b class="sny-t">SNY</b>${Object.keys(n).filter(z => n[z]).map(z => `<span class="sny-z${z === '?' ? '' : ' z-' + z.toLowerCase()}">${n[z] > 1 ? n[z] + '× ' : ''}${z === '?' ? 'zone ?' : z}</span>`).join('')}`;
   }
   window.syncSnyBox = syncSnyBox;
   function syncLoadUI(){
