@@ -7,8 +7,8 @@
    Données du vol dans le champ caché Nightstop :
    { sv:{ toilV, toilR, eauV, eauR, men:'S'|'DC'|'DI'|'', gpu, ech, asu, tr:'BELLOVA'|'ASSISTAIR'|'', deg, dec },
      def:'arr'|'dep' (cases par défaut posées), touched (services modifiés à la main),
-     hs:{ on, ok, n, h, s },                       fouille soutes (retour basé, arrivée pays tiers)
-     ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], n, h, s } }   tour avion
+     hs:{ on, ok, n (NOM), p (Prénom), h, s },                       fouille soutes (retour basé, arrivée pays tiers)
+     ta:{ sv:'OUI'|'NON'|'', dm:'OUI'|'NON'|'', x:[[u,v]…], n, p, h, s } }   tour avion
    Les croix sont en coordonnées relatives (0 à 1) sur la silhouette img/silhouette-b737.png.
    ===================================================================== */
 const NS_REQUIRED = false;
@@ -94,12 +94,22 @@ const NS_REQUIRED = false;
   window.uiNightstopClose = function(){ $('nsModal').style.display = 'none'; syncRow(); };
 
   const chip = (on, attrs, txt) => '<button type="button" class="ns-c' + (on ? ' on' : '') + '" ' + attrs + '>' + txt + '</button>';
-  // noms déjà saisis, proposés en suggestion (liste #nsNoms)
-  const nomsGet = () => { try{ const a = JSON.parse(localStorage.getItem('nsNoms') || '[]'); if(a.length) return a; const v = localStorage.getItem('nsNom'); return v ? [v] : []; }catch(e){ return []; } };
-  function nomsAdd(v){ try{ localStorage.setItem('nsNoms', JSON.stringify([v, ...nomsGet().filter(x => x.toLowerCase() !== v.toLowerCase())].slice(0, 8))); }catch(e){} }
-  const nomsList = () => '<datalist id="nsNoms">' + nomsGet().map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>';
-  const sigBlock = (key, name, nameLbl, ph, hour) =>
-      '<div class="field"><label class="label">' + nameLbl + '</label><input class="input" type="text" autocomplete="off" list="nsNoms" data-name="' + key + '" value="' + esc(name) + '"></div>'
+  // nom en majuscules, prénom avec majuscule initiale (Jean-Pierre)
+  const fmtN = v => v.toUpperCase();
+  const fmtP = v => v.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const fullName = x => [x.n, x.p].filter(Boolean).join(' ');
+  // personnes déjà saisies [{n, p}], proposées en suggestion (listes #nsNoms, #nsPrenoms)
+  const gensGet = () => { try{ return JSON.parse(localStorage.getItem('nsGens') || '[]'); }catch(e){ return []; } };
+  function gensAdd(n, p){
+    if(!n) return;
+    try{ localStorage.setItem('nsGens', JSON.stringify([{ n, p }, ...gensGet().filter(x => x.n !== n || x.p !== p)].slice(0, 10))); }catch(e){}
+  }
+  const uniq = a => [...new Set(a.filter(Boolean))];
+  const gensList = () => '<datalist id="nsNoms">' + uniq(gensGet().map(x => x.n)).map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>'
+    + '<datalist id="nsPrenoms">' + uniq(gensGet().map(x => x.p)).map(v => '<option value="' + esc(v) + '">').join('') + '</datalist>';
+  const sigBlock = (key, who, ph, hour) =>
+      '<div class="ns-np"><div class="field"><label class="label">Nom</label><input class="input ns-up" type="text" autocomplete="off" autocapitalize="characters" list="nsNoms" data-name="' + key + '" data-f="n" value="' + esc(who.n || '') + '"></div>'
+    + '<div class="field"><label class="label">Prénom</label><input class="input" type="text" autocomplete="off" autocapitalize="words" list="nsPrenoms" data-name="' + key + '" data-f="p" value="' + esc(who.p || '') + '"></div></div>'
     + (hour != null ? '<div class="field ns-h"><label class="label">Heure locale</label><div class="ns-hrow"><input class="input" type="time" data-hour="' + key + '" value="' + esc(hour) + '"><button type="button" class="ns-c" data-now="' + key + '">Now</button></div></div>' : '')
     + '<div class="ac-sig-h"><span class="label">Signature</span><button type="button" class="ac-all" data-sigclr="' + key + '">Effacer</button></div>'
     + '<div class="ac-sig-wrap"><canvas class="ns-sig" data-sig="' + key + '"></canvas><span class="ac-sig-ph" data-ph="' + key + '">' + ph + '</span></div>';
@@ -137,7 +147,7 @@ const NS_REQUIRED = false;
         + '<div class="ns-row"><span>Arrivée d\'un pays tiers</span><span class="ns-cs">' + chip(o.hs.on === true, 'data-hs="on"', 'Oui') + chip(o.hs.on === false, 'data-hs="off"', 'Non') + '</span></div>';
       if(o.hs.on){
         h += '<label class="ac-it' + (o.hs.ok ? ' on' : '') + '"><input type="checkbox" data-hsok' + (o.hs.ok ? ' checked' : '') + '><span class="ac-box"><svg class="ico"><use href="#i-check"/></svg></span><span>Hold security check / search effectué</span></label>'
-          + '<div class="ac-sign">' + sigBlock('h', o.hs.n || '', 'Nom', 'Signature', o.hs.h || '') + '</div>';
+          + '<div class="ac-sign">' + sigBlock('h', o.hs, 'Signature', o.hs.h || '') + '</div>';
       }
       h += '</div>';
     }
@@ -149,9 +159,9 @@ const NS_REQUIRED = false;
       + '<div class="ns-row"><span>Dommage(s) constaté(s)</span><span class="ns-cs">' + chip(o.ta.dm === 'OUI', 'data-ta="dm" data-v="OUI"', 'Oui') + chip(o.ta.dm === 'NON', 'data-ta="dm" data-v="NON"' + (x.length ? ' disabled' : ''), 'Non') + '</span></div>'
       + '<div class="ns-pl-wrap"><button type="button" class="ns-pl" id="nsPlane" aria-label="Annoter la silhouette en plein écran">' + planeHTML(x) + '</button>'
       + '<div class="ns-pl-foot"><span>' + (x.length ? x.length + (x.length > 1 ? ' croix' : ' croix') + ' sur la silhouette' : 'Repérer le(s) dommage(s) par une croix') + '</span><button type="button" class="ns-c on" id="nsFullBtn">Plein écran</button></div></div>'
-      + '<div class="ac-sign">' + sigBlock('t', o.ta.n || '', 'Nom', 'Signature', o.ta.h || '') + '</div>'
+      + '<div class="ac-sign">' + sigBlock('t', o.ta, 'Signature', o.ta.h || '') + '</div>'
       + '</div>';
-    body.innerHTML = h + nomsList();
+    body.innerHTML = h + gensList();
     bind();
     paintPh();
   }
@@ -186,16 +196,25 @@ const NS_REQUIRED = false;
       upd(o => o.ta[k] = o.ta[k] === v ? '' : v);
       body.querySelectorAll('[data-ta="' + k + '"]').forEach(x => x.classList.toggle('on', get().ta[k] === x.dataset.v));
     });
-    // nom : fouille des soutes <-> tour avion, l'un remplit l'autre tant que l'autre n'a pas été saisi à la main
+    // nom / prénom : fouille des soutes <-> tour avion, l'un remplit l'autre tant que l'autre n'a pas été saisi à la main
     const names = [...body.querySelectorAll('[data-name]')];
-    const saveName = i => upd(o => { const v = i.value.trim(); if(i.dataset.name === 'h') o.hs.n = v; else o.ta.n = v; });
+    const fmt = i => i.dataset.f === 'n' ? fmtN(i.value) : fmtP(i.value);
+    const setVal = (i, v) => { if(i.value === v) return; const a = i.selectionStart, b = i.selectionEnd; i.value = v; try{ if(document.activeElement === i) i.setSelectionRange(a, b); }catch(e){} };
+    const saveName = i => upd(o => { (i.dataset.name === 'h' ? o.hs : o.ta)[i.dataset.f] = i.value.trim(); });
+    const twin = i => names.filter(j => j !== i && j.dataset.f === i.dataset.f);
     names.forEach(i => i.oninput = () => {
-      delete i.dataset.auto; saveName(i);
-      names.forEach(j => { if(j !== i && (!j.value || j.dataset.auto)){ j.value = i.value; j.dataset.auto = '1'; saveName(j); } });
+      setVal(i, fmt(i)); delete i.dataset.auto; saveName(i);
+      twin(i).forEach(j => { if(!j.value || j.dataset.auto){ j.value = i.value; j.dataset.auto = '1'; saveName(j); } });
+      // nom choisi dans les suggestions : prénom associé si le prénom est vide
+      if(i.dataset.f === 'n'){
+        const g = gensGet().find(x => x.n === i.value.trim());
+        const pi = names.find(j => j.dataset.name === i.dataset.name && j.dataset.f === 'p');
+        if(g && g.p && pi && (!pi.value || pi.dataset.auto)){ pi.value = g.p; pi.dataset.auto = '1'; pi.oninput(); pi.dataset.auto = '1'; }
+      }
     });
-    names.forEach(i => i.onchange = () => { const v = i.value.trim(); if(v) nomsAdd(v); });
-    // nom vide : repris de l'autre signature, sinon du dernier nom saisi
-    names.forEach(i => { if(!i.value){ const v = (names.find(j => j !== i && j.value.trim()) || {}).value || nomsGet()[0] || ''; if(v){ i.value = v; i.dataset.auto = '1'; saveName(i); } } });
+    // champ vide : repris de l'autre signature, sinon de la dernière personne saisie
+    const last = gensGet()[0] || {};
+    names.forEach(i => { if(!i.value){ const v = ((twin(i).find(j => j.value.trim()) || {}).value) || last[i.dataset.f] || ''; if(v){ i.value = v; i.dataset.auto = '1'; saveName(i); } } });
     body.querySelectorAll('[data-hour]').forEach(i => i.onchange = () => upd(o => { if(i.dataset.hour === 'h') o.hs.h = i.value; else o.ta.h = i.value; }));
     body.querySelectorAll('[data-now]').forEach(b => b.onclick = () => {
       const i = body.querySelector('[data-hour="' + b.dataset.now + '"]'); i.value = nowHM(); i.onchange();
@@ -257,7 +276,7 @@ const NS_REQUIRED = false;
       const hh = fresh || !(hi && hi.value) ? nowHM() : hi.value;
       upd(o => { if(k === 'h'){ o.hs.s = png; o.hs.h = hh; } else { o.ta.s = png; o.ta.h = hh; } });
       if(hi) hi.value = hh;
-      const ni = document.querySelector('#nsBody [data-name="' + k + '"]'); if(ni && ni.value.trim()) nomsAdd(ni.value.trim());
+      const w = k === 'h' ? get().hs : get().ta; gensAdd(w.n, w.p);
     };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
   }
@@ -363,11 +382,11 @@ const NS_REQUIRED = false;
     const row = (k, v) => { c.strokeStyle = '#d5dde7'; c.lineWidth = 1; c.strokeRect(P, y, W - 2 * P, 32); c.fillStyle = '#0f1723'; c.font = '600 17px Manrope, sans-serif'; c.fillText(k, P + 12, y + 16); c.font = '700 17px Manrope, sans-serif'; c.fillText(v, W / 2, y + 16); y += 32; };
     sec('Services');
     SV.forEach(s => row(s.t, s.tg ? (o.sv[s.k] ? 'Oui' : 'Non') : s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', '—'])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, t]) => t).join(' + ') || '—'));
-    if(m === 'arr' && o.hs.on){ y += 12; sec('Fouille des soutes · arrivée pays tiers'); row('Hold security check / search', o.hs.ok ? 'Effectué' : 'Non coché'); row('Nom · heure', (o.hs.n || '—') + ' · ' + (o.hs.h || '--:--') + (o.hs.s ? '  · signé' : '')); }
+    if(m === 'arr' && o.hs.on){ y += 12; sec('Fouille des soutes · arrivée pays tiers'); row('Hold security check / search', o.hs.ok ? 'Effectué' : 'Non coché'); row('Nom · heure', (fullName(o.hs) || '—') + ' · ' + (o.hs.h || '--:--') + (o.hs.s ? '  · signé' : '')); }
     y += 12; sec('Tour avion');
     row('Soutes vidées et contrôlées', o.ta.sv || '—');
     row('Dommage(s) constaté(s)', (o.ta.dm || '—') + (o.ta.x.length ? ' · ' + o.ta.x.length + ' croix' : ''));
-    row('Nom · heure', (o.ta.n || '—') + ' · ' + (o.ta.h || '--:--') + (o.ta.s ? '  · signé' : ''));
+    row('Nom · heure', (fullName(o.ta) || '—') + ' · ' + (o.ta.h || '--:--') + (o.ta.s ? '  · signé' : ''));
     const load = src => new Promise(res => { if(!src) return res(null); const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
     return Promise.all([load(IMG), load(m === 'arr' && o.hs.on ? o.hs.s : ''), load(o.ta.s)]).then(([pl, sh, st]) => {
       y += 20;
@@ -416,11 +435,11 @@ const NS_REQUIRED = false;
       const v = s.one ? (s.opts.find(([k]) => k === o.sv[s.one]) || ['', ''])[1] : s.opts.filter(([k]) => o.sv[k]).map(([, x]) => x).join(' + ');
       if(v) t += s.t.toUpperCase() + ' : ' + v.toUpperCase() + '\n';
     });
-    if(m === 'arr' && o.hs.on) t += 'FOUILLE SOUTES (PAYS TIERS) : ' + (o.hs.ok ? 'EFFECTUEE' : 'NON COCHEE') + ' · ' + (o.hs.n || '-') + ' ' + (o.hs.h || '') + ' · SIGNATURE ' + (o.hs.s ? 'OUI' : 'NON') + '\n';
+    if(m === 'arr' && o.hs.on) t += 'FOUILLE SOUTES (PAYS TIERS) : ' + (o.hs.ok ? 'EFFECTUEE' : 'NON COCHEE') + ' · ' + (fullName(o.hs) || '-') + ' ' + (o.hs.h || '') + ' · SIGNATURE ' + (o.hs.s ? 'OUI' : 'NON') + '\n';
     t += '\nTOUR AVION\n';
     t += 'SOUTES VIDEES ET CONTROLEES : ' + (o.ta.sv || '-') + '\n';
     t += 'DOMMAGES CONSTATES : ' + (o.ta.dm || '-') + (o.ta.x.length ? ' (' + o.ta.x.length + ' croix sur la silhouette)' : '') + '\n';
-    t += 'RESPONSABLE : ' + (o.ta.n || '-') + ' ' + (o.ta.h || '') + ' · SIGNATURE ' + (o.ta.s ? 'OUI' : 'NON') + '\n';
+    t += 'RESPONSABLE : ' + (fullName(o.ta) || '-') + ' ' + (o.ta.h || '') + ' · SIGNATURE ' + (o.ta.s ? 'OUI' : 'NON') + '\n';
     return t;
   };
 

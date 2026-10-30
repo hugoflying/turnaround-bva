@@ -1627,3 +1627,7 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .ns-tg.on i::after{transform:translateX(18px)}
 .ns-pl-full{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .ns-x.is-drag{width:7%;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+/* v3.51.4 · Nightstop : nom (majuscules) + prénom côte à côte */
+.ns-np{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ns-np .field{min-width:0}
+.ns-up{text-transform:uppercase}
