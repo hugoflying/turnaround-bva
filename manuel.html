@@ -193,7 +193,7 @@ const S = [
 <li><b>HLE, H-15, eLID / LID / LDS, EOBT, CTOT</b> : les heures clés calculées. Elles passent en jaune quand elles approchent et en rouge une fois dépassées. HLE = SOBT −60 pour FR/RK, −40 pour les autres.</li></ul>
 <div class="tip">EOBT = SOBT si l'avion est à l'heure. FR/RK : EOBT = max(SOBT, AIBT + 25 min), 35 min avec changement d'équipage. W4/W6 : 30 min (35 sur A321).</div>`],
 ['Prise en main','bandeau-reduit','Réduire le bandeau',[I('bandeau-reduit','Bandeau réduit')],`
-<p><b>Un tap sur le bandeau bleu</b> le réduit à une seule ligne : stand, route centrée avec l'EOBT (et le CTOT s'il y en a un), compte à rebours et barre de progression. <b>Un tap sur la ligne</b> le rouvre.</p>
+<p><b>Un tap sur le bandeau bleu</b> le réduit à une seule ligne : stand, route centrée avec l'EOBT (et le CTOT s'il y en a un), compte à rebours et barre de progression. <b>Un tap sur la ligne</b> le rouvre. La partie droite (LT / UTC et compte à rebours) ne réduit pas le bandeau.</p>
 <p>Les boutons du bandeau (LT/UTC, CTOT) gardent leur rôle. Le choix est conservé d'une ouverture à l'autre.</p>`],
 // ───────── Vols
 ['Les vols','ouvrir','Ouvrir un vol',[I('ouvrir-vol','Liste des vols')],`
@@ -233,7 +233,7 @@ const S = [
 ['Onglet Vol','modifier','Modifier le vol',[I('vol-modifier','Modifier le vol')],`
 <p>Bouton <span class="k">Modifier</span> sur la carte du vol :</p>
 <ul><li><b>Compagnie</b> en pastilles (FR, RK, W4, W6, V7, H4, U5…).</li>
-<li><b>N° de vol</b> : il commence toujours par un chiffre. Saisi FR5595, FR est rangé automatiquement dans la compagnie.</li>
+<li><b>N° vol arrivée</b> et <b>N° vol départ</b> : un n° de vol commence toujours par un chiffre. Saisi FR5595, FR est rangé automatiquement dans la compagnie. Quand To = BVA, une seule case : le n° de l'arrivée.</li>
 <li><b>Date</b> du vol, <b>From</b> / <b>To</b> (la destination est proposée en gris, un appui l'accepte), <b>immatriculation</b>, <b>type avion</b> (types proposés selon la compagnie) et <b>parking</b> (1 à 12, ou Autre).</li></ul>
 <p><span class="k">Terminé</span> referme la fiche.</p>`],
 ['Onglet Vol','ctot','CTOT et régulation',[I('vol-ctot','Avec le bandeau CTOT'),I('vol-ctot-petit','Sans le bandeau CTOT (option Jamais)')],`
