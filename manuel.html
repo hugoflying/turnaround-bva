@@ -151,7 +151,7 @@ const ZM = {
   sny:[['z-sny-note','Code + siège : la zone s\'affiche'],['z-sny-final','La ligne SNY dans FINAL']],
   fuel:[['z-load-fuel','Load FUEL']],
   retard:[['z-codes-retard','Code 93 mis automatiquement']],
-  'auto-controle':[['z-ac-tete','En-tête et premier bloc à cocher']],
+  'auto-controle':[['z-ac-tete','En-tête et premier bloc à cocher'],['z-ac-signature-vide','Nom du RZA et zone de signature'],['z-ac-signature','Signature au doigt ou au stylet']],
   valider:[['z-valider','Auto-contrôle et Valider le vol']],
   notes:[['z-notes-journal','Ajout rapide et journal des notes']],
   'menu-reglages':[['z-reglages','Les réglages du menu']],
@@ -279,7 +279,7 @@ const S = [
 <ul><li>Arrivée en retard : l'app met toute seule le <b>93</b> (93A selon les cas) avec les minutes.</li>
 <li>Vol régulé : prévoir le 81 / 89 selon la cause affichée dans le <a href="#ctot">détail CTOT</a>.</li></ul>`],
 ['Retard et validation','auto-controle','Auto-contrôle Ryanair',[I('auto-controle','Auto-contrôle')],`
-<p><span class="tag t-fr">FR/RK</span> La feuille d'auto-contrôle en version numérique : préparation et vérification LIR / LID, post vol, avec <span class="k">Tout cocher</span> par bloc, nom de l'agent et signature au doigt.</p>
+<p><span class="tag t-fr">FR/RK</span> La feuille d'auto-contrôle en version numérique : préparation et vérification LIR / LID, post vol, avec <span class="k">Tout cocher</span> par bloc, nom du RZA et signature au doigt ou au stylet (<span class="k">Effacer</span> pour recommencer).</p>
 <p><span class="k">Feuille</span> partage ou télécharge la feuille en image. Elle est pour l'instant <b>facultative</b> pour valider.</p>`],
 ['Retard et validation','valider','Valider le vol',[I('retard','Valider le vol')],`
 <p><span class="k">Valider le vol</span> en bas de l'onglet Retard :</p>
