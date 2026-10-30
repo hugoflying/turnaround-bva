@@ -326,6 +326,12 @@ const S = [
 <div class="tip warn">Effacer et fermer ne se rattrapent pas. Valider le vol avant de le fermer.</div>`],
 ['Menu','maj','Mises à jour et hors ligne',[],`
 <p>L'app se met à jour toute seule : à l'ouverture, elle vérifie s'il y a une nouvelle version et se recharge une fois. Elle fonctionne aussi sans réseau : les vols et saisies sont gardés sur le téléphone. Seule la liste des vols et son actualisation ont besoin du réseau.</p>`],
+['Menu','securite','Sécurité : aucun appel extérieur',[],`
+<p>L'app est <b>entièrement autonome</b>, un point important pour la sécurité de l'entreprise :</p>
+<ul><li><b>Aucune ressource externe</b> : polices, styles (CSS), scripts et icônes sont tous hébergés avec l'app. Pas de CDN, pas de police en ligne, pas d'outil de statistiques ou de suivi, pas de publicité.</li>
+<li>Le navigateur <b>ne contacte que le site de l'app lui-même</b>. La liste des vols passe par le serveur du site : la clé d'accès reste sur le serveur et n'est jamais présente sur l'appareil.</li>
+<li>Les saisies restent <b>sur l'appareil</b>. Le rapport part par la messagerie de l'appareil, les appels de l'Annuaire par le téléphone.</li></ul>
+<div class="tip info">Seule exception, <b>en version démo uniquement</b> : l'app lit les réglages publiés depuis l'admin sur un serveur dédié à la démo. La version en production n'en dépend pas.</div>`],
 // ───────── Admin
 ['Admin','adm-acces','Accès et organisation',[I('adm-compagnies','Admin › Compagnies')],`
 <p><span class="tag t-pc">PC</span> <span class="tag t-demo">Démo</span> L'admin agit pour l'instant <b>uniquement sur la version démo</b>. L'objectif est de l'étendre ensuite à la <b>version en production</b>. Elle permet au service informatique de garder la maîtrise de l'interface <b>sans toucher au code</b>, pour des modifications basiques : valeurs et variables (temps de rotation, cibles, codes retard, noms d'événements, mots rapides, vols de démo…).</p>
