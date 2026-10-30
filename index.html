@@ -22,7 +22,7 @@
 /* Mise a jour forcee : si version.json (lu sans cache) annonce une autre
    version que celle-ci, on vide les caches et on recharge la page.
    A chaque livraison : changer APP_VERSION ici, dans version.json et les ?v=. */
-window.APP_VERSION = '20261030r223';
+window.APP_VERSION = '20261030r224';
 (function(){
   function check(){
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
@@ -44,8 +44,8 @@ window.APP_VERSION = '20261030r223';
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') check(); });
 })();
 </script>
-<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r223" />
-<link rel="stylesheet" href="./css/app.css?v=20261030r223" />
+<link rel="stylesheet" href="./fonts/fonts.css?v=20261030r224" />
+<link rel="stylesheet" href="./css/app.css?v=20261030r224" />
 </head>
 <body>
 
@@ -746,9 +746,11 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
             </datalist>
       </div>
       <div class="iv-two">
+          <!-- v3.51.7 (Hugo) : n° du vol d'arrivée, masqué quand To = BVA (le n° de vol est alors celui de l'arrivée) -->
+          <label class="iv-f" id="ivNVolArrF"><small>N° vol arrivée</small><input class="input uppercase" type="text" id="NVolArr" autocomplete="off"></label>
           <label class="iv-f"><small id="ivNVolLbl">N° vol départ</small><input class="input uppercase" type="text" id="NVol" oninput="updateTabLabelInstant();"></label>
-          <label class="iv-f"><small>Date</small><input class="input" type="date" id="Date"></label>
       </div>
+      <label class="iv-f"><small>Date</small><input class="input" type="date" id="Date"></label>
       <div class="iv-rt">
           <label class="iv-f"><small>From</small><input class="input uppercase" type="text" id="From" maxlength="3"
                  oninput="updateEOBT(); updateCountdownOnce(); ensureCountdownRunning(); updateAllCalculations();"></label>
@@ -1191,20 +1193,20 @@ function digitsOnly(el){ el.value = (el.value || '').replace(/[^0-9]/g, ''); }
 
 <!-- Cache-busting : incrementer ?v= a CHAQUE deploiement pour forcer
      les navigateurs (et iOS) a recharger app.js au lieu du cache. -->
-<script src="./edition.js?v=20261030r223"></script>
-<script src="./cfg.js?v=20261030r223"></script>
-<script src="./contacts.js?v=20261030r223"></script>
-<script src="./app.js?v=20261030r223"></script>
-<script src="./app-load.js?v=20261030r223"></script>
-<script src="./app-onglets.js?v=20261030r223"></script>
-<script src="./app-retard.js?v=20261030r223"></script>
-<script src="./app-timeline.js?v=20261030r223"></script>
-<script src="./app-keeper.js?v=20261030r223"></script>
-<script src="./app-outils.js?v=20261030r223"></script>
-<script src="./demo-auto.js?v=20261030r223"></script>
-<script src="./ui.js?v=20261030r223"></script>
-<script src="./tools.js?v=20261030r223"></script>
-<script src="./nightstop.js?v=20261030r223"></script>
-<script src="./dlcodes.js?v=20261030r223"></script>
+<script src="./edition.js?v=20261030r224"></script>
+<script src="./cfg.js?v=20261030r224"></script>
+<script src="./contacts.js?v=20261030r224"></script>
+<script src="./app.js?v=20261030r224"></script>
+<script src="./app-load.js?v=20261030r224"></script>
+<script src="./app-onglets.js?v=20261030r224"></script>
+<script src="./app-retard.js?v=20261030r224"></script>
+<script src="./app-timeline.js?v=20261030r224"></script>
+<script src="./app-keeper.js?v=20261030r224"></script>
+<script src="./app-outils.js?v=20261030r224"></script>
+<script src="./demo-auto.js?v=20261030r224"></script>
+<script src="./ui.js?v=20261030r224"></script>
+<script src="./tools.js?v=20261030r224"></script>
+<script src="./nightstop.js?v=20261030r224"></script>
+<script src="./dlcodes.js?v=20261030r224"></script>
 </body>
 </html>

@@ -1405,6 +1405,7 @@ function clockMin(){
     const from = val('From').toUpperCase(), to = val('To').toUpperCase();
     const lbl = document.getElementById('ivNVolLbl');
     if(lbl) lbl.textContent = to === 'BVA' ? 'N° vol arrivée' : 'N° vol départ';
+    ivArrSync(to);
     // v2.57 : la suggestion s'affiche dans le champ To (un appui la valide)
     const toEl = document.getElementById('To'); if(!toEl) return;
     const show = /^[A-Z]{3}$/.test(from) && from !== 'BVA' && !to && ivSuggOff !== from;
@@ -1443,6 +1444,34 @@ function clockMin(){
     syncIvRoute();
   }
   window.syncIvRoute = syncIvRoute;
+
+  /* v3.51.7 (Hugo) : « N° vol arrivée » dans Modifier le vol. Il alimente akMeta.arrFF du vol (onglet, Récap, bandeau),
+     comme le n° d'arrivée venu de la liste des vols. Masqué quand To = BVA : le n° de vol saisi est alors l'arrivée. */
+  const tabData = () => { try{ return JSON.parse(localStorage.getItem('tab-' + currentTabId) || '{}'); }catch(e){ return {}; } };
+  function ivArrSync(to){
+    const f = document.getElementById('ivNVolArrF'), i = document.getElementById('NVolArr'); if(!f || !i) return;
+    f.hidden = to === 'BVA';
+    // vol venu de la liste : on affiche son n° d'arrivée (sans le code compagnie s'il est le même)
+    if(!i.value && typeof currentTabId !== 'undefined' && currentTabId){
+      const ff = (tabData().akMeta?.arrFF || '').toUpperCase(), cie = val('Cie').toUpperCase();
+      if(ff) i.value = cie && ff.startsWith(cie) && /^\d/.test(ff.slice(cie.length)) ? ff.slice(cie.length) : ff;
+    }
+  }
+  function ivArrSave(){
+    const i = document.getElementById('NVolArr'); if(!i || typeof currentTabId === 'undefined' || !currentTabId) return;
+    const v = i.value.toUpperCase().replace(/\s+/g, ''), cie = val('Cie').toUpperCase();
+    const d = tabData(); d.akMeta = d.akMeta || {};
+    if(v) d.akMeta.arrFF = /^\d/.test(v) ? cie + v : v; else delete d.akMeta.arrFF;
+    d.NVolArr = i.value;
+    try{ localStorage.setItem('tab-' + currentTabId, JSON.stringify(d)); }catch(e){}
+    try{ updateInfoStrip(); }catch(e){}
+    try{ updateTabLabelInstant(); }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const i = document.getElementById('NVolArr'); if(!i) return;
+    i.addEventListener('input', () => { const p = i.selectionStart; i.value = i.value.toUpperCase(); try{ i.setSelectionRange(p, p); }catch(e){} ivArrSave(); });
+    document.getElementById('Cie')?.addEventListener('input', () => { if(i.value && /^\d/.test(i.value)) ivArrSave(); });
+  });
 
   function init(){
     paintCtotBandSeg(); syncHero(); syncArrDot(); syncCtotBand(); setInterval(()=>{ syncHero(); syncArrDot(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
@@ -1896,7 +1925,8 @@ window.uiFoldHeader = uiFoldHeader; window.uiFoldSync = uiFoldSync;
 document.addEventListener('DOMContentLoaded', () => {
   try{ if(localStorage.getItem('hdrFold') === '1') uiFoldHeader(true); }catch(e){}
   const band = document.querySelector('#fixedHeader .fh-band');
-  if(band) band.addEventListener('click', e => { if(e.target.closest('button, a, input, select, textarea, .chip-ctot')) return; uiFoldHeader(); });
+  // v3.51.7 (Hugo) : la partie droite (LT/UTC, CD) ne réduit pas le bandeau
+  if(band) band.addEventListener('click', e => { if(e.target.closest('button, a, input, select, textarea, .chip-ctot, .chip-cd')) return; uiFoldHeader(); });
   const cd = document.getElementById('timer-cd');
   if(cd && window.MutationObserver) new MutationObserver(uiFoldSync).observe(cd, { childList:true, characterData:true, subtree:true, attributes:true });
 });

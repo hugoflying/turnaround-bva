@@ -405,6 +405,7 @@ function loadTabData(id){
   if(data.assistances && typeof data.assistances === 'object') _assistancesData = data.assistances;
   if(data.rza && typeof data.rza === 'object') _rzaData = data.rza;
   { const eo = document.getElementById('EvOuverts'); if(eo && !('EvOuverts' in data)) eo.value = ''; }   // v3.41.5 : vol enregistré avant
+  { const na = document.getElementById('NVolArr'); if(na && !('NVolArr' in data)) na.value = ''; }   // v3.51.7 : vol enregistré avant
     for(const k in data){
       // ✅ toggles globaux : jamais restaurés depuis l’onglet
       if(k === 'utcToggle' || k === 'darkToggle') continue;
