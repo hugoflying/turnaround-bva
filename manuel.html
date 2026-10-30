@@ -132,7 +132,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <script>
 // Contenu du manuel : [groupe, id, titre, captures (manuel/img/*.jpg), texte HTML]
 // IMGV : à changer quand des captures sont refaites (sinon le navigateur garde les anciennes)
-const IMGV = '4';
+const IMGV = '5';
 const I = (f, c) => [f, c];
 // gros plans (captures recadrées, haute définition) affichés sous le texte de la rubrique
 const ZM = {
@@ -158,6 +158,7 @@ const ZM = {
   fuel:[['z-load-fuel','Load FUEL']],
   retard:[['z-codes-retard','Code 93 mis automatiquement']],
   'auto-controle':[['z-ac-tete','En-tête et premier bloc à cocher'],['z-ac-signature','Signature au doigt ou au stylet']],
+  nightstop:[['z-ns-ligne','La ligne Nightstop dans l\'onglet Retard'],['z-ns-plein-ecran','Silhouette en plein écran paysage : un appui pose une croix']],
   valider:[['z-valider','Auto-contrôle et Valider le vol']],
   notes:[['z-notes-journal','Ajout rapide et journal des notes']],
   'menu-reglages':[['z-reglages','Les réglages du menu']],
@@ -288,9 +289,18 @@ const S = [
 ['Retard et validation','auto-controle','Auto-contrôle Ryanair',[I('auto-controle','Auto-contrôle')],`
 <p><span class="tag t-fr">FR/RK</span> La feuille d'auto-contrôle en version numérique : préparation et vérification LIR / LID, post vol, avec <span class="k">Tout cocher</span> par bloc, nom du RZA et signature au doigt ou au stylet (<span class="k">Effacer</span> pour recommencer).</p>
 <p><span class="k">Feuille</span> partage ou télécharge la feuille en image. Elle est <b>facultative</b> pour valider dans la version actuelle, et deviendra <b>obligatoire</b> une fois le serveur des rapports mis en place.</p>`],
+['Retard et validation','nightstop','Nightstop & tour avion',[I('nightstop','Prestations'),I('nightstop-tour','Tour avion')],`
+<p>Pour les vols basés : <b>départ basé</b> (From = BVA) et <b>retour basé</b> (To = BVA). La ligne <span class="k">Nightstop</span> apparaît alors dans l'onglet Retard, au-dessus de Valider le vol. Elle remplace la feuille papier « Checklist &amp; suivi des prestations nightstop » remise au responsable piste.</p>
+<ul><li><b>Prestations</b> : toilettes et eau potable (vidange / remplissage), ménage <b>S / DC / DI</b>, 2 échelles, ASU, tractage (Bellova / Assist'Air), dégivrage, collecte déchets. Un appui coche ou décoche.</li>
+<li><b>Équipage</b> : nom ou crew code du commandant ou du mécanicien, heure et signature.</li>
+<li><b>Fouille des soutes</b> (hold security search) : retour basé uniquement, à activer quand le vol arrive d'un pays tiers. Nom, heure et signature.</li>
+<li><b>Tour avion</b> : soutes vidées et contrôlées, dommages constatés, personnes avisées (CdB, mécanicien, opérations), nom, heure et signature.</li></ul>
+<p>Les dommages se notent par des <b>croix sur la silhouette</b>. <span class="k">Plein écran</span> passe la silhouette en grand, en paysage (si le téléphone est tenu droit, l'image pivote d'elle-même). Un appui pose une croix, un appui sur une croix l'enlève ; <span class="k">Annuler la dernière</span> et <span class="k">Tout effacer</span> sont dans la barre du haut.</p>
+<p><span class="k">Feuille</span> partage ou télécharge la feuille complète en image, silhouette comprise. Le contenu est repris dans le rapport du vol.</p>
+<div class="tip info">Feuille <b>facultative</b> dans la version actuelle, comme l'auto-contrôle. Elle deviendra <b>obligatoire</b> une fois le serveur des rapports mis en place.</div>`],
 ['Retard et validation','valider','Valider le vol',[I('retard','Valider le vol')],`
 <p><span class="k">Valider le vol</span> en bas de l'onglet Retard :</p>
-<ol><li>auto-contrôle (FR/RK : facultatif pour l'instant, obligatoire avec le futur serveur) ;</li><li>prestations (ménage GSF N / S / DC / DI, assistances…) ;</li><li>récap puis envoi du rapport, avec tous les horaires, loads, retards, notes, dommages et auto-contrôle.</li></ol>
+<ol><li>auto-contrôle (FR/RK : facultatif pour l'instant, obligatoire avec le futur serveur) et, pour les vols basés, feuille <a href="#nightstop">Nightstop</a> ;</li><li>prestations (ménage GSF N / S / DC / DI, assistances…) ;</li><li>récap puis envoi du rapport, avec tous les horaires, loads, retards, notes, dommages et auto-contrôle.</li></ol>
 <p>Le vol est marqué validé (utile pour les <a href="#veille">vols de la veille</a>).</p>
 <div class="tip info">À terme, le rapport sera enregistré sur un <b>serveur</b> : consultable et modifiable depuis un PC, il alimentera des <b>indicateurs (KPI)</b> de performance et remplacera l'actuel fichier Excel « Performances », arrivé à bout de souffle et peu fiable.</div>`],
 // ───────── Notes
