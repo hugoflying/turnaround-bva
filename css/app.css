@@ -1643,3 +1643,10 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 /* v3.52 · Récap (démo) : réinitialiser les vols démo */
 .rc-demo-reset{margin:18px 0 8px;display:flex;align-items:center;justify-content:center;gap:8px}
 .rc-demo-reset.is-ask{border-color:var(--crit);color:var(--crit)}
+
+/* v3.54 (Hugo) : retard d'un vol parti, sous l'off-block (Récap) */
+.rc-dly{display:inline-block;font-style:normal;font-size:12px;font-weight:700;color:#fff;background:var(--crit);border-radius:999px;padding:1px 8px;margin-top:3px;font-variant-numeric:tabular-nums;line-height:1.4}
+.rc-cd .rc-dly{font-size:13px;margin-top:0}
+.rc-card.is-done > :has(.rc-dly){opacity:1}
+.rc-row.is-done{opacity:1}
+.rc-row.is-done > :not(.rc-x):not(:has(.rc-dly)){opacity:.6}

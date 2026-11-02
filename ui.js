@@ -847,7 +847,9 @@ function clockMin(){
     // Statut sol affiché en bas des cartes
     const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : aibt != null ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
     return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? cieFromFF(fno) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
-             sobt: R(sobt), aobt: R(aobt), dated, eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late' };
+             sobt: R(sobt), aobt: R(aobt), dated, eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late',
+             // v3.54 (Hugo) : retard d'un vol parti = AOBT − SOBT (minuit géré)
+             dly: aobt != null && sobt != null ? ((aobt - sobt + 720) % 1440 + 1440) % 1440 - 720 : null };
   }
 
   function recapView(){ try{ return localStorage.getItem('rcView') === 'cmp' ? 'cmp' : 'det'; }catch(e){ return 'det'; } }
@@ -930,8 +932,10 @@ function clockMin(){
   window.uiOpenFlight = function(id){ window._tabJustOpened = true; window._keepGoneId = String(id); try{ switchTab(id); }catch(e){} try{ uiTab('vol'); } finally { window._tabJustOpened = false; } };
 
   function ringHTML(f){ return '<span class="flt-cie rc-ring ' + f.ringCls + '" style="--p:' + f.p.toFixed(1) + '%"><b>' + esc(f.cie || '–') + '</b></span>'; }
+  // v3.54 (Hugo) : sous l'heure d'off-block, « +4 min » en rouge si le vol est parti en retard
+  function dlyHTML(f){ return f.dly > 0 ? '<i class="rc-dly">+' + f.dly + ' min</i>' : ''; }
   function cdHTML(f){
-    if(f.done) return '<small>OFF-BLOCK</small><b class="ok">' + esc(f.st.replace('Parti ','')) + '</b>';
+    if(f.done) return '<small>OFF-BLOCK</small><b class="ok">' + esc(f.st.replace('Parti ','')) + '</b>' + dlyHTML(f);
     if(f.left == null) return '<small>CD</small><b class="mut">—</b>';
     return '<small>' + (f.late ? 'RETARD' : 'CD') + '</small><b class="' + f.cls + '">' + fmtLeft(f.left) + '</b>';
   }
@@ -983,7 +987,7 @@ function clockMin(){
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)
         + '<span class="rc-t"><b>' + esc(f.fno) + '</b><small>' + esc([f.place, f.park && 'P' + f.park.replace(/^P/i,'')].filter(Boolean).join(' · ')) + '</small></span>'
         + '<span class="rc-e">EOBT<b>' + (f.eobt != null ? fmtHM(f.eobt) : '--:--') + '</b></span>'
-        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? '✓' : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
+        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? (f.dly > 0 ? '<i class="rc-dly">+' + f.dly + '</i>' : '✓') : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
         + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '')).join('') + '</div>'
         + (doneN ? (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + doneN + ' vol' + (doneN > 1 ? 's' : '') + ' terminé' + (doneN > 1 ? 's' : '') + ' ?', '*')
                    : '<button type="button" class="rc-clear rc-clear-cmp" onclick="uiRecapAsk(\'*\')">✕ Retirer les terminés (' + doneN + ')</button>') : '');
