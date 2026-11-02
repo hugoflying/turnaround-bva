@@ -400,7 +400,7 @@ function clockMin(){
   /* ===== v2.47 : vols de démo (menu ⋯) ===== */
   let DEMO_FLIGHTS = [
     // cie, arr, dep, from/to, immat, type, parking, escale (min), PAF
-    ['FR','594','595','OPO','EIDCL','B38M','4',25,''],
+    ['FR','594','595','OPO','EIDCL','B38M','4',25,'PAF'],   // v3.53 (Hugo) : PAF et CTOT par défaut
     ['W4','5148','5149','TIA','9HWAU','A321','12',35,'S3'],
     ['FR','1037','1038','VIE','9HLOA','A320','7',25,'S2'],
     ['FR','3016','3017','PMI','EIEVA','B738','2',25,''],
@@ -425,7 +425,7 @@ function clockMin(){
   // 0 = FR OPO en embarquement · 1 = W4 TIA posé, PAF S3, CTOT · 2 = FR VIE à l'arrivée, PAF S2, CTOT météo
   let DEMO_OPEN = [0, 1, 2];
   let DEMO_SCHED = {
-    0: { sibt:-15 },
+    0: { sibt:-15, ctot:18, reg:{ regul:'LPPCTA', cause:'C · ATC', reason:'ATC capacity', remark:'Lisbon ACC sector LPPC' } },
     1: { sibt:1, ctot:20, reg:{ regul:'LROPTA', cause:'C · ATC', reason:'ATC capacity', remark:'Expect improvements after 1030z' } },
     2: { sibt:10, ctot:28, reg:{ regul:'LFFFUTA', cause:'W · Weather', reason:'Weather', description:'Thunderstorms sector UT' } },
   };
@@ -577,7 +577,44 @@ function clockMin(){
     if(typeof renderTabs === 'function') renderTabs();
     if(typeof updateInfoStrip === 'function') updateInfoStrip();
   };
+  /* v3.53 (Hugo) : un départ basé de la first wave, terminé et validé : FR3433 BVA → BGY, SOBT 06:00, parti à 05:46.
+     Timings du départ seulement (l'avion a dormi à BVA), feuille Nightstop remplie et signée, auto-contrôle rempli et signé. */
+  function demoSig(seed){
+    const c = document.createElement('canvas'); c.width = 300; c.height = 110;
+    const x = c.getContext('2d'); x.strokeStyle = '#0B1E4F'; x.lineWidth = 2.4; x.lineCap = x.lineJoin = 'round';
+    x.beginPath(); x.moveTo(24, 70);
+    for(let t = 0; t <= 1; t += 0.02){ const px = 24 + t * 230, py = 62 - Math.sin(t * (9 + seed) ) * (18 - t * 8) - Math.cos(t * 23 + seed) * 7; x.lineTo(px, py); }
+    x.stroke(); x.beginPath(); x.moveTo(60, 86); x.quadraticCurveTo(150, 74, 262, 80); x.stroke();
+    return c.toDataURL('image/png');
+  }
+  window.demoFillFW = function(T0){
+    const now = new Date(T0);
+    const hm = m => { const d = new Date(now.getTime() + m*60000); const h = isUTC ? d.getUTCHours() : d.getHours(), mi = isUTC ? d.getUTCMinutes() : d.getMinutes(); return String(h).padStart(2,'0') + ':' + String(mi).padStart(2,'0'); };
+    const iso = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+    const set = (id, v) => { const e = document.getElementById(id); if(!e) return; e.value = v; e.dispatchEvent(new Event('input', {bubbles:true})); e.dispatchEvent(new Event('change', {bubbles:true})); };
+    // SOBT 06:00 heure locale du jour ; démo ouverte avant 06:45 → départ 45 min avant l'ouverture
+    const tmin = now.getHours() * 60 + now.getMinutes();
+    const D = tmin >= 405 ? 360 - tmin : demoR5(-45, demoT0()), off = D - 14;
+    set('Cie', 'FR'); set('NVol', '3433'); set('Date', iso);
+    set('From', 'BVA'); set('To', 'BGY'); set('Immat', 'EIEBZ'); set('TypeAvion', 'B738'); set('Parking', '8');
+    if(typeof setLidMode === 'function') setLidMode('ELID');
+    set('SOBT', hm(D));
+    const plan = demoAutoPlan(7, 'FR', { A:D - 60, off }, 'ELID');
+    const DEP = ['DebutChargementBagages','FinChargementBagages','AvionPremierEmbarque','AvionDernierEmbarque','RemiseLID','FermetureSouteAV','FermetureSouteAR','FermeturePorteAvion','RetraitEchelleAV','RetraitEchelleAR','ConnexionAgentCasque'];
+    plan.tm.filter(([id]) => DEP.includes(id)).forEach(([id, rel]) => set(id, hm(rel)));
+    plan.val.filter(([id]) => !/^Arr/.test(id)).forEach(([id, v]) => set(id, v));
+    set('AOBT', hm(off));
+    if(typeof updateAllCalculations === 'function') updateAllCalculations();
+    set('FaitsSaillants', [hm(off - 50) + ' · Tour avion · RAS, nightstop OK', hm(off - 8) + ' · BAGS OK', hm(off - 3) + ' · Pas de préboard'].join('\n'));
+    set('Nightstop', JSON.stringify({ def:'dep', touched:1, sv:{ toilR:true, eauR:true, gpu:true, asu:true, men:'' }, hs:{},
+      ta:{ sv:'OUI', dm:'NON', x:[], n:'MARTIN', p:'Julien', h:hm(off - 50), s:demoSig(1) } }));
+    set('AutoCtrl', JSON.stringify({ c:Array.from({ length:20 }, (_, k) => k), n:'DURAND Léa', s:demoSig(4), t:new Date(T0 + (off + 2) * 60000).toISOString() }));
+    set('ValideLe', new Date(T0 + (off + 6) * 60000).toISOString());
+    if(typeof updateAllCalculations === 'function') updateAllCalculations();
+    saveCurrentTabData();
+  };
   async function demoBuild(T0){
+    createNewTab(); window.demoFillFW(T0); await new Promise(r => setTimeout(r, 5));   // v3.53 : first wave terminée (Récap)
     for(const i of DEMO_OPEN){
       createNewTab();
       window.demoFillFlight(i, T0, true);
@@ -596,7 +633,7 @@ function clockMin(){
   const demoAllowed = () => (window.APP_EDITION || 'demo') === 'demo';
   // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
   window.demoActive = () => demoAllowed();
-  const DEMO_VER = '5';                       // changer pour regénérer les vols de démo chez tout le monde
+  const DEMO_VER = '6';                       // changer pour regénérer les vols de démo chez tout le monde
   window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
     localStorage.setItem('demoMode', 'pending');
