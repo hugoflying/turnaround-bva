@@ -594,7 +594,7 @@ function clockMin(){
     const set = (id, v) => { const e = document.getElementById(id); if(!e) return; e.value = v; e.dispatchEvent(new Event('input', {bubbles:true})); e.dispatchEvent(new Event('change', {bubbles:true})); };
     // SOBT 06:00 heure locale du jour ; démo ouverte avant 06:45 → départ 45 min avant l'ouverture
     const tmin = now.getHours() * 60 + now.getMinutes();
-    const D = tmin >= 405 ? 360 - tmin : demoR5(-45, demoT0()), off = D - 14;
+    const D = tmin >= 405 ? 360 - tmin : demoR5(-45, demoT0()), off = D + 4;   // v3.53.1 (Hugo) : AOBT SOBT+4, DL 89 4 min
     set('Cie', 'FR'); set('NVol', '3433'); set('Date', iso);
     set('From', 'BVA'); set('To', 'BGY'); set('Immat', 'EIEBZ'); set('TypeAvion', 'B738'); set('Parking', '8');
     if(typeof setLidMode === 'function') setLidMode('ELID');
@@ -604,6 +604,7 @@ function clockMin(){
     plan.tm.filter(([id]) => DEP.includes(id)).forEach(([id, rel]) => set(id, hm(rel)));
     plan.val.filter(([id]) => !/^Arr/.test(id)).forEach(([id, v]) => set(id, v));
     set('AOBT', hm(off));
+    set('DLcode1', '89'); set('DLduree1', '4');
     if(typeof updateAllCalculations === 'function') updateAllCalculations();
     set('FaitsSaillants', [hm(off - 50) + ' · Tour avion · RAS, nightstop OK', hm(off - 8) + ' · BAGS OK', hm(off - 3) + ' · Pas de préboard'].join('\n'));
     set('Nightstop', JSON.stringify({ def:'dep', touched:1, sv:{ toilR:true, eauR:true, gpu:true, asu:true, men:'' }, hs:{},
@@ -633,7 +634,7 @@ function clockMin(){
   const demoAllowed = () => (window.APP_EDITION || 'demo') === 'demo';
   // v2.87 : l'édition « demo » (testapp) est une démo permanente, plus de mode à activer
   window.demoActive = () => demoAllowed();
-  const DEMO_VER = '6';                       // changer pour regénérer les vols de démo chez tout le monde
+  const DEMO_VER = '7';                       // changer pour regénérer les vols de démo chez tout le monde
   window.uiDemoReset = function(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
     localStorage.setItem('demoMode', 'pending');
