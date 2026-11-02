@@ -444,6 +444,8 @@ function clockMin(){
     v = String(v ?? '').trim().replace(/[−–]/g, '-');
     if(!v) return null;
     if(/^(non|x|pas encore)$/i.test(v)) return 'non';
+    // v3.52 (Hugo) : « T-60 », « T+15 », « T0 » = par rapport à T0 (lancement ou réinitialisation de la démo)
+    if(/^T0?\s*([+-]\s*\d+)?$/i.test(v)){ const t = v.replace(/^T0?\s*/i, '').replace(/\s/g, ''); return t ? parseInt(t, 10) : 0; }
     const m = /^(\d{1,2})[:h](\d{2})$/.exec(v);
     if(m){
       const t = new Date(T0); if(isUTC) t.setUTCHours(+m[1], +m[2], 0, 0); else t.setHours(+m[1], +m[2], 0, 0);
@@ -599,6 +601,12 @@ function clockMin(){
     if(typeof closeSettingsMenu === 'function') closeSettingsMenu();
     localStorage.setItem('demoMode', 'pending');
     location.reload();
+  };
+  // v3.52 (Hugo) : bouton du Récap, deuxième appui pour confirmer (les saisies faites dans la démo sont effacées)
+  window.uiRecapDemoReset = function(b){
+    if(b.classList.contains('is-ask')) return window.uiDemoReset();
+    b.classList.add('is-ask'); b.querySelector('span').textContent = 'Confirmer : les vols démo repartent de maintenant';
+    clearTimeout(b._t); b._t = setTimeout(() => { b.classList.remove('is-ask'); b.querySelector('span').textContent = 'Réinitialiser les vols démo'; }, 4000);
   };
   window.uiDemoToggle = function(){
     if(demoAllowed()) return window.uiDemoReset();
@@ -919,6 +927,7 @@ function clockMin(){
     const badge = document.getElementById('volsBadge');
     if(badge){ badge.hidden = !lateN; badge.textContent = lateN; }
     if(document.body.dataset.panel !== 'vols') return;
+    { const dr = document.getElementById('rcDemoReset'); if(dr) dr.hidden = !(window.demoActive && window.demoActive()); }
     const view = recapView();
     document.querySelectorAll('.rc-seg button').forEach(b => b.classList.toggle('is-on', b.dataset.view === view));
     document.getElementById('rcSub').textContent = F.length ? F.length + ' vol' + (F.length > 1 ? 's' : '') + ' · ' + fmtHM(nowMin()) + (lateN ? ' · ' + lateN + ' en retard' : '') : '';

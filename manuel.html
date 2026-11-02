@@ -325,7 +325,7 @@ const S = [
 ['Menu','frequences','Fréquences',[I('frequences','Fréquences')],`<p>TWR, APP et OPS de LFOB.</p>`],
 ['Menu','degivrage','Dégivrage',[I('degivrage','Dégivrage')],`<p>Le produit utilisé (ABAX Ecowing AD-2 Type II) et les <b>holdover times</b> : selon la température et la concentration choisies, l'app affiche les durées par condition météo.</p>`],
 ['Menu','demo','Mode démo et Nouveautés',[I('nouveautes','Nouveautés')],`
-<p><b>Mode démo</b> : des vols fictifs déjà remplis pour tout essayer. Les vrais vols sont mis de côté et reviennent en quittant la démo. <span class="k">Réinitialiser</span> repart à l'heure actuelle.</p>
+<p><b>Mode démo</b> : des vols fictifs déjà remplis pour tout essayer. Les vrais vols sont mis de côté et reviennent en quittant la démo. <span class="k">Réinitialiser</span> (bandeau jaune ou bas du <a href="#recap">Récap</a> : <span class="k">Réinitialiser les vols démo</span>, deuxième appui pour confirmer) remet tous les vols de démo à l'heure actuelle. Sans réinitialisation, la démo garde ses vols et les saisies : rouverte plus tard, les vols sont donc passés.</p>
 <div class="tip info"><b>Formation.</b> La démo peut être présentée lors de la formation d'un nouveau RZA : il s'entraîne et découvre l'interface <b>sans aucun risque pour l'exploitation</b>.</div>
 <div class="tip warn">Les vols de démo <b>ne sont pas connectés entre eux</b> ni aux autres appareils. Les informations saisies sont pour le moment <b>stockées en cache dans le navigateur</b> de l'appareil utilisé.</div>
 <p><b>Nouveautés</b> : la liste des changements de la version. Elle s'affiche une fois après chaque mise à jour.</p>`],
@@ -376,7 +376,7 @@ const S = [
 ['Admin','adm-demo','Vols de démo',[I('adm-demo','Frise du scénario'),I('adm-demo-load','Fiche d\'un vol › Load')],`
 <p>Le scénario rejoué au lancement de la démo et à chaque <span class="k">Réinitialiser</span>.</p>
 <ul><li><b>La frise</b> : une barre par vol, de l'arrivée au départ, autour du LANCEMENT (Au sol, En approche, Prévu, Parti, Annulé). Un appui sur un vol ouvre son réglage.</li>
-<li><b>Heures</b> : <kbd>10:35</kbd> heure exacte, <kbd>-20</kbd> 20 min avant le lancement, <kbd>+15</kbd> après, <kbd>non</kbd> pas encore. Les SIBT / SOBT tombent toujours sur 0 ou 5 et respectent la rotation mini.</li>
+<li><b>Heures</b> par rapport à <b>T0</b>, le moment où la démo est ouverte la première fois ou réinitialisée : <kbd>T-20</kbd> 20 min avant T0, <kbd>T+15</kbd> après (ou simplement -20, +15), <kbd>10:35</kbd> heure exacte, <kbd>non</kbd> pas encore. Le bouton <span class="k">T0 / Heure</span> affiche les heures calculées en T ou en heure. Les SIBT / SOBT tombent toujours sur 0 ou 5 et respectent la rotation mini.</li>
 <li><b>Onglet ouvert</b> ou dans « Ouvrir un vol », <b>Dupliquer</b>, <b>Retirer</b>, <b>Vol annulé</b>.</li>
 <li><b>Remplissage</b> : « Comme un vrai vol » (l'app remplit ce qui est passé, en gris dans l'admin) ou « Je saisis moi-même ».</li>
 <li>Onglets <b>Arrivée</b>, <b>Départ</b>, <b>Événements</b>, <b>Load &amp; fuel</b> (eLID ou Paper LID pour FR/RK), <b>Notes</b> pour forcer une valeur.</li></ul>`],
