@@ -1679,3 +1679,6 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 /* v3.56.1 (Hugo) : bandeau du vol, logo chrono à la place de « CD » */
 .fh-cdsw{display:inline-flex;align-items:center}
 .fh-cdsw svg{width:16px;height:16px;opacity:.8}
+/* v3.56.2 (Hugo) : vue compacte, même colonne droite pour tous les vols → EOBT et SOBT › AOBT alignés */
+.rc-row.is-done{grid-template-columns:auto minmax(0,1fr) auto 76px;padding-right:12px}
+.rc-row.is-done .rc-bd{justify-self:start}
