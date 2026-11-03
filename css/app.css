@@ -1676,3 +1676,6 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .rc-row .rc-cd .cd-sw{width:15px;height:15px}
 .rc-cdbig b.cd-ic{display:flex;align-items:center;justify-content:flex-end;gap:6px}
 .rc-cdbig b.cd-ic .cd-sw{width:20px;height:20px}
+/* v3.56.1 (Hugo) : bandeau du vol, logo chrono à la place de « CD » */
+.fh-cdsw{display:inline-flex;align-items:center}
+.fh-cdsw svg{width:16px;height:16px;opacity:.8}
