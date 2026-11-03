@@ -986,11 +986,11 @@ function clockMin(){
       list.innerHTML = '<div class="rc-list">' + sorted.map(f =>
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)
         + '<span class="rc-t"><b>' + esc(f.fno) + '</b><small><span>' + esc([f.place, f.park && 'P' + f.park.replace(/^P/i,'')].filter(Boolean).join(' · ')) + '</span></small></span>'
-        // v3.54.6 (Hugo) : vol parti = SOBT, AOBT et le retard à côté (EOBT retirée, trop petit)
-        + (f.done ? '<span class="rc-e rc-e3"><span>SOBT<b>' + (f.sobt != null ? fmtHM(f.sobt) : '--:--') + '</b></span><span>AOBT<b>' + (f.aobt != null ? fmtHM(f.aobt) : '--:--') + '</b></span>'
-            + '<i class="rc-dlyt">' + (f.dly > 0 ? '+' + (f.dly < 60 ? f.dly + ' min' : Math.floor(f.dly / 60) + 'h' + String(f.dly % 60).padStart(2, '0')) : '') + '</i>' + '</span>'
+        // v3.55 (Hugo, option B) : vol parti = « SOBT › AOBT » au milieu, pastille ronde à droite (✓ vert ou +N rouge)
+        + (f.done ? '<span class="rc-e rc-sa">SOBT › AOBT<b>' + (f.sobt != null ? fmtHM(f.sobt) : '--:--') + '<i>›</i>' + (f.aobt != null ? fmtHM(f.aobt) : '--:--') + '</b></span>'
           : '<span class="rc-e">EOBT<b>' + (f.eobt != null ? fmtHM(f.eobt) : '--:--') + '</b></span>')
-        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? '✓' : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
+        + (f.done ? '<span class="rc-bd ' + (f.dly > 0 ? 'late' + (f.dly > 99 ? ' x3' : '') : 'ok') + '">' + (f.dly > 0 ? '+' + f.dly : '✓') + '</span>'
+          : '<span class="rc-cd ' + (f.left == null ? 'mut' : f.cls) + '">' + (f.left == null ? '—' : fmtLeft(f.left)) + '</span>') + rcX(f) + '</button>'
         + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '')).join('') + '</div>'
         + (doneN ? (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + doneN + ' vol' + (doneN > 1 ? 's' : '') + ' terminé' + (doneN > 1 ? 's' : '') + ' ?', '*')
                    : '<button type="button" class="rc-clear rc-clear-cmp" onclick="uiRecapAsk(\'*\')">✕ Retirer les terminés (' + doneN + ')</button>') : '');
