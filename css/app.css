@@ -1666,3 +1666,5 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .rc-e3 .rc-dlyt{margin-left:0;font-size:13px;line-height:1.35}
 .rc-row.is-done > .rc-e3{opacity:1}
 .rc-row.is-done > .rc-e3 > span{opacity:.6}
+/* v3.54.7 : place du retard toujours réservée → SOBT / AOBT alignées d'une ligne à l'autre */
+.rc-e3 .rc-dlyt{min-width:58px;text-align:left}
