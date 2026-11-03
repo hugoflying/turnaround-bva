@@ -1650,3 +1650,6 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .rc-card.is-done > :has(.rc-dly){opacity:1}
 .rc-row.is-done{opacity:1}
 .rc-row.is-done > :not(.rc-x):not(:has(.rc-dly)){opacity:.6}
+/* v3.54.2 (Hugo) : la pastille retard ne doit pas décaler le vol vers le bas → hors du flux, sous l'heure */
+.rc-cdbig{position:relative}
+.rc-cdbig .rc-dly{position:absolute;right:0;top:100%;margin-top:2px;white-space:nowrap}
