@@ -1278,7 +1278,7 @@ function clockMin(){
 
   const NJ_TAGS = (typeof cfgWords === 'function' && cfgWords()) || ['SNY', 'BAGS OK', 'PMR', 'Bag manquant', 'Pax en retard', 'Nettoyage', 'Fuel'];   // v3.37 : réglables dans l'admin (démo)
   const NJ_RE = /^(\d{1,2}:\d{2})\s*·\s*(.*)$/;
-  let njTag = '', njLast = null, njArm = -1;
+  let njTag = '', njLast = null, njArm = -1, njTab = null;
   const njEl = sel => document.querySelector('#bnTextMode ' + sel);
   const njArea = () => document.getElementById('FaitsSaillants');
   function njLines(){ return (njArea()?.value || '').split('\n').filter(l => l.trim()); }
@@ -1327,7 +1327,7 @@ function clockMin(){
     inp.spellcheck = !sny;
     inp.placeholder = sny ? 'Crew code + siège : DERUHU 12C' : njTag ? 'Détail (facultatif)' : 'Écrire une note…';
     inp.classList.toggle('nj-code', sny);
-    njCheck();
+    njCheck(); njSave();
   }
   // v3.48 (Hugo, option C) : « DERUHU 12C » = crew code puis siège ; la zone FWD/MID/AFT (FR/RK) est ajoutée à la note
   const SNY_Z = ['FWD', 'MID', 'AFT'];
@@ -1375,7 +1375,7 @@ function clockMin(){
     const line = [hm, njTag, txt].filter(Boolean).join(' · ');
     njArm = -1;
     njWrite(njLines().concat(line));
-    inp.value = ''; njSetTag(''); inp.focus();
+    inp.value = ''; njSetTag(''); njSave(); inp.focus();
     const log = njEl('.nj-log'); if(log) log.lastElementChild?.scrollIntoView({ block:'nearest' });
   }
   function initNoteJournal(){
@@ -1409,9 +1409,35 @@ function clockMin(){
       njCheck();
     });
     inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); njAdd(); } });
+    inp.addEventListener('input', njSave);
     njArea()?.addEventListener('input', () => njRender());
     njSetTag(''); njRender(true);
+    // v3.56.3 (Hugo) : la note en cours de frappe appartient à son vol (avant : elle restait affichée sur les autres onglets)
+    ['loadTabData', 'clearFormFields'].forEach(fn => {
+      const orig = window[fn]; if(typeof orig !== 'function') return;
+      window[fn] = function(){ njSave(); const r = orig.apply(this, arguments); njSync(); return r; };
+    });
+    njTab = njCur(); njSync(true);
   }
+  // v3.56.3 : brouillon par vol { idOnglet: { t: texte, g: tag } } dans localStorage njDraft
+  const njCur = () => { try{ return currentTabId == null ? null : String(currentTabId); }catch(_){ return null; } };
+  function njDrafts(){ try{ const o = JSON.parse(localStorage.getItem('njDraft') || '{}'); return o && typeof o === 'object' ? o : {}; }catch(_){ return {}; } }
+  function njSave(){
+    const inp = njEl('.nj-input'); if(!inp || njTab == null) return;
+    const all = njDrafts(), t = inp.value;
+    if(t || njTag) all[njTab] = { t, g: njTag }; else delete all[njTab];
+    let tabs = []; try{ tabs = (JSON.parse(localStorage.getItem('flightTabs') || '[]') || []).map(String); }catch(_){}
+    for(const k in all) if(k !== njTab && !tabs.includes(k)) delete all[k];   // vols fermés
+    try{ localStorage.setItem('njDraft', JSON.stringify(all)); }catch(_){}
+  }
+  function njSync(force){
+    const cur = njCur(), inp = njEl('.nj-input'); if(!inp) return;
+    if(!force && cur === njTab) return;
+    njTab = cur;
+    const d = (cur != null && njDrafts()[cur]) || { t: '', g: '' };
+    njArm = -1; inp.value = d.t || ''; njSetTag(d.g || ''); njRender(true);
+  }
+  window.njSync = njSync;
 
   /* Vol (v2.37) : pastilles Compagnie / Parking / Type de la feuille « Modifier le vol » */
   // Types proposés selon la compagnie (Hugo) ; autre compagnie = toute la liste
@@ -1533,7 +1559,7 @@ function clockMin(){
   });
 
   function init(){
-    paintCtotBandSeg(); syncHero(); syncArrDot(); syncCtotBand(); setInterval(()=>{ syncHero(); syncArrDot(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njRender(); acSyncRow(); }, 1000);
+    paintCtotBandSeg(); syncHero(); syncArrDot(); syncCtotBand(); setInterval(()=>{ syncHero(); syncArrDot(); syncCtotBand(); syncEvents(); syncTabRings(); syncLoadUI(); syncDelayUI(); njSync(); njRender(); acSyncRow(); }, 1000);
     initSwipe(); initLdmSwipe(); syncFollowBtn(); syncTabRings(); renderRecap(); setInterval(renderRecap, 15000); setInterval(()=>{ if(rcFast && document.body.dataset.panel === 'vols') renderRecap(); }, 1000);
     const tb = document.getElementById('tab-bar'); if(tb) new MutationObserver(()=>requestAnimationFrame(syncTabRings)).observe(tb, { childList:true }); setInterval(tlTick, 15000);
     document.addEventListener('click', e => { if(e.target.closest('.ev-x, .tw-zone')) setTimeout(syncEvents, 0); });
