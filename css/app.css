@@ -1649,7 +1649,7 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .rc-cd .rc-dly{font-size:13px;margin-top:0}
 .rc-card.is-done > :has(.rc-dly){opacity:1}
 .rc-row.is-done{opacity:1}
-.rc-row.is-done > :not(.rc-x):not(.rc-t):not(:has(.rc-dly)){opacity:.6}
+.rc-row.is-done > :not(.rc-x):not(.rc-t):not(.rc-e3):not(:has(.rc-dly)){opacity:.6}
 /* v3.54.2 (Hugo) : la pastille retard ne doit pas décaler le vol vers le bas → hors du flux, sous l'heure */
 .rc-cdbig{position:relative}
 .rc-cdbig .rc-dly{position:absolute;right:0;top:100%;margin-top:2px;white-space:nowrap}
@@ -1657,3 +1657,12 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 /* v3.54.4 (Hugo) : vue compacte, retard en texte rouge sur la 2e ligne (« IAS · P9  +105 min »), coche seule à droite */
 .rc-row.is-done > .rc-t > b,.rc-row.is-done > .rc-t small > span{opacity:.6}
 .rc-dlyt{font-style:normal;font-weight:700;color:var(--crit);margin-left:6px;white-space:nowrap}
+/* v3.54.5 (Hugo) : vue compacte, vol parti = SOBT · EOBT · AOBT + retard à côté, coche à droite */
+.rc-row.is-done{grid-template-columns:auto minmax(0,1fr) auto 20px}
+.rc-row.is-done{column-gap:6px}
+.rc-e3{display:flex;align-items:flex-end;gap:4px;text-align:center}
+.rc-e3 > span{display:block;font-size:9px;letter-spacing:.02em}
+.rc-e3 b{font-size:11.5px}
+.rc-e3 .rc-dlyt{margin-left:1px;font-size:11.5px;line-height:1.35}
+.rc-row.is-done > .rc-e3{opacity:1}
+.rc-row.is-done > .rc-e3 > span{opacity:.6}
