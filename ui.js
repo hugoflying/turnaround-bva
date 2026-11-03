@@ -935,10 +935,12 @@ function clockMin(){
   function ringHTML(f){ return '<span class="flt-cie rc-ring ' + f.ringCls + '" style="--p:' + f.p.toFixed(1) + '%"><b>' + esc(f.cie || '–') + '</b></span>'; }
   // v3.54 (Hugo) : sous l'heure d'off-block, « +4 min » en rouge si le vol est parti en retard
   function dlyHTML(f){ return f.dly > 0 ? '<i class="rc-dly">+' + f.dly + ' min</i>' : ''; }
+  // v3.56 (Hugo, option 2) : petite icône chrono devant le compte à rebours (Récap compacte + détaillée)
+  const CD_SW = '<svg class="cd-sw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13.5" r="8"/><path d="M10 2.5h4M12 2.5v3M18.6 6.4l1.4-1.4M12 13.5V9.5M12 13.5l2.6 2"/></svg>';
   function cdHTML(f){
     if(f.done) return '<small>OFF-BLOCK</small><b class="ok">' + esc(f.st.replace('Parti ','')) + '</b>' + dlyHTML(f);
     if(f.left == null) return '<small>CD</small><b class="mut">—</b>';
-    return '<small>' + (f.late ? 'RETARD' : 'CD') + '</small><b class="' + f.cls + '">' + fmtLeft(f.left) + '</b>';
+    return '<small>' + (f.late ? 'RETARD' : 'CD') + '</small><b class="cd-ic ' + f.cls + '">' + CD_SW + fmtLeft(f.left) + '</b>';
   }
 
   const metaT = (k, v, c) => '<span' + (c ? ' class="' + c + '"' : '') + '>' + k + ' <b>' + (v != null ? fmtHM(v) : '--:--') + '</b></span>';
@@ -991,7 +993,7 @@ function clockMin(){
         + (f.done ? '<span class="rc-e rc-sa">SOBT › AOBT<b>' + (f.sobt != null ? fmtHM(f.sobt) : '--:--') + '<i>›</i>' + (f.aobt != null ? fmtHM(f.aobt) : '--:--') + '</b></span>'
           : '<span class="rc-e">EOBT<b>' + (f.eobt != null ? fmtHM(f.eobt) : '--:--') + '</b></span>')
         + (f.done ? '<span class="rc-bd ' + (f.dly > 0 ? 'late' + (f.dly > 99 ? ' x3' : '') : 'ok') + '">' + (f.dly > 0 ? '+' + f.dly : '✓') + '</span>'
-          : '<span class="rc-cd ' + (f.left == null ? 'mut' : f.cls) + '">' + (f.left == null ? '—' : fmtLeft(f.left)) + '</span>') + rcX(f) + '</button>'
+          : '<span class="rc-cd ' + (f.left == null ? 'mut' : f.cls) + '">' + (f.left == null ? '—' : CD_SW + fmtLeft(f.left)) + '</span>') + rcX(f) + '</button>'
         + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '')).join('') + '</div>'
         + (doneN ? (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + doneN + ' vol' + (doneN > 1 ? 's' : '') + ' terminé' + (doneN > 1 ? 's' : '') + ' ?', '*')
                    : '<button type="button" class="rc-clear rc-clear-cmp" onclick="uiRecapAsk(\'*\')">✕ Retirer les terminés (' + doneN + ')</button>') : '');

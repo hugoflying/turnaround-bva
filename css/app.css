@@ -1668,3 +1668,11 @@ html.dark .ns-c.on{background:#8FA6FF;border-color:#8FA6FF;color:#0B1E4F}
 .rc-bd.ok{background:color-mix(in srgb,var(--green,#1F9D57) 14%,transparent);color:var(--green,#1F9D57);font-size:17px}
 .rc-bd.late{background:var(--crit);color:#fff}
 .rc-bd.x3{font-size:11px;letter-spacing:-.02em}
+
+/* v3.56 (Hugo, option 2) : icône chrono devant le compte à rebours du Récap */
+.cd-sw{flex:none;opacity:.5}
+.rc-row:not(.is-done){grid-template-columns:auto minmax(0,1fr) auto 76px}
+.rc-row .rc-cd{display:flex;align-items:center;justify-content:flex-end;gap:4px}
+.rc-row .rc-cd .cd-sw{width:15px;height:15px}
+.rc-cdbig b.cd-ic{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.rc-cdbig b.cd-ic .cd-sw{width:20px;height:20px}
