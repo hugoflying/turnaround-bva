@@ -866,7 +866,8 @@ function clockMin(){
         const c = pa.localeCompare(pb, 'fr', { numeric:true, sensitivity:'base' });
         if(c) return c;
       }
-      return eo(a) - eo(b);
+      // v3.55.1 (Hugo) : même EOBT → vol en cours avant vol parti, puis n° de vol (l'ordre ne bouge plus selon le vol ouvert)
+      return (eo(a) - eo(b)) || ((a.done ? 1 : 0) - (b.done ? 1 : 0)) || String(a.fno).localeCompare(String(b.fno), 'fr', { numeric:true });
     });
   }
   // v2.91 (Hugo) : les onglets du bandeau suivent le tri du Récap (vols en cours puis terminés)
