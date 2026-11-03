@@ -987,7 +987,7 @@ function clockMin(){
         '<button type="button" class="rc-row' + (f.cur ? ' is-cur' : '') + (f.done ? ' is-done' : '') + '" onclick="uiOpenFlight(\'' + esc(f.id) + '\')">' + ringHTML(f)
         + '<span class="rc-t"><b>' + esc(f.fno) + '</b><small>' + esc([f.place, f.park && 'P' + f.park.replace(/^P/i,'')].filter(Boolean).join(' · ')) + '</small></span>'
         + '<span class="rc-e">EOBT<b>' + (f.eobt != null ? fmtHM(f.eobt) : '--:--') + '</b></span>'
-        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? (f.dly > 0 ? '<i class="rc-dly">+' + f.dly + '</i>' : '✓') : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
+        + '<span class="rc-cd ' + (f.done ? 'ok' : f.left == null ? 'mut' : f.cls) + '">' + (f.done ? (f.dly > 0 ? '<i class="rc-dly">+' + f.dly + '</i> ' : '') + '✓' : f.left == null ? '—' : fmtLeft(f.left)) + '</span>' + rcX(f) + '</button>'
         + (rcAsk === String(f.id) ? rcConfirmHTML('Retirer ' + esc(f.fno) + (f.place ? ' ' + esc(f.place) : '') + ' ?', esc(f.id)) : '')).join('') + '</div>'
         + (doneN ? (rcAsk === '*' ? rcConfirmHTML('Retirer les ' + doneN + ' vol' + (doneN > 1 ? 's' : '') + ' terminé' + (doneN > 1 ? 's' : '') + ' ?', '*')
                    : '<button type="button" class="rc-clear rc-clear-cmp" onclick="uiRecapAsk(\'*\')">✕ Retirer les terminés (' + doneN + ')</button>') : '');
