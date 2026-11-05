@@ -778,7 +778,10 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
         setValAK('To', (nextDep.adesIata || '') || 'BVA');
 
-        setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+        // v3.56.4 (Hugo, FR200 FCO à 14:55 au lieu de 15:55) : au rafraîchissement, la SOBT reprend toujours
+        // l'horaire AK du départ lié (avant, une SOBT déjà remplie n'était jamais corrigée après réouverture)
+        if(isRefresh) setTimeFromISOAK('SOBT', nextDep.sobt || nextDep.eobt);
+        else setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
         setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
         if(nextDep.ctot){
           setTimeFromISOAK('CTOT', nextDep.ctot);
