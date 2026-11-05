@@ -2015,3 +2015,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const cd = document.getElementById('timer-cd');
   if(cd && window.MutationObserver) new MutationObserver(uiFoldSync).observe(cd, { childList:true, characterData:true, subtree:true, attributes:true });
 });
+
+/* v3.56.5 (Hugo) : sur l'accueil (photo), barres du téléphone en noir comme le fond, bleu marine dans l'app */
+(function(){
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(!meta) return;
+  const APP = meta.getAttribute('content') || '#0B1E4F', HOME = '#0A1017';
+  const sync = () => {
+    const b = document.body.classList, home = b.contains('no-tab') || b.contains('pv-locked');
+    const c = home ? HOME : APP;
+    if(meta.getAttribute('content') !== c) meta.setAttribute('content', c);
+  };
+  const start = () => { sync(); new MutationObserver(sync).observe(document.body, { attributes:true, attributeFilter:['class'] }); };
+  if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
