@@ -204,7 +204,7 @@ function clockMin(){
     { k:'crew',          t:'Crew',          d:'Arrivée PNT et PNC',             c:'#334155' },
     { k:'recherche-bag', t:'Recherche bag', d:'Nombre de bags, début et fin',   c:'#ec4899' },
     { k:'inad',          t:'INAD',          d:'Annonce et arrivée INAD',        c:'#D7263D' },
-    { k:'gpu',           t:'Nayak',         d:'Appel, arrivée et départ Nayak', c:'#FFAD00' },
+    { k:'gpu', side:'both', t:'Nayak',         d:'Appel, arrivée et départ Nayak', c:'#FFAD00' },   // v3.57 (Hugo) : aussi dans les événements Arrivée
     { k:'scan',          t:'Embarquement',  d:'Premier et dernier scanné',      c:'#0f766e' },
     { k:'casque',        t:'Connexion casque',  d:'Connexion de l’agent casque',     c:'#7c3aed' },
     { k:'push',          t:'Push',              d:'Connexion et changement de push', c:'#3273dc' },

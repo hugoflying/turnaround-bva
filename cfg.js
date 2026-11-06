@@ -115,7 +115,7 @@ const EV_BUILTIN = {
   crew:{ t:'Crew', side:'dep', c:'#334155', it:[['ArrPNT','Arrivée PNT','h'],['ArrPNC','Arrivée PNC','h']] },
   'recherche-bag':{ t:'Recherche bag', side:'dep', c:'#ec4899', it:[['RechercheBagDebut','Début de recherche','d'],['RechercheBagFin','Fin de recherche','f']] },
   inad:{ t:'INAD', side:'dep', c:'#D7263D', it:[['AnnonceINAD','Annonce INAD','h'],['ArriveeINAD','Arrivée INAD','h']] },
-  gpu:{ t:'Nayak', side:'dep', c:'#FFAD00', it:[['AppelNayak','Appel Nayak','h'],['ArriveeNayak','Arrivée Nayak','d'],['DepartNayak','Départ Nayak','f']] },
+  gpu:{ t:'Nayak', side:'both', c:'#FFAD00', it:[['AppelNayak','Appel Nayak','h'],['ArriveeNayak','Arrivée Nayak','d'],['DepartNayak','Départ Nayak','f']] },
   scan:{ t:'Embarquement', side:'dep', c:'#0f766e', it:[['PremierScanne','Premier scanné','d'],['DernierScanne','Dernier scanné','f']] },
   casque:{ t:'Connexion casque', side:'dep', c:'#7c3aed', it:[['ConnexionAgentCasque','Connexion casque','h']] },
   push:{ t:'Push', side:'dep', c:'#3273dc', it:[['ConnexionPush','Connexion push','h'],['ChangementPush','Changement de push','h']] },
