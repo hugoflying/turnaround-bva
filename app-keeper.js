@@ -735,7 +735,9 @@ function _doApplyAKFlight(f, flow, opts = {}){
         prevArrUsed = prevArr;
 
         setValAK('From', (prevArr.adepIata || '') || 'BVA');
-        setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+        // v3.57.1 (Hugo, FR065 SIBT restée en UTC) : au rafraîchissement, la SIBT reprend toujours l'horaire AK de l'arrivée liée
+        if(isRefresh) setTimeFromISOAK('SIBT', prevArr.sibt || prevArr.eibt);
+        else setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
         setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
 
         if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));

@@ -160,6 +160,8 @@ function setTimeModeUTC(enable, fromInit=false){
   // Resync TOUS les tw-displays immédiatement après conversion
   twSyncAll();
   updateAllCalculations();
+  // v3.57.1 : l'onglet courant converti est enregistré tout de suite (sinon, app fermée juste après, il restait dans l'ancien mode)
+  if(!fromInit && typeof saveCurrentTabData === 'function') try{ saveCurrentTabData(); }catch(_){ }
 
   // ✅ Resync timer-ctot (type="hidden", non couvert par twSyncAll)
   const ctotEl2 = document.getElementById('CTOT');
