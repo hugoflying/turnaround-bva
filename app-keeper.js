@@ -638,6 +638,22 @@ async function refreshAKTab(tabId){
   }
 }
 
+
+/* v3.57.2 (Hugo) : SIBT / SOBT saisies à la main = jamais remplacées par ↻ (champ caché HManuel « SIBT,SOBT ») */
+function hManuel(id){ return (document.getElementById('HManuel')?.value || '').split(',').includes(id); }
+function setSchedAK(id, iso, isRefresh){
+  if(hManuel(id)) return;
+  if(isRefresh) setTimeFromISOAK(id, iso); else setTimeFromISOIfEmptyOrAK(id, iso);
+}
+document.addEventListener('change', e => {
+  const id = e.target && e.target.id;
+  if((id !== 'SIBT' && id !== 'SOBT') || settingFromAK) return;
+  const h = document.getElementById('HManuel'); if(!h) return;
+  const set = new Set((h.value || '').split(',').filter(Boolean));
+  if(e.target.value) set.add(id); else set.delete(id);
+  h.value = [...set].join(',');
+}, true);
+
 function applyAKFlight(f, flow, opts = {}){
   // Nouvelle selection : si ce vol est deja ouvert, on demande confirmation
   if(!opts.refresh){
@@ -714,7 +730,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
     if(flow === 'DEP'){
       setValAK('To', (f.adesIata || '') || 'BVA');
 
-      setTimeFromISOAK('SOBT', f.sobt || f.eobt);
+      setSchedAK('SOBT', f.sobt || f.eobt, true);
       setTimeFromISOAK('AOBT', f.aobt);
       // CTOT : mis à jour depuis AK, et effacé si AK n'en a plus
       if(f.ctot){
@@ -736,8 +752,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
         setValAK('From', (prevArr.adepIata || '') || 'BVA');
         // v3.57.1 (Hugo, FR065 SIBT restée en UTC) : au rafraîchissement, la SIBT reprend toujours l'horaire AK de l'arrivée liée
-        if(isRefresh) setTimeFromISOAK('SIBT', prevArr.sibt || prevArr.eibt);
-        else setTimeFromISOIfEmptyOrAK('SIBT', prevArr.sibt || prevArr.eibt);
+        setSchedAK('SIBT', prevArr.sibt || prevArr.eibt, isRefresh);
         setTimeFromISOIfEmptyOrAK('AIBT', prevArr.aibt);
 
         if(prevArr?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(prevArr.paxNb));
@@ -761,7 +776,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
       // ✅ par défaut: avion reste à BVA (nuit / pas de rota)
       setValAK('To', 'BVA');
 
-      setTimeFromISOAK('SIBT', f.sibt || f.eibt);
+      setSchedAK('SIBT', f.sibt || f.eibt, true);
       setTimeFromISOAK('AIBT', f.aibt);
 
       if(f?.paxNb != null) setIfEmptyOrAK('ArrPAX_MAIN', String(f.paxNb));
@@ -782,8 +797,7 @@ function _doApplyAKFlight(f, flow, opts = {}){
 
         // v3.56.4 (Hugo, FR200 FCO à 14:55 au lieu de 15:55) : au rafraîchissement, la SOBT reprend toujours
         // l'horaire AK du départ lié (avant, une SOBT déjà remplie n'était jamais corrigée après réouverture)
-        if(isRefresh) setTimeFromISOAK('SOBT', nextDep.sobt || nextDep.eobt);
-        else setTimeFromISOIfEmptyOrAK('SOBT', nextDep.sobt || nextDep.eobt);
+        setSchedAK('SOBT', nextDep.sobt || nextDep.eobt, isRefresh);
         setTimeFromISOIfEmptyOrAK('AOBT', nextDep.aobt);
         if(nextDep.ctot){
           setTimeFromISOAK('CTOT', nextDep.ctot);

@@ -406,6 +406,7 @@ function loadTabData(id){
   if(data.rza && typeof data.rza === 'object') _rzaData = data.rza;
   { const eo = document.getElementById('EvOuverts'); if(eo && !('EvOuverts' in data)) eo.value = ''; }   // v3.41.5 : vol enregistré avant
   { const na = document.getElementById('NVolArr'); if(na && !('NVolArr' in data)) na.value = ''; }   // v3.51.7 : vol enregistré avant
+  { const hm = document.getElementById('HManuel'); if(hm && !('HManuel' in data)) hm.value = ''; }   // v3.57.2 : SIBT/SOBT saisies à la main
     for(const k in data){
       // ✅ toggles globaux : jamais restaurés depuis l’onglet
       if(k === 'utcToggle' || k === 'darkToggle') continue;
@@ -736,6 +737,7 @@ function generateTimingFields(){
       </div>
     </div>
     <input id="EvCote" type="hidden">
+    <input id="HManuel" type="hidden"><!-- v3.57.2 : SIBT/SOBT saisies à la main, jamais remplacées par ↻ -->
     <input id="EvOuverts" type="hidden"><!-- v3.41.5 : événements ouverts sur CE vol (« gpu,cx-abc ») -->
     </div>
     <button type="button" class="ev-add" id="evAddBtn" onclick="uiEvOpen('dep')"><span>+</span> Ajouter un événement</button>

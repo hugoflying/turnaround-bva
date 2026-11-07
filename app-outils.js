@@ -362,7 +362,7 @@ function confirmClearFields(){
     'FermeturePorteAvion','RemiseLID','ConnexionAgentCasque','ArriveeINAD',
     'ArrPNT','ArrPNC','AnnonceINAD','AppelNayak','ArriveeNayak','DepartNayak','PremierScanne','DernierScanne','RechercheBagDebut','RechercheBagFin',
     'MiseEnPlaceTapis','DebutDechargementBagages','FinDechargementBagages','DebutRepositionnement','FinRepositionnement','DebutChargementBagages','FinChargementBagages',
-    'DebutCleaningCabine','FinCleaningCabine','DebutVidangeToilettes','FinVidangeToilettes','DebutEauPotable','FinEauPotable','DebutDegivrage','FinDegivrage','EvCote','EvOuverts',
+    'DebutCleaningCabine','FinCleaningCabine','DebutVidangeToilettes','FinVidangeToilettes','DebutEauPotable','FinEauPotable','DebutDegivrage','FinDegivrage','EvCote','EvOuverts','HManuel',
     'ConnexionPush','ChangementPush','FermetureSouteAV','FermetureSouteAR','RetraitEchelleAV','RetraitEchelleAR','ReouverturePorteAvion','DebutComptageBagages','FinComptageBagages',
     'CommChiffresPorte', 'CommChargementPiste',
     'ArrPAX_MAIN','ArrPAX_INF','ArrBAGS','ArrPOIDS','ArrSI',
