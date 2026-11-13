@@ -825,16 +825,19 @@ function clockMin(){
     const left = eobt != null ? eobt - now : null;
     let st, cls = '', next;
     const has = k => !!g(k);
+    const fromV = g('From').toUpperCase(), depOnly = aibt == null && sibt == null && sobt != null && (fromV === 'BVA' || !fromV);
     // v2.71 : état en cours du vol (pas l'action à venir)
     // v2.99 (Hugo) : plus d'ATOT Keeper, « Departed » dès que l'AOBT est saisi
     if(aobt != null){ st = 'Parti ' + fmtHM(aobt); cls = 'ok'; next = 'Departed'; }
-    else if(aibt == null){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
+    // v3.57.3 (Hugo) : départ basé (From = BVA, ou ni provenance ni SIBT) = pas d'arrivée à saisir, on suit le départ
+    else if(aibt == null && !depOnly){ st = sibt != null ? 'Arr. ' + fmtHM(sibt) : 'Pas arrivé'; cls = 'mut'; next = sibt != null ? 'Arrivée prévue ' + fmtHM(sibt) : 'Arrivée à saisir'; }
     else {
       next = has('FermeturePorteAvion') ? 'Porte fermée'
            : has('AvionDernierEmbarque') ? 'Embarquement terminé'
            : has('AvionPremierEmbarque') ? 'Embarquement en cours'
            : has('DernierDebarque') ? 'Débarquement terminé'
            : has('PremierDebarque') ? 'Débarquement en cours'
+           : depOnly ? 'Départ prévu ' + fmtHM(sobt)
            : 'Arrivé au block';
       if(left != null && left < 0){ st = '+' + Math.round(-left) + '′'; cls = 'late'; }
       else if(left != null && left <= 5){ st = 'EOBT −5'; cls = 'soon'; }
@@ -845,7 +848,7 @@ function clockMin(){
     else if(aibt != null && eobt != null){ const a = R(aibt); p = Math.max(0, Math.min(1, (now - a) / Math.max(1, eobt - a))) * 100; }
     const ringCls = aobt != null ? 'done' : cls === 'late' ? 'over' : cls === 'soon' ? 'soon' : '';
     // Statut sol affiché en bas des cartes
-    const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : aibt != null ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
+    const blk = aobt != null ? { t:'Departed', c:'blk-dep' } : (aibt != null || depOnly) ? { t:'In block', c:'blk-in' } : { t:'Not in block', c:'blk-out' };
     return { blk, id, cur, cie: (cie || (fno !== 'VOL' ? cieFromFF(fno) : '')).slice(0,2), fno, place, park: g('Parking'), immat: g('Immat').toUpperCase(),
              sobt: R(sobt), aobt: R(aobt), dated, eobt, ctot, left: aobt != null ? null : left, st, cls, next, p, ringCls, done: aobt != null, late: cls === 'late',
              // v3.54 (Hugo) : retard d'un vol parti = AOBT − SOBT (minuit géré)
