@@ -597,23 +597,21 @@ function toggleInfoVolEdit(){
     ed.maxLength=5; ed.inputMode='numeric';
     ed.setAttribute('enterkeyhint','done');
 
+    // v3.57.6 : coordonnées document (position:absolute) → la case défile avec la page
+    // et reste sur son champ quand le clavier Android fait remonter l'écran
     function positionEditor(){
       const r = wrap.getBoundingClientRect();
-      const vv = window.visualViewport;
-      // Sur Android, visualViewport donne les coords réelles après ouverture du clavier
-      const offsetTop  = vv ? vv.offsetTop  : 0;
-      const offsetLeft = vv ? vv.offsetLeft : 0;
-      ed.style.top    = (r.top  + offsetTop)  + 'px';
-      ed.style.left   = (r.left + offsetLeft) + 'px';
+      const b = document.body.getBoundingClientRect();
+      const rel = getComputedStyle(document.body).position !== 'static';
+      ed.style.top    = (rel ? r.top  - b.top  : r.top  + window.scrollY) + 'px';
+      ed.style.left   = (rel ? r.left - b.left : r.left + window.scrollX) + 'px';
       ed.style.width  = r.width  + 'px';
       ed.style.height = r.height + 'px';
     }
 
     // Position fixe sur le wrap, en dehors du time-wrap pour éviter overflow:hidden
     ed.style.cssText = `
-      position:fixed;
-      top:${rect.top}px; left:${rect.left}px;
-      width:${rect.width}px; height:${rect.height}px;
+      position:absolute;
       z-index:9999;
       text-align:center; font-weight:900; font-size:1rem;
       border-radius:var(--radius);
@@ -622,6 +620,8 @@ function toggleInfoVolEdit(){
     `;
     disp.style.visibility='hidden';
     document.body.appendChild(ed);
+    positionEditor();
+    window.addEventListener('resize', positionEditor);
 
     // Recalculer la position quand le clavier Android ouvre (visualViewport resize)
     if(window.visualViewport){
@@ -644,6 +644,7 @@ function toggleInfoVolEdit(){
         }
       }
       ed.remove(); disp.style.visibility='';
+      window.removeEventListener('resize', positionEditor);
       if(window.visualViewport){
         window.visualViewport.removeEventListener('resize', positionEditor);
         window.visualViewport.removeEventListener('scroll', positionEditor);
